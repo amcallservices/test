@@ -3,3 +3,4 @@ fpdf
 requests
 openai
 python-docx
+PyPDF2
