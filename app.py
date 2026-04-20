@@ -421,8 +421,9 @@ Il genere e lo stile scelti richiedono un approccio neutrale e rigoroso. NON uti
     modulo_fonti = ""
     if st.session_state.get("conoscenza_extra"):
         modulo_fonti = """
-=== INTEGRAZIONE FONTI ESTERNE ===
-Ti sono stati forniti dei documenti di riferimento. Nella stesura, devi agire come un analista: estrai dati, concetti chiave, terminologia specifica e stilemi presenti nelle fonti per arricchire l'opera. Dai la priorità assoluta alle informazioni contenute nelle fonti.
+=== INTEGRAZIONE FONTI ESTERNE E DIVIETO DI COPIA-INCOLLA ===
+Ti sono stati forniti dei documenti di riferimento. Nella stesura, devi agire come un analista: estrai dati, concetti chiave, terminologia specifica e stilemi presenti nelle fonti per arricchire l'opera. 
+CRITICO E TASSATIVO: È ASSOLUTAMENTE VIETATO FARE COPIA E INCOLLA. Non trascrivere MAI frasi o paragrafi testuali dai documenti. Devi usare queste fonti ESCLUSIVAMENTE come base di ragionamento, interiorizzare le informazioni e spiegarle/argomentarle ex-novo con le tue parole, adattandole allo stile e al POV richiesto per il libro.
 """
 
     # --- AGGIUNTA RESTRIZIONE COMMENTI AL PROMPT DI BASE ---
@@ -474,6 +475,7 @@ CRITICO: NON inserire commenti, ragionamenti meta-testuali, note introduttive ("
                 
                 if st.session_state.get("conoscenza_extra"):
                     prompt_idx += f"\n\nBASA L'INDICE SUI SEGUENTI DOCUMENTI FORNITI DALL'UTENTE:\n{st.session_state['conoscenza_extra'][:4000]}"
+                    prompt_idx += "\nREGOLE SULLE FONTI: Usa questi documenti per comprendere gli argomenti da trattare, ma NON COPIARE i titoli originali. Rielabora la struttura creando un indice 100% originale ispirato a quei concetti."
 
                 prompt_idx += """\nREGOLE FONDAMENTALI:
                 1. SOLO L'INDICE NUDO E CRUDO: VIETATO inserire frasi come "Ecco l'indice", commenti, descrizioni sotto i capitoli o ragionamenti. Stampa SOLO le voci della lista.
