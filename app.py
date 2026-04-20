@@ -425,6 +425,7 @@ Il genere e lo stile scelti richiedono un approccio neutrale e rigoroso. NON uti
 Ti sono stati forniti dei documenti di riferimento. Nella stesura, devi agire come un analista: estrai dati, concetti chiave, terminologia specifica e stilemi presenti nelle fonti per arricchire l'opera. Dai la priorità assoluta alle informazioni contenute nelle fonti.
 """
 
+    # --- AGGIUNTA RESTRIZIONE COMMENTI AL PROMPT DI BASE ---
     S_PROMPT = f"""
 Sei un esperto Madrelingua in {lingua_sel}, Editor e Luminare mondiale nel campo '{val_genere}'. 
 Stai redigendo l'ebook '{val_titolo}'. 
@@ -452,7 +453,8 @@ PARAMETRI DI BASE (DA APPLICARE TASSATIVAMENTE IN OGNI SEZIONE):
 === SILENZIO STAMPA E DIVIETO DI ANTICIPAZIONE ===
 Se l'indice prevede che un argomento specifico venga trattato in un Sottocapitolo (es. 1.1), è ASSOLUTAMENTE VIETATO parlarne nel Capitolo Padre (es. Capitolo 1). Lascia il vuoto informativo per permettere al Sottocapitolo di esistere.
 
-CRITICO: NON inserire commenti o ragionamenti meta-testuali. L'output DEVE contenere ESCLUSIVAMENTE il contenuto finale.
+=== DIVIETO ASSOLUTO DI COMMENTI E METATESTO ===
+CRITICO: NON inserire commenti, ragionamenti meta-testuali, note introduttive ("Ecco il capitolo richiesto:"), conclusioni ("Spero ti sia utile"), o riflessioni dell'AI. L'output DEVE contenere ESCLUSIVAMENTE il contenuto finale da inserire nel libro, pronto per la stampa.
 """
 
     tabs = st.tabs(L["tabs"])
@@ -474,12 +476,12 @@ CRITICO: NON inserire commenti o ragionamenti meta-testuali. L'output DEVE conte
                     prompt_idx += f"\n\nBASA L'INDICE SUI SEGUENTI DOCUMENTI FORNITI DALL'UTENTE:\n{st.session_state['conoscenza_extra'][:4000]}"
 
                 prompt_idx += """\nREGOLE FONDAMENTALI:
-                1. SOLO L'INDICE: Nessun commento extra.
+                1. SOLO L'INDICE NUDO E CRUDO: VIETATO inserire frasi come "Ecco l'indice", commenti, descrizioni sotto i capitoli o ragionamenti. Stampa SOLO le voci della lista.
                 2. OBIETTIVO 100+ PAGINE: Dividi in almeno 4-5 Macro-Parti. Minimo 15-20 Capitoli. Da 3 a 5 Sottocapitoli molto specifici per capitolo.
                 3. FORMATO: Parte I, Capitolo 1, 1.1, 1.2
-                4. PULIZIA VISIVA: Solo l'elenco nudo e crudo."""
+                4. PULIZIA VISIVA: Non usare asterischi né formattazione oltre alla gerarchia."""
 
-                st.session_state["indice_raw"] = chiedi_gpt(prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.")
+                st.session_state["indice_raw"] = chiedi_gpt(prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito. Fornisci SOLO il risultato finale senza commentare.")
                 sync_capitoli(); st.rerun()
                 
         testo_corrente = st.session_state.get("indice_raw", "")
@@ -515,14 +517,14 @@ CRITICO: NON inserire commenti o ragionamenti meta-testuali. L'output DEVE conte
                 if st.button("🧠 QUIZ"):
                     if k_sessione in st.session_state:
                         with st.spinner("Generazione Quiz didattico..."):
-                            res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}", "Learning Expert.")
+                            res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}\nNON INSERIRE NESSUN COMMENTO.", "Learning Expert.")
                             st.session_state[k_sessione] += f"\n\n---\n\n### TEST DI VALUTAZIONE\n\n" + res_q; st.rerun()
                 if st.button("🍳 10 RICETTE"):
                     if k_sessione in st.session_state:
                         with st.spinner("Creazione 10 ricette uniche (Anti-ripetizione in corso)..."):
                             mem_ricette = st.session_state.get(k_sessione, "")
                             p_ricette = f"""Crea ESATTAMENTE 10 RICETTE uniche e dettagliate in lingua {lingua_sel} per '{sez_scelta}', coerenti con: '{val_trama}'.
-                            Usa il POV '{val_pov}'. [REGOLA ANTI-RIPETIZIONE ASSOLUTA]: Non ripetere i contenuti già generati: {mem_ricette[-4000:]}"""
+                            Usa il POV '{val_pov}'. [REGOLA ANTI-RIPETIZIONE ASSOLUTA]: Non ripetere i contenuti già generati: {mem_ricette[-4000:]}\nNON INSERIRE COMMENTI INIZIALI O FINALI."""
                             res_r = chiedi_gpt(p_ricette, f"Sei uno Chef in lingua {lingua_sel}.")
                             st.session_state[k_sessione] += f"\n\n---\n\n### 🍳 10 NUOVE RICETTE\n\n" + res_r
                             st.rerun()
