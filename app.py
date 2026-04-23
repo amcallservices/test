@@ -88,7 +88,6 @@ class PDFSemanticPsychologyAnalyzer:
             - La composizione (logica/spazio per il testo).
             """
             
-            # Utilizzo esclusivo di GPT-4o-mini
             resp = client_oai.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": system_prompt}],
@@ -135,7 +134,7 @@ ATMOSFERE = {
 }
 
 # ==============================================================================
-# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (AGGIORNATO)
+# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA
 # ==============================================================================
 with st.sidebar:
     st.title("📕 DESIGNER v90.3")
@@ -163,7 +162,6 @@ with st.sidebar:
     argomento_focus = st.text_input("🎯 Suggerisci Argomento (Opzionale):", placeholder="Es. Rivincita personale, Lotta di classe...")
     uploaded_pdf = st.file_uploader("Carica il PDF del libro:", type=["pdf"])
     
-    # UNICO PULSANTE ESTRAI SCENA (Gestito da GPT-4o-mini)
     if uploaded_pdf is not None:
         if st.button("🧠 Estrai Scena di Conversione"):
             if "OPENAI_API_KEY" not in st.secrets:
@@ -189,29 +187,36 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHY ENFORCEMENT FORTE PER DALL-E 3
+                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHY ENFORCEMENT ASSOLUTO PER DALL-E 3
                     # ========================================================================
                     text_enforcement = ""
+                    blocco_categorico = ""
                     if use_t and t_val:
-                        text_enforcement += f"You MUST flawlessly write the title \"{t_val.upper()}\" in massive, highly legible font at the {t_pos} of the image. "
+                        text_enforcement += f"The title '{t_val}' MUST be prominently and legibly written at the {t_pos}. "
+                        blocco_categorico += f"TITLE: '{t_val}' | "
                     if use_a and a_val:
-                        text_enforcement += f"You MUST flawlessly write the author name \"{a_val.upper()}\" at the {a_pos} of the image. "
+                        text_enforcement += f"The author name '{a_val}' MUST be visibly written at the {a_pos}. "
+                        blocco_categorico += f"AUTHOR: '{a_val}'"
 
                     prompt = (
-                        f"CRITICAL TYPOGRAPHY DIRECTIVE: {text_enforcement}"
-                        f"DO NOT add any other words, subtitles, or random letters. ONLY write the requested words exactly as provided. "
+                        f"[TEXT_OVERLAY_REQUIRED] You must incorporate exact typography into this image. "
+                        f"CRITICAL TYPOGRAPHY DIRECTIVE: {text_enforcement} "
+                        f"DO NOT add any other words, subtitles, or random letters. Generate ONLY the exact text requested. "
                         f"Generate a pure, standalone illustration. DO NOT generate a 3D book mockup, DO NOT render book covers, pages, or bindings. "
                         f"\n\nVISUAL HOOK: A highly engaging, neuromarketing-optimized artwork representing: {scene_en}. "
                         f"\n\nFOREGROUND COMPOSITION: The main subject MUST be positioned in the absolute foreground (close-up or prominent focus), dominating the visual space. "
                         f"\n\nSTYLE DIRECTION: {ATMOSFERE[genere]} rendered in {MODALITA_RENDERING[tipo_render]}."
                         f"\n\nLEGIBILITY RULE: The background immediately behind the text MUST be darkened, blurred, or simplified to guarantee the text is 100% readable."
                     )
+                    
+                    if blocco_categorico:
+                        prompt = f"[SYSTEM OVERRIDE: CATEGORICAL TEXT REQUIREMENT] YOU ARE STRICTLY FORBIDDEN FROM GENERATING THIS IMAGE WITHOUT THE EXACT TEXT: {blocco_categorico}. " + prompt + f" FINAL DIRECTIVE: IF THE WORDS {blocco_categorico} ARE OMITTED, IT IS A CATASTROPHIC FAILURE. RENDER THEM BOLDLY AND CLEARLY."
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
 
                     st.session_state['v83_prompt'] = prompt
-                    st.success("Architettura con Tipografia Pronta.")
+                    st.success("Architettura pronta.")
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
@@ -224,7 +229,6 @@ col_l, col_r = st.columns([1.2, 1])
 with col_l:
     p_edit = st.text_area("Prompt Finale (EN):", value=st.session_state['v83_prompt'], height=300)
     
-    # UNICO BOTTONE DI GENERAZIONE (Gestito da DALL-E 3)
     if st.button("🔥 GENERA COPERTINA HD"):
         if not p_edit:
             st.error("Configura prima la sidebar e compila l'architettura!")
@@ -237,8 +241,8 @@ with col_l:
                 with st.spinner("Generazione Master in corso (OpenAI DALL-E 3)..."):
                     response_oai = client_oai.images.generate(
                         model="dall-e-3",
-                        prompt=p_edit[:4000],  # Limite di DALL-E 3
-                        size="1024x1024",      # Formato normale quadrato per l'artwork
+                        prompt=p_edit[:4000], 
+                        size="1024x1024",      # Formato normale quadrato
                         quality="hd",
                         n=1
                     )
