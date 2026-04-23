@@ -187,28 +187,32 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: OTTIMIZZAZIONE SPECIFICA PER DALL-E 3
+                    # INIZIO MODIFICHE PROMPT: SINTASSI NATIVA DALL-E 3 PER TIPOGRAFIA
+                    # Questa è l'unica sintassi che garantisce la stampa esatta in DALL-E 3.
                     # ========================================================================
-                    # DALL-E 3 risponde molto meglio se le istruzioni testuali sono all'inizio
-                    # e racchiuse tra virgolette doppie "..."
-                    
-                    testo_titolo = f'with the exact text "{t_val}" written prominently at the {t_pos}' if use_t and t_val else ""
-                    testo_autore = f'and the exact text "{a_val}" written clearly at the {a_pos}' if use_a and a_val else ""
-                    testo_aggiuntivo = " ".join(filter(None, [testo_titolo, testo_autore]))
-
-                    if testo_aggiuntivo:
-                        text_enforcement = f"A high-quality illustration {testo_aggiuntivo}. IMPORTANT: Ensure the spelling is perfect. Do NOT add any extra random letters, words, or signatures. "
+                    text_elements = []
+                    if use_t and t_val:
+                        text_elements.append(f'the text "{t_val}" written clearly and prominently at the {t_pos}')
+                    if use_a and a_val:
+                        text_elements.append(f'the text "{a_val}" written clearly at the {a_pos}')
+                        
+                    if text_elements:
+                        testo_unito = " and ".join(text_elements)
+                        prompt = (
+                            f'An illustration containing {testo_unito}. '
+                            f'Visual scene: {scene_en}. '
+                            f'This is a flat 2D artwork (do not draw a physical book, no 3D mockups, no spines). '
+                            f'The main subject is in the absolute foreground. '
+                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
+                        )
                     else:
-                        text_enforcement = "A high-quality illustration with NO text, letters, or words anywhere. "
-
-                    prompt = (
-                        f"{text_enforcement}"
-                        f"This is a standalone artwork, NOT a 3D book mockup. Do not draw book covers, spines, or pages. "
-                        f"\n\nSCENE: A highly engaging artwork representing: {scene_en}. "
-                        f"The main subject MUST be positioned in the absolute foreground (close-up or prominent focus). "
-                        f"\n\nSTYLE: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}. "
-                        f"The background behind the text areas must be clean and highly contrasted so the text is 100% readable."
-                    )
+                        prompt = (
+                            f'An illustration. '
+                            f'Visual scene: {scene_en}. '
+                            f'This is a flat 2D artwork (do not draw a physical book, no 3D mockups, no spines). '
+                            f'The main subject is in the absolute foreground. '
+                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
+                        )
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
