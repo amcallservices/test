@@ -100,7 +100,7 @@ class PDFSemanticPsychologyAnalyzer:
             return None
 
 # ==============================================================================
-# 4. MATRICE DEGLI STILI (INVARIATO)
+# 4. MATRICE DEGLI STILI (DINAMICA AGGIORNATA CON CONTEMPORANEO)
 # ==============================================================================
 MODALITA_RENDERING = {
     "Fotorealistico": "photorealistic, 8k, highly detailed",
@@ -134,7 +134,7 @@ ATMOSFERE = {
 }
 
 # ==============================================================================
-# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA
+# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (AGGIORNATO)
 # ==============================================================================
 with st.sidebar:
     st.title("📕 DESIGNER v90.3")
@@ -187,32 +187,45 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: APPROCCIO "TIPOGRAFICO DIRETTO"
+                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHY NATIVE-SYNTAX FORTE PER DALL-E 3
                     # ========================================================================
-                    text_parts = []
+                    text_instructions = []
+                    blocco_categorico = ""
+                    
+                    # Rimuovi comandi aggressivi e MAIUSCOLI per evitare confusione nel modello.
+                    # Usa la sintassi formulaica che works best per DALL-E 3 typography.
+                    
                     if use_t and t_val:
-                        text_parts.append(f'the words "{t_val}" written prominently at the {t_pos}')
+                        text_instructions.append(f'the text "{t_val}" prominently and clearly written at the {t_pos}')
+                        blocco_categorico += f"TITLE: '{t_val}' | "
                     if use_a and a_val:
-                        text_parts.append(f'the words "{a_val}" written at the {a_pos}')
-
-                    if text_parts:
-                        text_instruction = "A typographic poster image featuring " + " and ".join(text_parts) + ". "
-                        text_instruction += "Make absolutely sure the spelling is correct and do not add any other random letters. "
+                        text_instructions.append(f'the author name "{a_val}" written at the {a_pos}')
+                        blocco_categorico += f"AUTHOR: '{a_val}'"
+                        
+                    if text_instructions:
+                        testo_unito = " and ".join(text_instructions)
+                        prompt_typography = f"A highly professional book cover featuring {testo_unito}. The background art shows "
                     else:
-                        text_instruction = "A textless image. "
+                        prompt_typography = "A highly professional textless book cover showing "
 
                     prompt = (
-                        f"{text_instruction}"
-                        f"The background art behind the text shows: {scene_en}. "
-                        f"This is a standalone 2D image. Do not draw a book cover, no 3D mockups. "
-                        f"Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}."
+                        f"{prompt_typography}"
+                        f"{scene_en}. "
+                        f"MANDATORY FOREGROUND RULE: The main subject or primary element beneath the massive title MUST be positioned in the absolute foreground (close-up or prominent focus), completely dominating the visual space beneath the text. "
+                        f"Style Direction: {ATMOSFERE[genere]} rendered in {MODALITA_RENDERING[tipo_render]}."
+                        f"\n\nLEGIBILITY RULE: The background immediately behind the text MUST be darkened, blurred, or simplified to guarantee the text is 100% readable."
                     )
+                    
+                    if blocco_categorico:
+                        # Rinforzo categorico MA semplice e formulaico per ChatGPT (che traduce il prompt per DALL-E).
+                        prompt += f" CATEGORICAL DIRECTIVE: ONLY generate the exact text \"{blocco_categorico.replace('|','and')}\". No other words, letters, signatures, or random AI gibberish anywhere on the cover. Spelling must be perfect."
+
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
 
                     st.session_state['v83_prompt'] = prompt
-                    st.success("Architettura pronta.")
+                    st.success("Architettura con Tipografia Pronta.")
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
@@ -225,6 +238,7 @@ col_l, col_r = st.columns([1.2, 1])
 with col_l:
     p_edit = st.text_area("Prompt Finale (EN):", value=st.session_state['v83_prompt'], height=300)
     
+    # UNICO BOTTONE DI GENERAZIONE (Gestito da DALL-E 3)
     if st.button("🔥 GENERA COPERTINA HD"):
         if not p_edit:
             st.error("Configura prima la sidebar e compila l'architettura!")
@@ -237,14 +251,14 @@ with col_l:
                 with st.spinner("Generazione Master in corso (OpenAI DALL-E 3)..."):
                     response_oai = client_oai.images.generate(
                         model="dall-e-3",
-                        prompt=p_edit[:4000], 
-                        size="1024x1024",      # Formato normale quadrato
+                        prompt=p_edit[:4000],  # Limite di DALL-E 3
+                        size="1024x1792",      # Aspect ratio KDP verticale (copertina del libro)
                         quality="hd",
                         n=1
                     )
                     st.session_state['v83_res'] = response_oai.data[0].url
                     st.balloons()
-                    st.rerun()
+                    st.rerun() # Forza l'aggiornamento per mostrare l'immagine
             except Exception as e:
                 st.error(f"Errore tecnico OpenAI: {e}")
 
@@ -253,6 +267,6 @@ with col_r:
         st.image(st.session_state['v83_res'], use_container_width=True)
         st.divider()
         response = requests.get(st.session_state['v83_res'])
-        st.download_button(label="📥 Scarica Immagine", data=response.content, file_name="artwork_dalle3.jpg", mime="image/jpeg")
+        st.download_button(label="📥 Scarica Copertina", data=response.content, file_name="book_cover_dalle3.jpg", mime="image/jpeg")
     else:
         st.info("Configura e genera per visualizzare l'anteprima.")
