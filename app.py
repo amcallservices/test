@@ -135,7 +135,7 @@ ATMOSFERE = {
 }
 
 # ==============================================================================
-# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (INVARIATO)
+# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (AGGIORNATO)
 # ==============================================================================
 with st.sidebar:
     st.title("📕 DESIGNER v90.4")
@@ -191,10 +191,12 @@ with st.sidebar:
                     blocco_categorico = ""
                     
                     if use_t and t_val:
-                        text_instructions.append(f'the text "{t_val}" prominently and clearly written at the {t_pos}')
+                        # AGGIUNTA: Richiesta esplicita per il controllo di ogni singolo carattere
+                        text_instructions.append(f'the exact text "{t_val}" (ensure every single character is rendered flawlessly) prominently and clearly written at the {t_pos}')
                         blocco_categorico += f"TITLE: '{t_val}' | "
                     if use_a and a_val:
-                        text_instructions.append(f'the author name "{a_val}" written at the {a_pos}')
+                        # AGGIUNTA: Richiesta esplicita per il controllo di ogni singolo carattere
+                        text_instructions.append(f'the exact author name "{a_val}" (verify every single letter is correct) written at the {a_pos}')
                         blocco_categorico += f"AUTHOR: '{a_val}'"
                         
                     if text_instructions:
@@ -212,7 +214,12 @@ with st.sidebar:
                     )
                     
                     if blocco_categorico:
-                        prompt += f" CATEGORICAL DIRECTIVE: ONLY generate the exact text \"{blocco_categorico.replace('|','and')}\". No other words, letters, signatures, or random AI gibberish anywhere on the cover. Spelling must be perfect."
+                        # AGGIUNTA: Rinforzo categorico che ordina al generatore di rispettare ogni singolo carattere
+                        prompt += (
+                            f" CATEGORICAL DIRECTIVE: You MUST correctly write EVERY SINGLE CHARACTER of the text \"{blocco_categorico.replace('|','and')}\". "
+                            f"Verify the spelling letter by letter. Do not miss, alter, or add a single letter. "
+                            f"No other words, signatures, or random AI gibberish anywhere on the cover."
+                        )
 
                     st.session_state['v83_prompt'] = prompt
                     st.success("Architettura con Tipografia Pronta.")
@@ -247,7 +254,7 @@ with col_l:
                         }
                     )
                     
-                    # CORREZIONE ERRORE: Estrazione sicura dell'URL dalla risposta Replicate
+                    # Estrazione sicura dell'URL dalla risposta Replicate
                     if isinstance(output, list) and len(output) > 0:
                         image_url = str(output[0])
                     else:
