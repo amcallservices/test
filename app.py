@@ -39,7 +39,7 @@ def reset_all():
     st.rerun()
 
 # ==============================================================================
-# 3. KNOWLEDGE BASE: NEUROMARKETING E TRE CERVELLI (RIPRISTINATO AL 100%)
+# 3. KNOWLEDGE BASE: NEUROMARKETING E TRE CERVELLI (INVARIATO)
 # ==============================================================================
 TRIUNE_BRAIN_THEORY = """
 REGOLE DI CONVERSIONE E NEUROMARKETING (I 3 CERVELLI):
@@ -71,7 +71,6 @@ class PDFSemanticPsychologyAnalyzer:
             
             focus_istruzione = f"ARGOMENTO FOCUS RICHIESTO DALL'UTENTE: '{argomento_focus}'. L'intera metafora visiva DEVE ruotare attorno a questo tema specifico, integrandolo in modo fluido con il testo estratto dal PDF." if argomento_focus else "Estrai il tema principale unicamente dal testo del PDF."
 
-            # PROMPT DEI 3 CERVELLI RIPRISTINATO ESATTAMENTE COME IN ORIGINE
             system_prompt = f"""
             Sei un Art Director editoriale senior esperto in {genere_scelto} e in Neuromarketing comportamentale.
             Il tuo scopo è progettare una scena visiva per una copertina che massimizzi le vendite (CTR) colpendo il subconscio del cliente al primo sguardo.
@@ -102,7 +101,7 @@ class PDFSemanticPsychologyAnalyzer:
             return None
 
 # ==============================================================================
-# 4. MATRICE DEGLI STILI (DINAMICA AGGIORNATA)
+# 4. MATRICE DEGLI STILI (INVARIATO)
 # ==============================================================================
 MODALITA_RENDERING = {
     "Fotorealistico": "photorealistic, 8k, highly detailed",
@@ -136,7 +135,7 @@ ATMOSFERE = {
 }
 
 # ==============================================================================
-# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA
+# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (INVARIATO)
 # ==============================================================================
 with st.sidebar:
     st.title("📕 DESIGNER v90.4")
@@ -188,32 +187,35 @@ with st.sidebar:
                     t = GoogleTranslator(source='it', target='en')
                     scene_en = t.translate(desc_it)
                     
-                    # Costruzione del Prompt per FLUX (ottimizzato per i testi testuali)
                     text_instructions = []
+                    blocco_categorico = ""
+                    
                     if use_t and t_val:
-                        text_instructions.append(f'the words "{t_val}" prominently and clearly written at the {t_pos}')
+                        text_instructions.append(f'the text "{t_val}" prominently and clearly written at the {t_pos}')
+                        blocco_categorico += f"TITLE: '{t_val}' | "
                     if use_a and a_val:
                         text_instructions.append(f'the author name "{a_val}" written at the {a_pos}')
-                    
+                        blocco_categorico += f"AUTHOR: '{a_val}'"
+                        
                     if text_instructions:
                         text_part = " and ".join(text_instructions)
-                        prompt = (
-                            f'A highly professional book cover illustration featuring {text_part}. '
-                            f'The artwork shows: {scene_en}. '
-                            f'The primary subject is in the immediate foreground. '
-                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}. '
-                            f'Ensure the spelling is perfect. No extra random letters.'
-                        )
+                        prompt_typography = f"A highly professional book cover featuring {text_part}. The background art shows "
                     else:
-                        prompt = (
-                            f'A highly professional book cover illustration. '
-                            f'The artwork shows: {scene_en}. '
-                            f'The primary subject is in the immediate foreground. '
-                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
-                        )
+                        prompt_typography = "A highly professional textless book cover showing "
+
+                    prompt = (
+                        f"{prompt_typography}"
+                        f"{scene_en}. "
+                        f"MANDATORY FOREGROUND RULE: The main subject or primary element beneath the massive title MUST be positioned in the absolute foreground (close-up or prominent focus), completely dominating the visual space beneath the text. "
+                        f"Style Direction: {ATMOSFERE[genere]} rendered in {MODALITA_RENDERING[tipo_render]}."
+                        f"\n\nLEGIBILITY RULE: The background immediately behind the text MUST be darkened, blurred, or simplified to guarantee the text is 100% readable."
+                    )
+                    
+                    if blocco_categorico:
+                        prompt += f" CATEGORICAL DIRECTIVE: ONLY generate the exact text \"{blocco_categorico.replace('|','and')}\". No other words, letters, signatures, or random AI gibberish anywhere on the cover. Spelling must be perfect."
 
                     st.session_state['v83_prompt'] = prompt
-                    st.success("Architettura pronta.")
+                    st.success("Architettura con Tipografia Pronta.")
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
@@ -230,7 +232,6 @@ with col_l:
         if not p_edit:
             st.error("Configura prima la sidebar e compila l'architettura!")
         elif "REPLICATE_API_TOKEN" not in st.secrets:
-            # BLOCCO DI SICUREZZA AGGIUNTO QUI PER EVITARE IL CRASH
             st.error("Manca la REPLICATE_API_TOKEN nei secrets di Streamlit!")
         else:
             try:
@@ -240,22 +241,33 @@ with col_l:
                         "black-forest-labs/flux-schnell",
                         input={
                             "prompt": p_edit,
-                            "aspect_ratio": "2:3", # Formato Copertina Verticale
+                            "aspect_ratio": "2:3",
                             "output_format": "jpg",
                             "output_quality": 100
                         }
                     )
-                    # Output di flux-schnell è solitamente una lista di URL
-                    st.session_state['v83_res'] = output[0] if isinstance(output, list) else str(output)
+                    
+                    # CORREZIONE ERRORE: Estrazione sicura dell'URL dalla risposta Replicate
+                    if isinstance(output, list) and len(output) > 0:
+                        image_url = str(output[0])
+                    else:
+                        image_url = str(output)
+                        
+                    st.session_state['v83_res'] = image_url
                     st.balloons()
             except Exception as e:
                 st.error(f"Errore tecnico Replicate: {e}")
 
 with col_r:
     if st.session_state['v83_res']:
+        # Mostra l'immagine convertita in URL in modo sicuro
         st.image(st.session_state['v83_res'], use_container_width=True)
         st.divider()
-        response = requests.get(st.session_state['v83_res'])
-        st.download_button(label="📥 Scarica Copertina", data=response.content, file_name="book_cover_flux.jpg", mime="image/jpeg")
+        try:
+            # Scarica il file per il download
+            response = requests.get(st.session_state['v83_res'])
+            st.download_button(label="📥 Scarica Copertina", data=response.content, file_name="book_cover_flux.jpg", mime="image/jpeg")
+        except Exception as e:
+            st.error("Errore durante il download dell'immagine.")
     else:
         st.info("Configura e genera per visualizzare l'anteprima.")
