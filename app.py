@@ -187,30 +187,28 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHY ENFORCEMENT ASSOLUTO PER DALL-E 3
+                    # INIZIO MODIFICHE PROMPT: OTTIMIZZAZIONE SPECIFICA PER DALL-E 3
                     # ========================================================================
-                    text_enforcement = ""
-                    blocco_categorico = ""
-                    if use_t and t_val:
-                        text_enforcement += f"The title '{t_val}' MUST be prominently and legibly written at the {t_pos}. "
-                        blocco_categorico += f"TITLE: '{t_val}' | "
-                    if use_a and a_val:
-                        text_enforcement += f"The author name '{a_val}' MUST be visibly written at the {a_pos}. "
-                        blocco_categorico += f"AUTHOR: '{a_val}'"
+                    # DALL-E 3 risponde molto meglio se le istruzioni testuali sono all'inizio
+                    # e racchiuse tra virgolette doppie "..."
+                    
+                    testo_titolo = f'with the exact text "{t_val}" written prominently at the {t_pos}' if use_t and t_val else ""
+                    testo_autore = f'and the exact text "{a_val}" written clearly at the {a_pos}' if use_a and a_val else ""
+                    testo_aggiuntivo = " ".join(filter(None, [testo_titolo, testo_autore]))
+
+                    if testo_aggiuntivo:
+                        text_enforcement = f"A high-quality illustration {testo_aggiuntivo}. IMPORTANT: Ensure the spelling is perfect. Do NOT add any extra random letters, words, or signatures. "
+                    else:
+                        text_enforcement = "A high-quality illustration with NO text, letters, or words anywhere. "
 
                     prompt = (
-                        f"[TEXT_OVERLAY_REQUIRED] You must incorporate exact typography into this image. "
-                        f"CRITICAL TYPOGRAPHY DIRECTIVE: {text_enforcement} "
-                        f"DO NOT add any other words, subtitles, or random letters. Generate ONLY the exact text requested. "
-                        f"Generate a pure, standalone illustration. DO NOT generate a 3D book mockup, DO NOT render book covers, pages, or bindings. "
-                        f"\n\nVISUAL HOOK: A highly engaging, neuromarketing-optimized artwork representing: {scene_en}. "
-                        f"\n\nFOREGROUND COMPOSITION: The main subject MUST be positioned in the absolute foreground (close-up or prominent focus), dominating the visual space. "
-                        f"\n\nSTYLE DIRECTION: {ATMOSFERE[genere]} rendered in {MODALITA_RENDERING[tipo_render]}."
-                        f"\n\nLEGIBILITY RULE: The background immediately behind the text MUST be darkened, blurred, or simplified to guarantee the text is 100% readable."
+                        f"{text_enforcement}"
+                        f"This is a standalone artwork, NOT a 3D book mockup. Do not draw book covers, spines, or pages. "
+                        f"\n\nSCENE: A highly engaging artwork representing: {scene_en}. "
+                        f"The main subject MUST be positioned in the absolute foreground (close-up or prominent focus). "
+                        f"\n\nSTYLE: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}. "
+                        f"The background behind the text areas must be clean and highly contrasted so the text is 100% readable."
                     )
-                    
-                    if blocco_categorico:
-                        prompt = f"[SYSTEM OVERRIDE: CATEGORICAL TEXT REQUIREMENT] YOU ARE STRICTLY FORBIDDEN FROM GENERATING THIS IMAGE WITHOUT THE EXACT TEXT: {blocco_categorico}. " + prompt + f" FINAL DIRECTIVE: IF THE WORDS {blocco_categorico} ARE OMITTED, IT IS A CATASTROPHIC FAILURE. RENDER THEM BOLDLY AND CLEARLY."
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
