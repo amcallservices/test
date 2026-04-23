@@ -135,7 +135,7 @@ ATMOSFERE = {
 }
 
 # ==============================================================================
-# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA
+# 5. SIDEBAR: ESTRAZIONE SCENA SINGOLA E PROMPT ARCHITETTURA (AGGIORNATO)
 # ==============================================================================
 with st.sidebar:
     st.title("📕 DESIGNER v90.3")
@@ -147,11 +147,13 @@ with st.sidebar:
     
     st.divider()
     
-    use_t = st.checkbox("Predisponi spazio per Titolo", value=True)
-    t_pos = st.selectbox("Spazio vuoto per Titolo:", ["top", "center", "bottom"]) if use_t else ""
+    use_t = st.checkbox("Abilita Inserimento Titolo", value=True)
+    t_val = st.text_input("Testo Titolo:", "TITOLO ESEMPIO") if use_t else ""
+    t_pos = st.selectbox("Posizione Titolo:", ["top", "center", "bottom"]) if use_t else ""
 
-    use_a = st.checkbox("Predisponi spazio per Autore", value=True)
-    a_pos = st.selectbox("Spazio vuoto per Autore:", ["top", "center", "bottom"], index=2) if use_a else ""
+    use_a = st.checkbox("Abilita Inserimento Autore", value=True)
+    a_val = st.text_input("Nome Autore:", "AUTORE ESEMPIO") if use_a else ""
+    a_pos = st.selectbox("Posizione Autore:", ["top", "center", "bottom"], index=2) if use_a else ""
 
     st.divider()
 
@@ -161,6 +163,7 @@ with st.sidebar:
     argomento_focus = st.text_input("🎯 Suggerisci Argomento (Opzionale):", placeholder="Es. Rivincita personale, Lotta di classe...")
     uploaded_pdf = st.file_uploader("Carica il PDF del libro:", type=["pdf"])
     
+    # UNICO PULSANTE ESTRAI SCENA (Gestito da GPT-4o-mini)
     if uploaded_pdf is not None:
         if st.button("🧠 Estrai Scena di Conversione"):
             if "OPENAI_API_KEY" not in st.secrets:
@@ -186,28 +189,29 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: APPROCCIO "TEXTLESS ARTWORK" + NEGATIVE PROMPT
+                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHY ENFORCEMENT FORTE PER DALL-E 3
                     # ========================================================================
                     text_enforcement = ""
-                    if use_t:
-                        text_enforcement += f"Leave a clean, untextured, empty negative space at the {t_pos} of the image for the user to add a title later. "
-                    if use_a:
-                        text_enforcement += f"Leave a subtle empty area at the {a_pos} of the image for an author name. "
+                    if use_t and t_val:
+                        text_enforcement += f"You MUST flawlessly write the title \"{t_val.upper()}\" in massive, highly legible font at the {t_pos} of the image. "
+                    if use_a and a_val:
+                        text_enforcement += f"You MUST flawlessly write the author name \"{a_val.upper()}\" at the {a_pos} of the image. "
 
                     prompt = (
-                        f"CRITICAL DIRECTIVE: THIS MUST BE A PURE, TEXTLESS ARTWORK. ABSOLUTELY NO LETTERS, WORDS, TYPOGRAPHY, OR GIBBERISH ANYWHERE IN THE IMAGE. "
-                        f"DO NOT draw a book cover, no 3D book mockups, no pages, no spine. Generate ONLY a beautiful, standalone, edge-to-edge illustration. "
-                        f"\n\nVISUAL HOOK: A highly engaging, neuromarketing-optimized illustration representing: {scene_en}. "
+                        f"CRITICAL TYPOGRAPHY DIRECTIVE: {text_enforcement}"
+                        f"DO NOT add any other words, subtitles, or random letters. ONLY write the requested words exactly as provided. "
+                        f"Generate a pure, standalone illustration. DO NOT generate a 3D book mockup, DO NOT render book covers, pages, or bindings. "
+                        f"\n\nVISUAL HOOK: A highly engaging, neuromarketing-optimized artwork representing: {scene_en}. "
                         f"\n\nFOREGROUND COMPOSITION: The main subject MUST be positioned in the absolute foreground (close-up or prominent focus), dominating the visual space. "
-                        f"\n\nLAYOUT RULES: {text_enforcement}"
                         f"\n\nSTYLE DIRECTION: {ATMOSFERE[genere]} rendered in {MODALITA_RENDERING[tipo_render]}."
+                        f"\n\nLEGIBILITY RULE: The background immediately behind the text MUST be darkened, blurred, or simplified to guarantee the text is 100% readable."
                     )
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
 
                     st.session_state['v83_prompt'] = prompt
-                    st.success("Architettura Textless pronta.")
+                    st.success("Architettura con Tipografia Pronta.")
                 except Exception as e:
                     st.error(f"Errore: {e}")
 
@@ -220,6 +224,7 @@ col_l, col_r = st.columns([1.2, 1])
 with col_l:
     p_edit = st.text_area("Prompt Finale (EN):", value=st.session_state['v83_prompt'], height=300)
     
+    # UNICO BOTTONE DI GENERAZIONE (Gestito da DALL-E 3)
     if st.button("🔥 GENERA COPERTINA HD"):
         if not p_edit:
             st.error("Configura prima la sidebar e compila l'architettura!")
@@ -229,10 +234,10 @@ with col_l:
             try:
                 from openai import OpenAI
                 client_oai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-                with st.spinner("Generazione Artwork Textless in corso (OpenAI DALL-E 3)..."):
+                with st.spinner("Generazione Master in corso (OpenAI DALL-E 3)..."):
                     response_oai = client_oai.images.generate(
                         model="dall-e-3",
-                        prompt=p_edit[:4000],
+                        prompt=p_edit[:4000],  # Limite di DALL-E 3
                         size="1024x1024",      # Formato normale quadrato per l'artwork
                         quality="hd",
                         n=1
@@ -248,6 +253,6 @@ with col_r:
         st.image(st.session_state['v83_res'], use_container_width=True)
         st.divider()
         response = requests.get(st.session_state['v83_res'])
-        st.download_button(label="📥 Scarica Immagine Textless", data=response.content, file_name="artwork_dalle3.jpg", mime="image/jpeg")
+        st.download_button(label="📥 Scarica Immagine", data=response.content, file_name="artwork_dalle3.jpg", mime="image/jpeg")
     else:
         st.info("Configura e genera per visualizzare l'anteprima.")
