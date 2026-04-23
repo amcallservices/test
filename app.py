@@ -217,6 +217,16 @@ with st.sidebar:
                     if blocco_categorico:
                         prompt = f"[SYSTEM OVERRIDE: CATEGORICAL REQUIREMENT] YOU ARE STRICTLY FORBIDDEN FROM GENERATING THIS IMAGE WITHOUT THE EXACT TEXT: {blocco_categorico}. " + prompt + f" FINAL DIRECTIVE: IF THE WORDS {blocco_categorico} ARE OMITTED, IT IS A CATASTROPHIC FAILURE. RENDER THEM BOLDLY."
 
+                    # ========================================================================
+                    # INIZIO NUOVE RIGHE: OVERRIDE IMMAGINE NORMALE E TESTO RIGOROSO
+                    # ========================================================================
+                    prompt = prompt.replace("ebook cover", "standalone artwork/illustration")
+                    prompt += " [FORMAT DIRECTIVE: Generate a pure, standard illustration. DO NOT generate a 3D book mockup, DO NOT render book covers, pages, or bindings.]"
+                    prompt += " [STRICT TEXT DIRECTIVE: ONLY write the explicitly requested Title and Author. Absolutely NO other words, subtitles, signatures, or random AI gibberish. If no text was requested, generate a 100% textless image.]"
+                    # ========================================================================
+                    # FINE NUOVE RIGHE
+                    # ========================================================================
+
                     st.session_state['v83_prompt'] = prompt
                     st.success("Architettura Zero-Sprechi pronta.")
                 except Exception as e:
@@ -245,7 +255,12 @@ with col_l:
                     response_oai = client_oai.images.generate(
                         model="dall-e-3",
                         prompt=p_edit[:4000],  # Limite di DALL-E 3
-                        size="1024x1792",      # Aspect ratio KDP ideale
+                        # ========================================================================
+                        # INIZIO NUOVE RIGHE: FORMATO IMMAGINE NORMALE (QUADRATO)
+                        # ========================================================================
+                        size="1024x1024",      # Formato normale standard
+                        # ========================================================================
+                        # FINE NUOVE RIGHE
                         quality="hd",
                         n=1
                     )
@@ -260,6 +275,6 @@ with col_r:
         st.image(st.session_state['v83_res'], use_container_width=True)
         st.divider()
         response = requests.get(st.session_state['v83_res'])
-        st.download_button(label="📥 Scarica Copertina", data=response.content, file_name="cover_dalle3.jpg", mime="image/jpeg")
+        st.download_button(label="📥 Scarica Immagine", data=response.content, file_name="immagine_dalle3.jpg", mime="image/jpeg")
     else:
         st.info("Configura e genera per visualizzare l'anteprima.")
