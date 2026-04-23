@@ -214,10 +214,12 @@ with st.sidebar:
                     )
                     
                     if blocco_categorico:
-                        # AGGIUNTA: Rinforzo categorico che ordina al generatore di rispettare ogni singolo carattere
+                        # AGGIUNTA: Rinforzo categorico per la correttezza e ANTI-RIPETIZIONE
                         prompt += (
                             f" CATEGORICAL DIRECTIVE: You MUST correctly write EVERY SINGLE CHARACTER of the text \"{blocco_categorico.replace('|','and')}\". "
                             f"Verify the spelling letter by letter. Do not miss, alter, or add a single letter. "
+                            f"CRITICAL ANTI-REPETITION RULE: You must print the title EXACTLY ONCE and the author EXACTLY ONCE. "
+                            f"DO NOT repeat, duplicate, mirror, or echo the text anywhere else on the canvas. "
                             f"No other words, signatures, or random AI gibberish anywhere on the cover."
                         )
 
