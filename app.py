@@ -187,30 +187,30 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: SINTASSI NATIVA DALL-E 3 PER TIPOGRAFIA
-                    # Questa è l'unica sintassi che garantisce la stampa esatta in DALL-E 3.
+                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHIC FOCUS PER DALL-E 3
                     # ========================================================================
-                    text_elements = []
+                    text_instructions = []
                     if use_t and t_val:
-                        text_elements.append(f'the text "{t_val}" written clearly and prominently at the {t_pos}')
+                        text_instructions.append(f'The words "{t_val}" prominently and clearly written at the {t_pos}')
                     if use_a and a_val:
-                        text_elements.append(f'the text "{a_val}" written clearly at the {a_pos}')
-                        
-                    if text_elements:
-                        testo_unito = " and ".join(text_elements)
+                        text_instructions.append(f'The words "{a_val}" clearly written at the {a_pos}')
+                    
+                    if text_instructions:
+                        text_part = " and ".join(text_instructions)
                         prompt = (
-                            f'An illustration containing {testo_unito}. '
-                            f'Visual scene: {scene_en}. '
-                            f'This is a flat 2D artwork (do not draw a physical book, no 3D mockups, no spines). '
-                            f'The main subject is in the absolute foreground. '
+                            f'A detailed illustration containing {text_part}. '
+                            f'This is a pure 2D illustration. Do not draw a physical book, pages, or a mockup. '
+                            f'The illustration depicts: {scene_en}. '
+                            f'The primary subject should be in the immediate foreground. '
+                            f'The background behind the text must be simple or darkened to ensure the text is highly readable. '
                             f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
                         )
                     else:
                         prompt = (
-                            f'An illustration. '
-                            f'Visual scene: {scene_en}. '
-                            f'This is a flat 2D artwork (do not draw a physical book, no 3D mockups, no spines). '
-                            f'The main subject is in the absolute foreground. '
+                            f'A detailed illustration. '
+                            f'This is a pure 2D illustration. Do not draw a physical book, pages, or a mockup. '
+                            f'The illustration depicts: {scene_en}. '
+                            f'The primary subject should be in the immediate foreground. '
                             f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
                         )
                     # ========================================================================
