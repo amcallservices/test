@@ -187,32 +187,26 @@ with st.sidebar:
                     scene_en = t.translate(desc_it)
                     
                     # ========================================================================
-                    # INIZIO MODIFICHE PROMPT: TYPOGRAPHIC FOCUS PER DALL-E 3
+                    # INIZIO MODIFICHE PROMPT: APPROCCIO "TIPOGRAFICO DIRETTO"
                     # ========================================================================
-                    text_instructions = []
+                    text_parts = []
                     if use_t and t_val:
-                        text_instructions.append(f'The words "{t_val}" prominently and clearly written at the {t_pos}')
+                        text_parts.append(f'the words "{t_val}" written prominently at the {t_pos}')
                     if use_a and a_val:
-                        text_instructions.append(f'The words "{a_val}" clearly written at the {a_pos}')
-                    
-                    if text_instructions:
-                        text_part = " and ".join(text_instructions)
-                        prompt = (
-                            f'A detailed illustration containing {text_part}. '
-                            f'This is a pure 2D illustration. Do not draw a physical book, pages, or a mockup. '
-                            f'The illustration depicts: {scene_en}. '
-                            f'The primary subject should be in the immediate foreground. '
-                            f'The background behind the text must be simple or darkened to ensure the text is highly readable. '
-                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
-                        )
+                        text_parts.append(f'the words "{a_val}" written at the {a_pos}')
+
+                    if text_parts:
+                        text_instruction = "A typographic poster image featuring " + " and ".join(text_parts) + ". "
+                        text_instruction += "Make absolutely sure the spelling is correct and do not add any other random letters. "
                     else:
-                        prompt = (
-                            f'A detailed illustration. '
-                            f'This is a pure 2D illustration. Do not draw a physical book, pages, or a mockup. '
-                            f'The illustration depicts: {scene_en}. '
-                            f'The primary subject should be in the immediate foreground. '
-                            f'Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}.'
-                        )
+                        text_instruction = "A textless image. "
+
+                    prompt = (
+                        f"{text_instruction}"
+                        f"The background art behind the text shows: {scene_en}. "
+                        f"This is a standalone 2D image. Do not draw a book cover, no 3D mockups. "
+                        f"Style: {ATMOSFERE[genere]}, {MODALITA_RENDERING[tipo_render]}."
+                    )
                     # ========================================================================
                     # FINE MODIFICHE PROMPT
                     # ========================================================================
