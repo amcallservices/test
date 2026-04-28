@@ -145,11 +145,58 @@ if st.session_state["risultato_ricette"]:
     )
 
     # ==========================================
-    # STEP 2: CHAT INTERATTIVA PER CHIARIMENTI (NUOVA SEZIONE)
+    # STEP 2: CHAT INTERATTIVA PER CHIARIMENTI E RIELABORAZIONE
     # ==========================================
     st.markdown("---")
-    st.header("💬 Step 2: Chiedi allo Chef (Domande & Chiarimenti)")
-    st.markdown("Hai dubbi su una tecnica? Vuoi sostituire un ingrediente, chiedere come sfilettare o capire meglio l'impiattamento? Fai una domanda allo Chef! Il numero di domande è illimitato.")
+    st.header("💬 Step 2: Modifica o Chiedi allo Chef")
+    
+    # -------------------------------------------------------------------------
+    # NUOVA SEZIONE: Rielaborazione totale del menù (Mantiene il PDF aggiornato)
+    # -------------------------------------------------------------------------
+    st.markdown("#### 🪄 Rielabora l'intero Menù")
+    st.info("Scrivi una direttiva (es. 'Fai tutto in chiave asiatica', 'Rendi le ricette vegane') e clicca il pulsante. Il menù si aggiornerà e potrai scaricare il nuovo PDF.")
+    
+    direttiva_rielaborazione = st.text_input("Direttiva per rielaborare le ricette:")
+    if st.button("Rielabora Menù 🪄", use_container_width=True):
+        if direttiva_rielaborazione.strip():
+            with st.spinner("Lo Chef sta rielaborando tutte le ricette e aggiornando il Food Cost..."):
+                prompt_rielaborazione = f"""
+                Sei un Executive Chef stellato. Hai precedentemente generato questo menù:
+                {st.session_state['risultato_ricette']}
+                
+                L'utente ha richiesto una RIELABORAZIONE TOTALE del menù seguendo questa direttiva:
+                "{direttiva_rielaborazione}"
+                
+                Riscrivi interamente tutte le 10 ricette applicando in modo logico e creativo questa direttiva.
+                DEVI MANTENERE LA STESSA IDENTICA STRUTTURA DEL FORMATO ORIGINALE:
+                - Nome Creativo
+                - Descrizione e Tempi
+                - Ingredienti e Food Cost (ricalcolato in base alle modifiche)
+                - Food Cost Totale e Prezzo
+                - Procedimento Tecnico Dettagliato
+                Restituisci esclusivamente il nuovo testo del menù, senza aggiungere commenti introduttivi o finali.
+                """
+                
+                try:
+                    risp_rielab = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "system", "content": prompt_rielaborazione}],
+                        temperature=0.8
+                    )
+                    
+                    # Sovrascrive il menù con la nuova versione
+                    st.session_state["risultato_ricette"] = risp_rielab.choices[0].message.content
+                    st.session_state["chat_history"] = [] # Resetta la chat siccome il menù è cambiato
+                    st.rerun() # Ricarica l'app per aggiornare la visualizzazione e rigenerare il PDF
+                    
+                except Exception as e:
+                    st.error(f"Errore durante la rielaborazione: {str(e)}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    # -------------------------------------------------------------------------
+
+    st.markdown("#### ❓ Domande & Chiarimenti")
+    st.markdown("Hai dubbi su una tecnica? Vuoi capire meglio l'impiattamento? Fai una domanda allo Chef! Il numero di domande è illimitato.")
 
     # Mostra lo storico della chat
     for message in st.session_state["chat_history"]:
@@ -157,7 +204,7 @@ if st.session_state["risultato_ricette"]:
             st.markdown(message["content"])
 
     # Input della chat
-    if prompt_chat := st.chat_input("Chiedi allo Chef (es. 'Con cosa posso sostituire la menta?', 'Come cuocio esattamente a bassa temperatura?'):"):
+    if prompt_chat := st.chat_input("Chiedi allo Chef (es. 'Come cuocio esattamente a bassa temperatura?'):"):
         
         # Aggiunge il messaggio dell'utente allo storico e lo mostra
         st.chat_message("user").markdown(prompt_chat)
