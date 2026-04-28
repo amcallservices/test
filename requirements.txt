@@ -1,5 +1,5 @@
 streamlit
-fpdf
+fpdf2
 requests
 openai
 python-docx
