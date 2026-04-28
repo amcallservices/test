@@ -7,6 +7,17 @@ from fpdf import FPDF
 # ==========================================
 st.set_page_config(page_title="Chef IA - Ricette Innovative & Food Cost", page_icon="🍳", layout="centered")
 
+# --- NUOVE RIGHE AGGIUNTE: Nasconde il menu in alto a destra, l'header e il footer ---
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            header {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# -------------------------------------------------------------------------------------
+
 # Inizializza la memoria di sessione per non perdere i dati durante il download
 if "risultato_ricette" not in st.session_state:
     st.session_state["risultato_ricette"] = ""
