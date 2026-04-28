@@ -53,56 +53,69 @@ ingredienti = st.text_area(
     height=100
 )
 
+# Layout per i pulsanti di azione
+col_gen, col_reset = st.columns([4, 1])
+
+# ==========================================
+# LOGICA DI RESET (Aggiunta)
+# ==========================================
+with col_reset:
+    if st.button("Reset 🔄", use_container_width=True):
+        st.session_state["risultato_ricette"] = ""
+        st.rerun()
+
 # ==========================================
 # LOGICA DI GENERAZIONE
 # ==========================================
-if st.button("Genera Ricette Innovative 🚀", use_container_width=True):
-    if not ingredienti.strip():
-        st.warning("Per favore, inserisci almeno un ingrediente.")
-    else:
-        with st.spinner("Lo Chef IA sta studiando abbinamenti innovativi e calcolando i costi..."):
-            
-            # Prompt ingegnerizzato per ricette innovative e costi dettagliati
-            prompt_sistema = """
-            Sei un Executive Chef stellato esperto in cucina molecolare, fusion e innovativa, nonché un maestro nel controllo del Food Cost.
-            Genera esattamente 10 ricette altamente innovative utilizzando gli ingredienti forniti. 
-            
-            Per OGNI ricetta, formatta la risposta rigorosamente in questo modo:
-            
-            ### [Nome Creativo del Piatto]
-            *Descrizione: [Breve intro sul concept del piatto]*
-            
-            **Tempi:** Preparazione: [X] min | Cottura: [Y] min
-            
-            **Ingredienti e Food Cost (per 1 porzione):**
-            - [Grammatura esatta] [Nome Ingrediente] - [Costo Stimato EUR]
-            - [Grammatura esatta] [Nome Ingrediente] - [Costo Stimato EUR]
-            - [Continua per tutti gli ingredienti]
-            
-            **Food Cost Totale Piatto:** [Totale EUR]
-            **Prezzo di Vendita Suggerito (Markup 300% / Target 25-30% FC):** [Prezzo EUR]
-            
-            **Procedimento:**
-            1. [Step 1]
-            2. [Step 2]
-            [Continua]
-            ---
-            """
-            
-            try:
-                risposta = client.chat.completions.create(
-                    model="gpt-4o-mini", # Usa "gpt-4o" per creatività culinaria superiore se hai budget
-                    messages=[
-                        {"role": "system", "content": prompt_sistema},
-                        {"role": "user", "content": f"Crea il menù usando questi ingredienti base: {ingredienti}"}
-                    ],
-                    temperature=0.8 # Leggermente più alto per favorire abbinamenti creativi
-                )
+with col_gen:
+    if st.button("Genera Ricette Innovative 🚀", use_container_width=True):
+        if not ingredienti.strip():
+            st.warning("Per favore, inserisci almeno un ingrediente.")
+        else:
+            with st.spinner("Lo Chef IA sta studiando abbinamenti innovativi e calcolando i costi..."):
                 
-                st.session_state["risultato_ricette"] = risposta.choices[0].message.content
+                # Prompt ingegnerizzato potenziato per procedimenti molto dettagliati
+                prompt_sistema = """
+                Sei un Executive Chef stellato esperto in cucina molecolare, fusion e innovativa, nonché un maestro nel controllo del Food Cost.
+                Genera esattamente 10 ricette altamente innovative utilizzando gli ingredienti forniti. 
                 
-            except Exception as e:
-                st.error(f"Errore durante la generazione: {str(e)}")
+                Per OGNI ricetta, formatta la risposta rigorosamente in questo modo:
+                
+                ### [Nome Creativo del Piatto]
+                *Descrizione: [Breve intro sul concept del piatto e la filosofia degli abbinamenti]*
+                
+                **Tempi:** Preparazione: [X] min | Cottura: [Y] min | Riposo: [Z] min
+                
+                **Ingredienti e Food Cost (per 1 porzione):**
+                - [Grammatura esatta] [Nome Ingrediente] - [Costo Stimato EUR]
+                - [Grammatura esatta] [Nome Ingrediente] - [Costo Stimato EUR]
+                - [Continua per tutti gli ingredienti]
+                
+                **Food Cost Totale Piatto:** [Totale EUR]
+                **Prezzo di Vendita Suggerito (Markup 300% / Target 25-30% FC):** [Prezzo EUR]
+                
+                **Procedimento Tecnico Dettagliato:**
+                *Sii estremamente analitico e minuzioso. Descrivi le tecniche professionali utilizzate (es. criocottura, sferificazione, osmosi, reazione di Maillard, sottovuoto). Specifica temperature esatte (es. dell'olio o al cuore), consistenze attese, strumenti specifici da cucina professionale e consigli per un impiattamento gourmet.*
+                1. [Step 1 dettagliato]
+                2. [Step 2 dettagliato]
+                [Continua con passaggi tecnici completi]
+                ---
+                """
+                
+                try:
+                    risposta = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": prompt_sistema},
+                            {"role": "user", "content": f"Crea il menù usando questi ingredienti base: {ingredienti}"}
+                        ],
+                        temperature=0.8
+                    )
+                    
+                    st.session_state["risultato_ricette"] = risposta.choices[0].message.content
+                    
+                except Exception as e:
+                    st.error(f"Errore durante la generazione: {str(e)}")
 
 # ==========================================
 # VISUALIZZAZIONE E DOWNLOAD
