@@ -23,6 +23,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import PyPDF2  # Libreria necessaria per leggere i PDF caricati
 from PIL import Image
 from commercial_layer import (
+    AI_REQUEST_CREDITS,
     COMMERCIAL_TEST_VERSION,
     CommercialCreditError,
     bootstrap_commercial_test,
