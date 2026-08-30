@@ -306,7 +306,6 @@ def _render_password_recovery() -> bool:
           document.getElementById('save-password').addEventListener('click', async () => {{
             const password = document.getElementById('new-password').value;
             const repeat = document.getElementById('repeat-password').value;
-            if (password.length < 6) {{ message.textContent = 'La password deve contenere almeno 6 caratteri.'; message.style.color = '#b42318'; return; }}
             if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
             message.textContent = 'Verifica del link e salvataggio in corso…'; message.style.color = '#174a73';
             try {{
@@ -325,7 +324,7 @@ def _render_password_recovery() -> bool:
               window.parent.location.replace({json.dumps(app_url + '?password_updated=1')});
             }} catch (error) {{
               message.textContent = error.message === 'password rejected'
-                ? 'La password non è accettata da Supabase. Usa almeno 6 caratteri.'
+                ? 'La password non è accettata dal servizio di autenticazione. Prova una password diversa.'
                 : 'Link non valido o scaduto. Richiedi un nuovo link e riprova.';
               message.style.color = '#b42318';
             }}
