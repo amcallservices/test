@@ -173,14 +173,14 @@ def _landing_page() -> None:
         <style>
           .stApp, [data-testid="stAppViewContainer"] {background:#f3f8fd !important; color:#102a43}
           section.main > div.block-container {max-width:1500px !important; padding:1.05rem 2.4rem 3.5rem !important}
-          .ss-hero-copy {padding:3.5rem .6rem 1.4rem 1.15rem; color:#102a43}
-          .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1rem}
+          .ss-hero-copy {padding:4.15rem .7rem 1.5rem 1.3rem; color:#102a43}
+          .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
-          .ss-title {font-family:Georgia,serif; font-size:clamp(4.65rem,7.35vw,7.6rem); margin:0; color:#102a43; line-height:.88; letter-spacing:-.075em}
-          .ss-title-line {width:58px; height:5px; background:#1689e8; border-radius:99px; margin:1.4rem 0}
-          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.3rem,3.75vw,3.85rem); font-weight:800; line-height:1.1; color:#102a43; margin:0 0 1.15rem}
-          .ss-subtitle {font-size:1.13rem; max-width:555px; margin:0; color:#486581; line-height:1.56}
+          .ss-title {font-family:Georgia,serif; font-size:clamp(5.2rem,8.25vw,8.6rem); margin:0; color:#cf3345; line-height:.83; letter-spacing:-.085em; text-shadow:0 2px 0 rgba(255,255,255,.8)}
+          .ss-title-line {width:68px; height:5px; background:#1689e8; border-radius:99px; margin:1.65rem 0}
+          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.45rem,4.1vw,4.2rem); font-weight:800; line-height:1.06; color:#102a43; margin:0 0 1.2rem; letter-spacing:-.035em}
+          .ss-subtitle {font-size:1.17rem; max-width:555px; margin:0; color:#486581; line-height:1.58}
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
@@ -198,22 +198,22 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
-          .ss-proof {margin:1.1rem .25rem 1.2rem 0; padding:1.25rem; border-radius:20px;
-            background:linear-gradient(135deg,#071728,#13385c); color:#e0f2fe;
-            box-shadow:0 18px 38px rgba(15,23,42,.25)}
+          .ss-proof {margin:1.25rem .2rem 1.2rem .15rem; padding:1.35rem; border-radius:18px;
+            background:linear-gradient(135deg,#071728 0%,#0b2642 58%,#133c62 100%); color:#e0f2fe;
+            box-shadow:0 22px 46px rgba(15,23,42,.27); border:1px solid rgba(125,211,252,.16)}
           .ss-proof-top {display:flex; gap:.45rem; align-items:center; padding:0 0 .8rem;
             border-bottom:1px solid rgba(255,255,255,.16); font-size:.9rem; color:#bae6fd}
           .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
           .ss-dot:nth-child(2) {background:#fbbf24}.ss-dot:nth-child(3) {background:#4ade80}
           .ss-proof-label {margin-left:auto; font-size:.72rem; border:1px solid rgba(125,211,252,.45); padding:.2rem .48rem; border-radius:99px}
-          .ss-proof-grid {display:grid; grid-template-columns:42% 1fr; gap:1rem; padding-top:1rem; text-align:left}
-          .ss-proof-index,.ss-proof-page {border-radius:13px; padding:1rem; background:rgba(255,255,255,.08)}
+          .ss-proof-grid {display:grid; grid-template-columns:43% 1fr; gap:1.05rem; padding-top:1.1rem; text-align:left}
+          .ss-proof-index,.ss-proof-page {border-radius:12px; padding:1.05rem; background:rgba(255,255,255,.075)}
           .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
           .ss-proof-index span {display:block; padding:.32rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
           .ss-proof-index .active {margin:.35rem -.35rem; padding:.42rem .35rem; background:rgba(45,212,191,.18); border-left:3px solid #5eead4; border-radius:5px; color:#fff}
-          .ss-proof-book {position:relative; min-height:372px; display:flex; align-items:center; justify-content:center; gap:0; padding:1rem .3rem; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 18% 10%,rgba(125,211,252,.16),transparent 38%),linear-gradient(145deg,#102f4c,#071728); box-shadow:inset 0 0 35px rgba(0,0,0,.3)}
-          .ss-book-page {position:relative; width:46%; height:76%; padding:1.4rem .5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#2d3748; background:linear-gradient(135deg,#fffdf6,#e8dfcf); box-shadow:0 8px 18px rgba(0,0,0,.3)}
-          .ss-book-page small {color:#4a5568; font-family:Georgia,serif; font-size:.65rem; margin-bottom:1.3rem}.ss-book-page b {font:700 1rem/1.35 Georgia,serif; max-width:105px}
+          .ss-proof-book {position:relative; min-height:385px; display:flex; align-items:center; justify-content:center; gap:0; padding:1rem .25rem; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 18% 10%,rgba(125,211,252,.16),transparent 38%),linear-gradient(145deg,#102f4c,#071728); box-shadow:inset 0 0 35px rgba(0,0,0,.3)}
+          .ss-book-page {position:relative; width:46%; height:78%; padding:1.55rem .5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#2d3748; background:linear-gradient(135deg,#fffdf6,#e8dfcf); box-shadow:0 9px 22px rgba(0,0,0,.36)}
+          .ss-book-page small {color:#4a5568; font-family:Georgia,serif; font-size:.68rem; margin-bottom:1.4rem}.ss-book-page b {font:700 1.1rem/1.38 Georgia,serif; max-width:115px}
           .ss-book-left {border-radius:10px 2px 2px 18px; transform:perspective(440px) rotateY(13deg) rotateZ(-2deg)}
           .ss-book-right {border-radius:2px 10px 18px 2px; transform:perspective(440px) rotateY(-13deg) rotateZ(2deg)}
           .ss-book-page:after {content:''; position:absolute; left:18%; right:18%; bottom:20%; height:1px; background:#b9ad98; box-shadow:0 -15px 0 #cfc3ae,0 -30px 0 #cfc3ae,0 -45px 0 #cfc3ae}
@@ -230,9 +230,9 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          .ss-benefits {max-width:1120px; margin:.55rem auto 2rem; padding:.42rem .2rem; background:#fff; border:1px solid #d9e5f0; border-radius:15px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 8px 24px rgba(20,77,120,.06)}
-          .ss-benefit {min-height:112px; padding:1.1rem 1.25rem; color:#486581; font-size:1rem; line-height:1.45; border-right:1px solid #d9e5f0}
-          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.14rem; margin-bottom:.35rem}
+          .ss-benefits {max-width:1160px; margin:.7rem auto 2.25rem; padding:.55rem .25rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 10px 26px rgba(20,77,120,.07)}
+          .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0}
+          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
           @media (max-width:760px) {.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
