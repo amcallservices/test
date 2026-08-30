@@ -149,6 +149,23 @@ def _supabase_signup(email: str, password: str) -> None:
         raise RuntimeError("Registrazione non riuscita. Usa una password più sicura o riprova.")
 
 
+def _supabase_recover_password(email: str) -> None:
+    """Invia il link di recupero password tramite il sistema sicuro di Supabase."""
+    url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/recover"
+    payload = {"email": email.strip()}
+    redirect_url = _secret("APP_BASE_URL")
+    if redirect_url:
+        payload["redirect_to"] = redirect_url.rstrip("/")
+    response = requests.post(
+        url,
+        headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
+        json=payload,
+        timeout=20,
+    )
+    if not response.ok:
+        raise RuntimeError("Impossibile inviare il link di recupero. Riprova tra poco.")
+
+
 def _landing_page() -> None:
     """Pagina di ingresso pubblica: compare prima dell'accesso."""
     st.markdown(
@@ -181,6 +198,24 @@ def _landing_page() -> None:
             min-height:120px; box-shadow:0 4px 12px rgba(76,29,149,.07)}
           .ss-feature strong {display:block; color:#5b21b6; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#41324f; font-size:.9rem; line-height:1.38}
+          .ss-proof {max-width:930px; margin:1.35rem auto; padding:1.2rem; border-radius:20px;
+            background:linear-gradient(135deg,#0f172a,#243b6b); color:#e0f2fe;
+            box-shadow:0 14px 30px rgba(15,23,42,.22)}
+          .ss-proof-top {display:flex; gap:.45rem; align-items:center; padding:0 0 .8rem;
+            border-bottom:1px solid rgba(255,255,255,.16); font-size:.9rem; color:#bae6fd}
+          .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
+          .ss-dot:nth-child(2) {background:#fbbf24}.ss-dot:nth-child(3) {background:#4ade80}
+          .ss-proof-grid {display:grid; grid-template-columns:36% 1fr; gap:1rem; padding-top:1rem; text-align:left}
+          .ss-proof-index,.ss-proof-page {border-radius:13px; padding:1rem; background:rgba(255,255,255,.08)}
+          .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
+          .ss-proof-index span {display:block; padding:.28rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
+          .ss-proof-page small {color:#7dd3fc; font-weight:800}.ss-proof-page h3 {color:#fff; margin:.38rem 0 .5rem}
+          .ss-proof-page p {margin:0; color:#dbeafe; font-size:.9rem; line-height:1.55}
+          .ss-credit-note {max-width:850px; margin:.7rem auto 1.3rem; padding:1rem 1.15rem; border-radius:14px;
+            text-align:center; background:#ecfeff; color:#155e75; border:1px solid #a5f3fc; font-weight:650}
+          .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
+            border-radius:15px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-weight:700}
+          @media (max-width:760px) {.ss-hero h1 {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}}
           [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
             font-weight:800; border:2px solid #6d28d9; background:linear-gradient(100deg,#6d28d9,#db2777) !important;
             border-color:#6d28d9 !important; color:#fff !important}
@@ -198,28 +233,49 @@ def _landing_page() -> None:
         <div class="ss-hero">
           <div class="ss-kicker">AI di Antonino presenta</div>
           <h1>Scrittore Site</h1>
-          <p>Dalla tua idea a un libro strutturato, approfondito e pronto da esportare.</p>
+          <p>Crea libri strutturati con l'AI, mantieni il controllo e scaricali in Word o PDF.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        "<div class='ss-bonus'>🎁 Registrati e avrai 120 crediti gratuiti per provarlo.</div>",
+        "<div class='ss-bonus'>🎁 Registrati e avrai 120 crediti gratuiti per provarlo. Nessuna carta richiesta.</div>",
         unsafe_allow_html=True,
     )
 
     left, right = st.columns(2)
     with left:
-        if st.button("Crea il tuo account", type="primary", use_container_width=True, key="landing_signup"):
+        if st.button("🎁 Crea il tuo account gratuito", type="primary", use_container_width=True, key="landing_signup"):
             st.session_state["commercial_show_auth"] = True
             st.session_state["commercial_auth_hint"] = "signup"
             st.rerun()
     with right:
-        if st.button("Accedi", use_container_width=True, key="landing_login"):
+        if st.button("Accedi al tuo spazio", use_container_width=True, key="landing_login"):
             st.session_state["commercial_show_auth"] = True
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
+
+    st.markdown(
+        """<div class='ss-proof'>
+          <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Anteprima dell'area di scrittura</div>
+          <div class='ss-proof-grid'>
+            <div class='ss-proof-index'><b>INDICE DEL PROGETTO</b><span>Parte I · Fondamenti</span><span>Capitolo 1 · Le basi</span><span>1.1 Concetti chiave</span><span>1.2 Esempio pratico</span><span>Parte II · Applicazione</span></div>
+            <div class='ss-proof-page'><small>CAPITOLO 1 · SEZIONE 1.2</small><h3>Dal progetto al manoscritto</h3><p>Genera una sezione, correggila con le tue indicazioni, aggiungi esempi e controlla la coerenza dell'intero libro prima di esportarlo.</p></div>
+          </div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='ss-section'><h2>Cosa puoi creare</h2><p class='ss-muted'>Un unico strumento, adattato al tuo progetto editoriale.</p></div>", unsafe_allow_html=True)
+    creator_cards = st.columns(3)
+    for column, title, text in (
+        (creator_cards[0], "Manuali e guide", "Manuali pratici, tecnici e divulgativi con procedure, esempi, checklist e approfondimenti."),
+        (creator_cards[1], "Ricettari e contenuti pratici", "Ricette, esempi e materiali operativi organizzati in modo leggibile e coerente."),
+        (creator_cards[2], "Narrativa, quiz e test prep", "Romanzi, libri di preparazione agli esami, quiz commentati e progetti multilingue."),
+    ):
+        with column:
+            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Come funziona Scrittore Site</h2><p class='ss-muted'>Segui il percorso e mantieni il controllo su ogni scelta del tuo libro.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
@@ -251,6 +307,10 @@ def _landing_page() -> None:
         for column, (title, text) in zip(columns, row):
             with column:
                 st.markdown(f"<div class='ss-feature'><strong>{title}</strong><p>{text}</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-credit-note'>Usi i crediti solo quando chiedi all'AI di generare o migliorare contenuti. Puoi leggere, modificare, controllare ed esportare il tuo lavoro quando vuoi.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
@@ -314,6 +374,18 @@ def _account_gate() -> dict[str, Any]:
                 st.rerun()
             except Exception as error:
                 st.error(str(error))
+        with st.expander("Password dimenticata?"):
+            st.caption("Inserisci la tua e-mail: riceverai un link sicuro per impostare una nuova password.")
+            recovery_email = st.text_input("E-mail per il recupero", key="commercial_recovery_email")
+            if st.button("Invia il link di recupero", key="commercial_recovery_button"):
+                if not recovery_email.strip():
+                    st.warning("Inserisci prima il tuo indirizzo e-mail.")
+                else:
+                    try:
+                        _supabase_recover_password(recovery_email)
+                        st.success("Se l'indirizzo è registrato, riceverai a breve il link di recupero.")
+                    except Exception as error:
+                        st.error(str(error))
     with signup_tab:
         email = st.text_input("Email", key="commercial_signup_email")
         password = st.text_input("Password", type="password", key="commercial_signup_password")
