@@ -298,6 +298,31 @@ def _render_password_recovery() -> bool:
     return True
 
 
+def _normalize_recovery_redirect() -> None:
+    """Riconosce i link di recupero che Supabase riporta alla home con token nell'hash.
+
+    Alcuni modelli email di Supabase usano il Site URL e non preservano il
+    parametro ``redirect_to``. Il token rimane comunque nell'hash del browser:
+    questo piccolo passaggio aggiunge solo ``?auth=recovery`` e non invia il
+    token a Streamlit né lo salva da nessuna parte.
+    """
+    components.html(
+        """
+        <script>
+          try {
+            const current = new URL(window.parent.location.href);
+            const hash = new URLSearchParams(current.hash.slice(1));
+            if (hash.get('type') === 'recovery' && current.searchParams.get('auth') !== 'recovery') {
+              current.searchParams.set('auth', 'recovery');
+              window.parent.location.replace(current.toString());
+            }
+          } catch (error) {}
+        </script>
+        """,
+        height=0,
+    )
+
+
 def _landing_page() -> None:
     """Pagina di ingresso pubblica: compare prima dell'accesso."""
     st.markdown(
@@ -804,6 +829,7 @@ def _commerce_sidebar() -> None:
 
 def bootstrap_commercial_app() -> None:
     """Mostra la home pubblica, quindi accesso e area editor riservata."""
+    _normalize_recovery_redirect()
     try:
         recovery_requested = st.query_params.get("auth") == "recovery"
     except Exception:
