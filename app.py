@@ -1154,6 +1154,55 @@ def sezioni_mancanti_per_esportazione(sezioni, genere):
     return mancanti
 
 
+def stati_sezioni_editoriali(sezioni, genere):
+    """Distingue chiaramente sezioni mancanti, deboli e complete senza alterare il manoscritto."""
+    minimi = {"parte": 35, "capitolo": 90 if genere == "Ricettario" else 120, "sottocapitolo": 120, "frontespizio": 40}
+    stati = []
+    for sezione in sezioni:
+        testo = pulisci_testo_editoriale(st.session_state.get(chiave_sezione(sezione), "")).strip()
+        minimo = minimi[tipo_sezione_editoriale(sezione)]
+        parole = len(testo.split())
+        if not testo:
+            stato, motivo = "MANCANTE", "nessun contenuto generato"
+        elif testo.startswith("ERRORE:") or parole < minimo:
+            stato, motivo = "DEBOLE", f"{parole} parole: servono almeno {minimo} parole"
+        else:
+            stato, motivo = "COMPLETA", f"{parole} parole"
+        stati.append({"Sezione": sezione, "Stato": stato, "Dettaglio": motivo})
+    return stati
+
+
+def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, genere, obiettivo):
+    """Controllo gratuito e non distruttivo: decide soltanto se il download è finale o BOZZA."""
+    stati = stati_sezioni_editoriali(sezioni, genere)
+    problemi, prompt_correzione = [], []
+    for voce in stati:
+        if voce["Stato"] != "COMPLETA":
+            problemi.append(f"{voce['Sezione']}: {voce['Stato'].lower()} ({voce['Dettaglio']})")
+            prompt_correzione.append(
+                f"SEZIONE: {voce['Sezione']}\n"
+                f"PROBLEMA: {voce['Dettaglio']}.\n"
+                "OBIETTIVO: completa o rafforza solo questa sezione, senza ripetere le altre.\n"
+                "PROMPT DA INCOLLARE: Riscrivi questa sezione rispettando titolo, genere, stile, POV e argomento del libro. "
+                "Aggiungi solo contenuto concreto necessario e non modificare le altre sezioni."
+            )
+
+    problemi_indice = criticita_indice_generato(indice, genere, titolo, trama, obiettivo)
+    if problemi_indice:
+        problemi.extend(f"Indice: {problema}" for problema in problemi_indice)
+
+    if genere == "Test Prep (Preparazione Esami)":
+        esiti_test = audit_simulazioni_test_prep(indice, contenuti, obiettivo, trama)
+        problemi.extend(esito for esito in esiti_test if esito.startswith("ERRORE"))
+
+    return {
+        "pronto": not problemi,
+        "problemi": problemi,
+        "prompt_correzione": prompt_correzione,
+        "stati": stati,
+    }
+
+
 def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS, max_completion_tokens=None):
     """Riprova una sezione senza perdere le precedenti; evita libri interrotti a metà dopo un errore transitorio."""
     ultimo_errore = None
@@ -2304,13 +2353,13 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 3. Apri Indice e premi Genera Indice Professionale. Se lo modifichi a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
-4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa le sezioni autonome ancora vuote. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
+4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa tutte le sezioni ancora vuote dell'indice, comprese aperture, capitoli, sottocapitoli e chiusure. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
 
 5. Rigenera con AI modifica solo la sezione scelta seguendo la tua istruzione. Quiz aggiunge domande, 10 Esempi aggiunge esempi, 10 Ricette è per i ricettari; Controlla i fatti e Report sintattico verificano qualità e leggibilità. Carica un'immagine inserisce la tua immagine in anteprima, Word e PDF.
 
 6. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
 
-7. In Esporta scarichi Word o PDF anche come bozza. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
+7. In Esporta il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI e puoi scaricare soltanto una BOZZA NON COMPLETA, chiaramente etichettata. Il software non modifica nulla automaticamente. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
 
 Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte o termina Scrivi tutto il libro, in caso di errore, al termine di Voto Indice, Controllo coerenza, formattazione ed esportazione. Controlla sempre testo e file finale prima di pubblicare."""),
         "English": ("How to use Scrittore Site", """1. Complete the sidebar: title, author, language, genre, style, goal, topic and desired final result. Use Further details for priorities, constraints and required examples.
@@ -2974,12 +3023,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # I capitoli che possiedono sottocapitoli sono cornici, non corpi duplicati:
-            # la stesura completa genera quindi solo i sottocapitoli e gli eventuali capitoli autonomi.
-            sezioni_intero_libro = individua_sezioni_da_stendere(lista_cap_base)
+            # La stesura completa deve generare OGNI sezione dell'indice, comprese
+            # prefazione, parti, capitoli, sottocapitoli, conclusione e ringraziamenti.
+            sezioni_intero_libro = opzioni_editor
             st.caption(
-                f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni con contenuto autonomo. "
-                "I capitoli con sottocapitoli non vengono duplicati e i contenuti già scritti verranno conservati."
+                f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
+                "I contenuti già scritti verranno conservati senza modifiche."
             )
             # Job persistente: genera una sezione alla volta e conserva sempre quanto già scritto.
             # Questo rende la pausa effettiva tra una richiesta AI e la successiva.
@@ -3343,22 +3392,41 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     # TAB 4: ESPORTAZIONE
     with tabs[4]:
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
+        contenuti_export = {
+            sezione: st.session_state.get(chiave_sezione(sezione), "")
+            for sezione in lista_cap_base
+        }
+        esito_finale_export = controllo_finale_pre_export(
+            st.session_state.get("indice_raw", ""), lista_cap_base, contenuti_export,
+            val_titolo, val_trama, val_genere, val_goal
+        ) if lista_cap_base else {"pronto": False, "problemi": ["Indice assente."], "prompt_correzione": [], "stati": []}
+        export_boza = not esito_finale_export["pronto"]
         if not lista_cap_base:
             st.warning("Esportazione non disponibile: genera e sincronizza prima l'indice del libro.")
-        elif sezioni_incomplete_export:
+        elif export_boza:
             st.warning(
-                "Esportazione disponibile come BOZZA: alcune sezioni dell'indice sono vuote o troppo brevi. "
-                "Il file non è ancora pronto per la pubblicazione."
+                "Esportazione disponibile solo come BOZZA NON COMPLETA: il controllo finale ha rilevato elementi da sistemare. "
+                "Il file non è pronto per la pubblicazione."
             )
-            st.caption("Sezioni da completare: " + "; ".join(sezioni_incomplete_export[:12]) + (" ..." if len(sezioni_incomplete_export) > 12 else ""))
+            with st.expander("Controllo finale: sezioni e correzioni richieste", expanded=True):
+                st.dataframe(esito_finale_export["stati"], hide_index=True, use_container_width=True)
+                st.write("Problemi rilevati:")
+                for problema in esito_finale_export["problemi"][:15]:
+                    st.write("- " + problema)
+                if esito_finale_export["prompt_correzione"]:
+                    st.text_area(
+                        "Prompt pronti per Rigenera con AI (il software non modifica nulla automaticamente)",
+                        value="\n\n".join(esito_finale_export["prompt_correzione"]), height=280,
+                        key="prompt_correzioni_export"
+                    )
         else:
-            st.success("Controllo completezza superato: tutte le sezioni previste dall'indice sono presenti.")
+            st.success("Controllo finale superato: struttura, sezioni richieste e contenuti promessi risultano completi. Il file può essere esportato come versione definitiva.")
         cw, cp = st.columns(2)
         with cw:
             if st.button(L["btn_word"], disabled=not lista_cap_base):
                 doc = Document(); doc.add_heading(val_titolo, 0)
-                if sezioni_incomplete_export:
-                    doc.add_paragraph("BOZZA NON COMPLETA - Non pronta per la pubblicazione.")
+                if export_boza:
+                    doc.add_paragraph("BOZZA NON COMPLETA - Non pronta per la pubblicazione. Consulta il controllo finale nell'app.")
                 for s in opzioni_editor:
                     ke = chiave_sezione(s)
                     if st.session_state.get(ke, "").strip():
@@ -3370,13 +3438,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         doc.add_paragraph(pulisci_testo_editoriale(st.session_state[ke]))
                 bw = BytesIO(); doc.save(bw); bw.seek(0)
                 notifica_sonora("word_pronto", lingua_sel, ripeti=True)
-                suffisso = "_BOZZA" if sezioni_incomplete_export else ""
+                suffisso = "_BOZZA_NON_COMPLETA" if export_boza else ""
                 st.download_button(L["btn_word"], data=bw, file_name=f"{val_titolo}{suffisso}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         with cp:
             if st.button(L["btn_pdf"], disabled=not lista_cap_base):
                 pdf = EbookPDF(val_titolo, val_autore); pdf.cover_page()
-                if sezioni_incomplete_export:
-                    pdf.add_content("BOZZA NON COMPLETA", "Questo file è una bozza di lavoro. Alcune sezioni previste dall'indice non sono ancora state completate; non usarlo per la pubblicazione.")
+                if export_boza:
+                    pdf.add_content("BOZZA NON COMPLETA", "Questo file è una bozza di lavoro. Il controllo finale ha rilevato elementi da completare o verificare; non usarlo per la pubblicazione.")
                 for s in opzioni_editor:
                     kd = chiave_sezione(s)
                     if st.session_state.get(kd, "").strip():
@@ -3391,7 +3459,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 pdf_output = pdf.output(dest="S")
                 out_p = pdf_output.encode("latin-1", "replace") if isinstance(pdf_output, str) else bytes(pdf_output)
                 notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
-                suffisso = "_BOZZA" if sezioni_incomplete_export else ""
+                suffisso = "_BOZZA_NON_COMPLETA" if export_boza else ""
                 st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}{suffisso}.pdf", mime="application/pdf")
 
     # TAB 5: FORMATTAZIONE E METADATI KDP
