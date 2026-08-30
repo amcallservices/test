@@ -1,21 +1,17 @@
-"""Livello commerciale per il collaudo separato di Scrittore Site.
-
-Non usare questo modulo nella release pubblica finché non sono attivi Supabase,
-Stripe Webhook e una revisione di sicurezza. In assenza dei Secrets lavora in
-modalità DEMO: saldo esclusivamente nella sessione del browser, nessun pagamento.
-"""
+"""Accesso, crediti e pagamenti per la versione commerciale di Scrittore Site."""
 from __future__ import annotations
 
 import os
 import uuid
-from dataclasses import dataclass
 from typing import Any
 
 import requests
 import streamlit as st
 
 
-COMMERCIAL_TEST_VERSION = "commercial-test-01"
+COMMERCIAL_VERSION = "commercial-01"
+# Alias mantenuto per compatibilità con l'app commerciale già predisposta.
+COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 120
 AI_REQUEST_CREDITS = 1
 
@@ -66,8 +62,7 @@ def _secret(name: str, default: str = "") -> str:
 
 
 def _mode() -> str:
-    # La copia di collaudo è utilizzabile anche senza servizi esterni.
-    return _secret("COMMERCIAL_MODE", "demo").lower()
+    return _secret("COMMERCIAL_MODE", "live").lower()
 
 
 def _supabase_ready() -> bool:
@@ -79,7 +74,6 @@ def _stripe_ready() -> bool:
 
 
 def _payments_enabled() -> bool:
-    """Evita vendite live prima della verifica completa del webhook."""
     return _secret("PAYMENTS_ENABLED", "false").lower() == "true"
 
 
@@ -137,16 +131,106 @@ def _supabase_signup(email: str, password: str) -> None:
         raise RuntimeError("Registrazione non riuscita. Usa una password più sicura o riprova.")
 
 
+def _landing_page() -> None:
+    """Pagina di ingresso pubblica: compare prima dell'accesso."""
+    st.markdown(
+        """
+        <style>
+          .ss-hero {max-width:1040px; margin:2.2rem auto 1.3rem; padding:3.2rem 2.3rem;
+            border-radius:24px; background:linear-gradient(135deg,#13213a 0%,#274d75 58%,#536f91 100%);
+            color:#fff; text-align:center; box-shadow:0 14px 40px rgba(15,23,42,.25)}
+          .ss-hero h1 {font-size:3rem; margin:0 0 .6rem; color:#fff}
+          .ss-hero p {font-size:1.22rem; max-width:720px; margin:0 auto; opacity:.95}
+          .ss-kicker {letter-spacing:.12em; text-transform:uppercase; font-weight:700; font-size:.82rem; opacity:.8}
+          .ss-section {max-width:1040px; margin:2.1rem auto .6rem; text-align:center}
+          .ss-section h2 {margin-bottom:.25rem}
+          .ss-card {background:#fff; border:1px solid rgba(30,58,95,.14); border-radius:18px;
+            padding:1.35rem 1.2rem; min-height:168px; box-shadow:0 5px 16px rgba(15,23,42,.06)}
+          .ss-card h3 {margin-top:0; color:#183b63}
+          .ss-price {font-size:1.55rem; font-weight:750; color:#183b63; margin:.2rem 0}
+          .ss-muted {color:#52616f; text-align:center; margin:.2rem auto 1.2rem; max-width:720px}
+        </style>
+        <div class="ss-hero">
+          <div class="ss-kicker">AI di Antonino</div>
+          <h1>Scrittore Site</h1>
+          <p>Trasforma un’idea in un libro strutturato, approfondito e pronto da esportare.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    left, right = st.columns(2)
+    with left:
+        if st.button("Crea il tuo account", type="primary", use_container_width=True, key="landing_signup"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "signup"
+            st.rerun()
+    with right:
+        if st.button("Accedi", use_container_width=True, key="landing_login"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "login"
+            st.rerun()
+
+    st.markdown("<div class='ss-section'><h2>Tutto ciò che serve per costruire il tuo libro</h2><p class='ss-muted'>Un ambiente unico per progettare, scrivere, controllare e pubblicare contenuti con ordine.</p></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    for column, title, text in (
+        (c1, "Brief guidato", "Definisci pubblico, obiettivo, argomento, tono e risultato finale prima di iniziare."),
+        (c2, "Scrittura strutturata", "Genera indice, capitoli e sottocapitoli con procedure, esempi e contenuti coerenti."),
+        (c3, "Controllo ed esportazione", "Rivedi il manoscritto, migliora le sezioni e scarica Word o PDF."),
+    ):
+        with column:
+            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Come funziona</h2></div>", unsafe_allow_html=True)
+    s1, s2, s3 = st.columns(3)
+    for column, title, text in (
+        (s1, "1. Imposta il progetto", "Compila il brief editoriale con le informazioni essenziali."),
+        (s2, "2. Costruisci il libro", "Crea l’indice e sviluppa le sezioni che desideri."),
+        (s3, "3. Esporta e pubblica", "Controlla il risultato e scarica i file pronti per il tuo lavoro editoriale."),
+    ):
+        with column:
+            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Acquista solo i crediti necessari ai tuoi progetti.</p></div>", unsafe_allow_html=True)
+    price_columns = st.columns(len(PACKAGES))
+    for column, package in zip(price_columns, PACKAGES.values()):
+        price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
+        with column:
+            st.markdown(
+                f"<div class='ss-card'><h3>{package['name'].replace('Pacchetto ', '')}</h3>"
+                f"<div class='ss-price'>{price}</div><p>{package['credits']} crediti</p></div>",
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<div class='ss-section'><h2>Domande frequenti</h2></div>", unsafe_allow_html=True)
+    with st.expander("Posso iniziare senza esperienza editoriale?"):
+        st.write("Sì. Scrittore Site guida la preparazione del brief e mantiene ordinati i passaggi di lavoro.")
+    with st.expander("I crediti servono per cosa?"):
+        st.write("I crediti permettono di usare le funzioni IA di progettazione, scrittura, revisione e miglioramento del libro.")
+    with st.expander("Posso esportare il mio lavoro?"):
+        st.write("Sì. Al termine puoi esportare il manoscritto in Word o PDF.")
+
+
 def _account_gate() -> dict[str, Any]:
-    if _mode() == "demo" or not _supabase_ready():
+    if _mode() == "demo":
         return _init_demo_account()
+
+    if not _supabase_ready():
+        st.error("Configurazione account non disponibile. Riprova più tardi.")
+        st.stop()
 
     current = st.session_state.get("commercial_user")
     if current:
         return current
 
     st.title("Accedi a Scrittore Site")
-    st.caption("Ambiente di collaudo commerciale: ogni account avrà libri e crediti separati.")
+    st.caption("Ogni account mantiene separati crediti e sessione di lavoro.")
+    if st.button("← Torna alla home", key="commercial_back_to_home"):
+        st.session_state.pop("commercial_show_auth", None)
+        st.session_state.pop("commercial_auth_hint", None)
+        st.rerun()
+    if st.session_state.get("commercial_auth_hint") == "signup":
+        st.info("Seleziona la scheda “Crea account” per registrarti.")
     access_tab, signup_tab = st.tabs(["Accedi", "Crea account"])
     with access_tab:
         email = st.text_input("Email", key="commercial_login_email")
@@ -236,12 +320,12 @@ def _create_checkout(package_key: str) -> str:
     }
     response = requests.post("https://api.stripe.com/v1/checkout/sessions", auth=(_secret("STRIPE_SECRET_KEY"), ""), data=payload, timeout=20)
     if not response.ok:
-        raise RuntimeError("Impossibile creare il pagamento. Controlla i Secrets Stripe dell'ambiente di test.")
+        raise RuntimeError("Impossibile creare il pagamento. Riprova o contatta l'assistenza.")
     return response.json()["url"]
 
 
 def _process_checkout_return() -> None:
-    """Verifica Stripe lato server e accredita una sola volta la ricarica di test."""
+    """Mostra l'esito del ritorno da Stripe; il webhook accredita i crediti."""
     if _mode() == "demo" or not (
         _payments_enabled() and _stripe_ready() and _supabase_ready()
     ):
@@ -295,24 +379,25 @@ def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
     with st.sidebar:
         st.divider()
-        st.markdown("### 💳 Crediti di test")
-        if _mode() == "demo" or not _supabase_ready():
-            st.caption("Modalità demo: nessun pagamento reale e saldo valido solo per questa sessione.")
+        st.markdown("### 💳 Crediti")
+        if _mode() == "demo":
+            st.caption("Modalità dimostrativa: saldo valido solo per questa sessione.")
         else:
             st.caption(f"Account: {user['email']}")
         st.metric("Saldo disponibile", f"{_balance(user['id'])} crediti")
 
         with st.expander("Ricarica crediti", expanded=False):
-            for key, package in PACKAGES.items():
-                label = f"{package['name']} — € {package['amount_cents'] / 100:.2f}".replace(".", ",")
-                if _mode() == "demo":
+            if _mode() == "demo":
+                for key, package in PACKAGES.items():
                     if st.button(f"Aggiungi {package['credits']} crediti demo", key=f"demo_topup_{key}"):
                         _grant_demo_credits(package)
                         st.success("Crediti demo aggiunti.")
                         st.rerun()
-                elif not _payments_enabled():
-                    st.caption("I pacchetti saranno disponibili dopo l'attivazione sicura dei pagamenti.")
-                else:
+            elif not _payments_enabled():
+                st.caption("I pacchetti saranno disponibili dopo l'attivazione sicura dei pagamenti.")
+            else:
+                for key, package in PACKAGES.items():
+                    label = f"{package['name']} — € {package['amount_cents'] / 100:.2f}".replace(".", ",")
                     if st.button(f"Acquista {label}", key=f"stripe_topup_{key}"):
                         try:
                             st.link_button("Apri pagamento sicuro", _create_checkout(key), type="primary")
@@ -320,13 +405,30 @@ def _commerce_sidebar() -> None:
                             st.error(str(error))
 
         if _mode() == "demo":
-            with st.expander("Movimenti demo", expanded=False):
+            with st.expander("Movimenti", expanded=False):
                 movements = st.session_state.get("commercial_demo_ledger", [])[-12:]
                 st.write(movements or "Nessun movimento ancora.")
 
+        if _mode() != "demo" and st.button("Esci", key="commercial_logout", use_container_width=True):
+            st.session_state.pop("commercial_user", None)
+            st.session_state.pop("commercial_user_context", None)
+            st.session_state.pop("commercial_show_auth", None)
+            st.rerun()
 
-def bootstrap_commercial_test() -> None:
-    """Mostra accesso e saldo; deve essere chiamata una volta, prima dell'editor."""
+
+def bootstrap_commercial_app() -> None:
+    """Mostra la home pubblica, quindi accesso e area editor riservata."""
+    if (
+        _mode() != "demo"
+        and not st.session_state.get("commercial_user")
+        and not st.session_state.get("commercial_show_auth")
+    ):
+        _landing_page()
+        st.stop()
     st.session_state["commercial_user_context"] = _account_gate()
     _process_checkout_return()
     _commerce_sidebar()
+
+
+# Compatibilità con il nome già importato dal file dell'app commerciale.
+bootstrap_commercial_test = bootstrap_commercial_app
