@@ -11,7 +11,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "beta 3a"
+COMMERCIAL_VERSION = "beta 3b"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -810,9 +810,10 @@ def _commerce_sidebar() -> None:
             st.caption(f"Account: {user['email']}")
 
         refresh_clicked = st.button(
-            "🔄 Aggiorna crediti",
+            "🔄 AGGIORNA SALDO CREDITI",
             key="commercial_refresh_credits",
             use_container_width=True,
+            type="primary",
             help="Usalo dopo un acquisto completato in un'altra scheda.",
         )
         if is_admin:
@@ -826,7 +827,7 @@ def _commerce_sidebar() -> None:
         if checkout_notice:
             st.success(checkout_notice)
         if not is_admin and _mode() != "demo":
-            st.caption("Dopo un pagamento concluso in un'altra scheda, premi “Aggiorna crediti”.")
+            st.caption("Dopo un pagamento concluso in un'altra scheda, premi il pulsante azzurro qui sopra.")
 
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
         with st.expander("Ricarica crediti", expanded=apri_ricarica):
