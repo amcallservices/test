@@ -142,9 +142,9 @@ def _landing_page() -> None:
             border-radius:28px; background:radial-gradient(circle at 12% 15%,#fbcfe8 0%,transparent 26%),
             radial-gradient(circle at 88% 88%,#ddd6fe 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#f5f3ff 100%);
             color:#25104b; text-align:center; border:1px solid #ddd6fe; box-shadow:0 16px 38px rgba(76,29,149,.15)}
-          .ss-hero h1 {font-size:3.15rem; margin:.15rem 0 .55rem; color:#4c1d95; line-height:1}
+          .ss-hero h1 {font-size:4.25rem; margin:.18rem 0 .65rem; color:#4c1d95; line-height:1; letter-spacing:-.045em}
           .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; color:#3b2b52; font-weight:600}
-          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:850; font-size:.76rem; color:#be185d}
+          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:850; font-size:.92rem; color:#be185d}
           .ss-bonus {max-width:720px; margin:.9rem auto 1rem; padding:.66rem 1rem; border-radius:999px;
             text-align:center; font-size:1.05rem; font-weight:750; color:#542177; background:#fdf2ff;
             border:1px solid #f0abfc}
@@ -156,13 +156,12 @@ def _landing_page() -> None:
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
           .ss-price {font-size:1.35rem; font-weight:800; color:#be185d; margin:.15rem 0}
           .ss-muted {color:#63506e; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
-          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:.72rem .8rem;
-            min-height:86px; text-align:left}
+          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:1rem .95rem;
+            min-height:130px; text-align:left}
           .ss-step strong {display:block; color:#c2410c; margin-bottom:.15rem}
           [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
-            font-weight:800; border:2px solid #6d28d9}
-          [data-testid="stMain"] .stButton button[kind="primary"] {background:linear-gradient(100deg,#6d28d9,#db2777);
-            border-color:#6d28d9; color:#fff}
+            font-weight:800; border:2px solid #6d28d9; background:linear-gradient(100deg,#6d28d9,#db2777) !important;
+            border-color:#6d28d9 !important; color:#fff !important}
           /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
           [data-testid="stHeader"] {background:transparent !important}
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
@@ -195,7 +194,6 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    st.markdown("<div class='ss-section'><h2>Un solo spazio. Tutto il tuo libro.</h2></div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     for column, title, text in (
         (c1, "✦ Brief guidato", "Definisci obiettivo, lettore e argomento."),
@@ -205,12 +203,12 @@ def _landing_page() -> None:
         with column:
             st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='ss-section'><h2>Come funziona</h2><p class='ss-muted'>Tre passaggi semplici per iniziare.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Come funziona Scrittore Site</h2><p class='ss-muted'>Segui il percorso e mantieni il controllo su ogni scelta del tuo libro.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
     for column, title, text in (
-        (s1, "1. Definisci", "Compila il brief editoriale."),
-        (s2, "2. Costruisci", "Genera indice e contenuti."),
-        (s3, "3. Esporta", "Controlla e scarica il libro."),
+        (s1, "1. Definisci il progetto", "Inserisci titolo, lingua, pubblico, genere, obiettivo e argomento. Puoi aggiungere istruzioni e approfondimenti importanti."),
+        (s2, "2. Crea e migliora", "Genera l’indice, valuta la struttura e sviluppa le singole parti o l’intero libro. Puoi fermarti, controllare e rigenerare ciò che desideri."),
+        (s3, "3. Controlla ed esporta", "Usa anteprima, controllo di coerenza e formattazione. Quando il risultato ti soddisfa, esporta il manoscritto in Word o PDF."),
     ):
         with column:
             st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
@@ -231,6 +229,18 @@ def _landing_page() -> None:
         st.write("Sì. Scrittore Site guida la preparazione del brief e mantiene ordinati i passaggi di lavoro.")
     with st.expander("I crediti servono per cosa?"):
         st.write("I crediti permettono di usare le funzioni IA di progettazione, scrittura, revisione e miglioramento del libro.")
+    with st.expander("Devo scrivere tutto il libro in una sola volta?"):
+        st.write("No. Puoi generare e controllare una sezione alla volta oppure usare la scrittura completa. In ogni momento puoi fermarti e rivedere ciò che è stato prodotto.")
+    with st.expander("Posso modificare indice e contenuti generati?"):
+        st.write("Sì. L’indice e ogni sezione restano modificabili. Puoi migliorare una sola parte con le tue istruzioni, senza dover ricominciare l’intero libro.")
+    with st.expander("Come faccio a ottenere un libro coerente?"):
+        st.write("Il software usa il brief, l’indice e le sezioni già scritte come riferimento. Il controllo di coerenza individua inoltre le parti che richiedono revisione.")
+    with st.expander("Posso usare più lingue?"):
+        st.write("Sì. Seleziona la lingua del progetto prima di creare l’indice: Scrittore Site adatta l’interfaccia e la generazione alla lingua scelta.")
+    with st.expander("Posso caricare materiale di riferimento?"):
+        st.write("Sì. Puoi caricare documenti PDF o Word come fonti esterne, così le istruzioni e le informazioni importanti restano disponibili durante il lavoro.")
+    with st.expander("Il libro viene pubblicato automaticamente?"):
+        st.write("No. Scrittore Site prepara il manoscritto e i file di esportazione; la scelta finale, le revisioni e la pubblicazione restano sempre sotto il tuo controllo.")
     with st.expander("Posso esportare il mio lavoro?"):
         st.write("Sì. Al termine puoi esportare il manoscritto in Word o PDF.")
 
