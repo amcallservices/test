@@ -97,7 +97,8 @@ def crea_scheda_fonti(testo, limite=2600):
     return "\n".join(scelti) or (testo or "")[:limite]
 
 
-MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", "gpt-5.4-mini")
+MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
+MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_STESURA)
 
 
 def studia_fonti_con_ai(testo, limite_input=30000):
@@ -476,7 +477,7 @@ class EbookPDF(FPDF):
         self.multi_cell(0, 10, self._clean(content))
 
 # ======================================================================================================================
-# 5. CORE LOGIC GPT-4o & ANALISI QUALITÀ (POTENZIATA) E DECISIONE NEURALE
+# 5. CORE LOGIC DI STESURA E ANALISI QUALITÀ (POTENZIATA) E DECISIONE NEURALE
 # ======================================================================================================================
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS):
     riferimento = None
@@ -484,9 +485,8 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if addebita:
             riferimento = charge_credits("generazione_testo", amount=amount)
         response = client.chat.completions.create(
-            model="gpt-4o-mini", 
+            model=MODELLO_STESURA,
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-            temperature=0.75 
         )
         testo = response.choices[0].message.content.strip()
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
@@ -562,7 +562,7 @@ def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     try:
         riferimento = charge_credits("verifica_fatti", amount=2)
         risposta = client.responses.create(
-            model="gpt-5-mini",
+            model=MODELLO_STESURA,
             tools=[{"type": "web_search_preview"}],
             input=(
                 f"Verifica il testo seguente in lingua {lingua} relativo alla sezione '{sezione}'. "
@@ -606,7 +606,7 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
     try:
         riferimento = charge_credits("audit_fatti", amount=2)
         risposta = client.responses.create(
-            model="gpt-5-mini",
+            model=MODELLO_STESURA,
             tools=[{"type": "web_search_preview"}],
             input=(
                 f"Controlla i soli fatti aggiornabili nel capitolo '{capitolo}', in lingua {lingua}. "
@@ -1726,7 +1726,7 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
         if addebita:
             riferimento = charge_credits("audit_editoriale", amount=1)
         risposta = client.responses.create(
-            model="gpt-5-mini",
+            model=MODELLO_STESURA,
             input=prompt
         )
         testo = getattr(risposta, "output_text", "") or ""
@@ -3328,12 +3328,11 @@ Una descrizione di vendita completa di almeno 450 parole, con apertura coinvolge
 Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive."""
                             riferimento_metadati = charge_credits("metadati_kdp")
                             risposta_metadati = client.chat.completions.create(
-                                model="gpt-4o-mini",
+                                model=MODELLO_STESURA,
                                 messages=[
                                     {"role": "system", "content": "Sei un esperto di metadati KDP. Produci soltanto il risultato editoriale richiesto."},
                                     {"role": "user", "content": prompt_metadati}
-                                ],
-                                temperature=0.6
+                                ]
                             )
                             st.session_state["metadati_formattazione"] = pulisci_testo_editoriale(
                                 risposta_metadati.choices[0].message.content
