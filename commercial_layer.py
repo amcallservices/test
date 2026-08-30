@@ -198,7 +198,13 @@ def _supabase_signup(email: str, password: str) -> None:
         timeout=20,
     )
     if not response.ok:
-        raise RuntimeError("Registrazione non riuscita. Usa una password più sicura o riprova.")
+        # Non attribuire genericamente l'errore alla password: può trattarsi
+        # anche di un indirizzo già registrato o di un limite temporaneo email.
+        raise RuntimeError(
+            "Non è stato possibile creare l'account. Se questa email è già "
+            "registrata, usa Accedi oppure Password dimenticata; altrimenti "
+            "riprova tra qualche minuto."
+        )
 
 
 def _supabase_resend_confirmation(email: str) -> None:
@@ -275,7 +281,7 @@ def _render_password_recovery() -> bool:
           document.getElementById('save-password').addEventListener('click', async () => {{
             const password = document.getElementById('new-password').value;
             const repeat = document.getElementById('repeat-password').value;
-            if (password.length < 8) {{ message.textContent = 'La password deve contenere almeno 8 caratteri.'; message.style.color = '#b42318'; return; }}
+            if (password.length < 6) {{ message.textContent = 'La password deve contenere almeno 6 caratteri.'; message.style.color = '#b42318'; return; }}
             if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
             message.textContent = 'Salvataggio in corso…'; message.style.color = '#174a73';
             try {{
