@@ -783,10 +783,17 @@ def _process_checkout_return() -> None:
             },
         )
         if granted is True:
-            st.success(f"Pagamento verificato: aggiunti {package['credits']} crediti.")
+            st.session_state["commercial_checkout_notice"] = (
+                f"Pagamento verificato: aggiunti {package['credits']} crediti."
+            )
         else:
-            st.info("Questo pagamento era già stato registrato.")
+            st.session_state["commercial_checkout_notice"] = (
+                "Questo pagamento era già stato registrato: il saldo è aggiornato."
+            )
         st.query_params.clear()
+        # Riapre l'app in stato pulito dopo Stripe: il saldo nella sidebar
+        # viene quindi riletto subito da Supabase, senza nuovo login.
+        st.rerun()
     except Exception as error:
         st.error(f"Pagamento ricevuto ma non ancora accreditato: {error}")
 
@@ -801,11 +808,25 @@ def _commerce_sidebar() -> None:
             st.caption("Modalità dimostrativa: saldo valido solo per questa sessione.")
         else:
             st.caption(f"Account: {user['email']}")
+
+        refresh_clicked = st.button(
+            "🔄 Aggiorna crediti",
+            key="commercial_refresh_credits",
+            use_container_width=True,
+            help="Usalo dopo un acquisto completato in un'altra scheda.",
+        )
         if is_admin:
             st.metric("Saldo disponibile", "∞ crediti")
             st.success("Account amministratore: crediti illimitati attivi.")
         else:
             st.metric("Saldo disponibile", f"{_balance(user['id'])} crediti")
+        if refresh_clicked:
+            st.success("Saldo crediti aggiornato.")
+        checkout_notice = st.session_state.pop("commercial_checkout_notice", "")
+        if checkout_notice:
+            st.success(checkout_notice)
+        if not is_admin and _mode() != "demo":
+            st.caption("Dopo un pagamento concluso in un'altra scheda, premi “Aggiorna crediti”.")
 
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
         with st.expander("Ricarica crediti", expanded=apri_ricarica):
