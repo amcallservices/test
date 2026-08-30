@@ -303,31 +303,30 @@ def _render_password_recovery() -> bool:
             }}
             try {{ return new URLSearchParams(window.parent.location.hash.slice(1)).get('access_token') || ''; }} catch (error) {{ return ''; }}
           }}
-          loadRecoverySession().then((accessToken) => {{
-            token = accessToken;
-            if (!token) throw new Error('missing recovery token');
-          }}).catch(() => {{
-            message.textContent = 'Link non valido o scaduto. Torna alla pagina di accesso e richiedine uno nuovo.';
-            message.style.color = '#b42318';
-            document.getElementById('save-password').disabled = true;
-          }});
           document.getElementById('save-password').addEventListener('click', async () => {{
             const password = document.getElementById('new-password').value;
             const repeat = document.getElementById('repeat-password').value;
             if (password.length < 6) {{ message.textContent = 'La password deve contenere almeno 6 caratteri.'; message.style.color = '#b42318'; return; }}
             if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
-            if (!token) {{ message.textContent = 'Preparazione del link in corso: attendi un istante e riprova.'; message.style.color = '#174a73'; return; }}
-            message.textContent = 'Salvataggio in corso…'; message.style.color = '#174a73';
+            message.textContent = 'Verifica del link e salvataggio in corso…'; message.style.color = '#174a73';
             try {{
+              if (!token) token = await loadRecoverySession();
+              if (!token) throw new Error('missing recovery token');
               const response = await fetch({json.dumps(supabase_url + '/auth/v1/user')}, {{
                 method: 'PUT',
                 headers: {{'apikey': {json.dumps(anon_key)}, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}},
                 body: JSON.stringify({{password}})
               }});
-              if (!response.ok) throw new Error('reset failed');
+              if (!response.ok) {{
+                if (response.status === 401 || response.status === 403) throw new Error('expired recovery token');
+                if (response.status === 422) throw new Error('password rejected');
+                throw new Error('reset failed');
+              }}
               window.parent.location.replace({json.dumps(app_url + '?password_updated=1')});
             }} catch (error) {{
-              message.textContent = 'Non è stato possibile aggiornare la password. Richiedi un nuovo link e riprova.';
+              message.textContent = error.message === 'password rejected'
+                ? 'La password non è accettata da Supabase. Usa almeno 6 caratteri.'
+                : 'Link non valido o scaduto. Richiedi un nuovo link e riprova.';
               message.style.color = '#b42318';
             }}
           }});
