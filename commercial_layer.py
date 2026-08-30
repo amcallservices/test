@@ -71,6 +71,20 @@ class CommercialCreditError(RuntimeError):
     """L'operazione IA non può iniziare perché il saldo è insufficiente."""
 
 
+def mostra_crediti_esauriti() -> None:
+    """Avviso chiaro in pagina: interrompe l'azione senza alterare il manoscritto."""
+    st.session_state["commercial_credit_limit"] = True
+    st.error("Crediti terminati")
+    st.write(
+        "Il tuo libro resta disponibile: puoi leggerlo, modificarlo manualmente "
+        "ed esportare le parti già create. Per usare di nuovo le funzioni IA, "
+        "ricarica i crediti."
+    )
+    if st.button("💳 Vai a Ricarica crediti", key="commercial_go_to_topup", type="primary"):
+        st.session_state["commercial_open_topup"] = True
+        st.rerun()
+
+
 def _secret(name: str, default: str = "") -> str:
     try:
         value = st.secrets.get(name, default)
@@ -500,6 +514,7 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
     if _mode() == "demo" or not _supabase_ready():
         balance = _balance(user["id"])
         if balance < amount:
+            st.session_state["commercial_credit_limit"] = True
             raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
         st.session_state["commercial_demo_credits"] = balance - amount
         _demo_ledger(reason, -amount, reference)
@@ -507,6 +522,7 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
 
     result = _supabase("POST", "rest/v1/rpc/spend_credits", payload={"p_user_id": user["id"], "p_credits": amount, "p_reason": reason, "p_reference": reference})
     if result is not True:
+        st.session_state["commercial_credit_limit"] = True
         raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
     return reference
 
@@ -619,7 +635,8 @@ def _commerce_sidebar() -> None:
         else:
             st.metric("Saldo disponibile", f"{_balance(user['id'])} crediti")
 
-        with st.expander("Ricarica crediti", expanded=False):
+        apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
+        with st.expander("Ricarica crediti", expanded=apri_ricarica):
             if is_admin:
                 st.caption("Non sono necessari acquisti: questo account ha crediti illimitati.")
             elif _mode() == "demo":
