@@ -142,23 +142,27 @@ def _landing_page() -> None:
             border-radius:28px; background:radial-gradient(circle at 12% 15%,#fbcfe8 0%,transparent 26%),
             radial-gradient(circle at 88% 88%,#ddd6fe 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#f5f3ff 100%);
             color:#25104b; text-align:center; border:1px solid #ddd6fe; box-shadow:0 16px 38px rgba(76,29,149,.15)}
-          .ss-hero h1 {font-size:4.25rem; margin:.18rem 0 .65rem; color:#4c1d95; line-height:1; letter-spacing:-.045em}
+          .ss-hero h1 {font-size:5.1rem; margin:.18rem 0 .7rem; color:#4c1d95; line-height:1; letter-spacing:-.055em}
           .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; color:#3b2b52; font-weight:600}
           .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:850; font-size:.92rem; color:#be185d}
           .ss-bonus {max-width:720px; margin:.9rem auto 1rem; padding:.66rem 1rem; border-radius:999px;
             text-align:center; font-size:1.05rem; font-weight:750; color:#542177; background:#fdf2ff;
             border:1px solid #f0abfc}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
-          .ss-section h2 {font-size:1.55rem; margin-bottom:.1rem; color:#25104b}
+          .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#25104b}
           .ss-card {background:linear-gradient(145deg,#fff 0%,#faf7ff 100%); border:1px solid #e9d5ff;
             border-radius:16px; padding:1rem .9rem; min-height:112px; box-shadow:0 5px 14px rgba(88,28,135,.08)}
           .ss-card h3 {margin:0 0 .34rem; color:#6d28d9; font-size:1rem}
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
           .ss-price {font-size:1.35rem; font-weight:800; color:#be185d; margin:.15rem 0}
           .ss-muted {color:#63506e; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
-          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:1rem .95rem;
-            min-height:130px; text-align:left}
-          .ss-step strong {display:block; color:#c2410c; margin-bottom:.15rem}
+          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:1.15rem 1.05rem;
+            min-height:150px; text-align:left; font-size:1rem; line-height:1.48}
+          .ss-step strong {display:block; color:#c2410c; margin-bottom:.3rem; font-size:1.18rem}
+          .ss-feature {background:#fff; border:1px solid #ddd6fe; border-radius:15px; padding:1rem;
+            min-height:120px; box-shadow:0 4px 12px rgba(76,29,149,.07)}
+          .ss-feature strong {display:block; color:#5b21b6; font-size:1rem; margin-bottom:.3rem}
+          .ss-feature p {margin:0; color:#41324f; font-size:.9rem; line-height:1.38}
           [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
             font-weight:800; border:2px solid #6d28d9; background:linear-gradient(100deg,#6d28d9,#db2777) !important;
             border-color:#6d28d9 !important; color:#fff !important}
@@ -167,6 +171,11 @@ def _landing_page() -> None:
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
           .stAppDeployButton, #MainMenu, footer, button[title="Manage app"], a[title="Manage app"],
           button[aria-label="Manage app"], a[aria-label="Manage app"] {display:none !important}
+          [data-testid="stExpander"] {max-width:860px; margin:.5rem auto; background:#fff !important;
+            border:1px solid #ddd6fe !important; border-radius:12px !important; overflow:hidden}
+          [data-testid="stExpander"] details, [data-testid="stExpander"] summary,
+          [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#fff !important; color:#25104b !important}
+          [data-testid="stExpander"] summary:hover {background:#faf5ff !important}
         </style>
         <div class="ss-hero">
           <div class="ss-kicker">AI di Antonino presenta</div>
@@ -194,15 +203,6 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    c1, c2, c3 = st.columns(3)
-    for column, title, text in (
-        (c1, "✦ Brief guidato", "Definisci obiettivo, lettore e argomento."),
-        (c2, "✦ Scrittura strutturata", "Indice, capitoli e testi coerenti."),
-        (c3, "✦ Pronto da esportare", "Rivedi e scarica Word o PDF."),
-    ):
-        with column:
-            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
-
     st.markdown("<div class='ss-section'><h2>Come funziona Scrittore Site</h2><p class='ss-muted'>Segui il percorso e mantieni il controllo su ogni scelta del tuo libro.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
     for column, title, text in (
@@ -212,6 +212,27 @@ def _landing_page() -> None:
     ):
         with column:
             st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Caratteristiche</h2><p class='ss-muted'>Strumenti pensati per accompagnarti dalla prima idea al manoscritto esportabile.</p></div>", unsafe_allow_html=True)
+    feature_rows = [
+        (
+            ("Brief editoriale", "Titolo, autore, genere, stile, punto di vista, obiettivo, argomento, risultato e approfondimenti in un unico spazio."),
+            ("Multilingue", "Crea progetti in nove lingue e usa un’interfaccia adattata alla lingua scelta."),
+            ("Indice professionale", "Genera l’indice, assegna un voto alla struttura e rigeneralo seguendo i suggerimenti ricevuti."),
+            ("Scrittura flessibile", "Scrivi una sezione, tutti i sottocapitoli di un capitolo o l’intero libro; puoi mettere in pausa il lavoro."),
+        ),
+        (
+            ("Miglioramento mirato", "Rigenera o rielabora soltanto la parte da migliorare, con istruzioni precise e senza riscrivere tutto."),
+            ("Quiz, esempi e ricette", "Aggiungi contenuti pratici quando sono utili al genere e al progetto editoriale."),
+            ("Fonti e immagini", "Carica PDF o Word come riferimento e integra immagini scelte da te nel manoscritto."),
+            ("Controllo ed esportazione", "Usa anteprima, formattazione, controllo di coerenza e download in formato Word o PDF."),
+        ),
+    ]
+    for row in feature_rows:
+        columns = st.columns(4)
+        for column, (title, text) in zip(columns, row):
+            with column:
+                st.markdown(f"<div class='ss-feature'><strong>{title}</strong><p>{text}</p></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
