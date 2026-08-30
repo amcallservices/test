@@ -51,6 +51,20 @@ PACKAGES = {
     },
 }
 
+# Testi della pagina pubblica nelle stesse nove lingue offerte dall'editor.
+# Il cambio lingua qui modifica solo la home: non altera un eventuale libro dell'utente.
+HOME_COPY = {
+    "Italiano": {"presenta":"AI di Antonino presenta", "language":"Lingua", "headline":"Scrivi il tuo libro.<br>Con metodo, qualità e controllo.", "subtitle":"Dall’idea al manoscritto finito: struttura, scrivi ed esporta il tuo libro con l’AI, mantenendo sempre il controllo.", "bonus":"🎁 50 crediti gratuiti. Nessuna carta richiesta.", "start":"Inizia gratis con 50 crediti", "login":"Accedi", "b1":"Indice professionale", "b1t":"Struttura il tuo libro con capitoli e sottocapitoli chiari, completi e flessibili.", "b2":"Scrittura guidata", "b2t":"L’AI ti affianca capitolo dopo capitolo, mantenendo coerenza e qualità.", "b3":"Word e PDF", "b3t":"Esporta il tuo libro in Word e PDF, pronto per la revisione o la pubblicazione.", "create":"Cosa puoi creare", "create_sub":"Un unico strumento, adattato al tuo progetto editoriale.", "c1":"Guide e manuali", "c1t":"Spiega, insegna e condividi le tue competenze in modo chiaro e professionale.", "c2":"Ricettari", "c2t":"Raccogli e organizza le tue ricette con stile, indice e impaginazione ordinata.", "c3":"Romanzi, quiz e test prep", "c3t":"Crea storie coinvolgenti o materiali di studio efficaci e ben strutturati."},
+    "English": {"presenta":"AI by Antonino presents", "language":"Language", "headline":"Write your book.<br>With method, quality and control.", "subtitle":"From idea to finished manuscript: plan, write and export your book with AI while always remaining in control.", "bonus":"🎁 50 free credits. No card required.", "start":"Start free with 50 credits", "login":"Log in", "b1":"Professional outline", "b1t":"Structure your book with clear, complete and flexible chapters and sections.", "b2":"Guided writing", "b2t":"AI supports you chapter by chapter to preserve consistency and quality.", "b3":"Word and PDF", "b3t":"Export your book in Word and PDF, ready for review or publishing.", "create":"What you can create", "create_sub":"One tool, adapted to your editorial project.", "c1":"Guides and manuals", "c1t":"Explain, teach and share your skills clearly and professionally.", "c2":"Cookbooks", "c2t":"Collect and organize your recipes with style, an outline and tidy layout.", "c3":"Novels, quizzes and test prep", "c3t":"Create engaging stories or effective, well-structured study material."},
+    "Español": {"presenta":"La IA de Antonino presenta", "language":"Idioma", "headline":"Escribe tu libro.<br>Con método, calidad y control.", "subtitle":"De la idea al manuscrito final: estructura, escribe y exporta tu libro con IA manteniendo siempre el control.", "bonus":"🎁 50 créditos gratis. No se necesita tarjeta.", "start":"Empieza gratis con 50 créditos", "login":"Iniciar sesión", "b1":"Índice profesional", "b1t":"Estructura tu libro con capítulos y secciones claros, completos y flexibles.", "b2":"Escritura guiada", "b2t":"La IA te acompaña capítulo a capítulo para mantener coherencia y calidad.", "b3":"Word y PDF", "b3t":"Exporta tu libro en Word y PDF, listo para revisar o publicar.", "create":"Qué puedes crear", "create_sub":"Una sola herramienta adaptada a tu proyecto editorial.", "c1":"Guías y manuales", "c1t":"Explica, enseña y comparte tus conocimientos de forma clara y profesional.", "c2":"Recetarios", "c2t":"Reúne y organiza tus recetas con estilo, índice y maquetación ordenada.", "c3":"Novelas, cuestionarios y test prep", "c3t":"Crea historias atractivas o materiales de estudio eficaces y bien estructurados."},
+    "Français": {"presenta":"L’IA d’Antonino présente", "language":"Langue", "headline":"Écrivez votre livre.<br>Avec méthode, qualité et contrôle.", "subtitle":"De l’idée au manuscrit final : structurez, écrivez et exportez votre livre avec l’IA, tout en gardant le contrôle.", "bonus":"🎁 50 crédits offerts. Aucune carte requise.", "start":"Commencer avec 50 crédits", "login":"Se connecter", "b1":"Plan professionnel", "b1t":"Structurez votre livre avec des chapitres et sections clairs, complets et flexibles.", "b2":"Rédaction guidée", "b2t":"L’IA vous accompagne chapitre après chapitre pour préserver cohérence et qualité.", "b3":"Word et PDF", "b3t":"Exportez votre livre en Word et PDF, prêt pour la relecture ou la publication.", "create":"Ce que vous pouvez créer", "create_sub":"Un seul outil adapté à votre projet éditorial.", "c1":"Guides et manuels", "c1t":"Expliquez, enseignez et partagez vos compétences clairement et professionnellement.", "c2":"Livres de recettes", "c2t":"Rassemblez et organisez vos recettes avec style, sommaire et mise en page soignée.", "c3":"Romans, quiz et test prep", "c3t":"Créez des histoires captivantes ou des supports d’étude efficaces et structurés."},
+    "Deutsch": {"presenta":"Antoninos KI präsentiert", "language":"Sprache", "headline":"Schreiben Sie Ihr Buch.<br>Mit Methode, Qualität und Kontrolle.", "subtitle":"Von der Idee bis zum fertigen Manuskript: Planen, schreiben und exportieren Sie Ihr Buch mit KI und behalten Sie die Kontrolle.", "bonus":"🎁 50 kostenlose Credits. Keine Karte erforderlich.", "start":"Kostenlos mit 50 Credits starten", "login":"Anmelden", "b1":"Professionelle Gliederung", "b1t":"Strukturieren Sie Ihr Buch mit klaren, vollständigen und flexiblen Kapiteln und Abschnitten.", "b2":"Geführtes Schreiben", "b2t":"Die KI begleitet Sie Kapitel für Kapitel für Konsistenz und Qualität.", "b3":"Word und PDF", "b3t":"Exportieren Sie Ihr Buch als Word und PDF – bereit zur Überarbeitung oder Veröffentlichung.", "create":"Was Sie erstellen können", "create_sub":"Ein Werkzeug, angepasst an Ihr redaktionelles Projekt.", "c1":"Ratgeber und Handbücher", "c1t":"Erklären, lehren und teilen Sie Ihr Wissen klar und professionell.", "c2":"Kochbücher", "c2t":"Sammeln und organisieren Sie Rezepte mit Stil, Inhaltsverzeichnis und ordentlichem Layout.", "c3":"Romane, Quiz und Test Prep", "c3t":"Erstellen Sie fesselnde Geschichten oder wirksame, gut strukturierte Lernmaterialien."},
+    "Română": {"presenta":"AI-ul lui Antonino prezintă", "language":"Limbă", "headline":"Scrie-ți cartea.<br>Cu metodă, calitate și control.", "subtitle":"De la idee la manuscrisul final: structurează, scrie și exportă cartea cu AI, păstrând mereu controlul.", "bonus":"🎁 50 de credite gratuite. Fără card.", "start":"Începe gratuit cu 50 de credite", "login":"Autentificare", "b1":"Cuprins profesional", "b1t":"Structurează cartea cu capitole și secțiuni clare, complete și flexibile.", "b2":"Scriere ghidată", "b2t":"AI-ul te însoțește capitol cu capitol pentru coerență și calitate.", "b3":"Word și PDF", "b3t":"Exportă cartea în Word și PDF, gata pentru revizuire sau publicare.", "create":"Ce poți crea", "create_sub":"Un singur instrument adaptat proiectului tău editorial.", "c1":"Ghiduri și manuale", "c1t":"Explică, predă și împărtășește competențele tale clar și profesionist.", "c2":"Cărți de rețete", "c2t":"Adună și organizează rețetele cu stil, cuprins și paginare ordonată.", "c3":"Romane, quiz-uri și test prep", "c3t":"Creează povești captivante sau materiale de studiu eficiente și bine structurate."},
+    "Русский": {"presenta":"ИИ Антонино представляет", "language":"Язык", "headline":"Напишите свою книгу.<br>С методом, качеством и контролем.", "subtitle":"От идеи до готовой рукописи: планируйте, пишите и экспортируйте книгу с ИИ, сохраняя полный контроль.", "bonus":"🎁 50 бесплатных кредитов. Карта не нужна.", "start":"Начать с 50 кредитами", "login":"Войти", "b1":"Профессиональная структура", "b1t":"Стройте книгу из ясных, полных и гибких глав и разделов.", "b2":"Направляемое написание", "b2t":"ИИ помогает глава за главой сохранять связность и качество.", "b3":"Word и PDF", "b3t":"Экспортируйте книгу в Word и PDF для редактирования или публикации.", "create":"Что можно создать", "create_sub":"Один инструмент для вашего издательского проекта.", "c1":"Руководства и пособия", "c1t":"Объясняйте, обучайте и делитесь знаниями ясно и профессионально.", "c2":"Кулинарные книги", "c2t":"Собирайте и систематизируйте рецепты со стилем и удобной структурой.", "c3":"Романы, тесты и подготовка", "c3t":"Создавайте увлекательные истории и эффективные учебные материалы."},
+    "العربية": {"presenta":"ذكاء أنطونينو الاصطناعي يقدّم", "language":"اللغة", "headline":"اكتب كتابك.<br>بمنهجية وجودة وتحكم.", "subtitle":"من الفكرة إلى المخطوطة النهائية: نظّم واكتب وصدّر كتابك بالذكاء الاصطناعي مع الحفاظ على التحكم الكامل.", "bonus":"🎁 50 رصيداً مجانياً. لا تحتاج إلى بطاقة.", "start":"ابدأ مجاناً مع 50 رصيداً", "login":"تسجيل الدخول", "b1":"فهرس احترافي", "b1t":"نظّم كتابك بفصول وأقسام واضحة وكاملة ومرنة.", "b2":"كتابة موجهة", "b2t":"يرافقك الذكاء الاصطناعي فصلاً بعد فصل للحفاظ على الاتساق والجودة.", "b3":"Word وPDF", "b3t":"صدّر كتابك بصيغة Word وPDF جاهزاً للمراجعة أو النشر.", "create":"ما الذي يمكنك إنشاؤه", "create_sub":"أداة واحدة تتكيف مع مشروعك التحريري.", "c1":"أدلة وكتيبات", "c1t":"اشرح وعلّم وشارك خبراتك بوضوح واحتراف.", "c2":"كتب وصفات", "c2t":"اجمع وصفاتك ونظّمها بأسلوب وفهرس وتنسيق مرتب.", "c3":"روايات واختبارات", "c3t":"أنشئ قصصاً ممتعة أو مواد دراسية فعالة ومنظمة."},
+    "中文": {"presenta":"Antonino 的 AI 呈现", "language":"语言", "headline":"写下你的书。<br>兼顾方法、品质与掌控。", "subtitle":"从想法到完整书稿：借助 AI 规划、写作和导出，同时始终保持掌控。", "bonus":"🎁 50 个免费积分。无需银行卡。", "start":"免费开始，获赠 50 积分", "login":"登录", "b1":"专业目录", "b1t":"用清晰、完整且灵活的章节和小节组织你的书。", "b2":"引导式写作", "b2t":"AI 逐章协助你保持内容连贯与质量。", "b3":"Word 和 PDF", "b3t":"将图书导出为 Word 或 PDF，方便审阅或出版。", "create":"你可以创作什么", "create_sub":"一款适合你出版项目的工具。", "c1":"指南与手册", "c1t":"以清晰、专业的方式讲解、教学并分享你的专长。", "c2":"食谱书", "c2t":"用良好的风格、目录和版式收集并整理你的食谱。", "c3":"小说、测验与备考", "c3t":"创作引人入胜的故事或有效且结构完善的学习材料。"},
+}
+
 
 class CommercialCreditError(RuntimeError):
     """L'operazione IA non può iniziare perché il saldo è insufficiente."""
@@ -198,6 +212,11 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
+          .ss-language-wrap {max-width:1500px; margin:0 auto -2.3rem; display:flex; justify-content:flex-end}
+          .ss-creator {display:flex; align-items:center; gap:1rem; min-height:145px; padding:1rem 1.15rem; background:#fff; border:1px solid #d9e5f0; border-radius:13px; box-shadow:0 8px 22px rgba(20,77,120,.055)}
+          .ss-creator-icon {flex:0 0 92px; height:105px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.6rem; border-radius:8px 16px 12px 8px; background:linear-gradient(145deg,#164c75,#0b263e); box-shadow:7px 7px 0 rgba(22,137,232,.15)}
+          .ss-creator-icon.recipe {background:linear-gradient(145deg,#9c5b31,#e0a250)} .ss-creator-icon.story {background:linear-gradient(145deg,#0c1d31,#2c4d6f)}
+          .ss-creator-copy {min-width:0}.ss-creator-copy b {display:block; color:#102a43; font-size:1.08rem; margin-bottom:.48rem}.ss-creator-copy p {margin:0; color:#486581; line-height:1.42; font-size:.94rem}.ss-creator-arrow {margin-left:auto; color:#1689e8; font-size:1.6rem}
           .ss-proof {margin:1.25rem .2rem 1.2rem .15rem; padding:1.35rem; border-radius:18px;
             background:linear-gradient(135deg,#071728 0%,#0b2642 58%,#133c62 100%); color:#e0f2fe;
             box-shadow:0 22px 46px rgba(15,23,42,.27); border:1px solid rgba(125,211,252,.16)}
@@ -233,7 +252,7 @@ def _landing_page() -> None:
           .ss-benefits {max-width:1160px; margin:.7rem auto 2.25rem; padding:.55rem .25rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 10px 26px rgba(20,77,120,.07)}
           .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0}
           .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
-          @media (max-width:760px) {.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -253,64 +272,62 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
 
+    language_spacer, language_picker = st.columns([0.82, 0.18])
+    with language_picker:
+        home_language = st.selectbox(
+            "🌐",
+            list(HOME_COPY.keys()),
+            key="commercial_home_language",
+            label_visibility="collapsed",
+        )
+    H = HOME_COPY[home_language]
+
     hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
     with hero_copy:
         st.markdown(
             f"""<div class='ss-hero-copy'>
-              <div class='ss-kicker'>AI di Antonino presenta</div>
+              <div class='ss-kicker'>{H['presenta']}</div>
               <div class='ss-version'>Versione app: {COMMERCIAL_VERSION}</div>
-              <h1 class='ss-title'>Scrittore Site</h1>
+              <h1 class='ss-title' style='color:#cf3345 !important'>Scrittore Site</h1>
               <div class='ss-title-line'></div>
-              <div class='ss-headline'>Scrivi il tuo libro.<br>Con metodo, qualità e controllo.</div>
-              <p class='ss-subtitle'>Dall’idea al manoscritto finito: struttura, scrivi ed esporta il tuo libro con l’AI, mantenendo sempre il controllo.</p>
-              <div class='ss-bonus'>🎁 50 crediti gratuiti. Nessuna carta richiesta.</div>
+              <div class='ss-headline'>{H['headline']}</div>
+              <p class='ss-subtitle'>{H['subtitle']}</p>
+              <div class='ss-bonus'>{H['bonus']}</div>
             </div>""",
             unsafe_allow_html=True,
         )
         cta_a, cta_b = st.columns([1.45, 0.85])
         with cta_a:
-            if st.button("Inizia gratis con 50 crediti", type="primary", use_container_width=True, key="landing_signup"):
+            if st.button(H['start'], type="primary", use_container_width=True, key="landing_signup"):
                 st.session_state["commercial_show_auth"] = True
                 st.session_state["commercial_auth_hint"] = "signup"
                 st.rerun()
         with cta_b:
-            if st.button("Accedi", use_container_width=True, key="landing_login"):
+            if st.button(H['login'], use_container_width=True, key="landing_login"):
                 st.session_state["commercial_show_auth"] = True
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
     with hero_visual:
-        st.markdown(
-            """<div class='ss-proof'>
-              <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Il mio libro <span class='ss-proof-label'>Salvato</span></div>
-              <div class='ss-proof-grid'>
-                <div class='ss-proof-book'>
-                  <div class='ss-book-page ss-book-left'><small>CAPITOLO 1</small><b>L’inizio di tutto</b></div>
-                  <div class='ss-book-page ss-book-right'></div>
-                </div>
-                <div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>☷ Struttura</span><span class='ss-proof-pill'>✎ Scrittura</span><span class='ss-proof-action'>Nuovo capitolo</span></div><div class='ss-proof-index'><b>INDICE</b><span class='active'>1&nbsp;&nbsp; L’inizio di tutto</span><span>2&nbsp;&nbsp; La decisione</span><span>3&nbsp;&nbsp; Il viaggio</span><span>4&nbsp;&nbsp; Gli ostacoli</span></div><small>CAPITOLO 1</small><h3>L’inizio di tutto</h3><div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div><div class='ss-proof-progress'>PROGRESSO DI SCRITTURA <div><span></span></div> 72%</div></div>
-              </div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
+        st.image("home-editor-preview.png", use_container_width=True)
 
     st.markdown(
-        """<div class='ss-benefits'>
-          <div class='ss-benefit'><b>▤ &nbsp;Indice professionale</b>Struttura il tuo libro con capitoli e sottocapitoli chiari, completi e flessibili.</div>
-          <div class='ss-benefit'><b>✎ &nbsp;Scrittura guidata</b>L’AI ti affianca capitolo dopo capitolo, mantenendo coerenza e qualità.</div>
-          <div class='ss-benefit'><b>⇩ &nbsp;Word e PDF</b>Esporta il tuo libro in Word e PDF, pronto per la revisione o la pubblicazione.</div>
+        f"""<div class='ss-benefits'>
+          <div class='ss-benefit'><b>▤ &nbsp;{H['b1']}</b>{H['b1t']}</div>
+          <div class='ss-benefit'><b>✎ &nbsp;{H['b2']}</b>{H['b2t']}</div>
+          <div class='ss-benefit'><b>⇩ &nbsp;{H['b3']}</b>{H['b3t']}</div>
         </div>""",
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='ss-section'><h2>Cosa puoi creare</h2><p class='ss-muted'>Un unico strumento, adattato al tuo progetto editoriale.</p></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='ss-section'><h2>{H['create']}</h2><p class='ss-muted'>{H['create_sub']}</p></div>", unsafe_allow_html=True)
     creator_cards = st.columns(3)
-    for column, title, text in (
-        (creator_cards[0], "Manuali e guide", "Manuali pratici, tecnici e divulgativi con procedure, esempi, checklist e approfondimenti."),
-        (creator_cards[1], "Ricettari e contenuti pratici", "Ricette, esempi e materiali operativi organizzati in modo leggibile e coerente."),
-        (creator_cards[2], "Narrativa, quiz e test prep", "Romanzi, libri di preparazione agli esami, quiz commentati e progetti multilingue."),
+    for column, icon_class, icon, title, text in (
+        (creator_cards[0], "", "⚙", H['c1'], H['c1t']),
+        (creator_cards[1], "recipe", "♨", H['c2'], H['c2t']),
+        (creator_cards[2], "story", "✦", H['c3'], H['c3t']),
     ):
         with column:
-            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='ss-creator'><div class='ss-creator-icon {icon_class}'>{icon}</div><div class='ss-creator-copy'><b>{title}</b><p>{text}</p></div><div class='ss-creator-arrow'>→</div></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Come funziona Scrittore Site</h2><p class='ss-muted'>Segui il percorso e mantieni il controllo su ogni scelta del tuo libro.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
