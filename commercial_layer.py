@@ -171,33 +171,32 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
-          .stApp, [data-testid="stAppViewContainer"] {background:linear-gradient(145deg,#f5fbff 0%,#eaf6ff 52%,#f4faff 100%) !important;
-            color:#172b4d}
-          .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:2.5rem 2rem;
-            border-radius:28px; background:radial-gradient(circle at 12% 15%,#fbcfe8 0%,transparent 26%),
-            radial-gradient(circle at 88% 88%,#bae6fd 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#e0f2fe 100%);
-            color:#12315c; text-align:center; border:1px solid #bae6fd; box-shadow:0 16px 38px rgba(14,116,144,.16)}
-          .ss-hero h1 {font-size:clamp(4.3rem,9.2vw,7.2rem); margin:.18rem -.45rem .7rem; color:#0c4a6e; line-height:.94; letter-spacing:-.07em}
-          .ss-hero p {font-size:1.2rem; max-width:700px; margin:0 auto; color:#173a63; font-weight:650}
-          .ss-kicker {letter-spacing:.15em; text-transform:uppercase; font-weight:850; font-size:1rem; color:#0e7490}
-          .ss-bonus {max-width:850px; margin:1rem auto 1.15rem; padding:.95rem 1.3rem; border-radius:999px;
-            text-align:center; font-size:1.35rem; font-weight:850; color:#0c4a6e; background:#cffafe;
-            border:2px solid #67e8f9; box-shadow:0 5px 16px rgba(8,145,178,.14)}
+          .stApp, [data-testid="stAppViewContainer"] {background:#f5f9fd !important; color:#102a43}
+          .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:3.1rem 2.2rem;
+            border-radius:26px; background:radial-gradient(circle at 88% 12%,rgba(22,137,232,.28) 0%,transparent 31%),
+            linear-gradient(135deg,#102a43 0%,#173f68 58%,#1269ae 150%);
+            color:#fff; text-align:center; border:1px solid rgba(125,211,252,.28); box-shadow:0 18px 44px rgba(16,42,67,.23)}
+          .ss-hero h1 {font-size:clamp(4rem,7.2vw,6rem); margin:.18rem -.2rem .7rem; color:#fff; line-height:.98; letter-spacing:-.06em}
+          .ss-hero p {font-size:1.25rem; max-width:720px; margin:0 auto; color:#e0f2fe; font-weight:600}
+          .ss-kicker {letter-spacing:.15em; text-transform:uppercase; font-weight:850; font-size:.9rem; color:#7dd3fc}
+          .ss-bonus {max-width:690px; margin:1rem auto 1.15rem; padding:.78rem 1.05rem; border-radius:12px;
+            text-align:center; font-size:1.08rem; font-weight:850; color:#9a3412; background:#ffedd5;
+            border:1px solid #fdba74; box-shadow:0 5px 16px rgba(249,115,22,.10)}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
-          .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#25104b}
-          .ss-card {background:linear-gradient(145deg,#fff 0%,#faf7ff 100%); border:1px solid #e9d5ff;
-            border-radius:16px; padding:1rem .9rem; min-height:112px; box-shadow:0 5px 14px rgba(88,28,135,.08)}
-          .ss-card h3 {margin:0 0 .34rem; color:#6d28d9; font-size:1rem}
+          .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
+          .ss-card {background:#fff; border:1px solid #d9e5f0;
+            border-radius:13px; padding:1.05rem .95rem; min-height:112px; box-shadow:none}
+          .ss-card h3 {margin:0 0 .34rem; color:#1269ae; font-size:1rem}
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
-          .ss-price {font-size:1.35rem; font-weight:800; color:#be185d; margin:.15rem 0}
-          .ss-muted {color:#63506e; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
-          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:1.15rem 1.05rem;
+          .ss-price {font-size:1.35rem; font-weight:800; color:#1269ae; margin:.15rem 0}
+          .ss-muted {color:#486581; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
+          .ss-step {background:#fff; border:1px solid #d9e5f0; border-radius:13px; padding:1.15rem 1.05rem;
             min-height:150px; text-align:left; font-size:1rem; line-height:1.48}
-          .ss-step strong {display:block; color:#c2410c; margin-bottom:.3rem; font-size:1.18rem}
-          .ss-feature {background:#fff; border:1px solid #ddd6fe; border-radius:15px; padding:1rem;
-            min-height:120px; box-shadow:0 4px 12px rgba(76,29,149,.07)}
-          .ss-feature strong {display:block; color:#5b21b6; font-size:1rem; margin-bottom:.3rem}
-          .ss-feature p {margin:0; color:#41324f; font-size:.9rem; line-height:1.38}
+          .ss-step strong {display:block; color:#1269ae; margin-bottom:.3rem; font-size:1.18rem}
+          .ss-feature {background:transparent; border:0; border-top:1px solid #cbd9e6; border-radius:0; padding:1rem .3rem;
+            min-height:100px; box-shadow:none}
+          .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
+          .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
           .ss-proof {max-width:980px; margin:1.35rem auto; padding:1.15rem; border-radius:20px;
             background:linear-gradient(135deg,#111827,#243b6b); color:#e0f2fe;
             box-shadow:0 14px 30px rgba(15,23,42,.22)}
@@ -213,31 +212,32 @@ def _landing_page() -> None:
           .ss-proof-index .active {margin:.35rem -.35rem; padding:.42rem .35rem; background:rgba(45,212,191,.18); border-left:3px solid #5eead4; border-radius:5px; color:#fff}
           .ss-proof-toolbar {display:flex; gap:.42rem; align-items:center; margin-bottom:.8rem; flex-wrap:wrap}
           .ss-proof-pill {font-size:.72rem; padding:.28rem .55rem; border-radius:99px; background:rgba(125,211,252,.16); color:#bae6fd}
-          .ss-proof-action {margin-left:auto; background:#db2777; color:#fff; border-radius:7px; padding:.38rem .62rem; font-size:.74rem; font-weight:800}
+          .ss-proof-action {margin-left:auto; background:#f97316; color:#fff; border-radius:7px; padding:.38rem .62rem; font-size:.74rem; font-weight:800}
           .ss-proof-page small {color:#7dd3fc; font-weight:800}.ss-proof-page h3 {color:#fff; margin:.38rem 0 .5rem}
           .ss-proof-page p {margin:0; color:#dbeafe; font-size:.9rem; line-height:1.55}
           .ss-proof-lines {margin:.85rem 0}.ss-proof-lines i {display:block; height:7px; margin:.42rem 0; border-radius:9px; background:linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,.05))}
           .ss-proof-lines i:nth-child(2) {width:91%}.ss-proof-lines i:nth-child(3) {width:77%}.ss-proof-lines i:nth-child(4) {width:84%}
           .ss-proof-progress {display:flex; align-items:center; gap:.65rem; color:#bbf7d0; font-size:.78rem; font-weight:700}
           .ss-proof-progress div {height:8px; border-radius:99px; background:rgba(255,255,255,.18); flex:1; overflow:hidden}.ss-proof-progress div span {display:block; width:64%; height:100%; background:linear-gradient(90deg,#2dd4bf,#60a5fa); border-radius:99px}
-          .ss-credit-note {max-width:850px; margin:.7rem auto 1.3rem; padding:1rem 1.15rem; border-radius:14px;
-            text-align:center; background:#ecfeff; color:#155e75; border:1px solid #a5f3fc; font-weight:650}
+          .ss-credit-note {max-width:850px; margin:.7rem auto 1.3rem; padding:1rem 1.15rem; border-radius:13px;
+            text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
-            border-radius:15px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-weight:700}
+            border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
           @media (max-width:760px) {.ss-hero h1 {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}}
-          [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
-            font-weight:800; border:2px solid #6d28d9; background:linear-gradient(100deg,#6d28d9,#db2777) !important;
-            border-color:#6d28d9 !important; color:#fff !important}
+          [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
+            font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
+            border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
+          [data-testid="stMain"] .stButton button[kind="secondary"] {background:#fff !important; color:#1269ae !important; border-color:#8ec5ee !important; box-shadow:none}
           /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
           [data-testid="stHeader"] {background:transparent !important}
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
           .stAppDeployButton, #MainMenu, footer, button[title="Manage app"], a[title="Manage app"],
           button[aria-label="Manage app"], a[aria-label="Manage app"] {display:none !important}
           [data-testid="stExpander"] {max-width:860px; margin:.5rem auto; background:#fff !important;
-            border:1px solid #ddd6fe !important; border-radius:12px !important; overflow:hidden}
+            border:1px solid #d9e5f0 !important; border-radius:12px !important; overflow:hidden}
           [data-testid="stExpander"] details, [data-testid="stExpander"] summary,
-          [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#fff !important; color:#25104b !important}
-          [data-testid="stExpander"] summary:hover {background:#faf5ff !important}
+          [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#fff !important; color:#102a43 !important}
+          [data-testid="stExpander"] summary:hover {background:#f5f9fd !important}
         </style>
         <div class="ss-hero">
           <div class="ss-kicker">AI di Antonino presenta</div>
