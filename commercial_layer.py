@@ -313,6 +313,7 @@ def _landing_page() -> None:
         preview_image = next(
             (candidate for candidate in (
                 base_dir / "home-editor-preview.png",
+                base_dir / "download.png",
                 base_dir / "assets" / "home-editor-preview.png",
             ) if candidate.is_file()),
             None,
