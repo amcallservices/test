@@ -198,8 +198,18 @@ def _supabase_signup(email: str, password: str) -> None:
         timeout=20,
     )
     if not response.ok:
-        # Non attribuire genericamente l'errore alla password: può trattarsi
-        # anche di un indirizzo già registrato o di un limite temporaneo email.
+        # Messaggi utili senza rivelare a terzi se una mail è già registrata.
+        try:
+            detail = json.dumps(response.json()).lower()
+        except ValueError:
+            detail = response.text.lower()
+        if response.status_code == 429 or "rate limit" in detail:
+            raise RuntimeError(
+                "Invio email temporaneamente bloccato da Supabase: attendi circa "
+                "un'ora prima di riprovare. Per gli utenti reali configura un SMTP personale."
+            )
+        if "weak_password" in detail or "weak password" in detail:
+            raise RuntimeError("La password non rispetta i requisiti minimi di Supabase. Usa almeno 6 caratteri.")
         raise RuntimeError(
             "Non è stato possibile creare l'account. Se questa email è già "
             "registrata, usa Accedi oppure Password dimenticata; altrimenti "
