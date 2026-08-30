@@ -172,16 +172,14 @@ def _landing_page() -> None:
         """
         <style>
           .stApp, [data-testid="stAppViewContainer"] {background:#f5f9fd !important; color:#102a43}
-          .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:3.1rem 2.2rem;
-            border-radius:26px; background:radial-gradient(circle at 88% 12%,rgba(22,137,232,.28) 0%,transparent 31%),
-            linear-gradient(135deg,#102a43 0%,#173f68 58%,#1269ae 150%);
-            color:#fff; text-align:center; border:1px solid rgba(125,211,252,.28); box-shadow:0 18px 44px rgba(16,42,67,.23)}
-          .ss-hero h1 {font-size:clamp(4rem,7.2vw,6rem); margin:.18rem -.2rem .7rem; color:#fff; line-height:.98; letter-spacing:-.06em}
-          .ss-hero p {font-size:1.25rem; max-width:720px; margin:0 auto; color:#e0f2fe; font-weight:600}
-          .ss-kicker {letter-spacing:.15em; text-transform:uppercase; font-weight:850; font-size:.9rem; color:#7dd3fc}
-          .ss-bonus {max-width:690px; margin:1rem auto 1.15rem; padding:.78rem 1.05rem; border-radius:12px;
-            text-align:center; font-size:1.08rem; font-weight:850; color:#9a3412; background:#ffedd5;
-            border:1px solid #fdba74; box-shadow:0 5px 16px rgba(249,115,22,.10)}
+          .ss-hero-copy {padding:3.1rem .6rem 1.2rem 1.1rem; color:#102a43}
+          .ss-kicker {font-weight:800; font-size:1rem; color:#1689e8; margin-bottom:.9rem}
+          .ss-title {font-family:Georgia,serif; font-size:clamp(4rem,6.6vw,6.6rem); margin:0; color:#102a43; line-height:.95; letter-spacing:-.065em}
+          .ss-title-line {width:48px; height:4px; background:#1689e8; border-radius:99px; margin:1.25rem 0}
+          .ss-headline {font-family:Georgia,serif; font-size:clamp(2rem,3.2vw,3.25rem); font-weight:800; line-height:1.13; color:#102a43; margin:0 0 1.1rem}
+          .ss-subtitle {font-size:1.1rem; max-width:530px; margin:0; color:#486581; line-height:1.52}
+          .ss-bonus {display:inline-block; margin:1.15rem 0 .7rem; padding:.55rem .78rem; border-radius:9px;
+            font-size:.91rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
@@ -197,19 +195,22 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
-          .ss-proof {max-width:980px; margin:1.35rem auto; padding:1.15rem; border-radius:20px;
-            background:linear-gradient(135deg,#111827,#243b6b); color:#e0f2fe;
+          .ss-proof {margin:1.2rem .25rem 1.2rem 0; padding:1.15rem; border-radius:20px;
+            background:linear-gradient(135deg,#071728,#132f50); color:#e0f2fe;
             box-shadow:0 14px 30px rgba(15,23,42,.22)}
           .ss-proof-top {display:flex; gap:.45rem; align-items:center; padding:0 0 .8rem;
             border-bottom:1px solid rgba(255,255,255,.16); font-size:.9rem; color:#bae6fd}
           .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
           .ss-dot:nth-child(2) {background:#fbbf24}.ss-dot:nth-child(3) {background:#4ade80}
           .ss-proof-label {margin-left:auto; font-size:.72rem; border:1px solid rgba(125,211,252,.45); padding:.2rem .48rem; border-radius:99px}
-          .ss-proof-grid {display:grid; grid-template-columns:29% 1fr; gap:1rem; padding-top:1rem; text-align:left}
+          .ss-proof-grid {display:grid; grid-template-columns:42% 1fr; gap:1rem; padding-top:1rem; text-align:left}
           .ss-proof-index,.ss-proof-page {border-radius:13px; padding:1rem; background:rgba(255,255,255,.08)}
           .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
           .ss-proof-index span {display:block; padding:.32rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
           .ss-proof-index .active {margin:.35rem -.35rem; padding:.42rem .35rem; background:rgba(45,212,191,.18); border-left:3px solid #5eead4; border-radius:5px; color:#fff}
+          .ss-proof-book {position:relative; min-height:370px; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 25% 26%,#faf7ef 0%,#ded6c7 47%,#172d43 48%); box-shadow:inset 0 0 35px rgba(0,0,0,.28)}
+          .ss-proof-book:before {content:'CAPITOLO 1\\A L’inizio di tutto'; white-space:pre; position:absolute; left:18%; top:23%; color:#262626; font-family:Georgia,serif; font-size:1.15rem; line-height:2.1; text-align:center; transform:rotate(-3deg)}
+          .ss-proof-book:after {content:''; position:absolute; width:3px; height:83%; left:50%; top:8%; background:rgba(15,23,42,.28); box-shadow:0 0 18px rgba(0,0,0,.45)}
           .ss-proof-toolbar {display:flex; gap:.42rem; align-items:center; margin-bottom:.8rem; flex-wrap:wrap}
           .ss-proof-pill {font-size:.72rem; padding:.28rem .55rem; border-radius:99px; background:rgba(125,211,252,.16); color:#bae6fd}
           .ss-proof-action {margin-left:auto; background:#f97316; color:#fff; border-radius:7px; padding:.38rem .62rem; font-size:.74rem; font-weight:800}
@@ -223,7 +224,10 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          @media (max-width:760px) {.ss-hero h1 {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}}
+          .ss-benefits {max-width:1080px; margin:.4rem auto 1.6rem; padding:.45rem .15rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr)}
+          .ss-benefit {min-height:86px; padding:.8rem 1rem; color:#486581; font-size:.9rem; border-right:1px solid #d9e5f0}
+          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.02rem; margin-bottom:.25rem}
+          @media (max-width:760px) {.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -239,39 +243,51 @@ def _landing_page() -> None:
           [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#fff !important; color:#102a43 !important}
           [data-testid="stExpander"] summary:hover {background:#f5f9fd !important}
         </style>
-        <div class="ss-hero">
-          <div class="ss-kicker">AI di Antonino presenta</div>
-          <h1>Scrittore Site</h1>
-          <p>Crea libri strutturati con l'AI, mantieni il controllo e scaricali in Word o PDF.</p>
-        </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        "<div class='ss-bonus'>🎁 Registrati e avrai 50 crediti gratuiti per provarlo. Nessuna carta richiesta.</div>",
-        unsafe_allow_html=True,
-    )
+    hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
+    with hero_copy:
+        st.markdown(
+            """<div class='ss-hero-copy'>
+              <div class='ss-kicker'>AI di Antonino presenta</div>
+              <h1 class='ss-title'>Scrittore Site</h1>
+              <div class='ss-title-line'></div>
+              <div class='ss-headline'>Scrivi il tuo libro.<br>Con metodo, qualità e controllo.</div>
+              <p class='ss-subtitle'>Dall’idea al manoscritto finito: struttura, scrivi ed esporta il tuo libro con l’AI, mantenendo sempre il controllo.</p>
+              <div class='ss-bonus'>🎁 50 crediti gratuiti. Nessuna carta richiesta.</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+        cta_a, cta_b = st.columns([1.45, 0.85])
+        with cta_a:
+            if st.button("Inizia gratis con 50 crediti", type="primary", use_container_width=True, key="landing_signup"):
+                st.session_state["commercial_show_auth"] = True
+                st.session_state["commercial_auth_hint"] = "signup"
+                st.rerun()
+        with cta_b:
+            if st.button("Accedi", use_container_width=True, key="landing_login"):
+                st.session_state["commercial_show_auth"] = True
+                st.session_state["commercial_auth_hint"] = "login"
+                st.rerun()
+    with hero_visual:
+        st.markdown(
+            """<div class='ss-proof'>
+              <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Il mio libro <span class='ss-proof-label'>Salvato</span></div>
+              <div class='ss-proof-grid'>
+                <div class='ss-proof-book'></div>
+                <div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>☷ Struttura</span><span class='ss-proof-pill'>✎ Scrittura</span><span class='ss-proof-action'>Nuovo capitolo</span></div><div class='ss-proof-index'><b>INDICE</b><span class='active'>1&nbsp;&nbsp; L’inizio di tutto</span><span>2&nbsp;&nbsp; La decisione</span><span>3&nbsp;&nbsp; Il viaggio</span><span>4&nbsp;&nbsp; Gli ostacoli</span></div><small>CAPITOLO 1</small><h3>L’inizio di tutto</h3><div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div><div class='ss-proof-progress'>PROGRESSO DI SCRITTURA <div><span></span></div> 72%</div></div>
+              </div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
-    left, right = st.columns(2)
-    with left:
-        if st.button("🎁 Crea il tuo account gratuito", type="primary", use_container_width=True, key="landing_signup"):
-            st.session_state["commercial_show_auth"] = True
-            st.session_state["commercial_auth_hint"] = "signup"
-            st.rerun()
-    with right:
-        if st.button("Accedi al tuo spazio", use_container_width=True, key="landing_login"):
-            st.session_state["commercial_show_auth"] = True
-            st.session_state["commercial_auth_hint"] = "login"
-            st.rerun()
-
     st.markdown(
-        """<div class='ss-proof'>
-          <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Area di scrittura <span class='ss-proof-label'>Esempio illustrativo</span></div>
-          <div class='ss-proof-grid'>
-            <div class='ss-proof-index'><b>IL TUO PROGETTO</b><span>Parte I · Fondamenti</span><span>Capitolo 1 · Le basi</span><span>1.1 Concetti chiave</span><span class='active'>1.2 Esempio pratico</span><span>Parte II · Applicazione</span></div>
-            <div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>Scrittura e Quiz</span><span class='ss-proof-pill'>Italiano</span><span class='ss-proof-action'>Rigenera con AI</span></div><small>CAPITOLO 1 · SEZIONE 1.2</small><h3>Dal progetto al manoscritto</h3><p>Genera una sezione, correggila con le tue indicazioni, aggiungi esempi e controlla la coerenza dell'intero libro prima di esportarlo.</p><div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div><div class='ss-proof-progress'>Stesura del libro <div><span></span></div> 64%</div></div>
-          </div>
+        """<div class='ss-benefits'>
+          <div class='ss-benefit'><b>Indice professionale</b>Struttura il tuo libro con capitoli e sottocapitoli chiari e flessibili.</div>
+          <div class='ss-benefit'><b>Scrittura guidata</b>L’AI ti affianca capitolo dopo capitolo per mantenere coerenza e qualità.</div>
+          <div class='ss-benefit'><b>Word e PDF</b>Esporta il tuo libro in Word e PDF, pronto per la revisione o la pubblicazione.</div>
         </div>""",
         unsafe_allow_html=True,
     )
