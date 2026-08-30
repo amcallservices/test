@@ -260,6 +260,13 @@ def _render_password_recovery() -> bool:
     if not is_recovery:
         return False
 
+    # Il token_hash viene aggiunto al link dell'email di recupero. A differenza
+    # dell'hash della URL, Streamlit può leggerlo in modo affidabile.
+    try:
+        recovery_token_hash = st.query_params.get("token_hash", "")
+    except Exception:
+        recovery_token_hash = ""
+
     supabase_url = _secret("SUPABASE_URL").rstrip("/")
     anon_key = _secret("SUPABASE_ANON_KEY")
     app_url = _secret("APP_BASE_URL").rstrip("/")
@@ -281,18 +288,35 @@ def _render_password_recovery() -> bool:
         </div>
         <script>
           const message = document.getElementById('recovery-message');
+          const tokenHash = {json.dumps(recovery_token_hash)};
           let token = '';
-          try {{ token = new URLSearchParams(window.parent.location.hash.slice(1)).get('access_token') || ''; }} catch (error) {{}}
-          if (!token) {{
+          async function loadRecoverySession() {{
+            if (tokenHash) {{
+              const verification = await fetch({json.dumps(supabase_url + '/auth/v1/verify')}, {{
+                method: 'POST',
+                headers: {{'apikey': {json.dumps(anon_key)}, 'Content-Type': 'application/json'}},
+                body: JSON.stringify({{token_hash: tokenHash, type: 'recovery'}})
+              }});
+              if (!verification.ok) throw new Error('invalid recovery token');
+              const data = await verification.json();
+              return data.access_token || '';
+            }}
+            try {{ return new URLSearchParams(window.parent.location.hash.slice(1)).get('access_token') || ''; }} catch (error) {{ return ''; }}
+          }}
+          loadRecoverySession().then((accessToken) => {{
+            token = accessToken;
+            if (!token) throw new Error('missing recovery token');
+          }}).catch(() => {{
             message.textContent = 'Link non valido o scaduto. Torna alla pagina di accesso e richiedine uno nuovo.';
             message.style.color = '#b42318';
             document.getElementById('save-password').disabled = true;
-          }}
+          }});
           document.getElementById('save-password').addEventListener('click', async () => {{
             const password = document.getElementById('new-password').value;
             const repeat = document.getElementById('repeat-password').value;
             if (password.length < 6) {{ message.textContent = 'La password deve contenere almeno 6 caratteri.'; message.style.color = '#b42318'; return; }}
             if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
+            if (!token) {{ message.textContent = 'Preparazione del link in corso: attendi un istante e riprova.'; message.style.color = '#174a73'; return; }}
             message.textContent = 'Salvataggio in corso…'; message.style.color = '#174a73';
             try {{
               const response = await fetch({json.dumps(supabase_url + '/auth/v1/user')}, {{
