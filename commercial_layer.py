@@ -14,7 +14,10 @@ COMMERCIAL_VERSION = "beta 3a"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
+# Griglia commerciale: un libro standard fino a 80 sezioni usa normalmente
+# 95 crediti (80 sezioni, indice, voto, controllo finale e metadati).
 AI_REQUEST_CREDITS = 1
+STANDARD_BOOK_CREDITS = 95
 # Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
 # ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
@@ -51,6 +54,20 @@ PACKAGES = {
         "currency": "eur",
     },
 }
+
+# Stime commerciali: un libro standard considera fino a 70 sezioni.
+PACKAGE_BOOK_ESTIMATES = {
+    "prova_7": "Fino a 7 sezioni per provare il servizio",
+    "base_100": "Fino a 1 libro standard + 5 crediti extra",
+    "creator_260": "Fino a 2 libri standard + 70 crediti extra",
+    "studio_530": "Fino a 5 libri standard + 55 crediti extra",
+    "professionale_1050": "Fino a 11 libri standard + 5 crediti extra",
+}
+PACKAGE_ESTIMATE_NOTE = (
+    "Stima indicativa: un libro standard considera fino a 80 sezioni. "
+    "Il consumo effettivo dipende da lunghezza, rigenerazioni, immagini, "
+    "verifiche online e funzioni avanzate utilizzate."
+)
 
 # Testi della pagina pubblica nelle stesse nove lingue offerte dall'editor.
 # Il cambio lingua qui modifica solo la home: non altera un eventuale libro dell'utente.
@@ -398,25 +415,29 @@ def _landing_page() -> None:
                 st.markdown(f"<div class='ss-feature'><strong>{title}</strong><p>{text}</p></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
-    st.markdown("<div class='ss-credit-note'>Usi i crediti solo quando chiedi all'AI di generare o migliorare contenuti. Puoi leggere, modificare, controllare ed esportare il tuo lavoro quando vuoi.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-credit-note'>Un libro standard fino a 80 sezioni usa normalmente 95 crediti: 80 sezioni, indice, voto dell’indice, controllo coerenza e metadati. Le funzioni avanzate consumano crediti aggiuntivi solo dopo il preventivo.</div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
-    for column, package in zip(price_columns, PACKAGES.values()):
+    for column, (package_key, package) in zip(price_columns, PACKAGES.items()):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
         with column:
             st.markdown(
                 f"<div class='ss-card'><h3>{package['name'].replace('Pacchetto ', '')}</h3>"
-                f"<div class='ss-price'>{price}</div><p>{package['credits']} crediti</p></div>",
+                f"<div class='ss-price'>{price}</div><p>{package['credits']} crediti</p>"
+                f"<p><strong>{PACKAGE_BOOK_ESTIMATES[package_key]}</strong></p></div>",
                 unsafe_allow_html=True,
             )
+    st.caption(PACKAGE_ESTIMATE_NOTE)
 
     st.markdown("<div class='ss-section'><h2>Domande frequenti</h2></div>", unsafe_allow_html=True)
     with st.expander("Posso iniziare senza esperienza editoriale?"):
         st.write("Sì. Scrittore Site guida la preparazione del brief e mantiene ordinati i passaggi di lavoro.")
     with st.expander("I crediti servono per cosa?"):
-        st.write("I crediti permettono di usare le funzioni IA di progettazione, scrittura, revisione e miglioramento del libro.")
+        st.write("I crediti permettono di usare le funzioni IA di progettazione, scrittura, revisione e miglioramento del libro. Ogni azione mostra il proprio preventivo prima di iniziare.")
+    with st.expander("Quanti libri posso creare con un pacchetto?"):
+        st.write("Le stime sui pacchetti fanno riferimento a un libro standard fino a 80 sezioni. Il consumo reale dipende dalla lunghezza dei testi e dall’uso di rigenerazioni, immagini, ricette, simulazioni Test Prep e verifiche online.")
     with st.expander("Devo scrivere tutto il libro in una sola volta?"):
         st.write("No. Puoi generare e controllare una sezione alla volta oppure usare la scrittura completa. In ogni momento puoi fermarti e rivedere ciò che è stato prodotto.")
     with st.expander("Posso modificare indice e contenuti generati?"):
