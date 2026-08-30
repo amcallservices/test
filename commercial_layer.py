@@ -9,7 +9,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "commercial-01"
+COMMERCIAL_VERSION = "commercial-02"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -174,6 +174,8 @@ def _landing_page() -> None:
           .stApp, [data-testid="stAppViewContainer"] {background:#f5f9fd !important; color:#102a43}
           .ss-hero-copy {padding:3.1rem .6rem 1.2rem 1.1rem; color:#102a43}
           .ss-kicker {font-weight:800; font-size:1rem; color:#1689e8; margin-bottom:.9rem}
+          .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
+            background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
           .ss-title {font-family:Georgia,serif; font-size:clamp(4rem,6.6vw,6.6rem); margin:0; color:#102a43; line-height:.95; letter-spacing:-.065em}
           .ss-title-line {width:48px; height:4px; background:#1689e8; border-radius:99px; margin:1.25rem 0}
           .ss-headline {font-family:Georgia,serif; font-size:clamp(2rem,3.2vw,3.25rem); font-weight:800; line-height:1.13; color:#102a43; margin:0 0 1.1rem}
@@ -250,8 +252,9 @@ def _landing_page() -> None:
     hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
     with hero_copy:
         st.markdown(
-            """<div class='ss-hero-copy'>
+            f"""<div class='ss-hero-copy'>
               <div class='ss-kicker'>AI di Antonino presenta</div>
+              <div class='ss-version'>Versione app: {COMMERCIAL_VERSION}</div>
               <h1 class='ss-title'>Scrittore Site</h1>
               <div class='ss-title-line'></div>
               <div class='ss-headline'>Scrivi il tuo libro.<br>Con metodo, qualità e controllo.</div>
