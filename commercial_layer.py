@@ -12,7 +12,7 @@ import streamlit as st
 COMMERCIAL_VERSION = "commercial-01"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
-DEMO_INITIAL_CREDITS = 120
+DEMO_INITIAL_CREDITS = 50
 AI_REQUEST_CREDITS = 1
 # Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
 # ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
@@ -198,24 +198,33 @@ def _landing_page() -> None:
             min-height:120px; box-shadow:0 4px 12px rgba(76,29,149,.07)}
           .ss-feature strong {display:block; color:#5b21b6; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#41324f; font-size:.9rem; line-height:1.38}
-          .ss-proof {max-width:930px; margin:1.35rem auto; padding:1.2rem; border-radius:20px;
-            background:linear-gradient(135deg,#0f172a,#243b6b); color:#e0f2fe;
+          .ss-proof {max-width:980px; margin:1.35rem auto; padding:1.15rem; border-radius:20px;
+            background:linear-gradient(135deg,#111827,#243b6b); color:#e0f2fe;
             box-shadow:0 14px 30px rgba(15,23,42,.22)}
           .ss-proof-top {display:flex; gap:.45rem; align-items:center; padding:0 0 .8rem;
             border-bottom:1px solid rgba(255,255,255,.16); font-size:.9rem; color:#bae6fd}
           .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
           .ss-dot:nth-child(2) {background:#fbbf24}.ss-dot:nth-child(3) {background:#4ade80}
-          .ss-proof-grid {display:grid; grid-template-columns:36% 1fr; gap:1rem; padding-top:1rem; text-align:left}
+          .ss-proof-label {margin-left:auto; font-size:.72rem; border:1px solid rgba(125,211,252,.45); padding:.2rem .48rem; border-radius:99px}
+          .ss-proof-grid {display:grid; grid-template-columns:29% 1fr; gap:1rem; padding-top:1rem; text-align:left}
           .ss-proof-index,.ss-proof-page {border-radius:13px; padding:1rem; background:rgba(255,255,255,.08)}
           .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
-          .ss-proof-index span {display:block; padding:.28rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
+          .ss-proof-index span {display:block; padding:.32rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
+          .ss-proof-index .active {margin:.35rem -.35rem; padding:.42rem .35rem; background:rgba(45,212,191,.18); border-left:3px solid #5eead4; border-radius:5px; color:#fff}
+          .ss-proof-toolbar {display:flex; gap:.42rem; align-items:center; margin-bottom:.8rem; flex-wrap:wrap}
+          .ss-proof-pill {font-size:.72rem; padding:.28rem .55rem; border-radius:99px; background:rgba(125,211,252,.16); color:#bae6fd}
+          .ss-proof-action {margin-left:auto; background:#db2777; color:#fff; border-radius:7px; padding:.38rem .62rem; font-size:.74rem; font-weight:800}
           .ss-proof-page small {color:#7dd3fc; font-weight:800}.ss-proof-page h3 {color:#fff; margin:.38rem 0 .5rem}
           .ss-proof-page p {margin:0; color:#dbeafe; font-size:.9rem; line-height:1.55}
+          .ss-proof-lines {margin:.85rem 0}.ss-proof-lines i {display:block; height:7px; margin:.42rem 0; border-radius:9px; background:linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,.05))}
+          .ss-proof-lines i:nth-child(2) {width:91%}.ss-proof-lines i:nth-child(3) {width:77%}.ss-proof-lines i:nth-child(4) {width:84%}
+          .ss-proof-progress {display:flex; align-items:center; gap:.65rem; color:#bbf7d0; font-size:.78rem; font-weight:700}
+          .ss-proof-progress div {height:8px; border-radius:99px; background:rgba(255,255,255,.18); flex:1; overflow:hidden}.ss-proof-progress div span {display:block; width:64%; height:100%; background:linear-gradient(90deg,#2dd4bf,#60a5fa); border-radius:99px}
           .ss-credit-note {max-width:850px; margin:.7rem auto 1.3rem; padding:1rem 1.15rem; border-radius:14px;
             text-align:center; background:#ecfeff; color:#155e75; border:1px solid #a5f3fc; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:15px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-weight:700}
-          @media (max-width:760px) {.ss-hero h1 {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}}
+          @media (max-width:760px) {.ss-hero h1 {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}}
           [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
             font-weight:800; border:2px solid #6d28d9; background:linear-gradient(100deg,#6d28d9,#db2777) !important;
             border-color:#6d28d9 !important; color:#fff !important}
@@ -240,7 +249,7 @@ def _landing_page() -> None:
     )
 
     st.markdown(
-        "<div class='ss-bonus'>🎁 Registrati e avrai 120 crediti gratuiti per provarlo. Nessuna carta richiesta.</div>",
+        "<div class='ss-bonus'>🎁 Registrati e avrai 50 crediti gratuiti per provarlo. Nessuna carta richiesta.</div>",
         unsafe_allow_html=True,
     )
 
@@ -258,10 +267,10 @@ def _landing_page() -> None:
 
     st.markdown(
         """<div class='ss-proof'>
-          <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Anteprima dell'area di scrittura</div>
+          <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Area di scrittura <span class='ss-proof-label'>Esempio illustrativo</span></div>
           <div class='ss-proof-grid'>
-            <div class='ss-proof-index'><b>INDICE DEL PROGETTO</b><span>Parte I · Fondamenti</span><span>Capitolo 1 · Le basi</span><span>1.1 Concetti chiave</span><span>1.2 Esempio pratico</span><span>Parte II · Applicazione</span></div>
-            <div class='ss-proof-page'><small>CAPITOLO 1 · SEZIONE 1.2</small><h3>Dal progetto al manoscritto</h3><p>Genera una sezione, correggila con le tue indicazioni, aggiungi esempi e controlla la coerenza dell'intero libro prima di esportarlo.</p></div>
+            <div class='ss-proof-index'><b>IL TUO PROGETTO</b><span>Parte I · Fondamenti</span><span>Capitolo 1 · Le basi</span><span>1.1 Concetti chiave</span><span class='active'>1.2 Esempio pratico</span><span>Parte II · Applicazione</span></div>
+            <div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>Scrittura e Quiz</span><span class='ss-proof-pill'>Italiano</span><span class='ss-proof-action'>Rigenera con AI</span></div><small>CAPITOLO 1 · SEZIONE 1.2</small><h3>Dal progetto al manoscritto</h3><p>Genera una sezione, correggila con le tue indicazioni, aggiungi esempi e controlla la coerenza dell'intero libro prima di esportarlo.</p><div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div><div class='ss-proof-progress'>Stesura del libro <div><span></span></div> 64%</div></div>
           </div>
         </div>""",
         unsafe_allow_html=True,
