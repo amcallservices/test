@@ -456,6 +456,51 @@ def chiedi_gpt(prompt, system_prompt):
             refund_credits(riferimento)
         return f"ERRORE: {str(e)}"
 
+
+def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
+                            use_container_width=False, disabled=False, tipo=None):
+    """Mostra una conferma preventiva prima delle sole azioni che consumano crediti."""
+    chiave_confermata = st.session_state.get("azione_crediti_confermata")
+    if chiave_confermata == azione_id:
+        st.session_state.pop("azione_crediti_confermata", None)
+        return True
+
+    parametri = {
+        "label": etichetta,
+        "key": f"preventivo_avvio_{azione_id}",
+        "use_container_width": use_container_width,
+        "disabled": disabled,
+    }
+    if tipo:
+        parametri["type"] = tipo
+    if st.button(**parametri):
+        st.session_state["preventivo_crediti_attesa"] = {
+            "azione_id": azione_id,
+            "stima": str(stima_crediti),
+            "descrizione": descrizione,
+        }
+
+    preventivo = st.session_state.get("preventivo_crediti_attesa", {})
+    if preventivo.get("azione_id") != azione_id:
+        return False
+
+    st.warning(
+        f"Preventivo: questa azione può consumare {preventivo['stima']} crediti. "
+        f"{preventivo['descrizione']}"
+    )
+    col_conferma, col_annulla = st.columns(2)
+    with col_conferma:
+        if st.button("Conferma e avvia", key=f"preventivo_conferma_{azione_id}",
+                     type="primary", use_container_width=True):
+            st.session_state["azione_crediti_confermata"] = azione_id
+            st.session_state.pop("preventivo_crediti_attesa", None)
+            st.rerun()
+    with col_annulla:
+        if st.button("Annulla", key=f"preventivo_annulla_{azione_id}", use_container_width=True):
+            st.session_state.pop("preventivo_crediti_attesa", None)
+            st.rerun()
+    return False
+
 def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     """Verifica soltanto i fatti aggiornabili che meritano una ricerca online."""
     riferimento = None
@@ -1136,6 +1181,17 @@ DOMANDE DELLA SIMULAZIONE
         f"SIMULAZIONE: DOMANDE\n\n{corpo_domande}\n\n"
         f"SOLUZIONI COMMENTATE - CONSULTALE SOLO DOPO AVER COMPLETATO LA PROVA\n\n{chiave}"
     )
+
+
+def stima_massima_crediti_stesura(sezione, indice, trama, obiettivo, genere):
+    """Stima prudente: include eventuali tentativi di recupero automatico."""
+    if sezione_simulazione_test_prep(sezione, indice, genere):
+        totale = numero_domande_simulazione(indice, trama, obiettivo)
+        if totale >= 10:
+            gruppi_domande = (totale + 9) // 10
+            # Gruppi di domande + chiave soluzioni, fino a tre correzioni e due retry ciascuno.
+            return (gruppi_domande + 1) * 6
+    return 2
 
 
 def criticita_specificita(testo, genere, sezione):
@@ -2539,7 +2595,9 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
-        if st.button(L["btn_idx"], disabled=not sidebar_pronta):
+        if pulsante_con_preventivo("genera_indice", L["btn_idx"], "fino a 10",
+                                   "L'indice può essere generato e controllato automaticamente più volte per raggiungere la soglia di qualità.",
+                                   disabled=not sidebar_pronta):
             with st.spinner("Creazione indice (Neuro-Analisi, Connessione Parametri e Strutturazione Logica in corso)..."):
                 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE TERMINI INDICE ---
@@ -2660,7 +2718,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
 
         indice_da_valutare = st.session_state.get("indice_raw", "").strip()
         if indice_da_valutare:
-            if st.button("⭐ VOTO INDICE", use_container_width=True, key="voto_indice"):
+            if pulsante_con_preventivo("voto_indice", "⭐ VOTO INDICE", 1,
+                                       "Analizza l'indice rispetto al brief editoriale.", use_container_width=True):
                 with st.spinner("Analisi editoriale dell'indice in corso..."):
                     st.session_state["analisi_voto_indice"] = valuta_indice_editoriale(
                         indice_da_valutare, val_titolo, val_trama, val_genere, val_stile,
@@ -2674,7 +2733,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     height=320,
                     key="output_voto_indice"
                 )
-                if st.button("🔄 RIGENERA INDICE SEGUENDO IL VOTO", use_container_width=True, key="rigenera_indice_voto"):
+                if pulsante_con_preventivo("rigenera_indice_voto", "🔄 RIGENERA INDICE SEGUENDO IL VOTO", "fino a 10",
+                                           "La proposta viene generata e verificata automaticamente prima di essere mostrata.", use_container_width=True):
                     with st.spinner("Creazione della proposta migliorata in corso..."):
                         prompt_rigenerazione = f"""Riscrivi esclusivamente l'indice del libro sotto indicato, rigorosamente in lingua {lingua_sel}.
 
@@ -2734,11 +2794,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.caption(f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. I contenuti già scritti verranno conservati.")
             # Job persistente: genera una sezione alla volta e conserva sempre quanto già scritto.
             # Questo rende la pausa effettiva tra una richiesta AI e la successiva.
-            if st.button("📚 SCRIVI TUTTO IL LIBRO", use_container_width=True, key="scrivi_tutto_libro"):
-                da_generare = [
+            da_generare_libro = [
                     sezione for sezione in sezioni_intero_libro
                     if not st.session_state.get(chiave_sezione(sezione), "").strip()
-                ]
+            ]
+            stima_libro = sum(
+                stima_massima_crediti_stesura(sezione, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
+                for sezione in da_generare_libro
+            )
+            if pulsante_con_preventivo("scrivi_tutto_libro", "📚 SCRIVI TUTTO IL LIBRO", f"fino a {stima_libro}",
+                                       f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati.",
+                                       use_container_width=True):
+                da_generare = da_generare_libro
                 if not da_generare:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
@@ -2805,7 +2872,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if sottocapitoli_capitolo:
                 chiave_audit_capitolo = f"audit_fatti_{sez_scelta.replace(' ', '_').replace('.', '')}"
                 st.caption(f"Capitolo selezionato: verranno elaborati {len(sottocapitoli_capitolo)} sottocapitoli non ancora scritti.")
-                if st.button("📝 SCRIVI TUTTI I SOTTOCAPITOLI DEL CAPITOLO", use_container_width=True):
+                stima_sottocapitoli = sum(
+                    stima_massima_crediti_stesura(sottocapitolo, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
+                    for sottocapitolo in sottocapitoli_capitolo
+                    if not st.session_state.get(chiave_sezione(sottocapitolo), "").strip()
+                ) + 1
+                if pulsante_con_preventivo(f"scrivi_sottocapitoli_{k_sessione}", "📝 SCRIVI TUTTI I SOTTOCAPITOLI DEL CAPITOLO", f"fino a {stima_sottocapitoli}",
+                                           "Il totale esatto dipende dai sottocapitoli ancora vuoti; include un eventuale controllo dei fatti del capitolo.", use_container_width=True):
                     da_generare = []
                     gia_presenti = 0
                     for sottocapitolo in sottocapitoli_capitolo:
@@ -2844,7 +2917,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             messaggio += f" Conservati senza modifiche: {gia_presenti}."
                         st.success(messaggio)
                         st.rerun()
-                if st.button("🔎 CONTROLLA I FATTI DEL CAPITOLO", use_container_width=True):
+                if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 1,
+                                           "Verifica online solo i dati aggiornabili del capitolo selezionato.", use_container_width=True):
                     contenuti_capitolo = [
                         (sottocapitolo, st.session_state.get(f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}", ""))
                         for sottocapitolo in sottocapitoli_capitolo
@@ -2858,7 +2932,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.write(st.session_state[chiave_audit_capitolo])
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
-                if st.button(L["btn_write"]):
+                if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
+                                           f"Verrà generata o sostituita la sezione selezionata: {sez_scelta}."):
                     with st.spinner(L["msg_run"]):
                         full_prompt = crea_prompt_stesura_sezione(
                             sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
@@ -2870,11 +2945,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         )
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
-                if st.button(L["btn_edit"] + " 🪄"):
+                if pulsante_con_preventivo(f"rigenera_sezione_{k_sessione}", L["btn_edit"] + " 🪄", f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
+                                           f"Verrà rielaborata solo la sezione selezionata: {sez_scelta}."):
                     if k_sessione in st.session_state:
                         st.session_state[k_sessione] = pulisci_testo_editoriale(chiedi_gpt(f"Rielabora con focus su: {istr} mantenendo categoricamente la lingua {lingua_sel}, il POV ({val_pov}) e senza usare punteggiatura anomala né riscrivere il titolo all'inizio. Non inserire URL, link, citazioni o sezioni bibliografiche. Testo da modificare:\n{st.session_state[k_sessione]}", S_PROMPT)); st.rerun()
             with c3:
-                if st.button("🧠 QUIZ"):
+                if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", 1,
+                                           "Saranno aggiunte 10 domande alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner("Generazione Quiz didattico..."):
                             res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}", "Learning Expert.")
@@ -2897,7 +2974,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # --- FINE NUOVE RIGHE ---
 
                 # --- AGGIUNTA PULSANTE GENERATORE ESEMPI ---
-                if st.button(t_btn_ese):
+                if pulsante_con_preventivo(f"esempi_{k_sessione}", t_btn_ese, 1,
+                                           "Saranno aggiunti 10 esempi pratici alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner(f"Creazione 10 esempi in {lingua_sel}..."):
                             mem_esempi = st.session_state.get(k_sessione, "")
@@ -2932,7 +3010,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # --- FINE NUOVE RIGHE ---
                 
                 # --- AGGIUNTA PULSANTE GENERATORE RICETTE ---
-                if st.button(t_btn_ric):
+                if pulsante_con_preventivo(f"ricette_{k_sessione}", t_btn_ric, 1,
+                                           "Saranno aggiunte 10 ricette alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner(f"Creazione 10 ricette uniche in {lingua_sel}..."):
                             mem_ricette = st.session_state.get(k_sessione, "")
@@ -3014,7 +3093,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
         st.subheader("Controllo del manoscritto")
-        if st.button("🔍 CONTROLLO COERENZA COMPLETO"):
+        stima_coerenza = len(blocchi_per_audit_manoscritto(contenuti_libro)) + 1
+        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", f"fino a {stima_coerenza}",
+                                   "La stima dipende dalla lunghezza del manoscritto; analisi già presenti possono ridurre il consumo effettivo."):
             barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
             stato_coerenza = st.empty()
 
@@ -3123,7 +3204,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     ["Italiano", "Inglese", "Spagnolo", "Francese", "Tedesco", "Rumeno", "Russo", "Arabo", "Cinese"],
                     key="lingua_metadati"
                 )
-                if st.button("Genera metadati dettagliati", key="genera_metadati_formattazione"):
+                if pulsante_con_preventivo("metadati_kdp", "Genera metadati dettagliati", 1,
+                                           "Genera descrizione marketing e sette keyword a coda lunga."):
                     with st.spinner("Analisi del manoscritto e generazione metadati in corso..."):
                         try:
                             contesto_metadati = estrai_anteprima_manoscritto(manoscritto)
