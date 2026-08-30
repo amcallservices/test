@@ -97,7 +97,7 @@ def crea_scheda_fonti(testo, limite=2600):
     return "\n".join(scelti) or (testo or "")[:limite]
 
 
-MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4")
+MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
 MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_STESURA)
 
 
@@ -2635,7 +2635,7 @@ Dopo la risposta dell'utente:
 2. Se pubblico, obiettivo e argomento sono abbastanza chiari, prepara subito la scheda finale.
 3. Fai una sola domanda aggiuntiva soltanto se manca una scelta che cambia davvero il progetto, per esempio il pubblico o il tipo di libro.
 4. La domanda aggiuntiva deve essere molto breve e offrire al massimo tre alternative concrete.
-5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto o punto di vista: sceglili tu.
+5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista o lunghezza: sceglili tu.
 6. Non fare più di due domande complessive, salvo che l'idea sia troppo vaga per creare una scheda affidabile.
 
 Esempio di unica domanda aggiuntiva utile:
@@ -2708,6 +2708,14 @@ Per il PUNTO DI VISTA scegli un solo valore tra:
 - Noi (Inclusivo, partecipativo e didattico)
 - Impersonale / Terza Persona (Distaccato, analitico, oggettivo)
 
+Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
+
+- Compatto — circa 140-200 parole per sezione
+- Standard KDP — circa 220-300 parole per sezione
+- Approfondito — circa 320-420 parole per sezione
+
+Scegli Standard KDP come impostazione predefinita. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
+
 Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearne di nuovi.
 
 REGOLE DI QUALITÀ
@@ -2718,6 +2726,9 @@ REGOLE DI QUALITÀ
 - Evita formule vaghe come “diventare esperto” o “migliorare la vita”.
 - Spiega cosa il lettore saprà fare, applicare, produrre o comprendere alla fine.
 - Mantieni confini chiari per evitare un libro troppo ampio o ripetitivo.
+- In TRAMA O ARGOMENTO descrivi pubblico, problema affrontato, contenuti principali, progressione logica e ciò che deve restare fuori dal libro. Non creare un indice né elencare capitoli.
+- In APPROFONDIMENTI indica gli aspetti che l'indice dovrà sviluppare con maggiore precisione: procedure, esempi, esercizi, casi pratici, errori comuni, verifiche o vincoli.
+- Ricorda che un capitolo con sottocapitoli sarà una breve cornice: il contenuto dettagliato verrà sviluppato nei sottocapitoli, evitando ripetizioni.
 - Adatta il progetto al genere: procedure per manuali, ricette per ricettari, quiz e simulazioni per test prep, trama e conflitto per narrativa.
 - Non promettere risultati garantiti.
 - Per salute, animali, norme, leggi, software, esami, prezzi, dati o altri temi aggiornabili, specifica negli Approfondimenti che le informazioni devono essere verificate e aggiornate prima della pubblicazione.
@@ -2741,6 +2752,8 @@ TIPOLOGIA SCRITTURA:
 STILE DI RACCONTO:
 
 PUNTO DI VISTA:
+
+LUNGHEZZA DELLE SEZIONI:
 
 OBIETTIVO DEL LIBRO:
 
