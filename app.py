@@ -196,7 +196,7 @@ def notifica_sonora(evento, lingua="Italiano", ripeti=False):
 # Developer: Antonino & Gemini Collaboration
 # Core Update: Integrazione Neuromarketing (Triune Brain Methodology) con Motore Decisionale Dinamico.
 # Identificativo visibile: permette di verificare che Streamlit stia eseguendo l'ultimo deploy.
-VERSIONE_DEPLOY = f"QA-2026-08-30-r20-{COMMERCIAL_TEST_VERSION}"
+VERSIONE_DEPLOY = f"Scrittore Site commerciale — {COMMERCIAL_TEST_VERSION}"
 VERSIONE_AUDIT_COHERENZA = "3"
 
 # --- AGGIORNAMENTO SICUREZZA API ---
@@ -206,14 +206,13 @@ except Exception as e:
     st.error("ERRORE CRITICO: Chiave API OpenAI non trovata nei Secrets di Streamlit. Assicurati di aver creato il file secrets.toml o configurato i Secrets online.")
 
 st.set_page_config(
-    page_title="AI di Antonino: Ebook Mondiale Creator PRO",
+    page_title="Scrittore Site",
     layout="wide",
     initial_sidebar_state="expanded",
     page_icon="✒️"
 )
 
-# AMBIENTE COMMERCIALE DI COLLAUDO: accesso, saldo crediti e modalità demo.
-# La release ebook_creator.py non importa questo blocco e resta quindi invariata.
+# AREA COMMERCIALE: accesso, crediti e pagamenti restano separati dalla release personale.
 bootstrap_commercial_test()
 
 # ======================================================================================================================
@@ -1860,8 +1859,8 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 # ======================================================================================================================
 # 8. UI PRINCIPALE & GENERAZIONE PROMPT DINAMICO
 # ======================================================================================================================
-st.markdown(f'<div class="custom-title">AI di Antonino: {val_titolo if val_titolo else "Ebook Creator PRO"}</div>', unsafe_allow_html=True)
-st.caption(f"Versione app: {VERSIONE_DEPLOY}")
+st.markdown(f'<div class="custom-title">Scrittore Site — {val_titolo if val_titolo else "Editor professionale"}</div>', unsafe_allow_html=True)
+st.caption(VERSIONE_DEPLOY)
 
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
