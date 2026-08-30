@@ -14,6 +14,9 @@ COMMERCIAL_VERSION = "commercial-01"
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 120
 AI_REQUEST_CREDITS = 1
+# Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
+# ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
+# Non inserire indirizzi amministratore direttamente nel codice pubblicato.
 
 PACKAGES = {
     "prova_7": {
@@ -75,6 +78,21 @@ def _stripe_ready() -> bool:
 
 def _payments_enabled() -> bool:
     return _secret("PAYMENTS_ENABLED", "false").lower() == "true"
+
+
+def _admin_emails() -> set[str]:
+    """Restituisce gli indirizzi amministratore definiti nei Secrets dell'app."""
+    return {
+        email.strip().lower()
+        for email in _secret("ADMIN_EMAILS").replace(";", ",").split(",")
+        if email.strip()
+    }
+
+
+def _is_admin(user: dict[str, Any] | None = None) -> bool:
+    """Un amministratore è riconosciuto solo da un indirizzo presente nei Secrets."""
+    current_user = user or st.session_state.get("commercial_user_context") or st.session_state.get("commercial_user") or {}
+    return str(current_user.get("email", "")).strip().lower() in _admin_emails()
 
 
 def _supabase_headers() -> dict[str, str]:
@@ -309,6 +327,9 @@ def _account_gate() -> dict[str, Any]:
 
 
 def _balance(user_id: str) -> int:
+    if _is_admin():
+        # Valore tecnico di compatibilità: la UI visualizza ∞ e gli addebiti sono ignorati.
+        return 1_000_000_000
     if _mode() == "demo" or not _supabase_ready():
         return int(st.session_state.get("commercial_demo_credits", DEMO_INITIAL_CREDITS))
     profile = _supabase("GET", "rest/v1/writer_profiles", params={"select": "credits", "id": f"eq.{user_id}", "limit": "1"})
@@ -326,6 +347,9 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
     """Addebito atomico prima della chiamata IA. Restituisce il riferimento rimborsabile."""
     user = st.session_state["commercial_user_context"]
     reference = uuid.uuid4().hex
+    if _is_admin(user):
+        # Nessun movimento e nessun consumo: l'amministratore dispone di crediti illimitati.
+        return reference
     if _mode() == "demo" or not _supabase_ready():
         balance = _balance(user["id"])
         if balance < amount:
@@ -343,6 +367,8 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
 def refund_credits(reference: str, reason: str = "ai_request_failed", amount: int = AI_REQUEST_CREDITS) -> None:
     user = st.session_state.get("commercial_user_context")
     if not user:
+        return
+    if _is_admin(user):
         return
     if _mode() == "demo" or not _supabase_ready():
         st.session_state["commercial_demo_credits"] = _balance(user["id"]) + amount
@@ -432,6 +458,7 @@ def _process_checkout_return() -> None:
 
 def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
+    is_admin = _is_admin(user)
     with st.sidebar:
         st.divider()
         st.markdown("### 💳 Crediti")
@@ -439,18 +466,24 @@ def _commerce_sidebar() -> None:
             st.caption("Modalità dimostrativa: saldo valido solo per questa sessione.")
         else:
             st.caption(f"Account: {user['email']}")
-        st.metric("Saldo disponibile", f"{_balance(user['id'])} crediti")
+        if is_admin:
+            st.metric("Saldo disponibile", "∞ crediti")
+            st.success("Account amministratore: crediti illimitati attivi.")
+        else:
+            st.metric("Saldo disponibile", f"{_balance(user['id'])} crediti")
 
         with st.expander("Ricarica crediti", expanded=False):
-            if _mode() == "demo":
+            if is_admin:
+                st.caption("Non sono necessari acquisti: questo account ha crediti illimitati.")
+            elif _mode() == "demo":
                 for key, package in PACKAGES.items():
                     if st.button(f"Aggiungi {package['credits']} crediti demo", key=f"demo_topup_{key}"):
                         _grant_demo_credits(package)
                         st.success("Crediti demo aggiunti.")
                         st.rerun()
-            elif not _payments_enabled():
+            elif not is_admin and not _payments_enabled():
                 st.caption("I pacchetti saranno disponibili dopo l'attivazione sicura dei pagamenti.")
-            else:
+            elif not is_admin:
                 for key, package in PACKAGES.items():
                     label = f"{package['name']} — € {package['amount_cents'] / 100:.2f}".replace(".", ",")
                     if st.button(f"Acquista {label}", key=f"stripe_topup_{key}"):
