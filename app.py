@@ -1485,9 +1485,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     elif not sidebar_pronta:
         st.session_state.pop("firma_notifica_sidebar", None)
     
-    # PULSANTE RESET BLINDATO: Unico modo per svuotare la session_state
+    # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(L["btn_res"]):
-        for key in list(st.session_state.keys()): del st.session_state[key]
+        for key in list(st.session_state.keys()):
+            if not key.startswith("commercial_"):
+                del st.session_state[key]
         st.rerun()
 
 # ======================================================================================================================
