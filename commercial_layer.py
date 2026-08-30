@@ -136,13 +136,15 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
+          .stApp, [data-testid="stAppViewContainer"] {background:linear-gradient(145deg,#fffdf7 0%,#f8f5ff 52%,#fff4fb 100%) !important;
+            color:#211334}
           .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:2.5rem 2rem;
-            border-radius:28px; background:radial-gradient(circle at 15% 20%,#ffb4df 0%,transparent 25%),
-            linear-gradient(125deg,#3c1b84 0%,#6d28d9 48%,#e11d8d 100%); color:#fff; text-align:center;
-            box-shadow:0 16px 42px rgba(91,33,182,.32)}
-          .ss-hero h1 {font-size:3.15rem; margin:.15rem 0 .55rem; color:#fff; line-height:1}
-          .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; opacity:.96}
-          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:800; font-size:.76rem; opacity:.85}
+            border-radius:28px; background:radial-gradient(circle at 12% 15%,#fbcfe8 0%,transparent 26%),
+            radial-gradient(circle at 88% 88%,#ddd6fe 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#f5f3ff 100%);
+            color:#25104b; text-align:center; border:1px solid #ddd6fe; box-shadow:0 16px 38px rgba(76,29,149,.15)}
+          .ss-hero h1 {font-size:3.15rem; margin:.15rem 0 .55rem; color:#4c1d95; line-height:1}
+          .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; color:#3b2b52; font-weight:600}
+          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:850; font-size:.76rem; color:#be185d}
           .ss-bonus {max-width:720px; margin:.9rem auto 1rem; padding:.66rem 1rem; border-radius:999px;
             text-align:center; font-size:1.05rem; font-weight:750; color:#542177; background:#fdf2ff;
             border:1px solid #f0abfc}
@@ -164,7 +166,8 @@ def _landing_page() -> None:
           /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
           [data-testid="stHeader"] {background:transparent !important}
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
-          .stAppDeployButton, #MainMenu, footer {display:none !important}
+          .stAppDeployButton, #MainMenu, footer, button[title="Manage app"], a[title="Manage app"],
+          button[aria-label="Manage app"], a[aria-label="Manage app"] {display:none !important}
         </style>
         <div class="ss-hero">
           <div class="ss-kicker">AI di Antonino presenta</div>
