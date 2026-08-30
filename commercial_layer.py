@@ -9,7 +9,6 @@ from typing import Any
 
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 COMMERCIAL_VERSION = "beta 3a"
@@ -252,7 +251,7 @@ def _supabase_recover_password(email: str) -> None:
 
 
 def _render_password_recovery() -> bool:
-    """Mostra il form di nuova password dopo il ritorno dal link Supabase."""
+    """Mostra e completa il recupero password con controlli nativi Streamlit."""
     try:
         is_recovery = st.query_params.get("auth") == "recovery"
     except Exception:
@@ -269,104 +268,76 @@ def _render_password_recovery() -> bool:
 
     supabase_url = _secret("SUPABASE_URL").rstrip("/")
     anon_key = _secret("SUPABASE_ANON_KEY")
-    app_url = _secret("APP_BASE_URL").rstrip("/")
-    if not (supabase_url and anon_key and app_url):
+    if not (supabase_url and anon_key):
         st.error("Reimpostazione password non disponibile. Riprova dalla pagina di accesso.")
         return True
 
+    recovery_key = "commercial_recovery_access_token"
+    access_token = st.session_state.get(recovery_key, "")
+    if recovery_token_hash and not access_token:
+        try:
+            verification = requests.post(
+                f"{supabase_url}/auth/v1/verify",
+                headers={"apikey": anon_key, "Content-Type": "application/json"},
+                json={"token_hash": recovery_token_hash, "type": "recovery"},
+                timeout=20,
+            )
+            data = verification.json() if verification.content else {}
+            access_token = data.get("access_token") or data.get("session", {}).get("access_token", "")
+            if not verification.ok or not access_token:
+                raise RuntimeError("invalid recovery token")
+            st.session_state[recovery_key] = access_token
+
+            # Il token serve una sola volta: lo conserviamo solo nella sessione
+            # e lo togliamo dall'indirizzo prima di mostrare il form.
+            st.query_params.clear()
+            st.query_params["auth"] = "recovery"
+            st.rerun()
+        except Exception:
+            st.error("Link non valido o scaduto. Richiedi un nuovo link e riprova.")
+            if st.button("Torna all'accesso", key="commercial_invalid_recovery_back"):
+                st.query_params.clear()
+                st.session_state["commercial_show_auth"] = True
+                st.rerun()
+            return True
+
+    if not access_token:
+        st.error("Link non valido o scaduto. Richiedi un nuovo link e riprova.")
+        if st.button("Torna all'accesso", key="commercial_missing_recovery_back"):
+            st.query_params.clear()
+            st.session_state["commercial_show_auth"] = True
+            st.rerun()
+        return True
+
     st.title("Imposta una nuova password")
-    st.caption("Scegli una password nuova e sicura per il tuo account.")
-    components.html(
-        f"""
-        <div style="font-family:system-ui,sans-serif;max-width:520px;padding:8px 2px;color:#102a43">
-          <label style="font-weight:700">Nuova password</label>
-          <input id="new-password" type="password" autocomplete="new-password" style="display:block;width:96%;padding:12px;margin:7px 0 14px;border:1px solid #9cc8e7;border-radius:8px" />
-          <label style="font-weight:700">Ripeti la nuova password</label>
-          <input id="repeat-password" type="password" autocomplete="new-password" style="display:block;width:96%;padding:12px;margin:7px 0 14px;border:1px solid #9cc8e7;border-radius:8px" />
-          <button id="save-password" style="padding:12px 18px;border:0;border-radius:8px;background:#1689e8;color:white;font-weight:800;cursor:pointer">Salva nuova password</button>
-          <p id="recovery-message" style="margin-top:14px"></p>
-        </div>
-        <script>
-          const message = document.getElementById('recovery-message');
-          const tokenHash = {json.dumps(recovery_token_hash)};
-          let token = '';
-          async function loadRecoverySession() {{
-            if (tokenHash) {{
-              const verification = await fetch({json.dumps(supabase_url + '/auth/v1/verify')}, {{
-                method: 'POST',
-                headers: {{'apikey': {json.dumps(anon_key)}, 'Content-Type': 'application/json'}},
-                body: JSON.stringify({{token_hash: tokenHash, type: 'recovery'}})
-              }});
-              if (!verification.ok) throw new Error('invalid recovery token');
-              const data = await verification.json();
-              return data.access_token || '';
-            }}
-            try {{ return new URLSearchParams(window.parent.location.hash.slice(1)).get('access_token') || ''; }} catch (error) {{ return ''; }}
-          }}
-          document.getElementById('save-password').addEventListener('click', async () => {{
-            const password = document.getElementById('new-password').value;
-            const repeat = document.getElementById('repeat-password').value;
-            if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
-            message.textContent = 'Verifica del link e salvataggio in corso…'; message.style.color = '#174a73';
-            try {{
-              if (!token) token = await loadRecoverySession();
-              if (!token) throw new Error('missing recovery token');
-              const response = await fetch({json.dumps(supabase_url + '/auth/v1/user')}, {{
-                method: 'PUT',
-                headers: {{'apikey': {json.dumps(anon_key)}, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}},
-                body: JSON.stringify({{password}})
-              }});
-              if (!response.ok) {{
-                if (response.status === 401 || response.status === 403) throw new Error('expired recovery token');
-                if (response.status === 422) throw new Error('password rejected');
-                throw new Error('reset failed');
-              }}
-              message.textContent = '✓ Password aggiornata correttamente.';
-              message.style.color = '#15803d';
-              const oldButton = document.getElementById('save-password');
-              const loginLink = document.createElement('a');
-              loginLink.href = {json.dumps(app_url + '?password_updated=1')};
-              loginLink.target = '_top';
-              loginLink.textContent = 'Vai all’accesso';
-              loginLink.style.cssText = 'display:inline-block;margin-top:6px;padding:12px 18px;border-radius:8px;background:#1689e8;color:#fff;font-weight:800;text-decoration:none';
-              oldButton.replaceWith(loginLink);
-            }} catch (error) {{
-              message.textContent = error.message === 'password rejected'
-                ? 'La password non è accettata dal servizio di autenticazione. Prova una password diversa.'
-                : 'Link non valido o scaduto. Richiedi un nuovo link e riprova.';
-              message.style.color = '#b42318';
-            }}
-          }});
-        </script>
-        """,
-        height=320,
-    )
+    st.caption("Scegli una nuova password per il tuo account.")
+    password = st.text_input("Nuova password", type="password", key="commercial_recovery_password")
+    repeat_password = st.text_input("Ripeti la nuova password", type="password", key="commercial_recovery_password_repeat")
+    if st.button("Salva nuova password", type="primary", key="commercial_save_recovery_password"):
+        if password != repeat_password:
+            st.error("Le due password non coincidono.")
+        else:
+            response = requests.put(
+                f"{supabase_url}/auth/v1/user",
+                headers={
+                    "apikey": anon_key,
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                json={"password": password},
+                timeout=20,
+            )
+            if response.ok:
+                st.session_state.pop(recovery_key, None)
+                st.session_state["commercial_password_updated_notice"] = True
+                st.session_state["commercial_show_auth"] = True
+                st.query_params.clear()
+                st.rerun()
+            elif response.status_code == 422:
+                st.error("La password non è accettata dal servizio di autenticazione. Prova una password diversa.")
+            else:
+                st.error("Non è stato possibile aggiornare la password. Richiedi un nuovo link e riprova.")
     return True
-
-
-def _normalize_recovery_redirect() -> None:
-    """Riconosce i link di recupero che Supabase riporta alla home con token nell'hash.
-
-    Alcuni modelli email di Supabase usano il Site URL e non preservano il
-    parametro ``redirect_to``. Il token rimane comunque nell'hash del browser:
-    questo piccolo passaggio aggiunge solo ``?auth=recovery`` e non invia il
-    token a Streamlit né lo salva da nessuna parte.
-    """
-    components.html(
-        """
-        <script>
-          try {
-            const current = new URL(window.parent.location.href);
-            const hash = new URLSearchParams(current.hash.slice(1));
-            if (hash.get('type') === 'recovery' && current.searchParams.get('auth') !== 'recovery') {
-              current.searchParams.set('auth', 'recovery');
-              window.parent.location.replace(current.toString());
-            }
-          } catch (error) {}
-        </script>
-        """,
-        height=0,
-    )
 
 
 def _landing_page() -> None:
@@ -622,12 +593,8 @@ def _account_gate() -> dict[str, Any]:
     if _render_password_recovery():
         st.stop()
 
-    try:
-        if st.query_params.get("password_updated") == "1":
-            st.success("Password aggiornata. Ora puoi accedere con quella nuova.")
-            st.query_params.clear()
-    except Exception:
-        pass
+    if st.session_state.pop("commercial_password_updated_notice", False):
+        st.success("Password aggiornata correttamente. Ora puoi accedere con quella nuova.")
 
     current = st.session_state.get("commercial_user")
     if current:
@@ -875,14 +842,11 @@ def _commerce_sidebar() -> None:
 
 def bootstrap_commercial_app() -> None:
     """Mostra la home pubblica, quindi accesso e area editor riservata."""
-    _normalize_recovery_redirect()
     try:
         recovery_requested = st.query_params.get("auth") == "recovery"
-        password_updated = st.query_params.get("password_updated") == "1"
     except Exception:
         recovery_requested = False
-        password_updated = False
-    if recovery_requested or password_updated:
+    if recovery_requested:
         st.session_state["commercial_show_auth"] = True
     if (
         _mode() != "demo"
