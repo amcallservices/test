@@ -136,18 +136,18 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
-          .stApp, [data-testid="stAppViewContainer"] {background:linear-gradient(145deg,#fffdf7 0%,#f8f5ff 52%,#fff4fb 100%) !important;
-            color:#211334}
+          .stApp, [data-testid="stAppViewContainer"] {background:linear-gradient(145deg,#f5fbff 0%,#eaf6ff 52%,#f4faff 100%) !important;
+            color:#172b4d}
           .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:2.5rem 2rem;
             border-radius:28px; background:radial-gradient(circle at 12% 15%,#fbcfe8 0%,transparent 26%),
-            radial-gradient(circle at 88% 88%,#ddd6fe 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#f5f3ff 100%);
-            color:#25104b; text-align:center; border:1px solid #ddd6fe; box-shadow:0 16px 38px rgba(76,29,149,.15)}
-          .ss-hero h1 {font-size:5.1rem; margin:.18rem 0 .7rem; color:#4c1d95; line-height:1; letter-spacing:-.055em}
-          .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; color:#3b2b52; font-weight:600}
-          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:850; font-size:.92rem; color:#be185d}
-          .ss-bonus {max-width:720px; margin:.9rem auto 1rem; padding:.66rem 1rem; border-radius:999px;
-            text-align:center; font-size:1.05rem; font-weight:750; color:#542177; background:#fdf2ff;
-            border:1px solid #f0abfc}
+            radial-gradient(circle at 88% 88%,#bae6fd 0%,transparent 32%),linear-gradient(125deg,#fff 0%,#e0f2fe 100%);
+            color:#12315c; text-align:center; border:1px solid #bae6fd; box-shadow:0 16px 38px rgba(14,116,144,.16)}
+          .ss-hero h1 {font-size:clamp(4.3rem,9.2vw,7.2rem); margin:.18rem -.45rem .7rem; color:#0c4a6e; line-height:.94; letter-spacing:-.07em}
+          .ss-hero p {font-size:1.2rem; max-width:700px; margin:0 auto; color:#173a63; font-weight:650}
+          .ss-kicker {letter-spacing:.15em; text-transform:uppercase; font-weight:850; font-size:1rem; color:#0e7490}
+          .ss-bonus {max-width:850px; margin:1rem auto 1.15rem; padding:.95rem 1.3rem; border-radius:999px;
+            text-align:center; font-size:1.35rem; font-weight:850; color:#0c4a6e; background:#cffafe;
+            border:2px solid #67e8f9; box-shadow:0 5px 16px rgba(8,145,178,.14)}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#25104b}
           .ss-card {background:linear-gradient(145deg,#fff 0%,#faf7ff 100%); border:1px solid #e9d5ff;
