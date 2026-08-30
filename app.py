@@ -3220,7 +3220,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             image_bytes=img.get("bytes") if img else None,
                             image_caption=img.get("caption") if img else None
                         )
-                out_p = pdf.output(dest='S').encode('latin-1', 'replace')
+              pdf_output = pdf.output(dest="S")
+
+if isinstance(pdf_output, str):
+    out_p = pdf_output.encode("latin-1", "replace")
+else:
+    out_p = bytes(pdf_output)
                 notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
                 suffisso = "_BOZZA" if sezioni_incomplete_export else ""
                 st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}{suffisso}.pdf", mime="application/pdf")
