@@ -437,10 +437,11 @@ class EbookPDF(FPDF):
 # ======================================================================================================================
 # 5. CORE LOGIC GPT-4o & ANALISI QUALITÀ (POTENZIATA) E DECISIONE NEURALE
 # ======================================================================================================================
-def chiedi_gpt(prompt, system_prompt):
+def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS):
     riferimento = None
     try:
-        riferimento = charge_credits("generazione_testo")
+        if addebita:
+            riferimento = charge_credits("generazione_testo", amount=amount)
         response = client.chat.completions.create(
             model="gpt-4o-mini", 
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
@@ -457,7 +458,7 @@ def chiedi_gpt(prompt, system_prompt):
         st.stop()
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento)
+            refund_credits(riferimento, amount=amount)
         return f"ERRORE: {str(e)}"
 
 
@@ -505,11 +506,20 @@ def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
             st.rerun()
     return False
 
+
+def addebita_azione_diretta(reason, amount):
+    """Addebito per azioni locali o raggruppate che non passano da chiedi_gpt."""
+    try:
+        return charge_credits(reason, amount=amount)
+    except CommercialCreditError:
+        mostra_crediti_esauriti()
+        st.stop()
+
 def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     """Verifica soltanto i fatti aggiornabili che meritano una ricerca online."""
     riferimento = None
     try:
-        riferimento = charge_credits("verifica_fatti")
+        riferimento = charge_credits("verifica_fatti", amount=2)
         risposta = client.responses.create(
             model="gpt-5-mini",
             tools=[{"type": "web_search_preview"}],
@@ -529,7 +539,7 @@ def verifica_e_correggi_fatti_online(testo, sezione, lingua):
         return pulisci_testo_editoriale(getattr(risposta, "output_text", None) or testo)
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento)
+            refund_credits(riferimento, amount=2)
         st.warning(f"Verifica online non disponibile: {e}")
         return pulisci_testo_editoriale(testo)
 
@@ -553,7 +563,7 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
         return "Controllo fatti del capitolo non necessario: nessun dato variabile rilevato."
     riferimento = None
     try:
-        riferimento = charge_credits("audit_fatti")
+        riferimento = charge_credits("audit_fatti", amount=2)
         risposta = client.responses.create(
             model="gpt-5-mini",
             tools=[{"type": "web_search_preview"}],
@@ -568,7 +578,7 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
         return pulisci_testo_editoriale(getattr(risposta, "output_text", "") or "Controllo non disponibile.")
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento)
+            refund_credits(riferimento, amount=2)
         return f"Controllo fatti del capitolo non disponibile: {e}"
 
 def pulisci_testo_editoriale(testo):
@@ -631,7 +641,7 @@ def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
     )
     riferimento = None
     try:
-        riferimento = charge_credits("generazione_immagine", amount=2)
+        riferimento = charge_credits("generazione_immagine", amount=5)
         risposta = client.images.generate(model="gpt-image-1-mini", prompt=f"Crea un'immagine didattica di alta qualità per il genere '{genere}' e il sottocapitolo '{sezione}'. Segui alla lettera questo brief visivo, senza aggiungere elementi non richiesti:\n{descrizione}\n\n{vincoli_dominio}\nLa scena deve avere corrispondenza uno-a-uno con il testo. Scegli composizione, livello di dettaglio e linguaggio visivo appropriati al dominio e al pubblico: diagramma o tavola tecnica per manuali, scena concreta per procedure, composizione narrativa per narrativa, visualizzazione concettuale per saggistica. Non creare immagini generiche o astratte e non inventare funzioni, dati, persone o oggetti. Nessun testo, lettera, numero, titolo, didascalia o logo nell'immagine. Mantieni sfondo bianco, tratto nero, scala di grigi e stile monocromatico pulito.", size="1024x1024", quality="medium")
         dato = risposta.data[0]
         raw = None
@@ -646,7 +656,7 @@ def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
         raise ValueError("Risposta immagini priva di dati utilizzabili")
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento, reason="generazione_immagine_fallita", amount=2)
+            refund_credits(riferimento, reason="generazione_immagine_fallita", amount=5)
         st.error(f"Errore nella generazione dell'immagine: {e}")
         return None, None
 
@@ -978,10 +988,10 @@ def criticita_indice_generato(indice, genere, titolo, trama, obiettivo):
     return problemi
 
 
-def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov):
+def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, *, addebita=True):
     """Usa esattamente lo stesso metro del pulsante 'Voto indice', evitando approvazioni incoerenti."""
     risposta = valuta_indice_editoriale(
-        indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, ""
+        indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, "", addebita=addebita
     ).strip()
     match = re.search(r"(?im)^\s*(?:voto\s+complessivo|voto)\s*:\s*(10|[0-9])\s*(?:/\s*10)?\b", risposta)
     voto = int(match.group(1)) if match else 0
@@ -991,12 +1001,17 @@ def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, l
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
-    corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt))
+    riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
+    try:
+        corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False))
+    except Exception:
+        refund_credits(riferimento, reason="genera_indice_fallito", amount=3)
+        raise
     massimo_tentativi = 5  # prima generazione + fino a quattro correzioni mirate nello stesso clic
     for tentativo in range(massimo_tentativi):
         problemi = criticita_indice_generato(corrente, genere, titolo, trama, obiettivo)
         voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
-            corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov
+            corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
         )
         difetti_bloccanti = (
             "non sono stati riconosciuti capitoli", "capitoli senza almeno due sottocapitoli",
@@ -1028,7 +1043,7 @@ Mantieni soltanto argomenti attinenti al brief.
 INDICE RIFIUTATO DA CORREGGERE
 {corrente}
 """
-        corrente = normalizza_indice_generato(chiedi_gpt(revisione, system_prompt))
+        corrente = normalizza_indice_generato(chiedi_gpt(revisione, system_prompt, addebita=False))
     return ""
 
 
@@ -1058,12 +1073,12 @@ def sezioni_mancanti_per_esportazione(sezioni, genere):
     return mancanti
 
 
-def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2):
+def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS):
     """Riprova una sezione senza perdere le precedenti; evita libri interrotti a metà dopo un errore transitorio."""
     ultimo_errore = None
     for tentativo in range(1, tentativi + 1):
         try:
-            testo = chiedi_gpt(prompt, system_prompt)
+            testo = chiedi_gpt(prompt, system_prompt, amount=amount)
             if not testo or testo.startswith("ERRORE:"):
                 raise RuntimeError(testo or "Risposta vuota")
             # La stesura non effettua automaticamente una ricerca: la verifica
@@ -1126,6 +1141,7 @@ def genera_simulazione_test_prep(prompt_base, system_prompt, sezione, indice, tr
         return genera_sezione_con_ripetizione(prompt_base, system_prompt, sezione, lingua)
 
     dimensione_blocco = 10
+    gruppi_domande = (totale + dimensione_blocco - 1) // dimensione_blocco
     blocchi_domande, domande_precedenti = [], []
     for inizio in range(1, totale + 1, dimensione_blocco):
         fine = min(inizio + dimensione_blocco - 1, totale)
@@ -1173,7 +1189,10 @@ DOMANDE DELLA SIMULAZIONE
     chiave = ""
     for tentativo_chiave in range(3):
         correzione = "" if not tentativo_chiave else "\nCORREZIONE OBBLIGATORIA: inserisci tutte e sole le soluzioni numerate richieste."
-        chiave = genera_sezione_con_ripetizione(prompt_chiave + correzione, system_prompt, sezione, lingua)
+        chiave = genera_sezione_con_ripetizione(
+            prompt_chiave + correzione, system_prompt, sezione, lingua,
+            amount=gruppi_domande,
+        )
         if len(re.findall(r"(?im)^\s*soluzione\s+\d{1,3}\s*[:.-]", chiave or "")) == totale:
             break
     if len(re.findall(r"(?im)^\s*soluzione\s+\d{1,3}\s*[:.-]", chiave or "")) != totale:
@@ -1194,8 +1213,9 @@ def stima_massima_crediti_stesura(sezione, indice, trama, obiettivo, genere):
         if totale >= 10:
             gruppi_domande = (totale + 9) // 10
             # Gruppi di domande + chiave soluzioni, fino a tre correzioni e due retry ciascuno.
-            return (gruppi_domande + 1) * 6
-    return 2
+            # Un credito ogni dieci domande e uno ogni dieci soluzioni.
+            return gruppi_domande * 2
+    return 1
 
 
 def criticita_specificita(testo, genere, sezione):
@@ -1275,8 +1295,9 @@ mostra il contenuto concreto richiesto dal titolo della sezione.
         "Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Economia e Finanza",
         "Biografia", "Test Prep (Preparazione Esami)", "Storico"
     }
-    if genere in generi_con_verifica_estesa or richiede_verifica_fatti(testo, sezione):
-        testo = verifica_e_correggi_fatti_online(testo, sezione, lingua)
+    # La verifica online è una scelta esplicita dell'utente: costa 2 crediti e
+    # viene proposta nel relativo pulsante del capitolo, senza addebiti nascosti
+    # durante la normale scrittura di una sezione.
     return pulisci_testo_editoriale(testo)
 
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
@@ -1566,7 +1587,7 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Mantieni paragrafi leggibili e sottotitoli brevi solo quando migliorano la consultazione; non usare formule generiche come "semplice", "intuitivo" o "fondamentale" senza spiegare concretamente il perché.
 """
 
-def valuta_indice_editoriale(indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti=""):
+def valuta_indice_editoriale(indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti="", *, addebita=True):
     """Valuta l'indice rispetto al brief compilato nella sidebar."""
     prompt = f"""Valuta professionalmente il seguente indice editoriale in lingua {lingua}.
 
@@ -1596,7 +1617,8 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
 """
     return pulisci_testo_editoriale(chiedi_gpt(
         prompt,
-        "Sei un editor senior specializzato in architettura di libri. Sei rigoroso, concreto e non usi valutazioni vaghe."
+        "Sei un editor senior specializzato in architettura di libri. Sei rigoroso, concreto e non usi valutazioni vaghe.",
+        addebita=addebita,
     ))
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
@@ -1634,11 +1656,12 @@ def blocchi_per_audit_manoscritto(contenuti, limite_caratteri=18000):
     return blocchi
 
 
-def chiedi_audit_editoriale(prompt):
+def chiedi_audit_editoriale(prompt, *, addebita=True):
     """Esegue l'audit editoriale completo con il modello rapido dedicato ai controlli."""
     riferimento = None
     try:
-        riferimento = charge_credits("audit_editoriale")
+        if addebita:
+            riferimento = charge_credits("audit_editoriale", amount=1)
         risposta = client.responses.create(
             model="gpt-5-mini",
             input=prompt
@@ -1647,7 +1670,7 @@ def chiedi_audit_editoriale(prompt):
         return pulisci_testo_editoriale(testo).strip()
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento)
+            refund_credits(riferimento, amount=1)
         return f"ERRORE AUDIT: {str(e)}"
 
 
@@ -1738,11 +1761,15 @@ INTERVENTI PROPOSTI:"""
         else:
             da_analizzare.append((numero, blocco, firma_blocco))
 
-    # I blocchi nuovi vengono controllati in parallelo; quelli già esaminati sono riutilizzati.
+    # Primo controllo: prezzo fisso. In seguito si pagano solo i blocchi modificati.
     if da_analizzare:
+        # Se nessun blocco del manoscritto corrente è in cache è un primo
+        # controllo, anche se la sessione contiene cache di un progetto passato.
+        costo_controllo = 10 if completati == 0 else len(da_analizzare)
+        addebita_azione_diretta("controllo_coerenza", amount=costo_controllo)
         with ThreadPoolExecutor(max_workers=3) as esecutore:
             lavori = {
-                esecutore.submit(chiedi_audit_editoriale, prompt_audit_blocco(numero, blocco)): (numero, firma_blocco)
+                esecutore.submit(chiedi_audit_editoriale, prompt_audit_blocco(numero, blocco), addebita=False): (numero, firma_blocco)
                 for numero, blocco, firma_blocco in da_analizzare
             }
             for lavoro in as_completed(lavori):
@@ -1808,7 +1835,7 @@ SOTTOCAPITOLO DA SISTEMARE: numero e titolo esatti; scrivi "INTERO CAPITOLO" sol
 PRIORITÀ: alta, media o bassa
 PROBLEMA: difetto concreto osservato nel testo
 OBIETTIVO DELLA CORREZIONE: risultato verificabile da ottenere
-PROMPT DA INCOLLARE: istruzione autonoma, pronta da copiare nel campo "Rigenera con AI" della sezione indicata. Indica cosa mantenere, cosa aggiungere, cosa eliminare, genere, stile, POV e divieto di ripetere altre sezioni. Non proporre alcuna riscrittura automatica.""")
+PROMPT DA INCOLLARE: istruzione autonoma, pronta da copiare nel campo "Rigenera con AI" della sezione indicata. Indica cosa mantenere, cosa aggiungere, cosa eliminare, genere, stile, POV e divieto di ripetere altre sezioni. Non proporre alcuna riscrittura automatica.""", addebita=False)
     cache_sintesi[firma_completa] = sintesi
     return sintesi
 
@@ -2599,8 +2626,8 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
-        if pulsante_con_preventivo("genera_indice", L["btn_idx"], "fino a 10",
-                                   "L'indice può essere generato e controllato automaticamente più volte per raggiungere la soglia di qualità.",
+        if pulsante_con_preventivo("genera_indice", L["btn_idx"], 3,
+                                   "Include generazione, valutazione editoriale e possibili correzioni automatiche dell'indice.",
                                    disabled=not sidebar_pronta):
             with st.spinner("Creazione indice (Neuro-Analisi, Connessione Parametri e Strutturazione Logica in corso)..."):
                 
@@ -2737,8 +2764,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     height=320,
                     key="output_voto_indice"
                 )
-                if pulsante_con_preventivo("rigenera_indice_voto", "🔄 RIGENERA INDICE SEGUENDO IL VOTO", "fino a 10",
-                                           "La proposta viene generata e verificata automaticamente prima di essere mostrata.", use_container_width=True):
+                if pulsante_con_preventivo("rigenera_indice_voto", "🔄 RIGENERA INDICE SEGUENDO IL VOTO", 3,
+                                           "Include rigenerazione, valutazione editoriale e possibili correzioni automatiche.", use_container_width=True):
                     with st.spinner("Creazione della proposta migliorata in corso..."):
                         prompt_rigenerazione = f"""Riscrivi esclusivamente l'indice del libro sotto indicato, rigorosamente in lingua {lingua_sel}.
 
@@ -2921,7 +2948,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             messaggio += f" Conservati senza modifiche: {gia_presenti}."
                         st.success(messaggio)
                         st.rerun()
-                if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 1,
+                if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 2,
                                            "Verifica online solo i dati aggiornabili del capitolo selezionato.", use_container_width=True):
                     contenuti_capitolo = [
                         (sottocapitolo, st.session_state.get(f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}", ""))
@@ -3014,7 +3041,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # --- FINE NUOVE RIGHE ---
                 
                 # --- AGGIUNTA PULSANTE GENERATORE RICETTE ---
-                if pulsante_con_preventivo(f"ricette_{k_sessione}", t_btn_ric, 1,
+                if pulsante_con_preventivo(f"ricette_{k_sessione}", t_btn_ric, 10,
                                            "Saranno aggiunte 10 ricette alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner(f"Creazione 10 ricette uniche in {lingua_sel}..."):
@@ -3029,7 +3056,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             {mem_ricette[-4000:]}"""
                             
-                            res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.")
+                            res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=10)
                             st.session_state[k_sessione] += f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r)
                             st.rerun()
 
@@ -3059,7 +3086,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.session_state[k_sessione] = st.text_area(L["label_editor"], value=testo_editor, height=500)
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
-                if st.button("Genera Report Sintattico"): st.write(analizza_qualita_prosa(st.session_state.get(k_sessione, "")))
+                if pulsante_con_preventivo(
+                    f"report_sintattico_{k_sessione}", "Genera Report Sintattico", 1,
+                    "Analizza qualità, chiarezza e criticità della sezione selezionata.",
+                ):
+                    addebita_azione_diretta("report_sintattico", amount=1)
+                    st.write(analizza_qualita_prosa(st.session_state.get(k_sessione, "")))
 
     # TAB 3: ANTEPRIMA
     with tabs[3]:
@@ -3097,9 +3129,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
         st.subheader("Controllo del manoscritto")
-        stima_coerenza = len(blocchi_per_audit_manoscritto(contenuti_libro)) + 1
-        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", f"fino a {stima_coerenza}",
-                                   "La stima dipende dalla lunghezza del manoscritto; analisi già presenti possono ridurre il consumo effettivo."):
+        stima_coerenza = 10 if not st.session_state.get("cache_audit_blocchi") else "1 per ogni blocco nuovo o modificato"
+        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", stima_coerenza,
+                                   "Il primo controllo completo costa 10 crediti. I controlli successivi riutilizzano la cache e consumano solo 1 credito per ogni blocco nuovo o modificato."):
             barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
             stato_coerenza = st.empty()
 
