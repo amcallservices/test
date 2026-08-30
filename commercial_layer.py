@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import os
 import uuid
+import json
 from pathlib import Path
 from typing import Any
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 COMMERCIAL_VERSION = "beta 3a"
@@ -185,14 +187,35 @@ def _supabase_login(email: str, password: str) -> dict[str, Any]:
 
 def _supabase_signup(email: str, password: str) -> None:
     url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/signup"
+    payload = {"email": email.strip(), "password": password}
+    app_url = _secret("APP_BASE_URL").rstrip("/")
+    if app_url:
+        payload["email_redirect_to"] = app_url
     response = requests.post(
         url,
         headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
-        json={"email": email, "password": password},
+        json=payload,
         timeout=20,
     )
     if not response.ok:
         raise RuntimeError("Registrazione non riuscita. Usa una password più sicura o riprova.")
+
+
+def _supabase_resend_confirmation(email: str) -> None:
+    """Reinvia la conferma senza rivelare se l'indirizzo è registrato."""
+    url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/resend"
+    payload = {"type": "signup", "email": email.strip()}
+    app_url = _secret("APP_BASE_URL").rstrip("/")
+    if app_url:
+        payload["email_redirect_to"] = app_url
+    response = requests.post(
+        url,
+        headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
+        json=payload,
+        timeout=20,
+    )
+    if not response.ok:
+        raise RuntimeError("Impossibile reinviare la conferma. Attendi un minuto e riprova.")
 
 
 def _supabase_recover_password(email: str) -> None:
@@ -201,7 +224,7 @@ def _supabase_recover_password(email: str) -> None:
     payload = {"email": email.strip()}
     redirect_url = _secret("APP_BASE_URL")
     if redirect_url:
-        payload["redirect_to"] = redirect_url.rstrip("/")
+        payload["redirect_to"] = f"{redirect_url.rstrip('/')}?auth=recovery"
     response = requests.post(
         url,
         headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
@@ -210,6 +233,69 @@ def _supabase_recover_password(email: str) -> None:
     )
     if not response.ok:
         raise RuntimeError("Impossibile inviare il link di recupero. Riprova tra poco.")
+
+
+def _render_password_recovery() -> bool:
+    """Mostra il form di nuova password dopo il ritorno dal link Supabase."""
+    try:
+        is_recovery = st.query_params.get("auth") == "recovery"
+    except Exception:
+        is_recovery = False
+    if not is_recovery:
+        return False
+
+    supabase_url = _secret("SUPABASE_URL").rstrip("/")
+    anon_key = _secret("SUPABASE_ANON_KEY")
+    app_url = _secret("APP_BASE_URL").rstrip("/")
+    if not (supabase_url and anon_key and app_url):
+        st.error("Reimpostazione password non disponibile. Riprova dalla pagina di accesso.")
+        return True
+
+    st.title("Imposta una nuova password")
+    st.caption("Scegli una password nuova e sicura per il tuo account.")
+    components.html(
+        f"""
+        <div style="font-family:system-ui,sans-serif;max-width:520px;padding:8px 2px;color:#102a43">
+          <label style="font-weight:700">Nuova password</label>
+          <input id="new-password" type="password" autocomplete="new-password" style="display:block;width:96%;padding:12px;margin:7px 0 14px;border:1px solid #9cc8e7;border-radius:8px" />
+          <label style="font-weight:700">Ripeti la nuova password</label>
+          <input id="repeat-password" type="password" autocomplete="new-password" style="display:block;width:96%;padding:12px;margin:7px 0 14px;border:1px solid #9cc8e7;border-radius:8px" />
+          <button id="save-password" style="padding:12px 18px;border:0;border-radius:8px;background:#1689e8;color:white;font-weight:800;cursor:pointer">Salva nuova password</button>
+          <p id="recovery-message" style="margin-top:14px"></p>
+        </div>
+        <script>
+          const message = document.getElementById('recovery-message');
+          let token = '';
+          try {{ token = new URLSearchParams(window.parent.location.hash.slice(1)).get('access_token') || ''; }} catch (error) {{}}
+          if (!token) {{
+            message.textContent = 'Link non valido o scaduto. Torna alla pagina di accesso e richiedine uno nuovo.';
+            message.style.color = '#b42318';
+            document.getElementById('save-password').disabled = true;
+          }}
+          document.getElementById('save-password').addEventListener('click', async () => {{
+            const password = document.getElementById('new-password').value;
+            const repeat = document.getElementById('repeat-password').value;
+            if (password.length < 8) {{ message.textContent = 'La password deve contenere almeno 8 caratteri.'; message.style.color = '#b42318'; return; }}
+            if (password !== repeat) {{ message.textContent = 'Le due password non coincidono.'; message.style.color = '#b42318'; return; }}
+            message.textContent = 'Salvataggio in corso…'; message.style.color = '#174a73';
+            try {{
+              const response = await fetch({json.dumps(supabase_url + '/auth/v1/user')}, {{
+                method: 'PUT',
+                headers: {{'apikey': {json.dumps(anon_key)}, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}},
+                body: JSON.stringify({{password}})
+              }});
+              if (!response.ok) throw new Error('reset failed');
+              window.parent.location.replace({json.dumps(app_url + '?password_updated=1')});
+            }} catch (error) {{
+              message.textContent = 'Non è stato possibile aggiornare la password. Richiedi un nuovo link e riprova.';
+              message.style.color = '#b42318';
+            }}
+          }});
+        </script>
+        """,
+        height=320,
+    )
+    return True
 
 
 def _landing_page() -> None:
@@ -462,6 +548,16 @@ def _account_gate() -> dict[str, Any]:
         st.error("Configurazione account non disponibile. Riprova più tardi.")
         st.stop()
 
+    if _render_password_recovery():
+        st.stop()
+
+    try:
+        if st.query_params.get("password_updated") == "1":
+            st.success("Password aggiornata. Ora puoi accedere con quella nuova.")
+            st.query_params.clear()
+    except Exception:
+        pass
+
     current = st.session_state.get("commercial_user")
     if current:
         return current
@@ -502,9 +598,26 @@ def _account_gate() -> dict[str, Any]:
         if st.button("Crea account", key="commercial_signup"):
             try:
                 _supabase_signup(email, password)
+                st.session_state["commercial_pending_confirmation_email"] = email.strip()
                 st.success("Account creato. Controlla l'email di conferma, poi accedi.")
             except Exception as error:
                 st.error(str(error))
+        st.divider()
+        st.caption("Non hai ricevuto l’email di conferma?")
+        resend_email = st.text_input(
+            "Email per reinviare la conferma",
+            value=st.session_state.get("commercial_pending_confirmation_email", ""),
+            key="commercial_resend_confirmation_email",
+        )
+        if st.button("Reinvia email di conferma", key="commercial_resend_confirmation"):
+            if not resend_email.strip():
+                st.warning("Inserisci prima il tuo indirizzo e-mail.")
+            else:
+                try:
+                    _supabase_resend_confirmation(resend_email)
+                    st.success("Se esiste una registrazione da confermare, riceverai a breve una nuova email.")
+                except Exception as error:
+                    st.error(str(error))
     st.stop()
 
 
@@ -691,6 +804,12 @@ def _commerce_sidebar() -> None:
 
 def bootstrap_commercial_app() -> None:
     """Mostra la home pubblica, quindi accesso e area editor riservata."""
+    try:
+        recovery_requested = st.query_params.get("auth") == "recovery"
+    except Exception:
+        recovery_requested = False
+    if recovery_requested:
+        st.session_state["commercial_show_auth"] = True
     if (
         _mode() != "demo"
         and not st.session_state.get("commercial_user")
