@@ -97,6 +97,41 @@ def crea_scheda_fonti(testo, limite=2600):
     return "\n".join(scelti) or (testo or "")[:limite]
 
 
+MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", "gpt-5.4-mini")
+
+
+def studia_fonti_con_ai(testo, limite_input=30000):
+    """Crea un dossier editoriale delle fonti prima di progettare indice e testi.
+
+    Il dossier non viene mai mostrato nel libro: serve soltanto come memoria ragionata
+    per l'indice e per le singole sezioni. Se il modello configurato non fosse
+    disponibile, l'app continua a funzionare con il riepilogo locale.
+    """
+    testo = (testo or "").strip()
+    if not testo:
+        return ""
+    estratto = testo[:limite_input]
+    try:
+        risposta = client.responses.create(
+            model=MODELLO_ANALISI_FONTI,
+            input=(
+                "Sei un ricercatore editoriale. Studia le fonti qui sotto per preparare "
+                "la redazione di un libro originale. Non copiare frasi estese e non "
+                "inventare informazioni. Restituisci un DOSSIER INTERNO strutturato con: "
+                "1) tesi e concetti centrali; 2) fatti, definizioni e terminologia da "
+                "rispettare; 3) collegamenti logici e progressione didattica consigliata; "
+                "4) esempi, procedure o dati realmente presenti; 5) limiti, contraddizioni "
+                "e punti da verificare; 6) argomenti da assegnare a capitoli e sottocapitoli. "
+                "Sii specifico e denso: questo testo guidera indice e stesura, ma non verra "
+                "pubblicato.\n\nFONTI:\n" + estratto
+            ),
+        )
+        dossier = (getattr(risposta, "output_text", "") or "").strip()
+        return dossier or crea_scheda_fonti(testo, limite=3600)
+    except Exception:
+        return crea_scheda_fonti(testo, limite=3600)
+
+
 def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
     """Recupera soltanto i brani più attinenti al titolo della sezione."""
     fonte = st.session_state.get("conoscenza_extra", "")
@@ -119,7 +154,12 @@ def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
             continue
         scelti.append(paragrafo)
         usati += len(paragrafo)
-    return "\n\n".join(scelti) or st.session_state.get("scheda_fonti", "")[:limite]
+    dossier = st.session_state.get("dossier_fonti_ai", "")
+    materiali = "\n\n".join(scelti) or st.session_state.get("scheda_fonti", "")[:limite]
+    if dossier:
+        spazio_dossier = max(900, limite // 2)
+        return f"DOSSIER RAGIONATO DELLE FONTI:\n{dossier[:spazio_dossier]}\n\nESTRATTI ORIGINALI PERTINENTI:\n{materiali[:limite - spazio_dossier]}"
+    return materiali
 
 
 def notifica_sonora(evento, lingua="Italiano", ripeti=False):
@@ -701,18 +741,9 @@ def aggiungi_numeri_pagina_docx(documento):
         run._r.append(campo_fine)
 
 def formatta_manoscritto_kdp(file_docx):
-    """Formatta un DOCX per KDP 6×9 preservando tutte le immagini originali."""
+    """Applica un formato Word pulito 6x9 per il manoscritto KDP caricato dall'utente."""
     documento = Document(BytesIO(file_docx.getvalue()))
-
-    def contiene_immagine(paragrafo):
-        """Riconosce immagini Word senza modificare il paragrafo che le contiene."""
-        return bool(
-            paragrafo._p.xpath(".//w:drawing")
-            or paragrafo._p.xpath(".//w:pict")
-            or paragrafo._p.xpath(".//w:object")
-        )
-
-    for nome_stile in ("Heading 1", "Heading 2"):
+    for nome_stile in ('Heading 1', 'Heading 2'):
         try:
             documento.styles[nome_stile]
         except KeyError:
@@ -727,60 +758,32 @@ def formatta_manoscritto_kdp(file_docx):
         sezione.right_margin = Inches(0.75)
 
     for paragrafo in list(documento.paragraphs):
-        # Non riscrivere mai un paragrafo con immagini: paragrafo.text le cancellerebbe.
-        if contiene_immagine(paragrafo):
-            paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            paragrafo.paragraph_format.space_before = Pt(8)
-            paragrafo.paragraph_format.space_after = Pt(8)
-            continue
-
         testo = pulisci_testo_editoriale(paragrafo.text).strip()
-
         if not testo:
             elimina_paragrafo_docx(paragrafo)
             continue
-
-        paragrafo.text = " ".join(testo.split())
-
-        if len(paragrafo.text) < 80 and re.search(
-            r"(?i)\b(capitolo|chapter|parte|part)\b",
-            paragrafo.text,
-        ):
-            paragrafo.style = "Heading 1"
+        paragrafo.text = ' '.join(testo.split())
+        if len(paragrafo.text) < 80 and re.search(r'(?i)\b(capitolo|chapter|parte|part)\b', paragrafo.text):
+            paragrafo.style = 'Heading 1'
             paragrafo.paragraph_format.page_break_before = True
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
             paragrafo.paragraph_format.space_before = Pt(0)
             paragrafo.paragraph_format.space_after = Pt(30)
-
-        elif len(paragrafo.text) < 100 and re.match(
-            r"^\d+(?:\.\d+)?\s+",
-            paragrafo.text,
-        ):
-            paragrafo.style = "Heading 2"
+        elif len(paragrafo.text) < 100 and re.match(r'^\d+(?:\.\d+)?\s+', paragrafo.text):
+            paragrafo.style = 'Heading 2'
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.LEFT
             paragrafo.paragraph_format.first_line_indent = Inches(0)
             paragrafo.paragraph_format.space_before = Pt(18)
             paragrafo.paragraph_format.space_after = Pt(10)
-
         else:
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             paragrafo.paragraph_format.first_line_indent = Inches(0.25)
             paragrafo.paragraph_format.space_after = Pt(6)
 
-    # Riduce soltanto le immagini troppo larghe per il formato 6×9, senza eliminarle.
-    larghezza_massima = Inches(4.5)
-    for immagine in documento.inline_shapes:
-        if immagine.width > larghezza_massima:
-            rapporto = larghezza_massima / immagine.width
-            immagine.width = int(immagine.width * rapporto)
-            immagine.height = int(immagine.height * rapporto)
-
-    stile_normale = documento.styles["Normal"]
-    stile_normale.font.name = "Georgia"
+    stile_normale = documento.styles['Normal']
+    stile_normale.font.name = 'Georgia'
     stile_normale.font.size = Pt(11)
-
     aggiungi_numeri_pagina_docx(documento)
-
     output = BytesIO()
     documento.save(output)
     output.seek(0)
@@ -1037,7 +1040,13 @@ def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, l
     return voto, (difetti.group(1).strip() if difetti else risposta)
 
 
-def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov):
+def firma_indice(indice):
+    """Confronto robusto: ignora maiuscole e spazi, non le differenze editoriali reali."""
+    return re.sub(r"\s+", " ", (indice or "").strip().lower())
+
+
+def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
+                              indice_da_superare=""):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
     try:
@@ -1045,9 +1054,16 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     except Exception:
         refund_credits(riferimento, reason="genera_indice_fallito", amount=3)
         raise
+    indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 5  # prima generazione + fino a quattro correzioni mirate nello stesso clic
     for tentativo in range(massimo_tentativi):
         problemi = criticita_indice_generato(corrente, genere, titolo, trama, obiettivo)
+        proposta_identica = bool(indice_di_partenza and firma_indice(corrente) == indice_di_partenza)
+        if proposta_identica:
+            problemi.append(
+                "la proposta è identica all'indice valutato: applica concretamente i miglioramenti richiesti "
+                "modificando struttura e titoli pertinenti"
+            )
         voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
             corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
         )
@@ -1057,7 +1073,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             "struttura troppo breve"
         )
         ha_blocchi = any(any(blocco in problema for blocco in difetti_bloccanti) for problema in problemi)
-        if voto_editoriale >= 8 and not ha_blocchi:
+        if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica:
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
                 esito += " Note qualitative considerate: " + "; ".join(problemi)
@@ -1077,6 +1093,11 @@ La bozza precedente non rispetta questi vincoli oggettivi/editoriali: {'; '.join
 Usa i difetti elencati come requisiti di correzione concreti. Riscrivi l'intero indice, senza commenti e senza la parola 'Indice' in apertura.
 Correggi tutti i punti segnalati, inclusi grammatica, gerarchia, ripetizioni e aderenza al brief; non limitarti a rinominare i titoli.
 Mantieni soltanto argomenti attinenti al brief.
+
+DIVIETO ASSOLUTO: non restituire l'indice di partenza né una sua copia cosmetica. Ogni miglioramento
+indicato dall'editor deve produrre una modifica visibile nella struttura, nella sequenza, nei titoli o
+nella copertura dei contenuti. Prima di rispondere confronta internamente la nuova proposta con l'indice
+da correggere e verifica di aver applicato almeno le correzioni necessarie.
 
 INDICE RIFIUTATO DA CORREGGERE
 {corrente}
@@ -1372,16 +1393,18 @@ with st.sidebar:
             file_caricati = file_caricati[:10]
         firma_fonti = firma_fonti_esterne(file_caricati)
         if st.session_state.get("firma_fonti") != firma_fonti:
-            with st.spinner("Lettura e preparazione delle fonti in corso..."):
+            with st.spinner("Lettura, studio editoriale e preparazione delle fonti in corso..."):
                 st.session_state["conoscenza_extra"] = estrai_testo_da_files(file_caricati)
                 st.session_state["scheda_fonti"] = crea_scheda_fonti(st.session_state["conoscenza_extra"])
+                st.session_state["dossier_fonti_ai"] = studia_fonti_con_ai(st.session_state["conoscenza_extra"])
                 st.session_state["firma_fonti"] = firma_fonti
         if st.session_state.get("conoscenza_extra"):
-            st.success(f"Analizzati {len(file_caricati)} documenti. Le fonti vengono riutilizzate senza una nuova lettura.")
-            st.caption("Le fonti guidano il ragionamento: il testo finale non mostrerà automaticamente link o citazioni.")
+            st.success(f"Studiati {len(file_caricati)} documenti. Il dossier editoriale viene riutilizzato per indice e stesura.")
+            st.caption(f"Analisi fonti: {MODELLO_ANALISI_FONTI}. Le fonti guidano il ragionamento e non compaiono come citazioni automatiche nel testo finale.")
     else:
         st.session_state["conoscenza_extra"] = ""
         st.session_state.pop("scheda_fonti", None)
+        st.session_state.pop("dossier_fonti_ai", None)
         st.session_state.pop("firma_fonti", None)
     
     st.markdown("---")
@@ -2730,7 +2753,13 @@ e applicazioni. Mantieni coerenza con genere, tipologia, stile, POV, obiettivo e
 L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
 """
                 if st.session_state.get("conoscenza_extra"):
-                    prompt_idx += f"\n\nFONTI ESTERNE E RAGIONAMENTO:\nUsa queste informazioni fornite dall'utente per strutturare l'indice in modo logico e autorevole. \n{st.session_state['conoscenza_extra'][:4000]}\n"
+                    dossier_fonti = st.session_state.get("dossier_fonti_ai") or st.session_state.get("scheda_fonti", "")
+                    prompt_idx += (
+                        "\n\nDOSSIER DELLE FONTI ESTERNE (STUDIATO PRIMA DELLA PROGETTAZIONE):\n"
+                        "Usa il dossier per distribuire i concetti con precisione nell'indice; "
+                        "non citare fonti, non copiare il testo e non aggiungere argomenti non supportati.\n"
+                        f"{dossier_fonti[:7000]}\n"
+                    )
 
                 prompt_idx += f"""
 REGOLE FONDAMENTALI ED ESCLUSIVE:
@@ -2830,7 +2859,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         proposta = genera_indice_controllato(
                             prompt_rigenerazione,
                             "Sei un editor senior. Correggi l'indice con precisione e conserva la coerenza con il brief.",
-                            val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov
+                            val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
+                            indice_da_superare=indice_da_valutare,
                         )
                         if proposta:
                             st.session_state["indice_proposto_dal_voto"] = proposta
@@ -3257,7 +3287,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             image_bytes=img.get("bytes") if img else None,
                             image_caption=img.get("caption") if img else None
                         )
-                out_p = bytes(pdf.output(dest='S'))
+                out_p = pdf.output(dest='S').encode('latin-1', 'replace')
                 notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
                 suffisso = "_BOZZA" if sezioni_incomplete_export else ""
                 st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}{suffisso}.pdf", mime="application/pdf")
