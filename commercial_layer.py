@@ -321,10 +321,15 @@ def _render_password_recovery() -> bool:
                 if (response.status === 422) throw new Error('password rejected');
                 throw new Error('reset failed');
               }}
-              message.textContent = '✓ Password aggiornata correttamente. Ti riportiamo all’accesso…';
+              message.textContent = '✓ Password aggiornata correttamente.';
               message.style.color = '#15803d';
-              document.getElementById('save-password').disabled = true;
-              setTimeout(() => window.parent.location.replace({json.dumps(app_url + '?password_updated=1')}), 2600);
+              const oldButton = document.getElementById('save-password');
+              const loginLink = document.createElement('a');
+              loginLink.href = {json.dumps(app_url + '?password_updated=1')};
+              loginLink.target = '_top';
+              loginLink.textContent = 'Vai all’accesso';
+              loginLink.style.cssText = 'display:inline-block;margin-top:6px;padding:12px 18px;border-radius:8px;background:#1689e8;color:#fff;font-weight:800;text-decoration:none';
+              oldButton.replaceWith(loginLink);
             }} catch (error) {{
               message.textContent = error.message === 'password rejected'
                 ? 'La password non è accettata dal servizio di autenticazione. Prova una password diversa.'
