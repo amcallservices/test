@@ -97,7 +97,7 @@ def crea_scheda_fonti(testo, limite=2600):
     return "\n".join(scelti) or (testo or "")[:limite]
 
 
-MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
+MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4")
 MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_STESURA)
 
 
