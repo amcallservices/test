@@ -10,7 +10,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "beta1a"
+COMMERCIAL_VERSION = "beta 2a"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
