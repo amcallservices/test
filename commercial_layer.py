@@ -10,7 +10,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "beta 2a"
+COMMERCIAL_VERSION = "beta 3a"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -192,9 +192,9 @@ def _landing_page() -> None:
           .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
-          .ss-title {font-family:Georgia,serif; font-size:clamp(5.2rem,8.25vw,8.6rem); margin:0; color:#cf3345; line-height:.83; letter-spacing:-.085em; text-shadow:0 2px 0 rgba(255,255,255,.8)}
+          .ss-title {font-family:Georgia,serif; font-size:clamp(6.2rem,9.6vw,10.2rem); margin:0; color:#cf3345; line-height:.8; letter-spacing:-.09em; text-shadow:0 2px 0 rgba(255,255,255,.8)}
           .ss-title-line {width:68px; height:5px; background:#1689e8; border-radius:99px; margin:1.65rem 0}
-          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.45rem,4.1vw,4.2rem); font-weight:800; line-height:1.06; color:#102a43; margin:0 0 1.2rem; letter-spacing:-.035em}
+          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.2rem,3.45vw,3.55rem); font-weight:800; line-height:1.08; color:#102a43; margin:0 0 1.2rem; letter-spacing:-.035em}
           .ss-subtitle {font-size:1.17rem; max-width:555px; margin:0; color:#486581; line-height:1.58}
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
