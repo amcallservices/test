@@ -479,15 +479,37 @@ class EbookPDF(FPDF):
 # ======================================================================================================================
 # 5. CORE LOGIC DI STESURA E ANALISI QUALITÀ (POTENZIATA) E DECISIONE NEURALE
 # ======================================================================================================================
-def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS):
+PROFILI_LUNGHEZZA_STESURA = {
+    "Compatto": {
+        "parole": "140-200 parole",
+        "max_completion_tokens": 420,
+        "descrizione": "capitoli rapidi, diretti e senza ripetizioni",
+    },
+    "Standard KDP": {
+        "parole": "220-300 parole",
+        "max_completion_tokens": 620,
+        "descrizione": "equilibrio consigliato tra qualità, lettura e lunghezza finale",
+    },
+    "Approfondito": {
+        "parole": "320-420 parole",
+        "max_completion_tokens": 780,
+        "descrizione": "trattazione più ampia per sezioni realmente complesse",
+    },
+}
+
+
+def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None):
     riferimento = None
     try:
         if addebita:
             riferimento = charge_credits("generazione_testo", amount=amount)
-        response = client.chat.completions.create(
-            model=MODELLO_STESURA,
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-        )
+        richiesta = {
+            "model": MODELLO_STESURA,
+            "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
+        }
+        if max_completion_tokens:
+            richiesta["max_completion_tokens"] = max_completion_tokens
+        response = client.chat.completions.create(**richiesta)
         testo = response.choices[0].message.content.strip()
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
@@ -1132,12 +1154,12 @@ def sezioni_mancanti_per_esportazione(sezioni, genere):
     return mancanti
 
 
-def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS):
+def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS, max_completion_tokens=None):
     """Riprova una sezione senza perdere le precedenti; evita libri interrotti a metà dopo un errore transitorio."""
     ultimo_errore = None
     for tentativo in range(1, tentativi + 1):
         try:
-            testo = chiedi_gpt(prompt, system_prompt, amount=amount)
+            testo = chiedi_gpt(prompt, system_prompt, amount=amount, max_completion_tokens=max_completion_tokens)
             if not testo or testo.startswith("ERRORE:"):
                 raise RuntimeError(testo or "Risposta vuota")
             # La stesura non effettua automaticamente una ricerca: la verifica
@@ -1329,11 +1351,14 @@ def criticita_specificita(testo, genere, sezione):
     return ""
 
 
-def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, genere, obiettivo, lingua):
+def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, genere, obiettivo, lingua, profilo_lunghezza="Standard KDP"):
     """Mantiene il flusso comune per tutti i generi e applica la logica speciale solo quando serve."""
     if sezione_simulazione_test_prep(sezione, indice, genere):
         return genera_simulazione_test_prep(prompt, system_prompt, sezione, indice, trama, obiettivo, lingua)
-    testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua))
+    limite_output = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])["max_completion_tokens"]
+    testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+        prompt, system_prompt, sezione, lingua, max_completion_tokens=limite_output
+    ))
     criticita = criticita_specificita(testo, genere, sezione)
     if criticita:
         testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
@@ -1346,7 +1371,7 @@ un esempio, un caso, un esercizio, un dato o una conseguenza specifica del gener
 Elimina frasi motivazionali, definizioni vaghe e ripetizioni. Non descrivere ciò che il lettore potrebbe fare:
 mostra il contenuto concreto richiesto dal titolo della sezione.
 """,
-            system_prompt, sezione, lingua
+            system_prompt, sezione, lingua, max_completion_tokens=limite_output
         ))
     # Le ricerche web sono riservate a leggi, prezzi, versioni, requisiti e altri
     # dati soggetti a cambiamento; i contenuti didattici stabili non consumano credito web.
@@ -1522,6 +1547,17 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         height=130,
         placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori."
     )
+    val_lunghezza = st.selectbox(
+        "Lunghezza delle sezioni",
+        list(PROFILI_LUNGHEZZA_STESURA.keys()),
+        index=1,
+        key="profilo_lunghezza_stesura",
+        help="Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti."
+    )
+    st.caption(
+        f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
+        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}."
+    )
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -1535,6 +1571,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         L["lbl_goal"]: val_goal,
         etichette_risultato.get(lingua_sel, "Risultato finale desiderato"): val_risultato,
         L["lbl_plot"]: val_trama,
+        "Lunghezza delle sezioni": val_lunghezza,
     }
     campi_sidebar_mancanti = [etichetta for etichetta, valore in campi_obbligatori_sidebar.items() if not str(valore).strip()]
     sidebar_pronta = not campi_sidebar_mancanti
@@ -1580,21 +1617,40 @@ def individua_sottocapitoli_del_capitolo(capitolo, sezioni):
     return [s for s in sezioni if re.match(rf"^{re.escape(numero)}\.\d+\s", s.strip())]
 
 def individua_sezioni_da_stendere(sezioni):
-    """Restituisce capitoli e sottocapitoli in ordine, escludendo Parti e appendici."""
+    """Restituisce le sole sezioni con contenuto autonomo, evitando il doppione capitolo/sottocapitoli."""
     regex_capitolo = r'(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+'
     regex_sottocapitolo = r'^\d+\.\d+\s+'
-    return [
-        sezione for sezione in sezioni
-        if re.match(regex_capitolo, sezione.strip()) or re.match(regex_sottocapitolo, sezione.strip())
-    ]
+    risultato = []
+    for sezione in sezioni:
+        pulita = sezione.strip()
+        if re.match(regex_sottocapitolo, pulita):
+            risultato.append(sezione)
+        elif re.match(regex_capitolo, pulita) and not individua_sottocapitoli_del_capitolo(sezione, sezioni):
+            # Un capitolo senza figli ha contenuto autonomo e viene scritto normalmente.
+            risultato.append(sezione)
+    return risultato
 
-def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti=""):
+def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti="", profilo_lunghezza="Standard KDP"):
     """Costruisce il prompt comune usato dalla stesura singola e dalla stesura di un capitolo intero."""
     memoria = genera_contesto_avanzato(sezione, trama)
     tipo_sezione = tipo_sezione_editoriale(sezione)
     profilo_genere = profilo_genere_stesura(genere)
     profilo_tipologia = profilo_tipologia_stesura(stile)
     regola_struttura = profilo_struttura_indice(genere, "", trama, obiettivo)
+    profilo_lunghezza_dati = PROFILI_LUNGHEZZA_STESURA.get(
+        profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+    )
+    ha_sottocapitoli = bool(individua_sottocapitoli_del_capitolo(sezione, indice.splitlines()))
+    if tipo_sezione == "capitolo" and ha_sottocapitoli:
+        istruzione_lunghezza = (
+            "Questo capitolo ha sottocapitoli: scrivi SOLO una cornice iniziale di 70-100 parole. "
+            "Non svolgere argomenti, procedure, esempi o conclusioni riservati ai sottocapitoli."
+        )
+    else:
+        istruzione_lunghezza = (
+            f"Scrivi tra {profilo_lunghezza_dati['parole']}. La qualità dipende dalla densità delle informazioni, "
+            "non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo."
+        )
     direttiva_test_prep = ""
     if genere == "Test Prep (Preparazione Esami)":
         direttiva_test_prep = """
@@ -1624,6 +1680,7 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 - Regole della tipologia di scrittura: {profilo_tipologia}
 - Regole della struttura: {regola_struttura}
 - Tipo della sezione corrente: {tipo_sezione}
+- Profilo di lunghezza scelto: {profilo_lunghezza}
 
 AZIONE:
 Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in lingua {lingua}.
@@ -1634,6 +1691,7 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Rispetta integralmente i parametri editoriali e usa tassativamente il POV richiesto ({pov}).
 - Tratta con priorità gli approfondimenti forniti, ma soltanto nelle sezioni cui sono pertinenti; non ripeterli artificialmente e non anticipare contenuti assegnati a sezioni successive.
 - Sii profondo ed esaustivo nell'ambito della sezione, senza rubare materiale alle altre.
+- {istruzione_lunghezza}
 - Redigi contenuto concreto suggerito dal titolo, senza preamboli inutili.
 - Non scrivere e non ripetere mai '{sezione}' come intestazione. Inizia direttamente con il contenuto.
 - Usa formattazione editoriale pulita: non usare Markdown, simboli ###, ##, **, __, ``` o intestazioni tecniche. Se servono elenchi, usa semplici punti o numeri senza caratteri decorativi.
@@ -1642,7 +1700,7 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Prima di consegnare, verifica internamente che il contenuto sia completo per la sezione assegnata, che non sia una bozza o un frammento e che non contenga residui di altre sezioni.
 
 === PROFONDITÀ ADATTIVA E SPIEGAZIONE PASSO PASSO ===
-- Scrivi un testo professionale, completo e proporzionato alla complessità della sezione: amplia dove sono necessari metodo, procedura, decisioni tecniche o esempi; evita invece di allungare con frasi motivazionali, ripetizioni o riassunti inutili.
+- Scrivi un testo professionale, completo e proporzionato alla complessità della sezione e al profilo di lunghezza scelto. Una spiegazione accurata non deve diventare una spiegazione lunga: evita frasi motivazionali, ripetizioni, riassunti e varianti dello stesso esempio.
 - Per una procedura o una funzione software, segui questa sequenza: scopo pratico; prerequisiti e strumenti; passaggi numerati nell'ordine esatto; cosa osservare dopo ogni passaggio; controllo del risultato; errori frequenti e correzioni; esempio realistico di applicazione.
 - Per un concetto teorico, segui questa sequenza: definizione chiara; perché è importante; come si applica; esempio concreto; limiti, eccezioni o errori da evitare.
 - Non saltare passaggi impliciti. Spiega ogni azione in modo che un lettore del livello dichiarato possa ripeterla autonomamente.
@@ -2058,9 +2116,9 @@ Devi agire come uno studioso che ha appena letto le fonti caricate dall'utente.
     # Aggiunto "Storico" a questo blocco logico
     if "Manuale" in val_genere or "Saggio" in val_genere or "Test Prep" in val_genere or "Economia" in val_genere or "Storico" in val_genere:
         modulo_approfondimento_genere = """
-=== DIRETTIVA DI APPROFONDIMENTO ESTREMO (MANUALISTICA E SAGGISTICA) ===
+=== DIRETTIVA DI APPROFONDIMENTO PROPORZIONATO (MANUALISTICA E SAGGISTICA) ===
 Trattandosi di un testo tecnico, didattico o manualistico, il tuo compito primario è ISTRUIRE. 
-Ogni singolo capitolo e sottocapitolo DEVE essere sviscerato in profondità assoluta. 
+Ogni sottocapitolo deve essere accurato e utile, entro la lunghezza assegnata. 
 - NON dare MAI nulla per scontato o rimanere in superficie.
 - Spiega dettagliatamente "COSA è", "PERCHÉ funziona così" e "COME si applica" nella pratica.
 - Inserisci esempi concreti, casi d'uso pratici, schemi logici o spiegazioni passo-passo.
@@ -2113,15 +2171,26 @@ Non limitarti a fare un discorso generico: devi FORNIRE MATERIALMENTE ciò che i
     modulo_operativita_universale = """
 === DIRETTIVA OBBLIGATORIA DI OPERATIVITÀ E DETTAGLIO ===
 Ogni sottocapitolo deve insegnare concretamente l'argomento, non limitarsi a descriverlo.
-Quando è pertinente, includi sempre: obiettivo, prerequisiti, strumenti, impostazioni,
-procedura numerata passo passo, valori o parametri, risultato atteso, errori frequenti,
-correzioni, esercizio pratico e criterio verificabile di completamento.
+Scegli soltanto gli elementi realmente necessari al titolo: procedura, esempio, errore comune,
+esercizio o criterio verificabile. Non inserire tutti gli elementi nello stesso testo solo per allungarlo.
 Se la sezione tratta prompt, scrivi prompt completi e copiabili. Se tratta software,
 indica menu, comandi, pulsanti e sequenza esatta. Se tratta una procedura, eseguila
 materialmente nel testo con dati o esempi realistici. Distingui fatti, esempi ipotetici
 e indicazioni da verificare. Non promettere risultati garantiti e non usare formule vaghe.
 Nel capitolo principale mantieni la visione d'insieme; nel sottocapitolo sviluppa il
 dettaglio assegnato senza anticipare o ripetere gli altri sottocapitoli.
+"""
+
+    profilo_lunghezza_corrente = PROFILI_LUNGHEZZA_STESURA.get(
+        val_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+    )
+    modulo_lunghezza = f"""
+=== LUNGHEZZA E DENSITÀ OBBLIGATORIE ===
+Profilo scelto: {val_lunghezza}.
+- Per una sezione autonoma, rispetta il limite di {profilo_lunghezza_corrente['parole']}.
+- Questa direttiva prevale su ogni invito generico a essere estremamente dettagliato o a includere molte categorie di esempi.
+- Una sezione è valida quando risponde bene al suo titolo con informazioni nuove, non quando ripete o aggiunge dettagli non necessari.
+- Un capitolo con sottocapitoli è solo una cornice breve: i contenuti completi appartengono ai sottocapitoli.
 """
 
     profilo_genere_corrente = profilo_genere_stesura(val_genere)
@@ -2139,6 +2208,7 @@ Stai redigendo l'ebook '{val_titolo}'.
 {modulo_esempi_specifici}
 {modulo_aderenza_titolo_genere}
 {modulo_operativita_universale}
+{modulo_lunghezza}
 
 === PROFILO EDITORIALE SPECIFICO ===
 - Regole del genere '{val_genere}': {profilo_genere_corrente}
@@ -2230,15 +2300,17 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Compila la barra laterale: titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
-2. Apri Indice e premi Genera Indice Professionale. Se lo modifichi a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 140-200 parole per sezione, Standard KDP (consigliato) circa 220-300 parole, Approfondito circa 320-420 parole. La scelta non cambia i crediti: regola soltanto la dimensione del testo. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
-3. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa le sezioni vuote. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
+3. Apri Indice e premi Genera Indice Professionale. Se lo modifichi a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
-4. Rigenera con AI modifica solo la sezione scelta seguendo la tua istruzione. Quiz aggiunge domande, 10 Esempi aggiunge esempi, 10 Ricette è per i ricettari; Controlla i fatti e Report sintattico verificano qualità e leggibilità. Carica un'immagine inserisce la tua immagine in anteprima, Word e PDF.
+4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa le sezioni autonome ancora vuote. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
 
-5. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
+5. Rigenera con AI modifica solo la sezione scelta seguendo la tua istruzione. Quiz aggiunge domande, 10 Esempi aggiunge esempi, 10 Ricette è per i ricettari; Controlla i fatti e Report sintattico verificano qualità e leggibilità. Carica un'immagine inserisce la tua immagine in anteprima, Word e PDF.
 
-6. In Esporta scarichi Word o PDF anche come bozza. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
+6. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
+
+7. In Esporta scarichi Word o PDF anche come bozza. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
 
 Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte o termina Scrivi tutto il libro, in caso di errore, al termine di Voto Indice, Controllo coerenza, formattazione ed esportazione. Controlla sempre testo e file finale prima di pubblicare."""),
         "English": ("How to use Scrittore Site", """1. Complete the sidebar: title, author, language, genre, style, goal, topic and desired final result. Use Further details for priorities, constraints and required examples.
@@ -2889,10 +2961,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # La stesura completa deve seguire esattamente tutte le sezioni disponibili nell'editor:
-            # prefazione, parti, capitoli, sottocapitoli e ringraziamenti.
-            sezioni_intero_libro = opzioni_editor
-            st.caption(f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. I contenuti già scritti verranno conservati.")
+            # I capitoli che possiedono sottocapitoli sono cornici, non corpi duplicati:
+            # la stesura completa genera quindi solo i sottocapitoli e gli eventuali capitoli autonomi.
+            sezioni_intero_libro = individua_sezioni_da_stendere(lista_cap_base)
+            st.caption(
+                f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni con contenuto autonomo. "
+                "I capitoli con sottocapitoli non vengono duplicati e i contenuti già scritti verranno conservati."
+            )
             # Job persistente: genera una sezione alla volta e conserva sempre quanto già scritto.
             # Questo rende la pausa effettiva tra una richiesta AI e la successiva.
             da_generare_libro = [
@@ -2939,11 +3014,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     try:
                         prompt = crea_prompt_stesura_sezione(
                             sezione_corrente, st.session_state['indice_raw'], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti
+                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                         )
                         st.session_state[chiave_sezione(sezione_corrente)] = genera_contenuto_editoriale(
                             prompt, S_PROMPT, sezione_corrente, st.session_state['indice_raw'], val_trama,
-                            val_genere, val_goal, lingua_sel
+                            val_genere, val_goal, lingua_sel, val_lunghezza
                         )
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         st.rerun()
@@ -2999,11 +3074,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             )
                             prompt = crea_prompt_stesura_sezione(
                                 sottocapitolo, st.session_state['indice_raw'], val_trama, val_genere,
-                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti
+                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                             )
                             st.session_state[chiave] = genera_contenuto_editoriale(
                                 prompt, S_PROMPT, sottocapitolo, st.session_state['indice_raw'], val_trama,
-                                val_genere, val_goal, lingua_sel
+                                val_genere, val_goal, lingua_sel, val_lunghezza
                             )
                         avanzamento.progress(100, text="Sottocapitoli completati.")
                         contenuti_capitolo = [
@@ -3038,18 +3113,29 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     with st.spinner(L["msg_run"]):
                         full_prompt = crea_prompt_stesura_sezione(
                             sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti
+                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                         )
                         st.session_state[k_sessione] = genera_contenuto_editoriale(
                             full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
-                            val_genere, val_goal, lingua_sel
+                            val_genere, val_goal, lingua_sel, val_lunghezza
                         )
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
                 if pulsante_con_preventivo(f"rigenera_sezione_{k_sessione}", L["btn_edit"] + " 🪄", f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
                                            f"Verrà rielaborata solo la sezione selezionata: {sez_scelta}."):
                     if k_sessione in st.session_state:
-                        st.session_state[k_sessione] = pulisci_testo_editoriale(chiedi_gpt(f"Rielabora con focus su: {istr} mantenendo categoricamente la lingua {lingua_sel}, il POV ({val_pov}) e senza usare punteggiatura anomala né riscrivere il titolo all'inizio. Non inserire URL, link, citazioni o sezioni bibliografiche. Testo da modificare:\n{st.session_state[k_sessione]}", S_PROMPT)); st.rerun()
+                        limite_output = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_completion_tokens"]
+                        prompt_rigenerazione = (
+                            f"Rielabora con focus su: {istr}. Mantieni categoricamente la lingua {lingua_sel}, "
+                            f"il POV ({val_pov}) e una lunghezza di {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']}. "
+                            "Non allungare il testo con ripetizioni; conserva solo dettagli pertinenti alla sezione. "
+                            "Non usare punteggiatura anomala né riscrivere il titolo all'inizio. Non inserire URL, link, "
+                            f"citazioni o sezioni bibliografiche. Testo da modificare:\n{st.session_state[k_sessione]}"
+                        )
+                        st.session_state[k_sessione] = pulisci_testo_editoriale(
+                            chiedi_gpt(prompt_rigenerazione, S_PROMPT, max_completion_tokens=limite_output)
+                        )
+                        st.rerun()
             with c3:
                 if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", 1,
                                            "Saranno aggiunte 10 domande alla sezione selezionata."):
