@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -308,7 +309,28 @@ def _landing_page() -> None:
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
     with hero_visual:
-        st.image("home-editor-preview.png", use_container_width=True)
+        base_dir = Path(__file__).resolve().parent
+        preview_image = next(
+            (candidate for candidate in (
+                base_dir / "home-editor-preview.png",
+                base_dir / "assets" / "home-editor-preview.png",
+            ) if candidate.is_file()),
+            None,
+        )
+        if preview_image:
+            st.image(str(preview_image), use_container_width=True)
+        else:
+            # La pagina resta utilizzabile anche durante il primo deploy, prima
+            # dell'upload dell'anteprima grafica nel repository.
+            st.markdown(
+                "<div class='ss-proof'><div class='ss-proof-top'>Anteprima dell'editor</div>"
+                "<div class='ss-proof-grid'><div class='ss-proof-book'></div>"
+                "<div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>Struttura</span>"
+                "<span class='ss-proof-pill'>Scrittura</span></div><div class='ss-proof-index'><b>INDICE</b>"
+                "<span class='active'>1&nbsp;&nbsp; Il tuo libro</span><span>2&nbsp;&nbsp; Capitolo successivo</span></div>"
+                "<h3>Scrivi con controllo</h3><div class='ss-proof-lines'><i></i><i></i><i></i></div></div></div></div>",
+                unsafe_allow_html=True,
+            )
 
     st.markdown(
         f"""<div class='ss-benefits'>
