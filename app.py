@@ -701,9 +701,18 @@ def aggiungi_numeri_pagina_docx(documento):
         run._r.append(campo_fine)
 
 def formatta_manoscritto_kdp(file_docx):
-    """Applica un formato Word pulito 6x9 per il manoscritto KDP caricato dall'utente."""
+    """Formatta un DOCX per KDP 6×9 preservando tutte le immagini originali."""
     documento = Document(BytesIO(file_docx.getvalue()))
-    for nome_stile in ('Heading 1', 'Heading 2'):
+
+    def contiene_immagine(paragrafo):
+        """Riconosce immagini Word senza modificare il paragrafo che le contiene."""
+        return bool(
+            paragrafo._p.xpath(".//w:drawing")
+            or paragrafo._p.xpath(".//w:pict")
+            or paragrafo._p.xpath(".//w:object")
+        )
+
+    for nome_stile in ("Heading 1", "Heading 2"):
         try:
             documento.styles[nome_stile]
         except KeyError:
@@ -718,32 +727,60 @@ def formatta_manoscritto_kdp(file_docx):
         sezione.right_margin = Inches(0.75)
 
     for paragrafo in list(documento.paragraphs):
+        # Non riscrivere mai un paragrafo con immagini: paragrafo.text le cancellerebbe.
+        if contiene_immagine(paragrafo):
+            paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            paragrafo.paragraph_format.space_before = Pt(8)
+            paragrafo.paragraph_format.space_after = Pt(8)
+            continue
+
         testo = pulisci_testo_editoriale(paragrafo.text).strip()
+
         if not testo:
             elimina_paragrafo_docx(paragrafo)
             continue
-        paragrafo.text = ' '.join(testo.split())
-        if len(paragrafo.text) < 80 and re.search(r'(?i)\b(capitolo|chapter|parte|part)\b', paragrafo.text):
-            paragrafo.style = 'Heading 1'
+
+        paragrafo.text = " ".join(testo.split())
+
+        if len(paragrafo.text) < 80 and re.search(
+            r"(?i)\b(capitolo|chapter|parte|part)\b",
+            paragrafo.text,
+        ):
+            paragrafo.style = "Heading 1"
             paragrafo.paragraph_format.page_break_before = True
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
             paragrafo.paragraph_format.space_before = Pt(0)
             paragrafo.paragraph_format.space_after = Pt(30)
-        elif len(paragrafo.text) < 100 and re.match(r'^\d+(?:\.\d+)?\s+', paragrafo.text):
-            paragrafo.style = 'Heading 2'
+
+        elif len(paragrafo.text) < 100 and re.match(
+            r"^\d+(?:\.\d+)?\s+",
+            paragrafo.text,
+        ):
+            paragrafo.style = "Heading 2"
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.LEFT
             paragrafo.paragraph_format.first_line_indent = Inches(0)
             paragrafo.paragraph_format.space_before = Pt(18)
             paragrafo.paragraph_format.space_after = Pt(10)
+
         else:
             paragrafo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             paragrafo.paragraph_format.first_line_indent = Inches(0.25)
             paragrafo.paragraph_format.space_after = Pt(6)
 
-    stile_normale = documento.styles['Normal']
-    stile_normale.font.name = 'Georgia'
+    # Riduce soltanto le immagini troppo larghe per il formato 6×9, senza eliminarle.
+    larghezza_massima = Inches(4.5)
+    for immagine in documento.inline_shapes:
+        if immagine.width > larghezza_massima:
+            rapporto = larghezza_massima / immagine.width
+            immagine.width = int(immagine.width * rapporto)
+            immagine.height = int(immagine.height * rapporto)
+
+    stile_normale = documento.styles["Normal"]
+    stile_normale.font.name = "Georgia"
     stile_normale.font.size = Pt(11)
+
     aggiungi_numeri_pagina_docx(documento)
+
     output = BytesIO()
     documento.save(output)
     output.seek(0)
