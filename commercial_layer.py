@@ -321,7 +321,10 @@ def _render_password_recovery() -> bool:
                 if (response.status === 422) throw new Error('password rejected');
                 throw new Error('reset failed');
               }}
-              window.parent.location.replace({json.dumps(app_url + '?password_updated=1')});
+              message.textContent = '✓ Password aggiornata correttamente. Ti riportiamo all’accesso…';
+              message.style.color = '#15803d';
+              document.getElementById('save-password').disabled = true;
+              setTimeout(() => window.parent.location.replace({json.dumps(app_url + '?password_updated=1')}), 2600);
             }} catch (error) {{
               message.textContent = error.message === 'password rejected'
                 ? 'La password non è accettata dal servizio di autenticazione. Prova una password diversa.'
