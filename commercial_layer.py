@@ -24,48 +24,60 @@ STANDARD_BOOK_CREDITS = 95
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
 
 PACKAGES = {
-    "prova_7": {
-        "name": "Pacchetto Prova — 7 crediti",
-        "credits": 7,
+    "prova_15": {
+        "name": "Pacchetto Prova — 15 crediti",
+        "credits": 15,
         "amount_cents": 100,
         "currency": "eur",
     },
-    "base_100": {
-        "name": "Pacchetto Base — 100 crediti",
-        "credits": 100,
+    "base_150": {
+        "name": "Pacchetto Base — 150 crediti",
+        "credits": 150,
         "amount_cents": 1000,
         "currency": "eur",
     },
-    "creator_260": {
-        "name": "Pacchetto Creator — 260 crediti",
-        "credits": 260,
+    "creator_375": {
+        "name": "Pacchetto Creator — 375 crediti",
+        "credits": 375,
         "amount_cents": 2500,
         "currency": "eur",
     },
-    "studio_530": {
-        "name": "Pacchetto Studio — 530 crediti",
-        "credits": 530,
+    "studio_750": {
+        "name": "Pacchetto Studio — 750 crediti",
+        "credits": 750,
         "amount_cents": 5000,
         "currency": "eur",
     },
-    "professionale_1050": {
-        "name": "Pacchetto Professionale — 1.050 crediti",
-        "credits": 1050,
+    "professionale_1500": {
+        "name": "Pacchetto Professionale — 1.500 crediti",
+        "credits": 1500,
         "amount_cents": 10000,
         "currency": "eur",
     },
 }
 
-# Stime commerciali: un libro standard considera fino a 70 sezioni.
+# Compatibilità temporanea: permette di accreditare checkout già creati prima
+# dell'aggiornamento, senza mostrarli né renderli acquistabili nell'app.
+LEGACY_PACKAGES = {
+    "prova_7": {"credits": 7},
+    "base_100": {"credits": 100},
+    "creator_260": {"credits": 260},
+    "studio_530": {"credits": 530},
+    "professionale_1050": {"credits": 1050},
+}
+
+# Stime commerciali: un libro standard usa normalmente 95 crediti
+# (80 sezioni + 15 crediti per indice, voto e migliorie editoriali).
 PACKAGE_BOOK_ESTIMATES = {
-    "prova_7": "Fino a 7 sezioni per provare il servizio",
-    "base_100": "Fino a 1 libro standard + 5 crediti extra",
-    "creator_260": "Fino a 2 libri standard + 70 crediti extra",
-    "studio_530": "Fino a 5 libri standard + 55 crediti extra",
-    "professionale_1050": "Fino a 11 libri standard + 5 crediti extra",
+    "prova_15": "15 crediti per provare le funzioni principali",
+    "base_150": "Fino a 1 libro standard + 55 crediti extra",
+    "creator_375": "Fino a 3 libri standard + 90 crediti extra",
+    "studio_750": "Fino a 7 libri standard + 85 crediti extra",
+    "professionale_1500": "Fino a 15 libri standard + 75 crediti extra",
 }
 PACKAGE_ESTIMATE_NOTE = (
-    "Stima indicativa: un libro standard considera fino a 80 sezioni. "
+    "Stima indicativa: un libro standard considera 80 sezioni e circa 15 crediti "
+    "per indice, voto e migliorie editoriali (95 crediti totali). "
     "Il consumo effettivo dipende da lunghezza, rigenerazioni, immagini, "
     "verifiche online e funzioni avanzate utilizzate."
 )
@@ -769,7 +781,7 @@ def _process_checkout_return() -> None:
         user = st.session_state["commercial_user_context"]
         metadata = checkout.get("metadata", {})
         package_key = metadata.get("package_key", "")
-        package = PACKAGES.get(package_key)
+        package = PACKAGES.get(package_key) or LEGACY_PACKAGES.get(package_key)
         if checkout.get("payment_status") != "paid" or not package or metadata.get("user_id") != user["id"]:
             raise RuntimeError("Il pagamento non corrisponde all'account o al pacchetto selezionato.")
         granted = _supabase(
