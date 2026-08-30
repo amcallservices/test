@@ -9,7 +9,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "commercial-02"
+COMMERCIAL_VERSION = "beta1a"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -171,17 +171,18 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
-          .stApp, [data-testid="stAppViewContainer"] {background:#f5f9fd !important; color:#102a43}
-          .ss-hero-copy {padding:3.1rem .6rem 1.2rem 1.1rem; color:#102a43}
-          .ss-kicker {font-weight:800; font-size:1rem; color:#1689e8; margin-bottom:.9rem}
+          .stApp, [data-testid="stAppViewContainer"] {background:#f3f8fd !important; color:#102a43}
+          section.main > div.block-container {max-width:1500px !important; padding:1.05rem 2.4rem 3.5rem !important}
+          .ss-hero-copy {padding:3.5rem .6rem 1.4rem 1.15rem; color:#102a43}
+          .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1rem}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
-          .ss-title {font-family:Georgia,serif; font-size:clamp(4rem,6.6vw,6.6rem); margin:0; color:#102a43; line-height:.95; letter-spacing:-.065em}
-          .ss-title-line {width:48px; height:4px; background:#1689e8; border-radius:99px; margin:1.25rem 0}
-          .ss-headline {font-family:Georgia,serif; font-size:clamp(2rem,3.2vw,3.25rem); font-weight:800; line-height:1.13; color:#102a43; margin:0 0 1.1rem}
-          .ss-subtitle {font-size:1.1rem; max-width:530px; margin:0; color:#486581; line-height:1.52}
-          .ss-bonus {display:inline-block; margin:1.15rem 0 .7rem; padding:.55rem .78rem; border-radius:9px;
-            font-size:.91rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
+          .ss-title {font-family:Georgia,serif; font-size:clamp(4.65rem,7.35vw,7.6rem); margin:0; color:#102a43; line-height:.88; letter-spacing:-.075em}
+          .ss-title-line {width:58px; height:5px; background:#1689e8; border-radius:99px; margin:1.4rem 0}
+          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.3rem,3.75vw,3.85rem); font-weight:800; line-height:1.1; color:#102a43; margin:0 0 1.15rem}
+          .ss-subtitle {font-size:1.13rem; max-width:555px; margin:0; color:#486581; line-height:1.56}
+          .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
+            font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
@@ -197,9 +198,9 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
-          .ss-proof {margin:1.2rem .25rem 1.2rem 0; padding:1.15rem; border-radius:20px;
-            background:linear-gradient(135deg,#071728,#132f50); color:#e0f2fe;
-            box-shadow:0 14px 30px rgba(15,23,42,.22)}
+          .ss-proof {margin:1.1rem .25rem 1.2rem 0; padding:1.25rem; border-radius:20px;
+            background:linear-gradient(135deg,#071728,#13385c); color:#e0f2fe;
+            box-shadow:0 18px 38px rgba(15,23,42,.25)}
           .ss-proof-top {display:flex; gap:.45rem; align-items:center; padding:0 0 .8rem;
             border-bottom:1px solid rgba(255,255,255,.16); font-size:.9rem; color:#bae6fd}
           .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
@@ -210,9 +211,12 @@ def _landing_page() -> None:
           .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
           .ss-proof-index span {display:block; padding:.32rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
           .ss-proof-index .active {margin:.35rem -.35rem; padding:.42rem .35rem; background:rgba(45,212,191,.18); border-left:3px solid #5eead4; border-radius:5px; color:#fff}
-          .ss-proof-book {position:relative; min-height:370px; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 25% 26%,#faf7ef 0%,#ded6c7 47%,#172d43 48%); box-shadow:inset 0 0 35px rgba(0,0,0,.28)}
-          .ss-proof-book:before {content:'CAPITOLO 1\\A L’inizio di tutto'; white-space:pre; position:absolute; left:18%; top:23%; color:#262626; font-family:Georgia,serif; font-size:1.15rem; line-height:2.1; text-align:center; transform:rotate(-3deg)}
-          .ss-proof-book:after {content:''; position:absolute; width:3px; height:83%; left:50%; top:8%; background:rgba(15,23,42,.28); box-shadow:0 0 18px rgba(0,0,0,.45)}
+          .ss-proof-book {position:relative; min-height:372px; display:flex; align-items:center; justify-content:center; gap:0; padding:1rem .3rem; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 18% 10%,rgba(125,211,252,.16),transparent 38%),linear-gradient(145deg,#102f4c,#071728); box-shadow:inset 0 0 35px rgba(0,0,0,.3)}
+          .ss-book-page {position:relative; width:46%; height:76%; padding:1.4rem .5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#2d3748; background:linear-gradient(135deg,#fffdf6,#e8dfcf); box-shadow:0 8px 18px rgba(0,0,0,.3)}
+          .ss-book-page small {color:#4a5568; font-family:Georgia,serif; font-size:.65rem; margin-bottom:1.3rem}.ss-book-page b {font:700 1rem/1.35 Georgia,serif; max-width:105px}
+          .ss-book-left {border-radius:10px 2px 2px 18px; transform:perspective(440px) rotateY(13deg) rotateZ(-2deg)}
+          .ss-book-right {border-radius:2px 10px 18px 2px; transform:perspective(440px) rotateY(-13deg) rotateZ(2deg)}
+          .ss-book-page:after {content:''; position:absolute; left:18%; right:18%; bottom:20%; height:1px; background:#b9ad98; box-shadow:0 -15px 0 #cfc3ae,0 -30px 0 #cfc3ae,0 -45px 0 #cfc3ae}
           .ss-proof-toolbar {display:flex; gap:.42rem; align-items:center; margin-bottom:.8rem; flex-wrap:wrap}
           .ss-proof-pill {font-size:.72rem; padding:.28rem .55rem; border-radius:99px; background:rgba(125,211,252,.16); color:#bae6fd}
           .ss-proof-action {margin-left:auto; background:#f97316; color:#fff; border-radius:7px; padding:.38rem .62rem; font-size:.74rem; font-weight:800}
@@ -226,9 +230,9 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          .ss-benefits {max-width:1080px; margin:.4rem auto 1.6rem; padding:.45rem .15rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr)}
-          .ss-benefit {min-height:86px; padding:.8rem 1rem; color:#486581; font-size:.9rem; border-right:1px solid #d9e5f0}
-          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.02rem; margin-bottom:.25rem}
+          .ss-benefits {max-width:1120px; margin:.55rem auto 2rem; padding:.42rem .2rem; background:#fff; border:1px solid #d9e5f0; border-radius:15px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 8px 24px rgba(20,77,120,.06)}
+          .ss-benefit {min-height:112px; padding:1.1rem 1.25rem; color:#486581; font-size:1rem; line-height:1.45; border-right:1px solid #d9e5f0}
+          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.14rem; margin-bottom:.35rem}
           @media (max-width:760px) {.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
@@ -279,7 +283,10 @@ def _landing_page() -> None:
             """<div class='ss-proof'>
               <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>&nbsp; Il mio libro <span class='ss-proof-label'>Salvato</span></div>
               <div class='ss-proof-grid'>
-                <div class='ss-proof-book'></div>
+                <div class='ss-proof-book'>
+                  <div class='ss-book-page ss-book-left'><small>CAPITOLO 1</small><b>L’inizio di tutto</b></div>
+                  <div class='ss-book-page ss-book-right'></div>
+                </div>
                 <div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>☷ Struttura</span><span class='ss-proof-pill'>✎ Scrittura</span><span class='ss-proof-action'>Nuovo capitolo</span></div><div class='ss-proof-index'><b>INDICE</b><span class='active'>1&nbsp;&nbsp; L’inizio di tutto</span><span>2&nbsp;&nbsp; La decisione</span><span>3&nbsp;&nbsp; Il viaggio</span><span>4&nbsp;&nbsp; Gli ostacoli</span></div><small>CAPITOLO 1</small><h3>L’inizio di tutto</h3><div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div><div class='ss-proof-progress'>PROGRESSO DI SCRITTURA <div><span></span></div> 72%</div></div>
               </div>
             </div>""",
@@ -288,9 +295,9 @@ def _landing_page() -> None:
 
     st.markdown(
         """<div class='ss-benefits'>
-          <div class='ss-benefit'><b>Indice professionale</b>Struttura il tuo libro con capitoli e sottocapitoli chiari e flessibili.</div>
-          <div class='ss-benefit'><b>Scrittura guidata</b>L’AI ti affianca capitolo dopo capitolo per mantenere coerenza e qualità.</div>
-          <div class='ss-benefit'><b>Word e PDF</b>Esporta il tuo libro in Word e PDF, pronto per la revisione o la pubblicazione.</div>
+          <div class='ss-benefit'><b>▤ &nbsp;Indice professionale</b>Struttura il tuo libro con capitoli e sottocapitoli chiari, completi e flessibili.</div>
+          <div class='ss-benefit'><b>✎ &nbsp;Scrittura guidata</b>L’AI ti affianca capitolo dopo capitolo, mantenendo coerenza e qualità.</div>
+          <div class='ss-benefit'><b>⇩ &nbsp;Word e PDF</b>Esporta il tuo libro in Word e PDF, pronto per la revisione o la pubblicazione.</div>
         </div>""",
         unsafe_allow_html=True,
     )
