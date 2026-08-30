@@ -2223,12 +2223,11 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             notifica_sonora("test_notifiche", lingua_sel, ripeti=True)
 
         st.divider()
-        st.subheader("🤖 Crea la tua chat per compilare la sidebar")
-        st.info(
-            "Questa guida non è il prompt. Leggila prima; subito sotto trovi il prompt da copiare nella tua chat personale di GPT."
-        )
-        st.markdown("""
-1. Apri una nuova chat nel tuo GPT personale.
+        guida_chat_sidebar = {
+            "Italiano": {
+                "titolo": "🤖 Crea la tua chat per compilare la sidebar",
+                "nota": "Questa guida non è il prompt. Leggila prima; subito sotto trovi il prompt da copiare nella tua chat personale di GPT.",
+                "passi": """1. Apri una nuova chat nel tuo GPT personale.
 
 2. Copia tutto il testo nel riquadro scuro qui sotto, senza cambiarlo.
 
@@ -2238,9 +2237,156 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
 5. Alla fine riceverai una scheda pronta. Copia ogni risposta nel campo con lo stesso nome nella sidebar di Scrittore Site.
 
-6. Non chiedere a quella chat di scrivere il libro completo: serve solo a preparare bene la sidebar e poi Scrittore Site creerà l'indice.
-        """)
-        prompt_chat_sidebar = """Agisci esclusivamente come Assistente per la Sidebar di Scrittore Site.
+6. Non chiedere a quella chat di scrivere il libro completo: serve solo a preparare bene la sidebar e poi Scrittore Site creerà l'indice.""",
+                "etichetta": "PROMPT DA COPIARE NELLA TUA CHAT PERSONALE DI GPT",
+            },
+            "English": {
+                "titolo": "🤖 Create your chat to complete the sidebar",
+                "nota": "This guide is not the prompt. Read it first; immediately below is the prompt to copy into your personal GPT chat.",
+                "passi": """1. Open a new chat in your personal GPT account.
+
+2. Copy all the text in the dark box below, without changing it.
+
+3. Paste it as the first message and send it.
+
+4. GPT will begin with one simple question about the book you want to create. If the information is already clear, it will prepare the form immediately; otherwise, it will ask one short question about the most important choice.
+
+5. At the end you will receive a ready-to-use form. Copy each answer into the field with the same name in the Scrittore Site sidebar.
+
+6. Do not ask that chat to write the complete book: it only prepares the sidebar, then Scrittore Site creates the index.""",
+                "etichetta": "PROMPT TO COPY INTO YOUR PERSONAL GPT CHAT",
+            },
+            "Español": {
+                "titolo": "🤖 Crea tu chat para completar la barra lateral",
+                "nota": "Esta guía no es el prompt. Léela primero; justo debajo está el prompt que debes copiar en tu chat personal de GPT.",
+                "passi": """1. Abre un chat nuevo en tu cuenta personal de GPT.
+
+2. Copia todo el texto del recuadro oscuro de abajo, sin cambiarlo.
+
+3. Pégalo como primer mensaje y envíalo.
+
+4. GPT empezará con una pregunta sencilla sobre el libro que quieres crear. Si la información ya está clara, preparará la ficha enseguida; si no, hará una sola pregunta breve sobre la decisión más importante.
+
+5. Al final recibirás una ficha lista. Copia cada respuesta en el campo con el mismo nombre de la barra lateral de Scrittore Site.
+
+6. No pidas a ese chat que escriba el libro completo: solo prepara la barra lateral y después Scrittore Site creará el índice.""",
+                "etichetta": "PROMPT PARA COPIAR EN TU CHAT PERSONAL DE GPT",
+            },
+            "Français": {
+                "titolo": "🤖 Créez votre chat pour remplir la barre latérale",
+                "nota": "Ce guide n’est pas le prompt. Lisez-le d’abord ; le prompt à copier dans votre chat GPT personnel se trouve juste dessous.",
+                "passi": """1. Ouvrez une nouvelle conversation dans votre compte GPT personnel.
+
+2. Copiez tout le texte du cadre sombre ci-dessous, sans le modifier.
+
+3. Collez-le comme premier message et envoyez-le.
+
+4. GPT commencera par une question simple sur le livre à créer. Si les informations sont déjà claires, il préparera directement la fiche ; sinon, il posera une seule question courte sur le choix le plus important.
+
+5. À la fin, vous recevrez une fiche prête à l’emploi. Copiez chaque réponse dans le champ du même nom de la barre latérale de Scrittore Site.
+
+6. Ne demandez pas à ce chat d’écrire le livre complet : il prépare seulement la barre latérale, puis Scrittore Site créera l’index.""",
+                "etichetta": "PROMPT À COPIER DANS VOTRE CHAT GPT PERSONNEL",
+            },
+            "Deutsch": {
+                "titolo": "🤖 Erstellen Sie Ihren Chat zum Ausfüllen der Seitenleiste",
+                "nota": "Diese Anleitung ist nicht der Prompt. Lesen Sie sie zuerst; darunter finden Sie den Prompt zum Kopieren in Ihren persönlichen GPT-Chat.",
+                "passi": """1. Öffnen Sie einen neuen Chat in Ihrem persönlichen GPT-Konto.
+
+2. Kopieren Sie den gesamten Text im dunklen Feld unten, ohne ihn zu ändern.
+
+3. Fügen Sie ihn als erste Nachricht ein und senden Sie ihn ab.
+
+4. GPT beginnt mit einer einfachen Frage zu dem Buch, das Sie erstellen möchten. Wenn die Angaben bereits klar sind, erstellt es sofort die Vorlage; andernfalls stellt es eine kurze Frage zur wichtigsten Entscheidung.
+
+5. Am Ende erhalten Sie eine fertige Vorlage. Kopieren Sie jede Antwort in das gleichnamige Feld der Scrittore-Site-Seitenleiste.
+
+6. Bitten Sie diesen Chat nicht, das ganze Buch zu schreiben: Er bereitet nur die Seitenleiste vor, danach erstellt Scrittore Site den Index.""",
+                "etichetta": "PROMPT ZUM KOPIEREN IN IHREN PERSÖNLICHEN GPT-CHAT",
+            },
+            "Română": {
+                "titolo": "🤖 Creează chatul tău pentru completarea barei laterale",
+                "nota": "Acest ghid nu este promptul. Citește-l mai întâi; imediat mai jos găsești promptul de copiat în chatul tău personal GPT.",
+                "passi": """1. Deschide un chat nou în contul tău personal GPT.
+
+2. Copiază tot textul din caseta întunecată de mai jos, fără să îl modifici.
+
+3. Lipește-l ca primul mesaj și trimite-l.
+
+4. GPT va începe cu o întrebare simplă despre cartea pe care vrei să o creezi. Dacă informațiile sunt deja clare, va pregăti imediat fișa; altfel, va pune o singură întrebare scurtă despre alegerea cea mai importantă.
+
+5. La final vei primi o fișă pregătită. Copiază fiecare răspuns în câmpul cu același nume din bara laterală Scrittore Site.
+
+6. Nu cere acelui chat să scrie cartea completă: el pregătește doar bara laterală, apoi Scrittore Site va crea indexul.""",
+                "etichetta": "PROMPT DE COPIAT ÎN CHATUL TĂU PERSONAL GPT",
+            },
+            "Русский": {
+                "titolo": "🤖 Создайте чат для заполнения боковой панели",
+                "nota": "Это руководство — не промпт. Сначала прочитайте его; ниже находится промпт для копирования в ваш личный чат GPT.",
+                "passi": """1. Откройте новый чат в своём личном аккаунте GPT.
+
+2. Скопируйте весь текст из тёмного блока ниже, ничего не меняя.
+
+3. Вставьте его первым сообщением и отправьте.
+
+4. GPT начнёт с простого вопроса о книге, которую вы хотите создать. Если информации достаточно, он сразу подготовит карточку; иначе задаст один короткий вопрос о самом важном выборе.
+
+5. В конце вы получите готовую карточку. Скопируйте каждый ответ в поле с таким же названием на боковой панели Scrittore Site.
+
+6. Не просите этот чат написать всю книгу: он только готовит боковую панель, после чего Scrittore Site создаст оглавление.""",
+                "etichetta": "ПРОМПТ ДЛЯ КОПИРОВАНИЯ В ВАШ ЛИЧНЫЙ ЧАТ GPT",
+            },
+            "العربية": {
+                "titolo": "🤖 أنشئ محادثتك لملء الشريط الجانبي",
+                "nota": "هذا الدليل ليس هو الموجّه. اقرأه أولاً؛ ستجد أسفله مباشرة الموجّه لنسخه في محادثتك الشخصية مع GPT.",
+                "passi": """1. افتح محادثة جديدة في حسابك الشخصي على GPT.
+
+2. انسخ كل النص الموجود في المربع الداكن أدناه دون تغييره.
+
+3. الصقه كأول رسالة ثم أرسله.
+
+4. سيبدأ GPT بسؤال بسيط عن الكتاب الذي تريد إنشاءه. إذا كانت المعلومات واضحة، فسيُعدّ البطاقة مباشرة؛ وإلا فسيسأل سؤالاً قصيراً واحداً عن أهم اختيار.
+
+5. في النهاية ستحصل على بطاقة جاهزة. انسخ كل إجابة إلى الحقل الذي يحمل الاسم نفسه في الشريط الجانبي لـ Scrittore Site.
+
+6. لا تطلب من تلك المحادثة كتابة الكتاب كاملاً: دورها فقط إعداد الشريط الجانبي، وبعد ذلك ينشئ Scrittore Site الفهرس.""",
+                "etichetta": "موجّه لنسخه في محادثتك الشخصية مع GPT",
+            },
+            "中文": {
+                "titolo": "🤖 创建聊天以填写侧边栏",
+                "nota": "这不是提示词本身。请先阅读本说明；下面就是可复制到你个人 GPT 聊天中的提示词。",
+                "passi": """1. 在你的个人 GPT 账户中打开一个新聊天。
+
+2. 完整复制下方深色框中的所有文字，不要修改。
+
+3. 将它作为第一条消息粘贴并发送。
+
+4. GPT 会先询问一个有关你想创作的图书的简单问题。如果信息已足够清晰，它会立即准备好资料卡；否则只会就最重要的选择再问一个简短问题。
+
+5. 最后你会得到一张可直接使用的资料卡。将每项答案复制到 Scrittore Site 侧边栏中同名的字段。
+
+6. 不要让该聊天直接写完整本书：它只负责准备侧边栏，然后 Scrittore Site 会生成目录。""",
+                "etichetta": "复制到你的个人 GPT 聊天中的提示词",
+            },
+        }
+        guida_chat = guida_chat_sidebar.get(lingua_sel, guida_chat_sidebar["Italiano"])
+        st.subheader(guida_chat["titolo"])
+        st.info(guida_chat["nota"])
+        st.markdown(guida_chat["passi"])
+        istruzione_lingua_prompt = {
+            "Italiano": f"LINGUA OPERATIVA OBBLIGATORIA: comunica sempre con l'utente e restituisci la scheda finale esclusivamente in {lingua_sel}. Non tradurre i nomi esatti delle opzioni di Scrittore Site indicate sotto.",
+            "English": f"MANDATORY WORKING LANGUAGE: communicate with the user and return the final form only in {lingua_sel}. Do not translate the exact Scrittore Site option names shown below.",
+            "Español": f"IDIOMA DE TRABAJO OBLIGATORIO: comunícate con el usuario y entrega la ficha final únicamente en {lingua_sel}. No traduzcas los nombres exactos de las opciones de Scrittore Site indicadas abajo.",
+            "Français": f"LANGUE DE TRAVAIL OBLIGATOIRE : communiquez avec l’utilisateur et fournissez la fiche finale uniquement en {lingua_sel}. Ne traduisez pas les noms exacts des options de Scrittore Site ci-dessous.",
+            "Deutsch": f"VERBINDLICHE ARBEITSSPRACHE: Kommunizieren Sie mit dem Nutzer und geben Sie die fertige Vorlage ausschließlich auf {lingua_sel} zurück. Übersetzen Sie die unten stehenden exakten Namen der Scrittore-Site-Optionen nicht.",
+            "Română": f"LIMBĂ DE LUCRU OBLIGATORIE: comunică cu utilizatorul și oferă fișa finală exclusiv în {lingua_sel}. Nu traduce denumirile exacte ale opțiunilor Scrittore Site de mai jos.",
+            "Русский": f"ОБЯЗАТЕЛЬНЫЙ РАБОЧИЙ ЯЗЫК: общайтесь с пользователем и выдавайте итоговую карточку только на {lingua_sel}. Не переводите точные названия параметров Scrittore Site ниже.",
+            "العربية": f"لغة العمل الإلزامية: تواصل مع المستخدم وقدّم البطاقة النهائية باللغة {lingua_sel} فقط. لا تترجم أسماء خيارات Scrittore Site الدقيقة الواردة أدناه.",
+            "中文": f"强制工作语言：仅使用 {lingua_sel} 与用户交流并返回最终资料卡。不要翻译下方 Scrittore Site 选项的准确名称。",
+        }
+        prompt_chat_sidebar = f"""{istruzione_lingua_prompt.get(lingua_sel, istruzione_lingua_prompt['Italiano'])}
+
+Agisci esclusivamente come Assistente per la Sidebar di Scrittore Site.
 
 Il tuo unico compito è trasformare l'idea dell'utente in una scheda completa, pronta da copiare nei campi della sidebar di Scrittore Site.
 
@@ -2383,7 +2529,7 @@ TRAMA O ARGOMENTO:
 APPROFONDIMENTI (FACOLTATIVO):
 
 Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site e genera l'indice."""
-        st.caption("PROMPT DA COPIARE NELLA TUA CHAT PERSONALE DI GPT")
+        st.caption(guida_chat["etichetta"])
         st.code(prompt_chat_sidebar, language=None)
 
     # TAB 1: INDICE (CHIRURGIA: FIX SENSO LOGICO E PULIZIA ASSOLUTA DELL'INDICE E CONNESSIONE SARTORIALE)
