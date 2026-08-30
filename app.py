@@ -27,6 +27,7 @@ from commercial_layer import (
     CommercialCreditError,
     bootstrap_commercial_test,
     charge_credits,
+    mostra_crediti_esauriti,
     refund_credits,
 )
 
@@ -450,7 +451,10 @@ def chiedi_gpt(prompt, system_prompt):
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
         return "\n".join(righe).strip()
     except CommercialCreditError as e:
-        return f"ERRORE: {str(e)}"
+        # Non inserisce mai un messaggio d'errore nel manoscritto e ferma
+        # l'azione prima che una sezione esistente possa essere sovrascritta.
+        mostra_crediti_esauriti()
+        st.stop()
     except Exception as e:
         if riferimento:
             refund_credits(riferimento)
