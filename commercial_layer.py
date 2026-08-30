@@ -870,9 +870,11 @@ def bootstrap_commercial_app() -> None:
     _normalize_recovery_redirect()
     try:
         recovery_requested = st.query_params.get("auth") == "recovery"
+        password_updated = st.query_params.get("password_updated") == "1"
     except Exception:
         recovery_requested = False
-    if recovery_requested:
+        password_updated = False
+    if recovery_requested or password_updated:
         st.session_state["commercial_show_auth"] = True
     if (
         _mode() != "demo"
