@@ -136,26 +136,47 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
-          .ss-hero {max-width:1040px; margin:2.2rem auto 1.3rem; padding:3.2rem 2.3rem;
-            border-radius:24px; background:linear-gradient(135deg,#13213a 0%,#274d75 58%,#536f91 100%);
-            color:#fff; text-align:center; box-shadow:0 14px 40px rgba(15,23,42,.25)}
-          .ss-hero h1 {font-size:3rem; margin:0 0 .6rem; color:#fff}
-          .ss-hero p {font-size:1.22rem; max-width:720px; margin:0 auto; opacity:.95}
-          .ss-kicker {letter-spacing:.12em; text-transform:uppercase; font-weight:700; font-size:.82rem; opacity:.8}
-          .ss-section {max-width:1040px; margin:2.1rem auto .6rem; text-align:center}
-          .ss-section h2 {margin-bottom:.25rem}
-          .ss-card {background:#fff; border:1px solid rgba(30,58,95,.14); border-radius:18px;
-            padding:1.35rem 1.2rem; min-height:168px; box-shadow:0 5px 16px rgba(15,23,42,.06)}
-          .ss-card h3 {margin-top:0; color:#183b63}
-          .ss-price {font-size:1.55rem; font-weight:750; color:#183b63; margin:.2rem 0}
-          .ss-muted {color:#52616f; text-align:center; margin:.2rem auto 1.2rem; max-width:720px}
+          .ss-hero {max-width:1080px; margin:1.3rem auto .65rem; padding:2.5rem 2rem;
+            border-radius:28px; background:radial-gradient(circle at 15% 20%,#ffb4df 0%,transparent 25%),
+            linear-gradient(125deg,#3c1b84 0%,#6d28d9 48%,#e11d8d 100%); color:#fff; text-align:center;
+            box-shadow:0 16px 42px rgba(91,33,182,.32)}
+          .ss-hero h1 {font-size:3.15rem; margin:.15rem 0 .55rem; color:#fff; line-height:1}
+          .ss-hero p {font-size:1.14rem; max-width:680px; margin:0 auto; opacity:.96}
+          .ss-kicker {letter-spacing:.14em; text-transform:uppercase; font-weight:800; font-size:.76rem; opacity:.85}
+          .ss-bonus {max-width:720px; margin:.9rem auto 1rem; padding:.66rem 1rem; border-radius:999px;
+            text-align:center; font-size:1.05rem; font-weight:750; color:#542177; background:#fdf2ff;
+            border:1px solid #f0abfc}
+          .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
+          .ss-section h2 {font-size:1.55rem; margin-bottom:.1rem; color:#25104b}
+          .ss-card {background:linear-gradient(145deg,#fff 0%,#faf7ff 100%); border:1px solid #e9d5ff;
+            border-radius:16px; padding:1rem .9rem; min-height:112px; box-shadow:0 5px 14px rgba(88,28,135,.08)}
+          .ss-card h3 {margin:0 0 .34rem; color:#6d28d9; font-size:1rem}
+          .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
+          .ss-price {font-size:1.35rem; font-weight:800; color:#be185d; margin:.15rem 0}
+          .ss-muted {color:#63506e; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
+          .ss-step {background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:.72rem .8rem;
+            min-height:86px; text-align:left}
+          .ss-step strong {display:block; color:#c2410c; margin-bottom:.15rem}
+          [data-testid="stMain"] .stButton button {min-height:3.45rem; border-radius:14px; font-size:1.12rem;
+            font-weight:800; border:2px solid #6d28d9}
+          [data-testid="stMain"] .stButton button[kind="primary"] {background:linear-gradient(100deg,#6d28d9,#db2777);
+            border-color:#6d28d9; color:#fff}
+          /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
+          [data-testid="stHeader"] {background:transparent !important}
+          [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
+          .stAppDeployButton, #MainMenu, footer {display:none !important}
         </style>
         <div class="ss-hero">
-          <div class="ss-kicker">AI di Antonino</div>
+          <div class="ss-kicker">AI di Antonino presenta</div>
           <h1>Scrittore Site</h1>
-          <p>Trasforma un’idea in un libro strutturato, approfondito e pronto da esportare.</p>
+          <p>Dalla tua idea a un libro strutturato, approfondito e pronto da esportare.</p>
         </div>
         """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "<div class='ss-bonus'>🎁 Registrati e avrai 120 crediti gratuiti per provarlo.</div>",
         unsafe_allow_html=True,
     )
 
@@ -171,27 +192,27 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    st.markdown("<div class='ss-section'><h2>Tutto ciò che serve per costruire il tuo libro</h2><p class='ss-muted'>Un ambiente unico per progettare, scrivere, controllare e pubblicare contenuti con ordine.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Un solo spazio. Tutto il tuo libro.</h2></div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     for column, title, text in (
-        (c1, "Brief guidato", "Definisci pubblico, obiettivo, argomento, tono e risultato finale prima di iniziare."),
-        (c2, "Scrittura strutturata", "Genera indice, capitoli e sottocapitoli con procedure, esempi e contenuti coerenti."),
-        (c3, "Controllo ed esportazione", "Rivedi il manoscritto, migliora le sezioni e scarica Word o PDF."),
+        (c1, "✦ Brief guidato", "Definisci obiettivo, lettore e argomento."),
+        (c2, "✦ Scrittura strutturata", "Indice, capitoli e testi coerenti."),
+        (c3, "✦ Pronto da esportare", "Rivedi e scarica Word o PDF."),
     ):
         with column:
             st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='ss-section'><h2>Come funziona</h2></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Come funziona</h2><p class='ss-muted'>Tre passaggi semplici per iniziare.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
     for column, title, text in (
-        (s1, "1. Imposta il progetto", "Compila il brief editoriale con le informazioni essenziali."),
-        (s2, "2. Costruisci il libro", "Crea l’indice e sviluppa le sezioni che desideri."),
-        (s3, "3. Esporta e pubblica", "Controlla il risultato e scarica i file pronti per il tuo lavoro editoriale."),
+        (s1, "1. Definisci", "Compila il brief editoriale."),
+        (s2, "2. Costruisci", "Genera indice e contenuti."),
+        (s3, "3. Esporta", "Controlla e scarica il libro."),
     ):
         with column:
-            st.markdown(f"<div class='ss-card'><h3>{title}</h3><p>{text}</p></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Acquista solo i crediti necessari ai tuoi progetti.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
     for column, package in zip(price_columns, PACKAGES.values()):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
