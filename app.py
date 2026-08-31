@@ -2420,7 +2420,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 6. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
 
-7. In Esporta il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI e puoi scaricare soltanto una BOZZA NON COMPLETA, chiaramente etichettata. Il software non modifica nulla automaticamente. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
+7. In Esporta il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI; puoi comunque esportare il file e decidere tu quando è pronto per la pubblicazione. Il software non modifica nulla automaticamente. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
 
 Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte o termina Scrivi tutto il libro, in caso di errore, al termine di Voto Indice, Controllo coerenza, formattazione ed esportazione. Controlla sempre testo e file finale prima di pubblicare."""),
         "English": ("How to use Scrittore Site", """1. Complete the sidebar: title, author, language, genre, style, goal, topic and desired final result. Use Further details for priorities, constraints and required examples.
@@ -3497,8 +3497,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.warning("Esportazione non disponibile: genera e sincronizza prima l'indice del libro.")
         elif export_boza:
             st.warning(
-                "Esportazione disponibile solo come BOZZA NON COMPLETA: il controllo finale ha rilevato elementi da sistemare. "
-                "Il file non è pronto per la pubblicazione."
+                "Il controllo finale ha rilevato elementi da sistemare. Puoi comunque esportare il file; "
+                "controlla le correzioni suggerite prima della pubblicazione."
             )
             with st.expander("Controllo finale: sezioni e correzioni richieste", expanded=True):
                 st.dataframe(esito_finale_export["stati"], hide_index=True, use_container_width=True)
@@ -3517,8 +3517,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         with cw:
             if st.button(L["btn_word"], disabled=not lista_cap_base):
                 doc = Document(); doc.add_heading(val_titolo, 0)
-                if export_boza:
-                    doc.add_paragraph("BOZZA NON COMPLETA - Non pronta per la pubblicazione. Consulta il controllo finale nell'app.")
                 for s in opzioni_editor:
                     ke = chiave_sezione(s)
                     if st.session_state.get(ke, "").strip():
@@ -3530,13 +3528,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         doc.add_paragraph(pulisci_testo_editoriale(st.session_state[ke]))
                 bw = BytesIO(); doc.save(bw); bw.seek(0)
                 notifica_sonora("word_pronto", lingua_sel, ripeti=True)
-                suffisso = "_BOZZA_NON_COMPLETA" if export_boza else ""
-                st.download_button(L["btn_word"], data=bw, file_name=f"{val_titolo}{suffisso}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                st.download_button(L["btn_word"], data=bw, file_name=f"{val_titolo}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         with cp:
             if st.button(L["btn_pdf"], disabled=not lista_cap_base):
                 pdf = EbookPDF(val_titolo, val_autore); pdf.cover_page()
-                if export_boza:
-                    pdf.add_content("BOZZA NON COMPLETA", "Questo file è una bozza di lavoro. Il controllo finale ha rilevato elementi da completare o verificare; non usarlo per la pubblicazione.")
                 for s in opzioni_editor:
                     kd = chiave_sezione(s)
                     if st.session_state.get(kd, "").strip():
@@ -3551,8 +3546,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 pdf_output = pdf.output(dest="S")
                 out_p = pdf_output.encode("latin-1", "replace") if isinstance(pdf_output, str) else bytes(pdf_output)
                 notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
-                suffisso = "_BOZZA_NON_COMPLETA" if export_boza else ""
-                st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}{suffisso}.pdf", mime="application/pdf")
+                st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}.pdf", mime="application/pdf")
 
     # TAB 5: FORMATTAZIONE E METADATI KDP
     with tabs[5]:
