@@ -8,6 +8,7 @@ import time
 import datetime
 import base64
 import hashlib
+import math
 import tempfile
 import uuid
 from fpdf import FPDF
@@ -133,6 +134,46 @@ def studia_fonti_con_ai(testo, limite_input=30000):
         return dossier or crea_scheda_fonti(testo, limite=3600)
     except Exception:
         return crea_scheda_fonti(testo, limite=3600)
+
+
+def firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti):
+    """La ricerca viene riutilizzata finché il brief non cambia."""
+    base = "\n".join([titolo or "", genere or "", trama or "", obiettivo or "", lingua or "", approfondimenti or ""])
+    return hashlib.sha256(base.encode("utf-8", "ignore")).hexdigest()
+
+
+def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
+    """Cerca e sintetizza fonti autorevoli prima dell'indice; il dossier resta interno al progetto."""
+    firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
+    if st.session_state.get("firma_ricerca_preliminare") == firma:
+        return st.session_state.get("dossier_ricerca_preliminare", "")
+
+    riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=2)
+    try:
+        risposta = client.responses.create(
+            model=MODELLO_ANALISI_FONTI,
+            tools=[{"type": "web_search_preview"}],
+            input=(
+                "Sei un ricercatore editoriale. Cerca sul web fonti autorevoli e aggiornate utili "
+                "per progettare un libro. Non scrivere il libro e non produrre citazioni per il lettore. "
+                "Restituisci un DOSSIER INTERNO conciso con: concetti e definizioni affidabili; "
+                "fatti, norme, date o dati da verificare; controversie o limiti; progressione didattica consigliata; "
+                "aspetti concreti da assegnare all'indice. Non inserire URL, link Markdown o bibliografie.\n\n"
+                f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
+                f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
+                f"Approfondimenti: {approfondimenti or 'Nessuno'}"
+            ),
+        )
+        dossier = (getattr(risposta, "output_text", "") or "").strip()
+        if not dossier:
+            refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=2)
+            return ""
+        st.session_state["firma_ricerca_preliminare"] = firma
+        st.session_state["dossier_ricerca_preliminare"] = dossier
+        return dossier
+    except Exception:
+        refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=2)
+        return ""
 
 
 def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
@@ -484,23 +525,37 @@ class EbookPDF(FPDF):
 PROFILI_LUNGHEZZA_STESURA = {
     "Compatto": {
         "parole": "140-200 parole",
-        "max_completion_tokens": 420,
+        "min_parole": 140,
+        "max_parole": 200,
+        "max_completion_tokens": 330,
         "descrizione": "capitoli rapidi, diretti e senza ripetizioni",
         "max_sezioni": 50,
     },
     "Standard KDP": {
         "parole": "220-300 parole",
-        "max_completion_tokens": 620,
+        "min_parole": 220,
+        "max_parole": 300,
+        "max_completion_tokens": 480,
         "descrizione": "equilibrio consigliato tra qualità, lettura e lunghezza finale",
         "max_sezioni": 80,
     },
     "Approfondito": {
         "parole": "320-420 parole",
-        "max_completion_tokens": 780,
+        "min_parole": 320,
+        "max_parole": 420,
+        "max_completion_tokens": 680,
         "descrizione": "trattazione più ampia per sezioni realmente complesse",
         "max_sezioni": 110,
     },
 }
+
+
+def vincolo_parole_con_tolleranza(profilo_lunghezza):
+    """Restituisce il limite editoriale con margine massimo del 5% per lato."""
+    profilo = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])
+    minimo = math.ceil(profilo["min_parole"] * 0.95)
+    massimo = math.floor(profilo["max_parole"] * 1.05)
+    return minimo, massimo
 
 
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None):
@@ -1650,7 +1705,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
         f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
         f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
-        "comprese Prefazione e Ringraziamenti."
+        "comprese Prefazione e Ringraziamenti. Tolleranza massima sulla lunghezza: 5%."
     )
     limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
     # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
@@ -1749,6 +1804,7 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     profilo_lunghezza_dati = PROFILI_LUNGHEZZA_STESURA.get(
         profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
+    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(profilo_lunghezza)
     ha_sottocapitoli = bool(individua_sottocapitoli_del_capitolo(sezione, indice.splitlines()))
     if tipo_sezione == "capitolo" and ha_sottocapitoli:
         istruzione_lunghezza = (
@@ -1757,8 +1813,9 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
         )
     else:
         istruzione_lunghezza = (
-            f"Scrivi tra {profilo_lunghezza_dati['parole']}. La qualità dipende dalla densità delle informazioni, "
-            "non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo."
+            f"Obiettivo: {profilo_lunghezza_dati['parole']}. Tolleranza massima del 5%: non scrivere meno di "
+            f"{minimo_parole_tolleranza} né più di {massimo_parole_tolleranza} parole. La qualità dipende dalla densità "
+            "delle informazioni, non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo."
         )
     direttiva_test_prep = ""
     if genere == "Test Prep (Preparazione Esami)":
@@ -2294,10 +2351,13 @@ dettaglio assegnato senza anticipare o ripetere gli altri sottocapitoli.
     profilo_lunghezza_corrente = PROFILI_LUNGHEZZA_STESURA.get(
         val_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
+    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(val_lunghezza)
     modulo_lunghezza = f"""
 === LUNGHEZZA E DENSITÀ OBBLIGATORIE ===
 Profilo scelto: {val_lunghezza}.
-- Per una sezione autonoma, rispetta il limite di {profilo_lunghezza_corrente['parole']}.
+- Per una sezione autonoma, l'obiettivo è {profilo_lunghezza_corrente['parole']}.
+- Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
+- Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
 - Questa direttiva prevale su ogni invito generico a essere estremamente dettagliato o a includere molte categorie di esempi.
 - Una sezione è valida quando risponde bene al suo titolo con informazioni nuove, non quando ripete o aggiunge dettagli non necessari.
 - Un capitolo con sottocapitoli è solo una cornice breve: i contenuti completi appartengono ai sottocapitoli.
@@ -2412,7 +2472,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 2. Scegli Lunghezza delle sezioni: Compatto produce circa 140-200 parole per sezione e fino a 50 sezioni totali; Standard KDP (consigliato) circa 220-300 parole e fino a 80 sezioni; Approfondito circa 320-420 parole e fino a 110 sezioni. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
-3. Apri Indice e premi Genera Indice Professionale. Se lo modifichi a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
+3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
 4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa tutte le sezioni ancora vuote dell'indice, comprese aperture, capitoli, sottocapitoli e chiusure. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
 
@@ -2884,10 +2944,17 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
-        if pulsante_con_preventivo("genera_indice", L["btn_idx"], 3,
-                                   "Include generazione, valutazione editoriale e possibili correzioni automatiche dell'indice.",
+        if pulsante_con_preventivo("genera_indice", L["btn_idx"], 5,
+                                   "Include ricerca preliminare online (2 crediti), generazione, valutazione editoriale e possibili correzioni automatiche dell'indice (3 crediti).",
                                    disabled=not sidebar_pronta):
-            with st.spinner("Creazione indice (Neuro-Analisi, Connessione Parametri e Strutturazione Logica in corso)..."):
+            with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
+                dossier_ricerca_web = ricerca_preliminare_per_indice(
+                    val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti
+                )
+                if dossier_ricerca_web:
+                    st.session_state["ultimo_esito_ricerca_preliminare"] = (
+                        "Ricerca preliminare completata: il dossier interno guiderà indice e stesura."
+                    )
                 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE TERMINI INDICE ---
                 trad_termini = {
@@ -2972,6 +3039,13 @@ la somma di Parti + Capitoli + sottocapitoli resti nel budget.
                         "Usa il dossier per distribuire i concetti con precisione nell'indice; "
                         "non citare fonti, non copiare il testo e non aggiungere argomenti non supportati.\n"
                         f"{dossier_fonti[:7000]}\n"
+                    )
+                if dossier_ricerca_web:
+                    prompt_idx += (
+                        "\n\nDOSSIER DELLA RICERCA PRELIMINARE ONLINE (USO INTERNO):\n"
+                        "Usa questo dossier per controllare definizioni, priorità, limiti e progressione dell'indice. "
+                        "Non citare fonti, URL, siti o riferimenti bibliografici nell'indice né nel libro.\n"
+                        f"{dossier_ricerca_web[:7000]}\n"
                     )
 
                 prompt_idx += f"""
