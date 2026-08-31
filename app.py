@@ -1453,6 +1453,12 @@ def criticita_specificita(testo, genere, sezione):
     basso = pulito.lower()
     if tipo_sezione_editoriale(sezione) == "parte":
         return ""
+    # Un finale senza chiusura è spesso il segnale di una risposta interrotta dal limite di output.
+    # Viene rigenerata prima di essere salvata, senza accettare un ragionamento lasciato a metà.
+    finale = pulito.rstrip()
+    connettivi_finali = (" e", " o", " ma", " perché", " quindi", " inoltre", " come", " per", " con")
+    if finale and (finale[-1] not in ".!?…»”)]}" or any(finale.lower().endswith(connettivo) for connettivo in connettivi_finali)):
+        return "ragionamento non concluso: chiudi l'ultima idea con una frase completa e utile"
     if len(parole) < 150:
         return "testo troppo breve per sviluppare l'argomento assegnato"
 
@@ -1516,7 +1522,8 @@ La prima bozza è stata rifiutata perché presenta: {criticita}.
 Riscrivi integralmente la sezione. Ogni paragrafo deve aggiungere un fatto, una scena, una procedura,
 un esempio, un caso, un esercizio, un dato o una conseguenza specifica del genere '{genere}'.
 Elimina frasi motivazionali, definizioni vaghe e ripetizioni. Non descrivere ciò che il lettore potrebbe fare:
-mostra il contenuto concreto richiesto dal titolo della sezione.
+            mostra il contenuto concreto richiesto dal titolo della sezione.
+            Chiudi l'ultima idea con una frase completa e significativa, rispettando rigorosamente il limite di parole.
 """,
             system_prompt, sezione, lingua, max_completion_tokens=limite_output
         ))
@@ -1858,12 +1865,13 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Tratta con priorità gli approfondimenti forniti, ma soltanto nelle sezioni cui sono pertinenti; non ripeterli artificialmente e non anticipare contenuti assegnati a sezioni successive.
 - Sii profondo ed esaustivo nell'ambito della sezione, senza rubare materiale alle altre.
 - {istruzione_lunghezza}
+- Pianifica il contenuto prima di scrivere: dedica l'ultima parte della sezione a chiudere esplicitamente il ragionamento, la procedura, l'esempio o la scena. Se lo spazio non basta, riduci i dettagli secondari invece di interrompere una frase, un elenco o una conclusione.
 - Redigi contenuto concreto suggerito dal titolo, senza preamboli inutili.
 - Non scrivere e non ripetere mai '{sezione}' come intestazione. Inizia direttamente con il contenuto.
 - Usa formattazione editoriale pulita: non usare Markdown, simboli ###, ##, **, __, ``` o intestazioni tecniche. Se servono elenchi, usa semplici punti o numeri senza caratteri decorativi.
 - Non inserire URL, link, citazioni, note bibliografiche o sezioni fonti.
 - Se sono disponibili fonti esterne, usale solo per ragionare e integrare concetti pertinenti, senza citarle nel testo finale.
-- Prima di consegnare, verifica internamente che il contenuto sia completo per la sezione assegnata, che non sia una bozza o un frammento e che non contenga residui di altre sezioni.
+- Prima di consegnare, verifica internamente che il contenuto sia completo per la sezione assegnata, che non sia una bozza o un frammento, che l'ultima frase sia completa e che il ragionamento abbia una chiusura utile entro il limite di parole.
 
 === PROFONDITÀ ADATTIVA E SPIEGAZIONE PASSO PASSO ===
 - Scrivi un testo professionale, completo e proporzionato alla complessità della sezione e al profilo di lunghezza scelto. Una spiegazione accurata non deve diventare una spiegazione lunga: evita frasi motivazionali, ripetizioni, riassunti e varianti dello stesso esempio.
@@ -2358,6 +2366,7 @@ Profilo scelto: {val_lunghezza}.
 - Per una sezione autonoma, l'obiettivo è {profilo_lunghezza_corrente['parole']}.
 - Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
 - Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
+- Completa sempre l'ultima idea con una frase significativa: se lo spazio non basta, riduci prima dettagli secondari, esempi o elenchi, senza interrompere ragionamenti, procedure o scene.
 - Questa direttiva prevale su ogni invito generico a essere estremamente dettagliato o a includere molte categorie di esempi.
 - Una sezione è valida quando risponde bene al suo titolo con informazioni nuove, non quando ripete o aggiunge dettagli non necessari.
 - Un capitolo con sottocapitoli è solo una cornice breve: i contenuti completi appartengono ai sottocapitoli.
@@ -2934,6 +2943,53 @@ TRAMA O ARGOMENTO:
 APPROFONDIMENTI (FACOLTATIVO):
 
 Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site e genera l'indice."""
+        # Per le lingue diverse dall'italiano sostituiamo l'intero testo operativo,
+        # non solo l'intestazione della guida. Le opzioni restano in italiano perché
+        # sono valori tecnici da selezionare esattamente nella sidebar.
+        istruzioni_multilingue = {
+            "English": "Act only as the Scrittore Site Sidebar Assistant. Turn the user's idea into a complete form ready to copy into the sidebar. Do not write the book or outline, add external fields, or suggest subtitles, prices, formats, page counts, chapters, or marketing plans.\n\nPHASE 1 — Start with only: ‘What book would you like to create? You may write just one sentence. If you know more, mention reader, language, desired result, or title. If not, I will choose coherently.’\n\nPHASE 2 — After the answer, infer everything reasonable. If audience, goal, and topic are clear, prepare the form immediately. Ask only one short follow-up question with at most three choices when a decision would materially change the project. Do not ask for title, author, writing type, narrative style, point of view, or length: choose them yourself.\n\nQUALITY — Propose one title without subtitle; use [Enter your name] if the author is unknown. Make goal, result, and topic concrete and detailed. In TRAMA O ARGOMENTO include audience, problem, contents, progression, and boundaries. In APPROFONDIMENTI include procedures, examples, exercises, cases, mistakes, checks, or constraints. For changing topics, state that information must be verified before publication. Do not promise guaranteed results.",
+            "Español": "Actúa solo como asistente de la barra lateral de Scrittore Site. Convierte la idea del usuario en una ficha completa lista para copiar. No escribas el libro ni el índice, no añadas campos externos ni propongas subtítulos, precios, formatos, páginas, capítulos o marketing.\n\nFASE 1 — Empieza solo con: ‘¿Qué libro quieres crear? Puedes escribir una sola frase. Si sabes más, indica lector, idioma, resultado o título; si no, lo elegiré de forma coherente.’\n\nFASE 2 — Después de la respuesta, deduce lo razonable. Si público, objetivo y tema están claros, prepara la ficha. Haz una sola pregunta breve, con tres alternativas como máximo, solo si falta una decisión importante. No preguntes título, autor, tipo de escritura, estilo, punto de vista o longitud: elígelos tú.\n\nCALIDAD — Propón un título único sin subtítulo; usa [Introduce tu nombre] si no se conoce el autor. Redacta objetivo, resultado y tema de forma concreta y detallada. En TRAMA O ARGOMENTO incluye público, problema, contenidos, progresión y límites. En APPROFONDIMENTI incluye procedimientos, ejemplos, ejercicios, casos, errores, verificaciones o restricciones. Para temas actualizables indica que deben verificarse antes de publicar. No prometas resultados garantizados.",
+            "Français": "Agissez uniquement comme assistant de la barre latérale de Scrittore Site. Transformez l'idée de l'utilisateur en fiche complète prête à copier. N'écrivez ni le livre ni le sommaire, n'ajoutez pas de champs externes et ne proposez ni sous-titre, ni prix, ni format, ni pages, ni chapitres, ni marketing.\n\nPHASE 1 — Commencez seulement par : « Quel livre voulez-vous créer ? Vous pouvez écrire une seule phrase. Si vous en savez plus, indiquez lecteur, langue, résultat ou titre ; sinon, je les choisirai de façon cohérente. »\n\nPHASE 2 — Après la réponse, déduisez ce qui est raisonnable. Si public, objectif et sujet sont clairs, préparez la fiche. Posez une seule question courte avec trois choix au maximum si une décision importante manque. Ne demandez ni titre, ni auteur, ni type d'écriture, ni style, ni point de vue, ni longueur : choisissez-les.\n\nQUALITÉ — Proposez un titre unique sans sous-titre ; utilisez [Saisissez votre nom] si l'auteur est inconnu. Rendez objectif, résultat et sujet concrets et détaillés. Dans TRAMA O ARGOMENTO, indiquez public, problème, contenu, progression et limites. Dans APPROFONDIMENTI, indiquez procédures, exemples, exercices, cas, erreurs, vérifications ou contraintes. Pour les sujets évolutifs, précisez la vérification avant publication. Ne promettez aucun résultat garanti.",
+            "Deutsch": "Handeln Sie nur als Assistent für die Scrittore-Site-Seitenleiste. Wandeln Sie die Idee des Nutzers in ein vollständiges, kopierfertiges Formular um. Schreiben Sie weder Buch noch Inhaltsverzeichnis, fügen Sie keine externen Felder hinzu und schlagen Sie keine Untertitel, Preise, Formate, Seitenzahlen, Kapitel oder Marketing vor.\n\nPHASE 1 — Beginnen Sie nur mit: „Welches Buch möchten Sie erstellen? Sie können einen einzigen Satz schreiben. Wenn Sie mehr wissen, nennen Sie Leser, Sprache, Ergebnis oder Titel; andernfalls wähle ich es passend aus.“\n\nPHASE 2 — Leiten Sie nach der Antwort alles Sinnvolle ab. Sind Zielgruppe, Ziel und Thema klar, erstellen Sie das Formular. Stellen Sie nur eine kurze Zusatzfrage mit höchstens drei Optionen, wenn eine wichtige Entscheidung fehlt. Fragen Sie nicht nach Titel, Autor, Schreibtyp, Stil, Perspektive oder Länge: Wählen Sie diese selbst.\n\nQUALITÄT — Schlagen Sie einen Titel ohne Untertitel vor; verwenden Sie [Ihren Namen eingeben], wenn der Autor unbekannt ist. Formulieren Sie Ziel, Ergebnis und Thema konkret und detailliert. In TRAMA O ARGOMENTO gehören Zielgruppe, Problem, Inhalte, Ablauf und Grenzen. In APPROFONDIMENTI gehören Verfahren, Beispiele, Übungen, Fälle, Fehler, Prüfungen oder Vorgaben. Bei veränderlichen Themen muss eine Prüfung vor Veröffentlichung genannt werden. Versprechen Sie keine garantierten Ergebnisse.",
+            "Română": "Acționează doar ca asistent pentru bara laterală Scrittore Site. Transformă ideea utilizatorului într-o fișă completă gata de copiat. Nu scrie cartea sau cuprinsul, nu adăuga câmpuri externe și nu propune subtitluri, prețuri, formate, pagini, capitole sau marketing.\n\nFAZA 1 — Începe doar cu: «Ce carte vrei să creezi? Poți scrie o singură propoziție. Dacă știi mai multe, indică cititorul, limba, rezultatul sau titlul; dacă nu, le aleg eu coerent.»\n\nFAZA 2 — După răspuns, dedu tot ce este rezonabil. Dacă publicul, obiectivul și subiectul sunt clare, pregătește fișa. Pune o singură întrebare scurtă cu cel mult trei opțiuni numai când lipsește o alegere importantă. Nu întreba despre titlu, autor, tip, stil, punct de vedere sau lungime: alege-le tu.\n\nCALITATE — Propune un titlu unic fără subtitlu; folosește [Introduceți numele] dacă autorul nu este cunoscut. Scrie concret și detaliat obiectivul, rezultatul și subiectul. În TRAMA O ARGOMENTO include publicul, problema, conținutul, progresia și limitele. În APPROFONDIMENTI include proceduri, exemple, exerciții, cazuri, erori, verificări sau constrângeri. Pentru subiecte actualizabile menționează verificarea înainte de publicare. Nu promite rezultate garantate.",
+            "Русский": "Действуйте только как помощник боковой панели Scrittore Site. Превратите идею пользователя в полную карточку для копирования. Не пишите книгу или оглавление, не добавляйте внешние поля и не предлагайте подзаголовки, цены, форматы, страницы, главы или маркетинг.\n\nЭТАП 1 — Начните только с: «Какую книгу вы хотите создать? Можно написать одно предложение. Если вы знаете больше, укажите читателя, язык, результат или название; иначе я выберу их согласованно.»\n\nЭТАП 2 — После ответа выведите всё разумно возможное. Если аудитория, цель и тема ясны, подготовьте карточку. Задайте только один короткий вопрос максимум с тремя вариантами, когда не хватает важного решения. Не спрашивайте название, автора, тип письма, стиль, точку зрения или длину: выберите сами.\n\nКАЧЕСТВО — Предложите одно название без подзаголовка; если автор неизвестен, используйте [Введите ваше имя]. Пишите цель, результат и тему конкретно и подробно. В TRAMA O ARGOMENTO укажите аудиторию, проблему, содержание, последовательность и границы. В APPROFONDIMENTI укажите процедуры, примеры, упражнения, случаи, ошибки, проверки или ограничения. Для изменяемых тем укажите проверку до публикации. Не обещайте гарантированных результатов.",
+            "العربية": "اعمل فقط كمساعد للشريط الجانبي في Scrittore Site. حوّل فكرة المستخدم إلى بطاقة كاملة جاهزة للنسخ. لا تكتب الكتاب أو الفهرس، ولا تضف حقولاً خارجية، ولا تقترح عناوين فرعية أو أسعاراً أو صيغاً أو صفحات أو فصولاً أو تسويقاً.\n\nالمرحلة 1 — ابدأ فقط بعبارة: «ما الكتاب الذي تريد إنشاءه؟ يمكنك كتابة جملة واحدة. إذا كنت تعرف المزيد فاذكر القارئ أو اللغة أو النتيجة أو العنوان؛ وإلا سأختارها بشكل متسق.»\n\nالمرحلة 2 — بعد الإجابة استنتج كل ما هو معقول. إذا كان الجمهور والهدف والموضوع واضحين فجهز البطاقة. اطرح سؤالاً إضافياً واحداً قصيراً بثلاثة بدائل كحد أقصى فقط عند غياب قرار مهم. لا تسأل عن العنوان أو المؤلف أو نوع الكتابة أو الأسلوب أو وجهة النظر أو الطول: اخترها بنفسك.\n\nالجودة — اقترح عنواناً واحداً بلا عنوان فرعي؛ استخدم [أدخل اسمك] إذا كان المؤلف غير معروف. اكتب الهدف والنتيجة والموضوع بوضوح وتفصيل. في TRAMA O ARGOMENTO اذكر الجمهور والمشكلة والمحتوى والتدرج والحدود. في APPROFONDIMENTI اذكر الإجراءات والأمثلة والتمارين والحالات والأخطاء والتحققات والقيود. للموضوعات المتغيرة اذكر التحقق قبل النشر. لا تعد بنتائج مضمونة.",
+            "中文": "仅作为 Scrittore Site 侧边栏助手工作。将用户想法转换为可直接复制的完整资料卡。不要撰写书籍或目录，不要添加外部字段，也不要建议副标题、价格、格式、页数、章节或营销计划。\n\n阶段一——仅以此开始：“你想创作什么书？你可以只写一句话。如果你知道更多信息，可以说明读者、语言、结果或标题；如果不知道，我会合理选择。”\n\n阶段二——收到回答后，合理推断所有信息。如果读者、目标和主题明确，立即准备资料卡。只有在缺少会实质改变项目的重要选择时，才提出一个简短的附加问题，最多三个具体选项。不要询问标题、作者、写作类型、风格、视角或篇幅：请自行选择。\n\n质量——提出一个无副标题的唯一标题；作者未知时使用[填写你的姓名]。具体、详细地写出目标、结果和主题。在 TRAMA O ARGOMENTO 中包括读者、问题、内容、推进和边界。在 APPROFONDIMENTI 中包括流程、示例、练习、案例、错误、核查或限制。对于会更新的主题，注明出版前必须核实。不要承诺保证性结果。",
+        }
+        # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
+        if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (140-200 words, max 50 sections); Standard KDP (220-300 words, max 80 sections); Approfondito (320-420 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures."""
+            prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
+
+{istruzioni_multilingue[lingua_sel]}
+
+{opzioni_esatte}
+
+When sufficient information is available, ask no more questions. Return only the following form. Keep its labels and the selected option values exactly unchanged; write all descriptive values in {lingua_sel}.
+
+TITOLO DEL LIBRO:
+
+NOME AUTORE:
+
+LINGUA:
+
+GENERE LETTERARIO:
+
+TIPOLOGIA SCRITTURA:
+
+STILE DI RACCONTO:
+
+PUNTO DI VISTA:
+
+LUNGHEZZA DELLE SEZIONI:
+
+OBIETTIVO DEL LIBRO:
+
+RISULTATO FINALE DESIDERATO:
+
+TRAMA O ARGOMENTO:
+
+APPROFONDIMENTI (FACOLTATIVO):"""
         st.caption(guida_chat["etichetta"])
         st.code(prompt_chat_sidebar, language=None)
 
