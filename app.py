@@ -98,7 +98,9 @@ def crea_scheda_fonti(testo, limite=2600):
 
 
 MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
-MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_STESURA)
+# Il modello completo viene usato solo dove il ragionamento editoriale pesa davvero.
+MODELLO_EDITORIALE = os.getenv("EDITORIAL_MODEL", "gpt-5.4")
+MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_EDITORIALE)
 
 
 def studia_fonti_con_ai(testo, limite_input=30000):
@@ -498,13 +500,13 @@ PROFILI_LUNGHEZZA_STESURA = {
 }
 
 
-def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None):
+def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None):
     riferimento = None
     try:
         if addebita:
             riferimento = charge_credits("generazione_testo", amount=amount)
         richiesta = {
-            "model": MODELLO_STESURA,
+            "model": model or MODELLO_STESURA,
             "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
         }
         if max_completion_tokens:
@@ -1072,7 +1074,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
     try:
-        corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False))
+        corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
     except Exception:
         refund_credits(riferimento, reason="genera_indice_fallito", amount=3)
         raise
@@ -1124,7 +1126,7 @@ da correggere e verifica di aver applicato almeno le correzioni necessarie.
 INDICE RIFIUTATO DA CORREGGERE
 {corrente}
 """
-        corrente = normalizza_indice_generato(chiedi_gpt(revisione, system_prompt, addebita=False))
+        corrente = normalizza_indice_generato(chiedi_gpt(revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
     return ""
 
 
@@ -1187,9 +1189,8 @@ def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, gener
                 "Aggiungi solo contenuto concreto necessario e non modificare le altre sezioni."
             )
 
-    problemi_indice = criticita_indice_generato(indice, genere, titolo, trama, obiettivo)
-    if problemi_indice:
-        problemi.extend(f"Indice: {problema}" for problema in problemi_indice)
+    # La struttura dell'indice viene già validata quando è generata. Non la
+    # riutilizziamo qui per non trasformare libri validi ma più brevi in bozze.
 
     if genere == "Test Prep (Preparazione Esami)":
         esiti_test = audit_simulazioni_test_prep(indice, contenuti, obiettivo, trama)
@@ -1789,6 +1790,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
         prompt,
         "Sei un editor senior specializzato in architettura di libri. Sei rigoroso, concreto e non usi valutazioni vaghe.",
         addebita=addebita,
+        model=MODELLO_EDITORIALE,
     ))
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
@@ -1833,7 +1835,7 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
         if addebita:
             riferimento = charge_credits("audit_editoriale", amount=1)
         risposta = client.responses.create(
-            model=MODELLO_STESURA,
+            model=MODELLO_EDITORIALE,
             input=prompt
         )
         testo = getattr(risposta, "output_text", "") or ""
