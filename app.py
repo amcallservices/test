@@ -956,7 +956,7 @@ def profilo_struttura_indice(genere, titolo, trama, obiettivo):
         return "NARRATIVA E BIOGRAFIA: organizza 3-6 Parti e un numero di capitoli proporzionato all'arco narrativo. Non imporre sottocapitoli a ogni capitolo: usali solo se sono necessari e non spezzano artificialmente scene o svolte. Ogni titolo deve nominare una scena, una scelta, un luogo, un personaggio, un oggetto o una conseguenza specifici del brief. Almeno un terzo dei titoli deve contenere parole concrete tratte dal titolo o dalla trama. Evita titoli generici come 'Il ritorno', 'La scoperta', 'L'incontro inaspettato', 'Il richiamo del passato', 'Riflessioni' o 'La fine'."
     if genere in {"Quiz Scientifico", "Test Prep (Preparazione Esami)"}:
         return "QUIZ E TEST PREP: organizza fondamenti, esercitazione graduata, quiz/domande commentate, almeno una simulazione esplicitamente nominata e correzioni. Nella lingua scelta usa le parole equivalenti a ‘quiz/questions’ e ‘simulation’, così che lo scopo delle sezioni sia leggibile. Ogni unità deve indicare una competenza verificabile; non creare capitoli riempitivi."
-    return "SAGGISTICA E MANUALI: usa 4-6 Parti, 15-18 capitoli effettivi e 3-5 sottocapitoli solo quando corrispondono a concetti o passaggi realmente distinti."
+    return "SAGGISTICA E MANUALI: distribuisci fondamenti, metodo, applicazione, verifica e sintesi in una struttura proporzionata al brief. Crea sottocapitoli solo per concetti o passaggi realmente distinti; il budget di sezioni indicato nel prompt prevale su ogni schema numerico generale."
 
 
 def normalizza_indice_generato(indice):
@@ -1525,7 +1525,7 @@ with st.sidebar:
     val_stile = st.selectbox(L["lbl_style"], stili_estesi)
 
     direttive_indice_tipologia = {
-        "Standard": "Crea un percorso lineare in 5-6 Parti e 15-18 Capitoli: basi, sviluppo progressivo, applicazione, verifica e sintesi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
+        "Standard": "Crea un percorso lineare da basi a sviluppo, applicazione, verifica e sintesi. Rispetta il budget di sezioni indicato nel prompt: non espandere l'indice con capitoli o sottocapitoli ripetitivi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
         "Professionale Accademico": "Organizza l'indice in contesto, definizioni, quadro teorico, metodologia, analisi, evidenze, limiti, implicazioni e riferimenti. Separa chiaramente ipotesi, dati, metodo e risultati; prevedi criteri di valutazione e fonti.",
         "Persuasivo (Neuromarketing Applicato)": "Costruisci il percorso da problema e consapevolezza a soluzione, prove, obiezioni, benefici, applicazione e azione. Inserisci casi, comparazioni e piani d'azione senza promesse garantite o claim non verificabili.",
         "Conversazionale ed Empatico": "Sequenzia l'indice come un accompagnamento: situazione del lettore, ostacoli, spiegazione semplice, esercitazione guidata, verifica e autonomia. Usa domande guida, riepiloghi e passaggi graduali senza infantilizzare.",
@@ -1638,6 +1638,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     limite_voci_indice = max(1, limite_sezioni_totali - 2)
     # Un margine operativo evita che l'indice arrivi al tetto e lo superi con una voce imprevista.
     obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
+    budget_struttura_indice = {
+        "Compatto": "massimo 3 Parti, massimo 8 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 43 voci)",
+        "Standard KDP": "massimo 4 Parti, massimo 13 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 69 voci)",
+        "Approfondito": "massimo 5 Parti, massimo 15 Capitoli e massimo 5 sottocapitoli per Capitolo (circa 95 voci)",
+    }[val_lunghezza]
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -2929,6 +2934,12 @@ voci nell'indice qui sotto. OBIETTIVO CONSIGLIATO: circa {obiettivo_voci_indice}
 Non superare mai {limite_voci_indice} voci. Preferisci una struttura più compatta e completa invece di aggiungere voci
 simili o riempitive: accorpa argomenti contigui nello stesso sottocapitolo e rimuovi ogni voce che non aggiunge
 un risultato distinto. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
+
+=== BUDGET STRUTTURALE OBBLIGATORIO ===
+Per questo profilo usa: {budget_struttura_indice}. Questo budget PREVALE su qualunque indicazione numerica
+generale presente sopra. Non creare 15-18 capitoli con 6-10 sottocapitoli ciascuno. Se un argomento è collegato
+a un altro, trattalo nello stesso sottocapitolo invece di creare una nuova voce. Prima dell'output verifica che
+la somma di Parti + Capitoli + sottocapitoli resti nel budget.
 """
                 if st.session_state.get("conoscenza_extra"):
                     dossier_fonti = st.session_state.get("dossier_fonti_ai") or st.session_state.get("scheda_fonti", "")
@@ -3031,6 +3042,7 @@ Approfondimenti: {val_approfondimenti or "Nessuno"}
 LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice e punta a circa
 {obiettivo_voci_indice}. Prefazione e Ringraziamenti sono aggiunti separatamente dall'editor, quindi il libro
 completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
+BUDGET STRUTTURALE: {budget_struttura_indice}. Questo budget prevale su ogni schema numerico dell'indice attuale.
 
 INDICE ATTUALE
 {indice_da_valutare}
