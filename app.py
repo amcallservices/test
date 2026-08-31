@@ -1083,12 +1083,14 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
     try:
+        # L'indice resta affidato al modello editoriale completo: è la base
+        # dell'intero libro e deve distribuire correttamente argomenti e sezioni.
         corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
     except Exception:
         refund_credits(riferimento, reason="genera_indice_fallito", amount=3)
         raise
     indice_di_partenza = firma_indice(indice_da_superare)
-    massimo_tentativi = 5  # prima generazione + fino a quattro correzioni mirate nello stesso clic
+    massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
     for tentativo in range(massimo_tentativi):
         problemi = criticita_indice_generato(corrente, genere, titolo, trama, obiettivo)
         if massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni:
@@ -1101,15 +1103,20 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 "la proposta è identica all'indice valutato: applica concretamente i miglioramenti richiesti "
                 "modificando struttura e titoli pertinenti"
             )
-        voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
-            corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
-        )
         difetti_bloccanti = (
             "non sono stati riconosciuti capitoli", "capitoli senza almeno due sottocapitoli",
             "sono richieste", "un capitolo del ricettario", "il ricettario contiene sottocapitoli", "manca una sezione con quiz", "manca una sezione di simulazione",
             "struttura troppo breve", "oltre il massimo consentito"
         )
         ha_blocchi = any(any(blocco in problema for blocco in difetti_bloccanti) for problema in problemi)
+        # Non avviamo il lento audit editoriale su un indice già fuori misura:
+        # prima lo rendiamo valido sul piano oggettivo.
+        if ha_blocchi or proposta_identica:
+            voto_editoriale, difetti_editoriali = 0, "vincoli strutturali da correggere prima della valutazione editoriale"
+        else:
+            voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
+                corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
+            )
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica:
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
@@ -1130,6 +1137,9 @@ La bozza precedente non rispetta questi vincoli oggettivi/editoriali: {'; '.join
 Usa i difetti elencati come requisiti di correzione concreti. Riscrivi l'intero indice, senza commenti e senza la parola 'Indice' in apertura.
 Correggi tutti i punti segnalati, inclusi grammatica, gerarchia, ripetizioni e aderenza al brief; non limitarti a rinominare i titoli.
 Mantieni soltanto argomenti attinenti al brief.
+
+Se il difetto riguarda il numero di sezioni, non accorciare soltanto i titoli: unisci gli argomenti contigui
+e rimuovi le voci ridondanti fino a rispettare il massimo indicato. Conta nuovamente le voci prima di rispondere.
 
 DIVIETO ASSOLUTO: non restituire l'indice di partenza né una sua copia cosmetica. Ogni miglioramento
 indicato dall'editor deve produrre una modifica visibile nella struttura, nella sequenza, nei titoli o
@@ -1626,6 +1636,8 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
     # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
     limite_voci_indice = max(1, limite_sezioni_totali - 2)
+    # Un margine operativo evita che l'indice arrivi al tetto e lo superi con una voce imprevista.
+    obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -2865,6 +2877,7 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
                 limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
                 # Prefazione e Ringraziamenti sono aggiunti dall'editor dopo la sincronizzazione.
                 limite_voci_indice = max(1, limite_sezioni_totali - 2)
+                obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
                 # --- FINE NUOVE RIGHE ---
 
                 # PROMPT BLINDATO PER L'INDICE: Ora prende in carico TUTTI i parametri della sidebar per coerenza assoluta.
@@ -2912,8 +2925,10 @@ L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
 === LIMITE ASSOLUTO DI ESTENSIONE ===
 Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni,
 incluse Prefazione e Ringraziamenti aggiunti dall'editor. Quindi genera AL MASSIMO {limite_voci_indice}
-voci nell'indice qui sotto. Preferisci una struttura più compatta e completa invece di aggiungere voci
-simili o riempitive. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
+voci nell'indice qui sotto. OBIETTIVO CONSIGLIATO: circa {obiettivo_voci_indice} voci, per lasciare margine.
+Non superare mai {limite_voci_indice} voci. Preferisci una struttura più compatta e completa invece di aggiungere voci
+simili o riempitive: accorpa argomenti contigui nello stesso sottocapitolo e rimuovi ogni voce che non aggiunge
+un risultato distinto. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
 """
                 if st.session_state.get("conoscenza_extra"):
                     dossier_fonti = st.session_state.get("dossier_fonti_ai") or st.session_state.get("scheda_fonti", "")
@@ -2956,9 +2971,9 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 if indice_generato:
                     st.session_state["indice_raw"] = indice_generato
                     sync_capitoli(); st.rerun()
-                st.session_state["indice_raw"] = ""
-                st.session_state["lista_capitoli"] = []
-                st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
+                else:
+                    # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
+                    st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
                 
         # FIX ANTI-RESET PER L'INDICE: Salvataggio sicuro per prevenire sovrascritture da parte di Streamlit
         testo_corrente = st.session_state.get("indice_raw", "")
@@ -3013,8 +3028,9 @@ Obiettivo: {val_goal}
 Risultato finale desiderato: {val_risultato}
 Approfondimenti: {val_approfondimenti or "Nessuno"}
 
-LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice. Prefazione e Ringraziamenti
-sono aggiunti separatamente dall'editor, quindi il libro completo resterà entro {limite_sezioni_totali} sezioni.
+LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice e punta a circa
+{obiettivo_voci_indice}. Prefazione e Ringraziamenti sono aggiunti separatamente dall'editor, quindi il libro
+completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
 
 INDICE ATTUALE
 {indice_da_valutare}
