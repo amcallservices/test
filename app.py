@@ -486,16 +486,19 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "140-200 parole",
         "max_completion_tokens": 420,
         "descrizione": "capitoli rapidi, diretti e senza ripetizioni",
+        "max_sezioni": 50,
     },
     "Standard KDP": {
         "parole": "220-300 parole",
         "max_completion_tokens": 620,
         "descrizione": "equilibrio consigliato tra qualità, lettura e lunghezza finale",
+        "max_sezioni": 80,
     },
     "Approfondito": {
         "parole": "320-420 parole",
         "max_completion_tokens": 780,
         "descrizione": "trattazione più ampia per sezioni realmente complesse",
+        "max_sezioni": 110,
     },
 }
 
@@ -1069,8 +1072,14 @@ def firma_indice(indice):
     return re.sub(r"\s+", " ", (indice or "").strip().lower())
 
 
+def conta_sezioni_indice(indice):
+    """Conta le voci che saranno realmente disponibili nell'editor, in tutte le lingue supportate."""
+    regex = r'(?i)(Capitolo|Chapter|Kapitel|Capítulo|Chapitre|Capitolul|Глава|الفصل|Раздел|章节|Secţiune|Parte|Part|Partie|Teil|Partea|Часть|الجزء|部分|\d+\.)'
+    return sum(1 for riga in (indice or "").splitlines() if re.search(regex, riga.strip()))
+
+
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
-                              indice_da_superare=""):
+                              indice_da_superare="", massimo_sezioni=None):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
     try:
@@ -1082,6 +1091,10 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     massimo_tentativi = 5  # prima generazione + fino a quattro correzioni mirate nello stesso clic
     for tentativo in range(massimo_tentativi):
         problemi = criticita_indice_generato(corrente, genere, titolo, trama, obiettivo)
+        if massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni:
+            problemi.append(
+                f"l'indice contiene {conta_sezioni_indice(corrente)} sezioni, oltre il massimo consentito di {massimo_sezioni}"
+            )
         proposta_identica = bool(indice_di_partenza and firma_indice(corrente) == indice_di_partenza)
         if proposta_identica:
             problemi.append(
@@ -1094,7 +1107,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         difetti_bloccanti = (
             "non sono stati riconosciuti capitoli", "capitoli senza almeno due sottocapitoli",
             "sono richieste", "un capitolo del ricettario", "il ricettario contiene sottocapitoli", "manca una sezione con quiz", "manca una sezione di simulazione",
-            "struttura troppo breve"
+            "struttura troppo breve", "oltre il massimo consentito"
         )
         ha_blocchi = any(any(blocco in problema for blocco in difetti_bloccanti) for problema in problemi)
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica:
@@ -1606,8 +1619,13 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     )
     st.caption(
         f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
-        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}."
+        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
+        f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
+        "comprese Prefazione e Ringraziamenti."
     )
+    limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
+    # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
+    limite_voci_indice = max(1, limite_sezioni_totali - 2)
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -2351,7 +2369,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Compila la barra laterale: titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
-2. Scegli Lunghezza delle sezioni: Compatto produce circa 140-200 parole per sezione, Standard KDP (consigliato) circa 220-300 parole, Approfondito circa 320-420 parole. La scelta non cambia i crediti: regola soltanto la dimensione del testo. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 140-200 parole per sezione e fino a 50 sezioni totali; Standard KDP (consigliato) circa 220-300 parole e fino a 80 sezioni; Approfondito circa 320-420 parole e fino a 110 sezioni. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Se lo modifichi a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
@@ -2761,11 +2779,11 @@ Per il PUNTO DI VISTA scegli un solo valore tra:
 
 Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
 
-- Compatto — circa 140-200 parole per sezione
-- Standard KDP — circa 220-300 parole per sezione
-- Approfondito — circa 320-420 parole per sezione
+- Compatto — circa 140-200 parole per sezione, massimo 50 sezioni totali
+- Standard KDP — circa 220-300 parole per sezione, massimo 80 sezioni totali
+- Approfondito — circa 320-420 parole per sezione, massimo 110 sezioni totali
 
-Scegli Standard KDP come impostazione predefinita. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
+Scegli Standard KDP come impostazione predefinita. I limiti comprendono Prefazione e Ringraziamenti. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
 
 Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearne di nuovi.
 
@@ -2844,6 +2862,9 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
                 }
                 t_parte = trad_termini.get(lingua_sel, trad_termini["Italiano"])["parte"]
                 t_cap = trad_termini.get(lingua_sel, trad_termini["Italiano"])["cap"]
+                limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
+                # Prefazione e Ringraziamenti sono aggiunti dall'editor dopo la sincronizzazione.
+                limite_voci_indice = max(1, limite_sezioni_totali - 2)
                 # --- FINE NUOVE RIGHE ---
 
                 # PROMPT BLINDATO PER L'INDICE: Ora prende in carico TUTTI i parametri della sidebar per coerenza assoluta.
@@ -2887,6 +2908,12 @@ Distribuisci gli argomenti dell'obiettivo e della trama senza anticipare tutto n
 Per strumenti o software soggetti ad aggiornamento, separa principi stabili, funzioni da verificare
 e applicazioni. Mantieni coerenza con genere, tipologia, stile, POV, obiettivo e argomento.
 L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
+
+=== LIMITE ASSOLUTO DI ESTENSIONE ===
+Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni,
+incluse Prefazione e Ringraziamenti aggiunti dall'editor. Quindi genera AL MASSIMO {limite_voci_indice}
+voci nell'indice qui sotto. Preferisci una struttura più compatta e completa invece di aggiungere voci
+simili o riempitive. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
 """
                 if st.session_state.get("conoscenza_extra"):
                     dossier_fonti = st.session_state.get("dossier_fonti_ai") or st.session_state.get("scheda_fonti", "")
@@ -2922,7 +2949,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 
                 indice_generato = genera_indice_controllato(
                     prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.",
-                    val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov
+                    val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
+                    massimo_sezioni=limite_voci_indice,
                 )
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
@@ -2985,6 +3013,9 @@ Obiettivo: {val_goal}
 Risultato finale desiderato: {val_risultato}
 Approfondimenti: {val_approfondimenti or "Nessuno"}
 
+LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice. Prefazione e Ringraziamenti
+sono aggiunti separatamente dall'editor, quindi il libro completo resterà entro {limite_sezioni_totali} sezioni.
+
 INDICE ATTUALE
 {indice_da_valutare}
 
@@ -2997,6 +3028,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             "Sei un editor senior. Correggi l'indice con precisione e conserva la coerenza con il brief.",
                             val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                             indice_da_superare=indice_da_valutare,
+                            massimo_sezioni=limite_voci_indice,
                         )
                         if proposta:
                             st.session_state["indice_proposto_dal_voto"] = proposta
