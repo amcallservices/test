@@ -971,7 +971,7 @@ def normalizza_indice_generato(indice):
     return "\n".join(righe).strip()
 
 
-def criticita_indice_generato(indice, genere, titolo, trama, obiettivo):
+def criticita_indice_generato(indice, genere, titolo, trama, obiettivo, minimo_parti=4, minimo_capitoli=None):
     """Controllo deterministico leggero: intercetta gli errori che il modello tende a ripetere."""
     testo = normalizza_indice_generato(indice)
     righe = testo.splitlines()
@@ -982,11 +982,11 @@ def criticita_indice_generato(indice, genere, titolo, trama, obiettivo):
 
     problemi = []
     narrativi = {"Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Narrativo", "Romanzo Classico", "Contemporaneo", "Biografia"}
-    if genere != "Ricettario" and len(parti) < 4:
-        problemi.append(f"struttura troppo breve: sono presenti solo {len(parti)} Parti")
-    minimo_capitoli = 12 if genere not in {"Ricettario"} else 0
-    if len(capitoli) < minimo_capitoli:
-        problemi.append(f"struttura troppo breve: sono presenti solo {len(capitoli)} Capitoli, ne servono almeno {minimo_capitoli}")
+    if genere != "Ricettario" and len(parti) < minimo_parti:
+        problemi.append(f"struttura troppo breve: sono presenti solo {len(parti)} Parti, ne servono almeno {minimo_parti}")
+    minimo_capitoli_effettivo = (12 if genere not in {"Ricettario"} else 0) if minimo_capitoli is None else minimo_capitoli
+    if len(capitoli) < minimo_capitoli_effettivo:
+        problemi.append(f"struttura troppo breve: sono presenti solo {len(capitoli)} Capitoli, ne servono almeno {minimo_capitoli_effettivo}")
     if genere not in narrativi and genere != "Ricettario":
         capitoli_senza_sviluppo = []
         for posizione, capitolo in enumerate(capitoli):
@@ -1079,7 +1079,8 @@ def conta_sezioni_indice(indice):
 
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
-                              indice_da_superare="", massimo_sezioni=None):
+                              indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
+                              budget_strutturale=""):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
     try:
@@ -1092,7 +1093,9 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
     for tentativo in range(massimo_tentativi):
-        problemi = criticita_indice_generato(corrente, genere, titolo, trama, obiettivo)
+        problemi = criticita_indice_generato(
+            corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
+        )
         if massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni:
             problemi.append(
                 f"l'indice contiene {conta_sezioni_indice(corrente)} sezioni, oltre il massimo consentito di {massimo_sezioni}"
@@ -1130,7 +1133,23 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         if tentativo == massimo_tentativi - 1:
             st.session_state["ultimo_controllo_indice"] = "Attenzione: l'indice non ha raggiunto la soglia minima di 8/10 e richiede una verifica manuale: " + "; ".join(problemi)
             return ""
-        revisione = prompt + f"""
+        supera_limite = bool(massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni)
+        if supera_limite:
+            # Una richiesta dedicata alla compressione è più affidabile del prompt editoriale completo,
+            # che potrebbe contenere molte istruzioni e spingere il modello a espandere l'indice.
+            revisione = f"""Riduci e riorganizza l'indice qui sotto. Restituisci SOLO l'indice gerarchico pulito.
+
+VINCOLO INDEROGABILE: al massimo {massimo_sezioni} voci totali tra Parti, Capitoli e sottocapitoli.
+BUDGET DA RISPETTARE: {budget_strutturale or 'struttura compatta senza voci ridondanti'}.
+Conserva soltanto i passaggi indispensabili al titolo, al genere, al brief, ai quiz e alla simulazione se richiesti.
+Unisci argomenti contigui e cancella i sottocapitoli ripetitivi: non limitarti ad abbreviare i titoli.
+Prima di rispondere conta le voci; se sono oltre il massimo, continua ad accorpare finché rientrano.
+
+INDICE DA COMPRIMERE
+{corrente}
+"""
+        else:
+            revisione = prompt + f"""
 
 REVISIONE OBBLIGATORIA DELL'INDICE — TENTATIVO {tentativo + 1}
 La bozza precedente non rispetta questi vincoli oggettivi/editoriali: {'; '.join(problemi)}.
@@ -1642,6 +1661,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "Compatto": "massimo 3 Parti, massimo 8 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 43 voci)",
         "Standard KDP": "massimo 4 Parti, massimo 13 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 69 voci)",
         "Approfondito": "massimo 5 Parti, massimo 15 Capitoli e massimo 5 sottocapitoli per Capitolo (circa 95 voci)",
+    }[val_lunghezza]
+    minimi_struttura_indice = {
+        "Compatto": (3, 8),
+        "Standard KDP": (4, 10),
+        "Approfondito": (5, 12),
     }[val_lunghezza]
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
@@ -2977,6 +3001,9 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.",
                     val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                     massimo_sezioni=limite_voci_indice,
+                    minimo_parti=minimi_struttura_indice[0],
+                    minimo_capitoli=minimi_struttura_indice[1],
+                    budget_strutturale=budget_struttura_indice,
                 )
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
@@ -3057,6 +3084,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                             indice_da_superare=indice_da_valutare,
                             massimo_sezioni=limite_voci_indice,
+                            minimo_parti=minimi_struttura_indice[0],
+                            minimo_capitoli=minimi_struttura_indice[1],
+                            budget_strutturale=budget_struttura_indice,
                         )
                         if proposta:
                             st.session_state["indice_proposto_dal_voto"] = proposta
