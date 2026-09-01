@@ -634,7 +634,7 @@ def _landing_page() -> None:
           <div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualità sotto controllo</b>
           <p>Controlli su coerenza, completezza, ripetizioni, finali tronchi e dati aggiornabili prima dell'esportazione.</p><span class='ss-priority-tag'>REVISIONE GUIDATA</span></div>
           <div class='ss-priority'><div class='ss-priority-icon'>💾</div><b>Il lavoro resta tuo</b>
-          <p>Salvataggio automatico, recupero dell'ultima stesura, modifica manuale e ricerca/sostituzione nell'intero manoscritto.</p><span class='ss-priority-tag'>SEMPRE RECUPERABILE</span></div>
+          <p>Salva la sessione nel tuo account oppure scarica un archivio CSV completo: sidebar, indice, testi, fonti e immagini restano recuperabili.</p><span class='ss-priority-tag'>ARCHIVIO PORTABILE</span></div>
         </div>""",
         unsafe_allow_html=True,
     )
@@ -664,7 +664,7 @@ def _landing_page() -> None:
     for column, title, text in (
         (s1, "1. Definisci il progetto", "Inserisci titolo, lingua, pubblico, genere, obiettivo e argomento. Puoi aggiungere istruzioni e approfondimenti importanti."),
         (s2, "2. Crea e migliora", "Genera l’indice, valuta la struttura e sviluppa le singole parti o l’intero libro. Puoi fermarti, controllare e rigenerare ciò che desideri."),
-        (s3, "3. Controlla ed esporta", "Usa anteprima, controllo di coerenza e formattazione. Quando il risultato ti soddisfa, esporta il manoscritto in Word o PDF."),
+        (s3, "3. Controlla, salva ed esporta", "Usa anteprima, lettore vocale e controllo di coerenza. Salva la sessione, crea una copia CSV completa oppure esporta il manoscritto in Word o PDF."),
     ):
         with column:
             st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
@@ -698,8 +698,20 @@ def _landing_page() -> None:
         st.markdown("""<div class='ss-feature-group'><h3>🔎 Controlla e pubblica</h3>
         <p><strong>Controllo del manoscritto</strong><br>Coerenza, ripetizioni, completezza, lunghezza e qualità editoriale.</p>
         <p><strong>Verifica dei fatti</strong><br>Controllo mirato dei dati aggiornabili quando serve.</p>
-        <p><strong>Anteprima e lettore vocale</strong><br>Ascolta il libro con voce, velocità, pausa e avanzamento per sezione.</p>
-        <p><strong>Word, PDF e KDP</strong><br>Esporta il manoscritto e prepara la formattazione editoriale.</p></div>""", unsafe_allow_html=True)
+        <p><strong>Anteprima e lettore vocale</strong><br>Ascolta il libro con voce, velocità, pausa, avanzamento e passaggio in lettura evidenziato.</p>
+        <p><strong>Word, PDF e KDP</strong><br>Esporta il manoscritto e prepara la formattazione editoriale.</p>
+        <p><strong>Archivio CSV completo</strong><br>Esporta o importa sidebar, indice, sezioni, fonti e immagini per riprendere un progetto quando vuoi.</p></div>""", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Importa / Esporta: il progetto è sempre nelle tue mani</h2><p class='ss-muted'>Oltre ai file Word e PDF, puoi creare una copia completa e portabile del lavoro editoriale.</p></div>", unsafe_allow_html=True)
+    archivio_a, archivio_b, archivio_c = st.columns(3)
+    for colonna, titolo, testo in (
+        (archivio_a, "📥 Esporta progetto completo in CSV", "Con un solo download salvi sidebar, lingua, titolo, obiettivo, indice, prefazione, capitoli, sottocapitoli, ringraziamenti, fonti e immagini associate. È una fotografia del lavoro aperto in quel momento."),
+        (archivio_b, "📤 Importa e riprendi", "Carica un CSV precedentemente esportato da Scrittore Site: il software ricostruisce nella pagina tutti i campi della sidebar, l’indice e le sezioni scritte. Puoi controllare il risultato prima di fare altro."),
+        (archivio_c, "💾 Decidi tu quando salvare", "Dopo un’importazione, il progetto resta nella sessione finché non scegli “SALVA SESSIONE”. Solo allora viene aggiornato il tuo archivio personale; “RIAGGIORNA ALL’ULTIMA STESURA” resta sempre una scelta volontaria."),
+    ):
+        with colonna:
+            st.markdown(f"<div class='ss-step'><strong>{titolo}</strong>{testo}</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-trust'>CSV serve a salvare e ripristinare il progetto editoriale completo. Word e PDF servono invece a leggere, revisionare, stampare o pubblicare il manoscritto.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-credit-note'>Un Test Prep approfondito fino a 60 sezioni usa normalmente 75 crediti: 60 sezioni, indice, voto dell’indice, controllo coerenza e metadati. Le funzioni avanzate consumano crediti aggiuntivi solo dopo il preventivo.</div>", unsafe_allow_html=True)
