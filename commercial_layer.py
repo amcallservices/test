@@ -733,6 +733,41 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
     _supabase("POST", "rest/v1/rpc/refund_credits", payload={"p_user_id": user["id"], "p_credits": amount, "p_reason": reason, "p_reference": reference})
 
 
+def _grant_admin_credits(target_email: str, amount: int, reason: str) -> tuple[str, int]:
+    """Accredita crediti a un utente dal pannello protetto dell'amministratore."""
+    email = str(target_email or "").strip().lower()
+    if not email or "@" not in email:
+        raise RuntimeError("Inserisci un indirizzo email valido.")
+    if amount <= 0:
+        raise RuntimeError("Inserisci un numero di crediti maggiore di zero.")
+    if _mode() == "demo" or not _supabase_ready():
+        raise RuntimeError("L'accredito manuale è disponibile solo nella modalità collegata a Supabase.")
+
+    profili = _supabase(
+        "GET",
+        "rest/v1/writer_profiles",
+        params={"select": "id,email,credits", "email": f"eq.{email}", "limit": "1"},
+    )
+    if not profili:
+        raise RuntimeError("Nessun account trovato con questa email.")
+    profilo = profili[0]
+    riferimento = f"admin_manual_{uuid.uuid4().hex}"
+    esito = _supabase(
+        "POST",
+        "rest/v1/rpc/refund_credits",
+        payload={
+            "p_user_id": profilo["id"],
+            "p_credits": int(amount),
+            "p_reason": f"admin_manual: {str(reason or 'accredito manuale').strip()[:120]}",
+            "p_reference": riferimento,
+        },
+    )
+    if esito is not True:
+        raise RuntimeError("L'accredito non è stato completato. Riprova una sola volta.")
+    nuovo_saldo = int(profilo["credits"]) + int(amount)
+    return str(profilo["email"]), nuovo_saldo
+
+
 def _grant_demo_credits(package: dict[str, Any]) -> None:
     st.session_state["commercial_demo_credits"] = _balance(st.session_state["commercial_user_context"]["id"]) + int(package["credits"])
     _demo_ledger("demo_topup", int(package["credits"]), uuid.uuid4().hex)
@@ -849,6 +884,74 @@ def _commerce_sidebar() -> None:
             st.success(checkout_notice)
         if not is_admin and _mode() != "demo":
             st.caption("Dopo un pagamento concluso in un'altra scheda, premi il pulsante azzurro qui sopra.")
+
+        if is_admin:
+            with st.expander("🛡️ Amministrazione crediti", expanded=False):
+                st.caption("Visibile solo agli account amministratore. Ogni accredito viene registrato nello storico dell'utente.")
+                try:
+                    profili_utenti = _supabase(
+                        "GET",
+                        "rest/v1/writer_profiles",
+                        params={
+                            "select": "email,credits,updated_at",
+                            "order": "email.asc",
+                            "limit": "1000",
+                        },
+                    ) or []
+                except Exception as error:
+                    profili_utenti = []
+                    st.warning(f"Impossibile caricare l'elenco utenti: {error}")
+
+                if profili_utenti:
+                    st.caption(f"Utenti registrati: {len(profili_utenti)}")
+                    st.dataframe(
+                        [
+                            {
+                                "Email": profilo.get("email", ""),
+                                "Crediti": int(profilo.get("credits", 0)),
+                                "Ultimo aggiornamento": str(profilo.get("updated_at", ""))[:19].replace("T", " "),
+                            }
+                            for profilo in profili_utenti
+                        ],
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    target_email = st.selectbox(
+                        "Seleziona l'utente",
+                        options=[""] + [str(profilo.get("email", "")) for profilo in profili_utenti],
+                        format_func=lambda email: "— Seleziona un utente —" if not email else email,
+                        key="commercial_admin_credit_email",
+                    )
+                else:
+                    target_email = st.text_input(
+                        "Email dell'utente",
+                        key="commercial_admin_credit_email",
+                        placeholder="utente@email.com",
+                    )
+                amount = st.number_input(
+                    "Crediti da aggiungere",
+                    min_value=1,
+                    max_value=100_000,
+                    value=50,
+                    step=1,
+                    key="commercial_admin_credit_amount",
+                )
+                reason = st.text_input(
+                    "Nota per lo storico",
+                    value="accredito manuale amministratore",
+                    key="commercial_admin_credit_reason",
+                )
+                if st.button(
+                    "➕ Aggiungi crediti all'utente",
+                    type="primary",
+                    use_container_width=True,
+                    key="commercial_admin_grant_credits",
+                ):
+                    try:
+                        email_confermata, nuovo_saldo = _grant_admin_credits(target_email, int(amount), reason)
+                        st.success(f"Accreditati {int(amount)} crediti a {email_confermata}. Nuovo saldo: {nuovo_saldo} crediti.")
+                    except Exception as error:
+                        st.error(str(error))
 
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
         with st.expander("Ricarica crediti", expanded=apri_ricarica):
