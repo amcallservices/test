@@ -634,6 +634,16 @@ def _landing_page() -> None:
         with column:
             st.markdown(f"<div class='ss-creator'><div class='ss-creator-icon {icon_class}'>{icon}</div><div class='ss-creator-copy'><b>{title}</b><p>{text}</p></div><div class='ss-creator-arrow'>→</div></div>", unsafe_allow_html=True)
 
+    st.markdown("<div class='ss-section'><h2>Per chi è Scrittore Site</h2><p class='ss-muted'>Non serve esperienza tecnica: scegli il punto da cui vuoi partire.</p></div>", unsafe_allow_html=True)
+    pubblico_a, pubblico_b, pubblico_c = st.columns(3)
+    for colonna, titolo, testo in (
+        (pubblico_a, "🌱 Autori esordienti", "Hai un'idea ma non sai come trasformarla in una struttura ordinata? La sidebar e l'indice guidato ti accompagnano passo dopo passo."),
+        (pubblico_b, "🛠️ Professionisti e formatori", "Trasforma competenze, procedure e materiali di lavoro in manuali pratici, guide, saggi e percorsi didattici."),
+        (pubblico_c, "🎓 Docenti e creator di Test Prep", "Crea quiz, simulazioni, soluzioni commentate e materiali per preparazione esami mantenendo il controllo sul contenuto."),
+    ):
+        with colonna:
+            st.markdown(f"<div class='ss-step'><strong>{titolo}</strong>{testo}</div>", unsafe_allow_html=True)
+
     st.markdown("<div class='ss-section'><h2>Come funziona Scrittore Site</h2><p class='ss-muted'>Segui il percorso e mantieni il controllo su ogni scelta del tuo libro.</p></div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
     for column, title, text in (
@@ -643,6 +653,17 @@ def _landing_page() -> None:
     ):
         with column:
             st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='ss-section'><h2>Esempi di progetti che puoi realizzare</h2><p class='ss-muted'>Sono esempi di utilizzo: il titolo, il tono e i contenuti restano sempre scelti da te.</p></div>", unsafe_allow_html=True)
+    esempi = st.columns(4)
+    for colonna, icona, titolo, testo in (
+        (esempi[0], "🧘", "Guida al benessere", "Un percorso pratico su yoga, mindfulness o abitudini quotidiane, con esercizi e limiti chiari."),
+        (esempi[1], "🧪", "Manuale tecnico", "Procedure, controlli, esempi e avvertenze per software, processi professionali o competenze operative."),
+        (esempi[2], "📚", "Test Prep", "Preparazione strutturata con teoria, quiz, simulazioni svolgibili e soluzioni commentate separate."),
+        (esempi[3], "✨", "Narrativa", "Romanzi e racconti con personaggi, conflitto, svolte e conclusione coerente con il genere scelto."),
+    ):
+        with colonna:
+            st.markdown(f"<div class='ss-card'><h3>{icona} {titolo}</h3><p>{testo}</p></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Tutte le funzioni, senza complessità</h2><p class='ss-muted'>Strumenti concreti per progettare, scrivere, correggere, ascoltare e preparare il tuo manoscritto.</p></div>", unsafe_allow_html=True)
     gruppo_progetto, gruppo_scrittura, gruppo_controllo = st.columns(3)
@@ -668,6 +689,17 @@ def _landing_page() -> None:
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-credit-note'>Un Test Prep approfondito fino a 60 sezioni usa normalmente 75 crediti: 60 sezioni, indice, voto dell’indice, controllo coerenza e metadati. Le funzioni avanzate consumano crediti aggiuntivi solo dopo il preventivo.</div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
+    invito_a, invito_b = st.columns([1.35, 0.65])
+    with invito_a:
+        if st.button("✒️ Inizia il tuo progetto con 15 crediti", type="primary", use_container_width=True, key="landing_signup_mid"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "signup"
+            st.rerun()
+    with invito_b:
+        if st.button("Accedi", use_container_width=True, key="landing_login_mid"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "login"
+            st.rerun()
 
     st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
@@ -703,6 +735,19 @@ def _landing_page() -> None:
         st.write("No. Scrittore Site prepara il manoscritto e i file di esportazione; la scelta finale, le revisioni e la pubblicazione restano sempre sotto il tuo controllo.")
     with st.expander("Posso esportare il mio lavoro?"):
         st.write("Sì. Al termine puoi esportare il manoscritto in Word o PDF.")
+    with st.expander("I miei testi restano modificabili?"):
+        st.write("Sì. Puoi modificare manualmente indice e sezioni, usare la rigenerazione soltanto dove serve e recuperare l'ultima stesura salvata.")
+    with st.expander("Cosa accade se finiscono i crediti?"):
+        st.write("Il lavoro già creato resta disponibile: puoi leggerlo, modificarlo manualmente ed esportare le parti già presenti. I crediti servono solo per avviare nuove elaborazioni IA.")
+
+    st.markdown(
+        """<div class='ss-trust' style='margin-top:2rem'>
+        <strong>Scrittore Site</strong> · Progetta, scrivi, controlla ed esporta con il tuo ritmo.
+        <br><a href='https://wa.me/393282693777?text=Scrivo%20da%20Scrittore%20Site' target='_blank' rel='noopener noreferrer'>💬 Contatta l'assistenza</a>
+        &nbsp; · &nbsp;<a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>La nostra Community</a>
+        </div>""",
+        unsafe_allow_html=True,
+    )
 
 
 def _account_gate() -> dict[str, Any]:
