@@ -3914,8 +3914,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             k_sessione = chiave_sezione(sez_scelta)
             sottocapitoli_capitolo = individua_sottocapitoli_del_capitolo(sez_scelta, lista_cap_base)
             if sottocapitoli_capitolo:
+                # Il capitolo è una vera sezione editoriale introduttiva, non
+                # un semplice contenitore: il comando collettivo deve redigerlo
+                # insieme ai suoi sottocapitoli.
+                sezioni_del_capitolo = [sez_scelta] + sottocapitoli_capitolo
                 chiave_audit_capitolo = f"audit_fatti_{sez_scelta.replace(' ', '_').replace('.', '')}"
-                st.caption(f"Capitolo selezionato: verranno elaborati {len(sottocapitoli_capitolo)} sottocapitoli non ancora scritti.")
+                st.caption(f"Capitolo selezionato: verranno elaborati il testo del capitolo e {len(sottocapitoli_capitolo)} sottocapitoli ancora vuoti.")
                 esito_sottocapitoli = st.session_state.pop("messaggio_stesura_sottocapitoli", None)
                 if esito_sottocapitoli:
                     if esito_sottocapitoli.get("errori"):
@@ -3923,23 +3927,23 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     else:
                         st.success(esito_sottocapitoli["testo"])
                 stima_sottocapitoli = sum(
-                    stima_massima_crediti_stesura(sottocapitolo, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
-                    for sottocapitolo in sottocapitoli_capitolo
-                    if not leggi_sezione_memorizzata(sottocapitolo).strip()
+                    stima_massima_crediti_stesura(sezione_capitolo, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
+                    for sezione_capitolo in sezioni_del_capitolo
+                    if not leggi_sezione_memorizzata(sezione_capitolo).strip()
                 ) + 1
-                if pulsante_con_preventivo(f"scrivi_sottocapitoli_{k_sessione}", "📝 SCRIVI TUTTI I SOTTOCAPITOLI DEL CAPITOLO", f"fino a {stima_sottocapitoli}",
-                                           "Il totale esatto dipende dai sottocapitoli ancora vuoti; include un eventuale controllo dei fatti del capitolo.", use_container_width=True):
+                if pulsante_con_preventivo(f"scrivi_sottocapitoli_{k_sessione}", "📝 SCRIVI CAPITOLO E TUTTI I SOTTOCAPITOLI", f"fino a {stima_sottocapitoli}",
+                                           "Il totale esatto dipende dal capitolo e dai sottocapitoli ancora vuoti; include un eventuale controllo dei fatti.", use_container_width=True):
                     da_generare = []
                     gia_presenti = 0
-                    for sottocapitolo in sottocapitoli_capitolo:
+                    for sezione_capitolo in sezioni_del_capitolo:
                         # La memoria stabile ha la precedenza sul singolo widget: in questo
                         # modo un cambio di sezione non rende di nuovo "vuoto" un testo esistente.
-                        if leggi_sezione_memorizzata(sottocapitolo).strip():
+                        if leggi_sezione_memorizzata(sezione_capitolo).strip():
                             gia_presenti += 1
                         else:
-                            da_generare.append(sottocapitolo)
+                            da_generare.append(sezione_capitolo)
                     if not da_generare:
-                        st.info("Tutti i sottocapitoli di questo capitolo sono già presenti: nessun contenuto è stato sovrascritto.")
+                        st.info("Il capitolo e tutti i suoi sottocapitoli sono già presenti: nessun contenuto è stato sovrascritto.")
                     else:
                         avanzamento = st.progress(0, text="Preparazione della stesura del capitolo...")
                         completati = []
@@ -3971,8 +3975,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         avanzamento.progress(100, text="Elaborazione dei sottocapitoli conclusa.")
                         if completati:
                             contenuti_capitolo = [
-                                (sottocapitolo, leggi_sezione_memorizzata(sottocapitolo))
-                                for sottocapitolo in sottocapitoli_capitolo
+                                (sezione_capitolo, leggi_sezione_memorizzata(sezione_capitolo))
+                                for sezione_capitolo in sezioni_del_capitolo
                             ]
                             # Il controllo fatti è accessorio: se non è disponibile non può
                             # annullare né nascondere i sottocapitoli appena generati.
@@ -3983,11 +3987,16 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             except Exception as exc:
                                 st.session_state[chiave_audit_capitolo] = f"Controllo fatti non disponibile: {exc}"
 
-                        messaggio = f"Completati {len(completati)} sottocapitoli."
+                        capitolo_completato = sez_scelta in completati
+                        sottocapitoli_completati = len([s for s in completati if s != sez_scelta])
+                        messaggio = (
+                            f"Capitolo {'completato' if capitolo_completato else 'già presente'}; "
+                            f"completati {sottocapitoli_completati} sottocapitoli."
+                        )
                         if gia_presenti:
                             messaggio += f" Conservati senza modifiche: {gia_presenti}."
                         if errori:
-                            messaggio += " Alcuni sottocapitoli non sono stati generati; riprova solo quelli indicati."
+                            messaggio += " Alcune sezioni non sono state generate; riprova solo quelle indicate."
                         if completati:
                             salva_stesura_immediata(opzioni_editor)
                             st.session_state["messaggio_stesura_sottocapitoli"] = {
@@ -3996,7 +4005,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             }
                             st.session_state["dettaglio_errori_sottocapitoli"] = errori
                             st.rerun()
-                        st.error("Nessun sottocapitolo è stato scritto. " + (" ".join(errori) if errori else "Riprova tra poco."))
+                        st.error("Nessuna sezione del capitolo è stata scritta. " + (" ".join(errori) if errori else "Riprova tra poco."))
                 dettaglio_errori_sottocapitoli = st.session_state.pop("dettaglio_errori_sottocapitoli", [])
                 if dettaglio_errori_sottocapitoli:
                     with st.expander("Dettaglio dei sottocapitoli da riprovare", expanded=False):
