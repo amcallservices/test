@@ -82,6 +82,31 @@ PACKAGE_ESTIMATE_NOTE = (
     "verifiche online e funzioni avanzate utilizzate."
 )
 
+# Testo commerciale prudente: i crediti residui proteggono l'utente quando
+# desidera rigenerare, verificare fatti o usare strumenti aggiuntivi.
+PACKAGE_HOME_GUIDE = {
+    "prova_15": {
+        "ideal": "Ideale per: provare indice, editor e prime sezioni.",
+        "estimate": "Stima prudente: indice e fino a 10–12 sezioni brevi.",
+    },
+    "base_150": {
+        "ideal": "Ideale per: il primo manuale o progetto editoriale completo.",
+        "estimate": "Stima prudente: 1 libro standard da circa 80 sezioni, con margine per controlli.",
+    },
+    "creator_375": {
+        "ideal": "Ideale per: chi pubblica più guide, manuali o Test Prep.",
+        "estimate": "Stima prudente: fino a 3 libri standard oppure fino a 5 Test Prep completi.",
+    },
+    "studio_750": {
+        "ideal": "Ideale per: creator, docenti e progetti editoriali continuativi.",
+        "estimate": "Stima prudente: fino a 7 libri standard oppure fino a 10 Test Prep completi.",
+    },
+    "professionale_1500": {
+        "ideal": "Ideale per: professionisti, scuole e cataloghi di più libri.",
+        "estimate": "Stima prudente: fino a 15 libri standard oppure fino a 20 Test Prep completi.",
+    },
+}
+
 CONTACT_LABELS = {
     "Italiano": "CONTATTI",
     "English": "CONTACTS",
@@ -623,6 +648,31 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
 
+    st.markdown("<div class='ss-section'><h2>Da un’idea a un libro: un esempio concreto</h2><p class='ss-muted'>La stessa idea passa dalla sidebar all’indice, poi diventa un manoscritto controllabile e modificabile.</p></div>", unsafe_allow_html=True)
+    st.markdown(
+        """<div class='ss-proof'>
+          <div class='ss-proof-top'><span class='ss-dot'></span><span class='ss-dot'></span><span class='ss-dot'></span>
+          <b>Demo di un progetto editoriale</b><span class='ss-proof-label'>ESEMPIO</span></div>
+          <div class='ss-proof-grid'>
+            <div class='ss-proof-index'><b>1. SIDEBAR COMPILATA</b>
+              <span><strong>Titolo:</strong> Yoga per il benessere</span>
+              <span><strong>Genere:</strong> Meditazione / Mindfulness</span>
+              <span><strong>Obiettivo:</strong> creare una pratica quotidiana</span>
+              <span class='active'>Lunghezza: Standard KDP</span>
+              <span><strong>2. INDICE:</strong> capitoli e sottocapitoli ordinati</span>
+            </div>
+            <div class='ss-proof-page'>
+              <div class='ss-proof-toolbar'><span class='ss-proof-pill'>Anteprima</span><span class='ss-proof-pill'>Capitolo 2</span><span class='ss-proof-action'>Testo in lettura</span></div>
+              <small>3. MANOSCRITTO GENERATO E MODIFICABILE</small><h3>Creare una routine che dura</h3>
+              <p>Il testo nasce dall’indice e dal brief. Puoi correggerlo, rigenerare soltanto una parte, ascoltarlo e verificare la coerenza prima dell’esportazione.</p>
+              <div class='ss-proof-lines'><i></i><i></i><i></i><i></i></div>
+              <div class='ss-proof-progress'><span>Sezioni completate</span><div><span></span></div><span>64%</span></div>
+            </div>
+          </div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         """<div class='ss-section'><h2>Il tuo studio editoriale, in un unico spazio</h2>
         <p class='ss-muted'>Dall'idea alla bozza esportabile: ogni fase è guidata, modificabile e sotto il tuo controllo.</p></div>
@@ -728,44 +778,36 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    st.markdown("<div class='ss-section'><h2>Pacchetti crediti</h2><p class='ss-muted'>Scegli solo ciò che ti serve.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Pacchetti crediti chiari</h2><p class='ss-muted'>Scegli il pacchetto in base a ciò che vuoi realizzare. Le stime sono prudenti e includono un margine per le funzioni di controllo.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
     for column, (package_key, package) in zip(price_columns, PACKAGES.items()):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
+        guida = PACKAGE_HOME_GUIDE.get(package_key, {})
         with column:
             st.markdown(
                 f"<div class='ss-card'><h3>{package['name'].replace('Pacchetto ', '')}</h3>"
                 f"<div class='ss-price'>{price}</div><p>{package['credits']} crediti</p>"
-                f"<p><strong>{PACKAGE_BOOK_ESTIMATES[package_key]}</strong></p></div>",
+                f"<p><strong>{guida.get('ideal', '')}</strong></p>"
+                f"<p>{guida.get('estimate', PACKAGE_BOOK_ESTIMATES[package_key])}</p></div>",
                 unsafe_allow_html=True,
             )
     st.caption(PACKAGE_ESTIMATE_NOTE)
 
-    st.markdown("<div class='ss-section'><h2>Domande frequenti</h2></div>", unsafe_allow_html=True)
-    with st.expander("Posso iniziare senza esperienza editoriale?"):
-        st.write("Sì. Scrittore Site guida la preparazione del brief e mantiene ordinati i passaggi di lavoro.")
-    with st.expander("I crediti servono per cosa?"):
-        st.write("I crediti permettono di usare le funzioni IA di progettazione, scrittura, revisione e miglioramento del libro. Ogni azione mostra il proprio preventivo prima di iniziare.")
-    with st.expander("Quanti libri posso creare con un pacchetto?"):
-        st.write("Le stime sui pacchetti fanno riferimento a un Test Prep approfondito fino a 60 sezioni. Il consumo reale dipende dalla lunghezza dei testi e dall’uso di rigenerazioni, immagini, ricette, simulazioni Test Prep e verifiche online.")
-    with st.expander("Devo scrivere tutto il libro in una sola volta?"):
-        st.write("No. Puoi generare e controllare una sezione alla volta oppure usare la scrittura completa. In ogni momento puoi fermarti e rivedere ciò che è stato prodotto.")
-    with st.expander("Posso modificare indice e contenuti generati?"):
-        st.write("Sì. L’indice e ogni sezione restano modificabili. Puoi migliorare una sola parte con le tue istruzioni, senza dover ricominciare l’intero libro.")
-    with st.expander("Come faccio a ottenere un libro coerente?"):
-        st.write("Il software usa il brief, l’indice e le sezioni già scritte come riferimento. Il controllo di coerenza individua inoltre le parti che richiedono revisione.")
-    with st.expander("Posso usare più lingue?"):
-        st.write("Sì. Seleziona la lingua del progetto prima di creare l’indice: Scrittore Site adatta l’interfaccia e la generazione alla lingua scelta.")
-    with st.expander("Posso caricare materiale di riferimento?"):
-        st.write("Sì. Puoi caricare documenti PDF o Word come fonti esterne, così le istruzioni e le informazioni importanti restano disponibili durante il lavoro.")
-    with st.expander("Il libro viene pubblicato automaticamente?"):
-        st.write("No. Scrittore Site prepara il manoscritto e i file di esportazione; la scelta finale, le revisioni e la pubblicazione restano sempre sotto il tuo controllo.")
-    with st.expander("Posso esportare il mio lavoro?"):
-        st.write("Sì. Al termine puoi esportare il manoscritto in Word o PDF.")
-    with st.expander("I miei testi restano modificabili?"):
-        st.write("Sì. Puoi modificare manualmente indice e sezioni, usare la rigenerazione soltanto dove serve e recuperare l'ultima stesura salvata.")
-    with st.expander("Cosa accade se finiscono i crediti?"):
-        st.write("Il lavoro già creato resta disponibile: puoi leggerlo, modificarlo manualmente ed esportare le parti già presenti. I crediti servono solo per avviare nuove elaborazioni IA.")
+    st.markdown("<div class='ss-section'><h2>Domande frequenti</h2><p class='ss-muted'>Le informazioni essenziali prima di iniziare.</p></div>", unsafe_allow_html=True)
+    with st.expander("Come funzionano i crediti?"):
+        st.write("I crediti servono solo per le elaborazioni IA: indice, scrittura, rigenerazioni, controlli e strumenti avanzati. Prima di ogni azione a consumo vedi il preventivo. Se terminano, il lavoro già creato resta leggibile, modificabile ed esportabile.")
+    with st.expander("I miei dati e il mio libro sono privati?"):
+        st.write("Ogni account mantiene separati crediti e progetto. Il manoscritto non viene pubblicato automaticamente e resta sempre sotto il tuo controllo. Per maggiore sicurezza, usa una password personale e conserva una copia CSV del progetto importante.")
+    with st.expander("Come salvo e recupero una stesura?"):
+        st.write("Durante il lavoro i dati restano nella pagina. Premi “SALVA SESSIONE” per conservarli nel tuo account. Dopo un nuovo accesso l’editor parte pulito: se vuoi riaprire il progetto salvato, premi “RIAGGIORNA ALL’ULTIMA STESURA”.")
+    with st.expander("A cosa serve il CSV del progetto?"):
+        st.write("Il CSV è una copia portabile completa: sidebar, indice, sezioni, fonti e immagini associate. Puoi esportarlo come backup e reimportarlo in Scrittore Site. Dopo l’importazione controlli il progetto e decidi tu se premere “SALVA SESSIONE” per aggiornarlo anche nel tuo account.")
+    with st.expander("Qual è la differenza tra CSV, Word e PDF?"):
+        st.write("CSV serve per salvare e ripristinare il progetto modificabile. Word serve per continuare la revisione editoriale. PDF serve per leggere, condividere, stampare o preparare una bozza per la pubblicazione.")
+    with st.expander("Posso modificare o pubblicare il libro quando voglio?"):
+        st.write("Sì. Indice e sezioni restano modificabili; puoi rigenerare soltanto le parti necessarie. Nessuna pubblicazione avviene in automatico: la decisione finale è sempre tua.")
+    with st.expander("Come posso ricevere assistenza?"):
+        st.write("Nella sidebar trovi il pulsante CONTATTI, che apre WhatsApp con un messaggio già predisposto. Puoi anche entrare nella Community per confrontarti con altri utenti.")
 
 
 
