@@ -893,7 +893,9 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             if(!synth||!Utterance){{el("status").textContent="Lettore vocale non disponibile: apri l'app con Chrome, Edge o Safari aggiornato.";return;}}
             try {{
               utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel(); synth.resume();
-              chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
+              // Le sezioni inviate da Python usano la chiave italiana
+              // "testo"; supportiamo anche "text" per vecchi progetti.
+              chunks=bookParts.flatMap((part)=>split(part.testo||part.text||"",part.titolo||"Libro"));
               if(!chunks.length)chunks=split(bookText,"Libro");
               position=0;active=true;paused=false;
               // speak deve avvenire nello stesso click dell'utente: alcuni
