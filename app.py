@@ -797,6 +797,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           button{{background:#1689e8;color:#fff;border:0;cursor:pointer}} .stop{{background:#cf3345}}
           #status{{margin-top:10px;font-size:13px;font-weight:700;color:#1269ae}}
           #currentSection{{margin-top:10px;padding:8px 10px;border-radius:7px;background:#dbeafe;color:#0f3f68;font-size:13px;font-weight:700}}
+          #currentExcerpt{{margin-top:8px;padding:11px 12px;border-left:5px solid #f59e0b;border-radius:7px;background:#fff7d6;color:#4a3200;font-size:14px;line-height:1.5;font-style:italic}}
           .progress{{height:7px;border-radius:999px;background:#d9e2ec;margin-top:8px;overflow:hidden}}
           #progressBar{{height:100%;width:0;background:#1689e8;transition:width .25s ease}}
         </style>
@@ -806,7 +807,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             <button id="start"></button><button id="pause"></button><button id="resume"></button><button class="stop" id="stop"></button>
             <label><span id="speedText"></span> <select id="speed"><option value="0.8">0,8×</option><option value="1" selected>1×</option><option value="1.2">1,2×</option><option value="1.4">1,4×</option></select></label>
             <select id="voice"></select>
-          </div><div id="status"></div><div id="currentSection"></div><div class="progress"><div id="progressBar"></div></div>
+          </div><div id="status"></div><div id="currentSection"></div><div id="currentExcerpt"></div><div class="progress"><div id="progressBar"></div></div>
         </div>
         <script>
           const bookText = {testo_json}, bookParts = {parti_json}, L = {labels_json}, bookLanguage = {lingua_json};
@@ -842,7 +843,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           function stopReading() {{
             active=false; paused=false; position=0; utteranceId++; currentUtterance=null;
             clearKeepAlive(); if(synth) synth.cancel();
-            el("status").textContent=L[7]; el("currentSection").textContent=""; el("progressBar").style.width="0";
+            el("status").textContent=L[7]; el("currentSection").textContent=""; el("currentExcerpt").textContent=""; el("progressBar").style.width="0";
           }}
           function split(value, sectionTitle) {{
             const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
@@ -880,6 +881,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             }};
             el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")";
             el("currentSection").textContent=L[11]+": "+chunk.section;
+            el("currentExcerpt").textContent="▶ "+chunk.text;
             el("progressBar").style.width=Math.round(((position+1)/chunks.length)*100)+"%";
             try {{
               synth.speak(utterance);
