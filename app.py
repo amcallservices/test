@@ -1423,6 +1423,8 @@ def chiave_sezione_precedente(sezione):
 
 
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
+CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
+CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 
 
 def leggi_sezione_memorizzata(sezione):
@@ -1447,9 +1449,34 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     return testo
 
 
+def contenuto_memorizzato_puro(sezione):
+    """Legge la copia stabile senza lasciarsi influenzare dal widget corrente."""
+    memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
+    contenuto = memoria.get(sezione, "")
+    if not str(contenuto).strip():
+        contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
+    return contenuto or ""
+
+
 def sincronizza_modifica_manuale(sezione):
     """Callback dell'editor: conserva subito anche le modifiche digitate a mano."""
     scrivi_sezione_memorizzata(sezione, st.session_state.get(chiave_sezione(sezione), ""))
+
+
+def prepara_sezione_editor_selezionata():
+    """Salva il campo lasciato e carica subito nel widget la sezione scelta.
+
+    Streamlit conserva lo stato di ogni widget tra i rerun: questa funzione
+    evita che un campo vuoto già presente nel browser prevalga sul testo che
+    la memoria del progetto possiede davvero.
+    """
+    precedente = st.session_state.get(CHIAVE_SEZIONE_EDITOR_ATTIVA)
+    if precedente:
+        sincronizza_modifica_manuale(precedente)
+    selezionata = st.session_state.get(CHIAVE_SELETTORE_EDITOR)
+    if selezionata:
+        st.session_state[chiave_sezione(selezionata)] = contenuto_memorizzato_puro(selezionata)
+        st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = selezionata
 
 
 def reidrata_sezioni_memorizzate(sezioni):
@@ -3868,7 +3895,22 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         salva_stesura_immediata(opzioni_editor)
                         st.rerun()
 
-            sez_scelta = st.selectbox(L["lbl_sec"], opzioni_editor)
+            # Il selettore ha una chiave esplicita e una callback: così il
+            # testo della sezione scelta viene caricato dal progetto prima che
+            # l'Editor di Testo Professionale sia disegnato.
+            if st.session_state.get(CHIAVE_SELETTORE_EDITOR) not in opzioni_editor:
+                st.session_state[CHIAVE_SELETTORE_EDITOR] = opzioni_editor[0]
+            sez_scelta = st.selectbox(
+                L["lbl_sec"], opzioni_editor,
+                key=CHIAVE_SELETTORE_EDITOR,
+                on_change=prepara_sezione_editor_selezionata,
+            )
+            if st.session_state.get(CHIAVE_SEZIONE_EDITOR_ATTIVA) != sez_scelta:
+                # Primo caricamento oppure indice modificato: il widget di
+                # testo non esiste ancora in questo rerun, quindi può essere
+                # riempito con certezza senza sovrascrivere modifiche manuali.
+                st.session_state[chiave_sezione(sez_scelta)] = contenuto_memorizzato_puro(sez_scelta)
+                st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = sez_scelta
             k_sessione = chiave_sezione(sez_scelta)
             sottocapitoli_capitolo = individua_sottocapitoli_del_capitolo(sez_scelta, lista_cap_base)
             if sottocapitoli_capitolo:
@@ -4120,7 +4162,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # L'editor deve sempre partire dalla memoria della sezione selezionata,
             # non dal valore rimasto nel widget della sezione precedente. Questo rende
             # visibili anche tutte le sezioni create con il comando del capitolo.
-            testo_editor = pulisci_testo_editoriale(leggi_sezione_memorizzata(sez_scelta))
+            testo_editor = pulisci_testo_editoriale(contenuto_memorizzato_puro(sez_scelta))
             if testo_editor and not str(st.session_state.get(k_sessione, "")).strip():
                 st.session_state[k_sessione] = testo_editor
             elif k_sessione not in st.session_state:
