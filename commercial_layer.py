@@ -369,6 +369,11 @@ def _landing_page() -> None:
           .ss-subtitle {font-size:1.17rem; max-width:555px; margin:0; color:#486581; line-height:1.58}
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
+          .ss-community-button {display:flex; align-items:center; justify-content:center; min-height:3.35rem; width:100%;
+            margin-top:.75rem; padding:.7rem 1rem; box-sizing:border-box; border-radius:11px; background:#cf3345;
+            color:#fff !important; font-size:1.08rem; font-weight:800; text-decoration:none !important;
+            box-shadow:0 6px 14px rgba(207,51,69,.22); transition:background .18s ease, transform .18s ease}
+          .ss-community-button:hover {background:#ad2435; color:#fff !important; transform:translateY(-1px)}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
@@ -479,6 +484,10 @@ def _landing_page() -> None:
                 st.session_state["commercial_show_auth"] = True
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
+        st.markdown(
+            "<a class='ss-community-button' href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>La nostra Community</a>",
+            unsafe_allow_html=True,
+        )
     with hero_visual:
         base_dir = Path(__file__).resolve().parent
         preview_image = next(
