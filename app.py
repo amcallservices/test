@@ -872,9 +872,9 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
             if(!chunks.length)chunks=split(bookText,"Libro");
             position=0;active=true;paused=false;
-            // Dopo cancel Chrome richiede un brevissimo intervallo prima di
-            // accettare una nuova voce; senza questo l'avvio può non partire.
-            setTimeout(()=>{{if(active&&!paused)next();}},80);
+            // speak deve avvenire nello stesso click dell'utente: alcuni
+            // browser bloccano il lettore se lo rimandiamo con setTimeout.
+            next();
           }};
           el("pause").onclick=()=>{{if(active){{paused=true;synth.pause();}}}};
           el("resume").onclick=()=>{{
@@ -1445,6 +1445,16 @@ def sincronizza_modifica_manuale(sezione):
     scrivi_sezione_memorizzata(sezione, st.session_state.get(chiave_sezione(sezione), ""))
 
 
+def reidrata_sezioni_memorizzate(sezioni):
+    """Riporta nell'editor tutte le sezioni già salvate prima di renderizzare i widget."""
+    memoria = st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}
+    for sezione in sezioni:
+        contenuto = memoria.get(sezione)
+        chiave = chiave_sezione(sezione)
+        if str(contenuto or "").strip() and not str(st.session_state.get(chiave, "")).strip():
+            st.session_state[chiave] = contenuto
+
+
 CAMPI_SALVATAGGIO_PROGETTO = {
     "titolo": "book_title",
     "autore": "book_author",
@@ -1459,6 +1469,55 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "approfondimenti": "book_further_details",
     "lunghezza": "profilo_lunghezza_stesura",
 }
+CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
+
+
+def sidebar_memorizzata_corrente():
+    """Restituisce tutti i campi editoriali, inclusi quelli non visibili dopo un rerun."""
+    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        if chiave in st.session_state:
+            memoria[nome] = st.session_state.get(chiave, "")
+    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(memoria)
+    return memoria
+
+
+def mostra_memoria_visiva_progetto():
+    """Pannello leggibile che rende verificabile la memoria reale del progetto."""
+    sidebar = sidebar_memorizzata_corrente()
+    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    # Includiamo anche un testo presente nel widget ma non ancora confluito
+    # nella cache, per esempio subito dopo una modifica manuale.
+    for chiave, valore in st.session_state.items():
+        if chiave.startswith("txt_") and str(valore).strip():
+            titolo = next((s for s in contenuti if chiave_sezione(s) == chiave), chiave[4:].replace("_", " "))
+            contenuti[titolo] = valore
+
+    campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
+    st.markdown("### 🧠 Memoria del progetto")
+    st.caption("Qui vedi ciò che il software conserva: campi della sidebar, indice e testi, inclusi quelli modificati a mano.")
+    col_a, col_b = st.columns(2)
+    col_a.metric("Sidebar", f"{campi_compilati}/{len(CAMPI_SALVATAGGIO_PROGETTO)}")
+    col_b.metric("Sezioni salvate", len(contenuti))
+    st.caption("Indice: ✓ salvato" if st.session_state.get("indice_raw", "").strip() else "Indice: non ancora creato")
+
+    with st.expander("Visualizza dati salvati", expanded=False):
+        for nome in CAMPI_SALVATAGGIO_PROGETTO:
+            valore = str(sidebar.get(nome, "")).strip() or "—"
+            st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
+        if st.session_state.get("indice_raw", "").strip():
+            st.text_area("Indice conservato", value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
+        if contenuti:
+            sezioni = list(contenuti)
+            scelta = st.selectbox("Sezione conservata", sezioni, key="memoria_sezione_scelta")
+            testo = str(contenuti.get(scelta, ""))
+            st.caption(f"{len(testo.split())} parole conservate")
+            st.text_area(
+                "Testo conservato", value=testo, height=230, disabled=True,
+                key=f"memoria_testo_{hashlib.sha256(scelta.encode('utf-8')).hexdigest()[:12]}",
+            )
+        else:
+            st.info("Non ci sono ancora sezioni salvate.")
 
 
 def applica_snapshot_progetto(snapshot):
@@ -1475,6 +1534,12 @@ def applica_snapshot_progetto(snapshot):
             valore = sidebar.get(nome)
             st.session_state[chiave] = valore
             campi_ripristinati.append(nome)
+    # Mantiene una seconda fotografia locale dei valori ripristinati: così un
+    # widget della sidebar non può riportare il proprio valore precedente sul
+    # salvataggio cloud subito dopo il ripristino.
+    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
+        nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO
+    }
     indice = snapshot.get("indice_raw", "")
     if indice:
         st.session_state["indice_raw"] = indice
@@ -1517,6 +1582,12 @@ def prepara_ripristino_ultima_stesura():
 
 def salva_progetto_corrente(sidebar, sezioni):
     """Crea una fotografia leggera di sidebar, indice e testi e la invia al cloud."""
+    # La sidebar è parte essenziale del progetto quanto le sezioni. Uniamo la
+    # memoria persistente ai valori del rerun corrente e salviamo sempre tutti
+    # i campi, anche quando sono vuoti per scelta dell'utente.
+    sidebar_completa = sidebar_memorizzata_corrente()
+    sidebar_completa.update({nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO})
+    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar_completa)
     # Partiamo dalla memoria stabile e aggiorniamo le sezioni presenti nella UI.
     # Non eliminiamo mai una sezione già salvata solo perché l'utente in quel
     # momento sta visualizzando un'altra voce dell'indice.
@@ -1528,7 +1599,7 @@ def salva_progetto_corrente(sidebar, sezioni):
     contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
     st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
     snapshot = {
-        "sidebar": sidebar,
+        "sidebar": sidebar_completa,
         "indice_raw": st.session_state.get("indice_raw", ""),
         "contenuti": contenuti,
         # Conserviamo il dossier già elaborato: dopo logout o refresh l'AI può
@@ -2048,6 +2119,22 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         key="profilo_lunghezza_stesura",
         help="Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti."
     )
+    # Memorizza la sidebar in ogni esecuzione, prima di qualsiasi pulsante che
+    # possa avviare una generazione o un rerun.
+    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
+        "titolo": val_titolo,
+        "autore": val_autore,
+        "lingua": lingua_sel,
+        "genere": val_genere,
+        "tipologia_scrittura": val_stile,
+        "stile_racconto": val_narrativa,
+        "punto_di_vista": val_pov,
+        "obiettivo": val_goal,
+        "risultato_finale": val_risultato,
+        "argomento": val_trama,
+        "approfondimenti": val_approfondimenti,
+        "lunghezza": val_lunghezza,
+    }
     st.caption(
         f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
         f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
@@ -2111,6 +2198,8 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             st.rerun()
         else:
             st.warning("Non è stata trovata una stesura salvata nel tuo account. Verifica che il salvataggio automatico indichi “nel tuo account”.")
+
+    mostra_memoria_visiva_progetto()
 
 # ======================================================================================================================
 # 7. LOGICA DI MEMORIA E COERENZA (EVITA RIPETIZIONI GLOBALI) E INTEGRAZIONE FONTI
@@ -2600,6 +2689,10 @@ st.caption(VERSIONE_DEPLOY)
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
 opzioni_editor = [L["preface"]] + lista_cap_base + [L["ack"]]
+# Prima di disegnare l'editor, ripristina ogni testo già protetto nella memoria
+# del progetto. Il cambio della sezione selezionata non può quindi svuotare le
+# altre caselle o nasconderle dall'anteprima/esportazione.
+reidrata_sezioni_memorizzate(opzioni_editor)
 
 # La guida deve essere disponibile anche al primo avvio, prima che l'utente compili il brief.
 interfaccia_editor_disponibile = True
@@ -3791,6 +3884,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if st.session_state.get(chiave_audit_capitolo):
                     with st.expander("🔎 Esito del controllo fatti del capitolo", expanded=False):
                         st.write(st.session_state[chiave_audit_capitolo])
+            messaggio_stesura = st.session_state.pop("messaggio_stesura_sezione", "")
+            if messaggio_stesura:
+                st.success(messaggio_stesura)
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
@@ -3805,6 +3901,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         ))
                         salva_stesura_immediata(opzioni_editor)
+                        st.session_state["messaggio_stesura_sezione"] = f"Sezione salvata: {sez_scelta}."
+                        # Ricrea l'interfaccia dopo il salvataggio: il pulsante
+                        # resta subito disponibile per la sezione selezionata.
+                        st.rerun()
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
                 if pulsante_con_preventivo(f"rigenera_sezione_{k_sessione}", L["btn_edit"] + " 🪄", f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
