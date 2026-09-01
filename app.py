@@ -1415,6 +1415,10 @@ def ripristina_progetto_salvato():
     for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
         if contenuto:
             st.session_state[chiave_sezione(sezione)] = contenuto
+    fonti = snapshot.get("fonti", {}) or {}
+    for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
+        if fonti.get(chiave):
+            st.session_state[chiave] = fonti[chiave]
     aggiornato = snapshot.get("_autosave_updated_at", "")
     st.session_state["autosave_stato"] = (
         f"✓ Progetto ripristinato automaticamente ({aggiornato[:16].replace('T', ' ')})."
@@ -1433,6 +1437,13 @@ def salva_progetto_corrente(sidebar, sezioni):
         "sidebar": sidebar,
         "indice_raw": st.session_state.get("indice_raw", ""),
         "contenuti": contenuti,
+        # Conserviamo il dossier già elaborato: dopo logout o refresh l'AI può
+        # continuare a usarlo senza richiedere nuovamente i file originali.
+        "fonti": {
+            "conoscenza_extra": st.session_state.get("conoscenza_extra", ""),
+            "scheda_fonti": st.session_state.get("scheda_fonti", ""),
+            "dossier_fonti_ai": st.session_state.get("dossier_fonti_ai", ""),
+        },
     }
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     firma = hashlib.sha256(serializzato.encode("utf-8")).hexdigest()
@@ -1800,11 +1811,8 @@ with st.sidebar:
         if st.session_state.get("conoscenza_extra"):
             st.success(f"Studiati {len(file_caricati)} documenti. Il dossier editoriale viene riutilizzato per indice e stesura.")
             st.caption(f"Analisi fonti: {MODELLO_ANALISI_FONTI}. Le fonti guidano il ragionamento e non compaiono come citazioni automatiche nel testo finale.")
-    else:
-        st.session_state["conoscenza_extra"] = ""
-        st.session_state.pop("scheda_fonti", None)
-        st.session_state.pop("dossier_fonti_ai", None)
-        st.session_state.pop("firma_fonti", None)
+    elif st.session_state.get("conoscenza_extra"):
+        st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
     
     st.markdown("---")
     # --- AGGIUNTA "STORICO" AI GENERI ---
