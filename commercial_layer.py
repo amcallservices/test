@@ -467,6 +467,13 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
+          .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:1.1rem 0 2.25rem}
+          .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1.25rem 1.12rem;min-height:210px;box-shadow:0 10px 24px rgba(20,77,120,.08)}
+          .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
+          .ss-priority-icon {font-size:1.72rem;margin-bottom:.75rem}.ss-priority b {display:block;color:#102a43;font-size:1.12rem;margin-bottom:.45rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.43;font-size:.93rem}
+          .ss-priority-tag {display:inline-block;margin-top:.72rem;padding:.22rem .48rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.7rem}
+          .ss-feature-group {background:rgba(255,255,255,.64);border:1px solid #d9e5f0;border-radius:14px;padding:1.1rem 1.05rem;height:100%}
+          .ss-feature-group h3 {margin:0 0 .42rem;color:#1269ae;font-size:1.06rem}.ss-feature-group p {margin:.42rem 0;color:#486581;font-size:.9rem;line-height:1.38}
           .ss-language-wrap {max-width:1500px; margin:0 auto -2.3rem; display:flex; justify-content:flex-end}
           .ss-creator {display:flex; align-items:center; gap:1rem; min-height:145px; padding:1rem 1.15rem; background:#fff; border:1px solid #d9e5f0; border-radius:13px; box-shadow:0 8px 22px rgba(20,77,120,.055)}
           .ss-creator-icon {flex:0 0 92px; height:105px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.6rem; border-radius:8px 16px 12px 8px; background:linear-gradient(145deg,#164c75,#0b263e); box-shadow:7px 7px 0 rgba(22,137,232,.15)}
@@ -507,7 +514,8 @@ def _landing_page() -> None:
           .ss-benefits {max-width:1160px; margin:.7rem auto 2.25rem; padding:.55rem .25rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 10px 26px rgba(20,77,120,.07)}
           .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0}
           .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
-          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}}
+          @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid{grid-template-columns:1fr}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -600,6 +608,22 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        """<div class='ss-section'><h2>Il tuo studio editoriale, in un unico spazio</h2>
+        <p class='ss-muted'>Dall'idea alla bozza esportabile: ogni fase è guidata, modificabile e sotto il tuo controllo.</p></div>
+        <div class='ss-priority-grid'>
+          <div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scrivi il libro completo</b>
+          <p>Genera prefazione, capitoli, sottocapitoli e ringraziamenti, oppure lavora su una singola sezione quando preferisci.</p><span class='ss-priority-tag'>IL CUORE DEL SOFTWARE</span></div>
+          <div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Indice studiato e verificato</b>
+          <p>Ricerca preliminare delle fonti, indice professionale, voto editoriale e rigenerazione guidata dai miglioramenti suggeriti.</p><span class='ss-priority-tag'>STRUTTURA PIÙ SOLIDA</span></div>
+          <div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualità sotto controllo</b>
+          <p>Controlli su coerenza, completezza, ripetizioni, finali tronchi e dati aggiornabili prima dell'esportazione.</p><span class='ss-priority-tag'>REVISIONE GUIDATA</span></div>
+          <div class='ss-priority'><div class='ss-priority-icon'>💾</div><b>Il lavoro resta tuo</b>
+          <p>Salvataggio automatico, recupero dell'ultima stesura, modifica manuale e ricerca/sostituzione nell'intero manoscritto.</p><span class='ss-priority-tag'>SEMPRE RECUPERABILE</span></div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
     st.markdown(f"<div class='ss-section'><h2>{H['create']}</h2><p class='ss-muted'>{H['create_sub']}</p></div>", unsafe_allow_html=True)
     creator_cards = st.columns(3)
     for column, icon_class, icon, title, text in (
@@ -620,26 +644,26 @@ def _landing_page() -> None:
         with column:
             st.markdown(f"<div class='ss-step'><strong>{title}</strong>{text}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='ss-section'><h2>Caratteristiche</h2><p class='ss-muted'>Strumenti pensati per accompagnarti dalla prima idea al manoscritto esportabile.</p></div>", unsafe_allow_html=True)
-    feature_rows = [
-        (
-            ("Brief editoriale", "Titolo, autore, genere, stile, punto di vista, obiettivo, argomento, risultato e approfondimenti in un unico spazio."),
-            ("Multilingue", "Crea progetti in nove lingue e usa un’interfaccia adattata alla lingua scelta."),
-            ("Indice professionale", "Genera l’indice, assegna un voto alla struttura e rigeneralo seguendo i suggerimenti ricevuti."),
-            ("Scrittura flessibile", "Scrivi una sezione, tutti i sottocapitoli di un capitolo o l’intero libro; puoi mettere in pausa il lavoro."),
-        ),
-        (
-            ("Miglioramento mirato", "Rigenera o rielabora soltanto la parte da migliorare, con istruzioni precise e senza riscrivere tutto."),
-            ("Quiz, esempi e ricette", "Aggiungi contenuti pratici quando sono utili al genere e al progetto editoriale."),
-            ("Fonti e immagini", "Carica PDF o Word come riferimento e integra immagini scelte da te nel manoscritto."),
-            ("Controllo ed esportazione", "Usa anteprima, formattazione, controllo di coerenza e download in formato Word o PDF."),
-        ),
-    ]
-    for row in feature_rows:
-        columns = st.columns(4)
-        for column, (title, text) in zip(columns, row):
-            with column:
-                st.markdown(f"<div class='ss-feature'><strong>{title}</strong><p>{text}</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Tutte le funzioni, senza complessità</h2><p class='ss-muted'>Strumenti concreti per progettare, scrivere, correggere, ascoltare e preparare il tuo manoscritto.</p></div>", unsafe_allow_html=True)
+    gruppo_progetto, gruppo_scrittura, gruppo_controllo = st.columns(3)
+    with gruppo_progetto:
+        st.markdown("""<div class='ss-feature-group'><h3>🧭 Progetta</h3>
+        <p><strong>Brief editoriale completo</strong><br>Titolo, autore, genere, stile, punto di vista, obiettivo e approfondimenti.</p>
+        <p><strong>9 lingue disponibili</strong><br>Interfaccia e progetto adattati alla lingua scelta.</p>
+        <p><strong>Fonti esterne</strong><br>Carica PDF o Word: il software crea un dossier interno per indice e stesura.</p>
+        <p><strong>Indice professionale</strong><br>Ricerca, generazione, voto e rigenerazione guidata.</p></div>""", unsafe_allow_html=True)
+    with gruppo_scrittura:
+        st.markdown("""<div class='ss-feature-group'><h3>✍️ Scrivi e modifica</h3>
+        <p><strong>Sezione, capitolo o libro completo</strong><br>Scegli tu quanto delegare all'AI e metti in pausa quando vuoi.</p>
+        <p><strong>Rigenerazione mirata</strong><br>Migliora soltanto la parte necessaria con istruzioni personali.</p>
+        <p><strong>Quiz, esempi, ricette e Test Prep</strong><br>Contenuti pratici calibrati sul genere del libro.</p>
+        <p><strong>Ricerca e sostituzione globale</strong><br>Uniforma nomi, termini e formulazioni in tutte le sezioni.</p></div>""", unsafe_allow_html=True)
+    with gruppo_controllo:
+        st.markdown("""<div class='ss-feature-group'><h3>🔎 Controlla e pubblica</h3>
+        <p><strong>Controllo del manoscritto</strong><br>Coerenza, ripetizioni, completezza, lunghezza e qualità editoriale.</p>
+        <p><strong>Verifica dei fatti</strong><br>Controllo mirato dei dati aggiornabili quando serve.</p>
+        <p><strong>Anteprima e lettore vocale</strong><br>Ascolta il libro con voce, velocità, pausa e avanzamento per sezione.</p>
+        <p><strong>Word, PDF e KDP</strong><br>Esporta il manoscritto e prepara la formattazione editoriale.</p></div>""", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-credit-note'>Un Test Prep approfondito fino a 60 sezioni usa normalmente 75 crediti: 60 sezioni, indice, voto dell’indice, controllo coerenza e metadati. Le funzioni avanzate consumano crediti aggiuntivi solo dopo il preventivo.</div>", unsafe_allow_html=True)
