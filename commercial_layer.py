@@ -274,6 +274,21 @@ def _supabase_login(email: str, password: str) -> dict[str, Any]:
     return {"access_token": data["access_token"], "id": data["user"]["id"], "email": data["user"].get("email", email)}
 
 
+def _apri_progetto_pulito_dopo_accesso() -> None:
+    """Prepara un editor vuoto dopo un nuovo accesso.
+
+    L'ultima stesura resta nel cloud, ma non viene mostrata né letta finché
+    l'utente non preme esplicitamente “RIAGGIORNA ALL'ULTIMA STESURA”.
+    """
+    for chiave in list(st.session_state.keys()):
+        if not chiave.startswith("commercial_"):
+            del st.session_state[chiave]
+    # Un reset di una sessione precedente non deve impedire il ripristino
+    # manuale dell'utente dopo un nuovo accesso.
+    st.session_state.pop("commercial_project_reset_requested", None)
+    st.session_state["commercial_editor_avvio_pulito"] = True
+
+
 def _supabase_signup(email: str, password: str) -> None:
     url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/signup"
     payload = {"email": email.strip(), "password": password}
@@ -774,7 +789,9 @@ def _account_gate() -> dict[str, Any]:
         password = st.text_input("Password", type="password", key="commercial_login_password")
         if st.button("Accedi", type="primary", key="commercial_login"):
             try:
-                st.session_state["commercial_user"] = _supabase_login(email, password)
+                utente = _supabase_login(email, password)
+                _apri_progetto_pulito_dopo_accesso()
+                st.session_state["commercial_user"] = utente
                 st.rerun()
             except Exception as error:
                 st.error(str(error))
@@ -1128,9 +1145,16 @@ def _commerce_sidebar() -> None:
                 st.write(movements or "Nessun movimento ancora.")
 
         if _mode() != "demo" and st.button("Esci", key="commercial_logout", use_container_width=True):
+            # Chiudendo l'account svuotiamo anche la memoria locale del libro.
+            # Il salvataggio cloud non viene toccato e potrà essere richiamato
+            # volontariamente dal pulsante di ripristino al prossimo accesso.
+            for chiave in list(st.session_state.keys()):
+                if not chiave.startswith("commercial_"):
+                    del st.session_state[chiave]
             st.session_state.pop("commercial_user", None)
             st.session_state.pop("commercial_user_context", None)
             st.session_state.pop("commercial_show_auth", None)
+            st.session_state.pop("commercial_project_reset_requested", None)
             st.rerun()
 
 
