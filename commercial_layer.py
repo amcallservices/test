@@ -82,6 +82,18 @@ PACKAGE_ESTIMATE_NOTE = (
     "verifiche online e funzioni avanzate utilizzate."
 )
 
+CONTACT_LABELS = {
+    "Italiano": "CONTATTI",
+    "English": "CONTACTS",
+    "Español": "CONTACTOS",
+    "Français": "CONTACTS",
+    "Deutsch": "KONTAKTE",
+    "Română": "CONTACTE",
+    "Русский": "КОНТАКТЫ",
+    "العربية": "تواصل معنا",
+    "中文": "联系我们",
+}
+
 # Testi della pagina pubblica nelle stesse nove lingue offerte dall'editor.
 # Il cambio lingua qui modifica solo la home: non altera un eventuale libro dell'utente.
 HOME_COPY = {
@@ -884,6 +896,15 @@ def _commerce_sidebar() -> None:
             st.success(checkout_notice)
         if not is_admin and _mode() != "demo":
             st.caption("Dopo un pagamento concluso in un'altra scheda, premi il pulsante azzurro qui sopra.")
+
+        lingua_sidebar = st.session_state.get("editor_language", "Italiano")
+        testo_contatti = CONTACT_LABELS.get(lingua_sidebar, CONTACT_LABELS["Italiano"])
+        st.link_button(
+            f"💬 {testo_contatti}",
+            "https://wa.me/393282693777?text=Scrivo%20da%20Scrittore%20Site",
+            use_container_width=True,
+            help="WhatsApp",
+        )
 
         if is_admin:
             with st.expander("🛡️ Amministrazione crediti", expanded=False):
