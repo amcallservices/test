@@ -779,13 +779,14 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
         </div>
         <script>
           const bookText = {testo_json}, L = {labels_json}, bookLanguage = {lingua_json};
-          const synth = window.speechSynthesis; let chunks = [], position = 0, active = false, voices = [];
+          const synth = window.speechSynthesis;
+          let chunks = [], position = 0, active = false, paused = false, voices = [], utteranceId = 0;
           const el = (id) => document.getElementById(id);
           el("title").textContent=L[0]; el("note").textContent=L[10]; el("start").textContent="▶ "+L[1];
           el("pause").textContent="⏸ "+L[2]; el("resume").textContent="▶ "+L[3]; el("stop").textContent="■ "+L[4];
           el("speedText").textContent=L[5]; el("status").textContent=L[7];
           function split(value) {{
-            const sentences=value.replace(/\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
+            const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
             sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push(current);current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
             if(current)result.push(current); return result;
           }}
@@ -796,15 +797,27 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
             select.value=old;
           }}
           function next() {{
-            if(!active||position>=chunks.length){{active=false;el("status").textContent=L[9];return;}}
+            if(!active||paused)return;
+            if(position>=chunks.length){{active=false;el("status").textContent=L[9];return;}}
+            const id=++utteranceId;
             const utterance=new SpeechSynthesisUtterance(chunks[position]); utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
             const chosen=el("voice").value; const voice=chosen!==""?voices[Number(chosen)]:voices.find(v=>v.lang.toLowerCase().startsWith(bookLanguage.slice(0,2).toLowerCase()));
-            if(voice)utterance.voice=voice; utterance.onend=()=>{{position+=1;next();}}; utterance.onerror=()=>{{active=false;el("status").textContent=L[7];}};
+            if(voice)utterance.voice=voice;
+            utterance.onend=()=>{{if(id!==utteranceId||paused||!active)return;position+=1;next();}};
+            utterance.onerror=()=>{{if(id===utteranceId&&!paused){{active=false;el("status").textContent=L[7];}}}};
             el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")"; synth.speak(utterance);
           }}
-          el("start").onclick=()=>{{synth.cancel();chunks=split(bookText);position=0;active=true;next();}};
-          el("pause").onclick=()=>{{if(synth.speaking)synth.pause();}}; el("resume").onclick=()=>{{if(synth.paused)synth.resume();}};
-          el("stop").onclick=()=>{{active=false;position=0;synth.cancel();el("status").textContent=L[7];}};
+          el("start").onclick=()=>{{utteranceId++;synth.cancel();chunks=split(bookText);position=0;active=true;paused=false;next();}};
+          el("pause").onclick=()=>{{if(active){{paused=true;synth.pause();}}}};
+          el("resume").onclick=()=>{{
+            if(!active||!paused)return;
+            paused=false;
+            synth.resume();
+            // Alcuni browser perdono la coda dopo una pausa: riparte dallo stesso blocco,
+            // senza saltare testo, solo se la ripresa non è effettiva.
+            setTimeout(()=>{{if(active&&!paused&&!synth.speaking)next();}}, 450);
+          }};
+          el("stop").onclick=()=>{{active=false;paused=false;position=0;utteranceId++;synth.cancel();el("status").textContent=L[7];}};
           loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
         </script>
         """,
