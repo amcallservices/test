@@ -1415,6 +1415,36 @@ def chiave_sezione(sezione):
     return f"txt_{sezione.replace(' ', '_').replace('.', '')}"
 
 
+CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
+
+
+def leggi_sezione_memorizzata(sezione):
+    """Legge una sezione dalla memoria stabile, sincronizzando il widget visibile."""
+    chiave = chiave_sezione(sezione)
+    memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
+    valore_widget = st.session_state.get(chiave, "")
+    if str(valore_widget).strip():
+        memoria[sezione] = valore_widget
+    return memoria.get(sezione, valore_widget or "")
+
+
+def scrivi_sezione_memorizzata(sezione, contenuto):
+    """Scrive sempre sia nel widget sia nell'archivio del progetto.
+
+    La doppia scrittura evita che il cambio di sezione o un rerun di Streamlit
+    possa lasciare visibile solo l'ultimo testo generato.
+    """
+    testo = contenuto or ""
+    st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo
+    st.session_state[chiave_sezione(sezione)] = testo
+    return testo
+
+
+def sincronizza_modifica_manuale(sezione):
+    """Callback dell'editor: conserva subito anche le modifiche digitate a mano."""
+    scrivi_sezione_memorizzata(sezione, st.session_state.get(chiave_sezione(sezione), ""))
+
+
 CAMPI_SALVATAGGIO_PROGETTO = {
     "titolo": "book_title",
     "autore": "book_author",
@@ -1451,7 +1481,7 @@ def applica_snapshot_progetto(snapshot):
         sync_capitoli()
     for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
         if contenuto:
-            st.session_state[chiave_sezione(sezione)] = contenuto
+            scrivi_sezione_memorizzata(sezione, contenuto)
     fonti = snapshot.get("fonti", {}) or {}
     for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
         if fonti.get(chiave):
@@ -1487,11 +1517,16 @@ def prepara_ripristino_ultima_stesura():
 
 def salva_progetto_corrente(sidebar, sezioni):
     """Crea una fotografia leggera di sidebar, indice e testi e la invia al cloud."""
-    contenuti = {
-        sezione: st.session_state.get(chiave_sezione(sezione), "")
-        for sezione in sezioni
-        if st.session_state.get(chiave_sezione(sezione), "").strip()
-    }
+    # Partiamo dalla memoria stabile e aggiorniamo le sezioni presenti nella UI.
+    # Non eliminiamo mai una sezione già salvata solo perché l'utente in quel
+    # momento sta visualizzando un'altra voce dell'indice.
+    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    for sezione in sezioni:
+        testo = st.session_state.get(chiave_sezione(sezione), "")
+        if str(testo).strip():
+            contenuti[sezione] = testo
+    contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
+    st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
     snapshot = {
         "sidebar": sidebar,
         "indice_raw": st.session_state.get("indice_raw", ""),
@@ -3622,10 +3657,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sezione_corrente, st.session_state['indice_raw'], val_trama, val_genere,
                             val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                         )
-                        st.session_state[chiave_sezione(sezione_corrente)] = genera_contenuto_editoriale(
+                        scrivi_sezione_memorizzata(sezione_corrente, genera_contenuto_editoriale(
                             prompt, S_PROMPT, sezione_corrente, st.session_state['indice_raw'], val_trama,
                             val_genere, val_goal, lingua_sel, val_lunghezza
-                        )
+                        ))
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         # Ogni sezione viene confermata prima del rerun: se il
                         # browser ricarica o Streamlit riavvia la sessione, le
@@ -3681,12 +3716,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         for sezione in sezioni_trovate:
                             chiave = chiave_sezione(sezione)
                             testo_sezione = st.session_state.get(chiave, "")
-                            st.session_state[chiave] = re.sub(
+                            scrivi_sezione_memorizzata(sezione, re.sub(
                                 re.escape(cerca_globale),
                                 lambda _match: sostituisci_globale,
                                 testo_sezione,
                                 flags=flag_ricerca,
-                            )
+                            ))
                         st.success(f"Sostituzione completata: {occorrenze} modifiche in {len(sezioni_trovate)} sezioni. Il salvataggio automatico verrà aggiornato.")
                         salva_stesura_immediata(opzioni_editor)
                         st.rerun()
@@ -3725,10 +3760,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 sottocapitolo, st.session_state['indice_raw'], val_trama, val_genere,
                                 val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                             )
-                            st.session_state[chiave] = genera_contenuto_editoriale(
+                            scrivi_sezione_memorizzata(sottocapitolo, genera_contenuto_editoriale(
                                 prompt, S_PROMPT, sottocapitolo, st.session_state['indice_raw'], val_trama,
                                 val_genere, val_goal, lingua_sel, val_lunghezza
-                            )
+                            ))
                         avanzamento.progress(100, text="Sottocapitoli completati.")
                         contenuti_capitolo = [
                             (sottocapitolo, st.session_state.get(f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}", ""))
@@ -3765,10 +3800,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
                             val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                         )
-                        st.session_state[k_sessione] = genera_contenuto_editoriale(
+                        scrivi_sezione_memorizzata(sez_scelta, genera_contenuto_editoriale(
                             full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
                             val_genere, val_goal, lingua_sel, val_lunghezza
-                        )
+                        ))
                         salva_stesura_immediata(opzioni_editor)
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
@@ -3783,9 +3818,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             "Non usare punteggiatura anomala né riscrivere il titolo all'inizio. Non inserire URL, link, "
                             f"citazioni o sezioni bibliografiche. Testo da modificare:\n{st.session_state[k_sessione]}"
                         )
-                        st.session_state[k_sessione] = pulisci_testo_editoriale(
+                        scrivi_sezione_memorizzata(sez_scelta, pulisci_testo_editoriale(
                             chiedi_gpt(prompt_rigenerazione, S_PROMPT, max_completion_tokens=limite_output)
-                        )
+                        ))
                         salva_stesura_immediata(opzioni_editor)
                         st.rerun()
             with c3:
@@ -3794,7 +3829,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     if k_sessione in st.session_state:
                         with st.spinner("Generazione Quiz didattico..."):
                             res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}", "Learning Expert.")
-                            st.session_state[k_sessione] += f"\n\nTEST DI VALUTAZIONE\n\n" + pulisci_testo_editoriale(res_q)
+                            scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\nTEST DI VALUTAZIONE\n\n" + pulisci_testo_editoriale(res_q))
                             salva_stesura_immediata(opzioni_editor); st.rerun()
 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE ESEMPI ---
@@ -3829,7 +3864,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             {mem_esempi[-4000:]}"""
                             
                             res_e = chiedi_gpt(p_esempi, f"Sei un autorevole esperto in {val_genere} e scrittore in lingua {lingua_sel}.")
-                            st.session_state[k_sessione] += f"\n\n{pulisci_testo_editoriale(t_tit_ese)}\n\n" + pulisci_testo_editoriale(res_e)
+                            scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\n{pulisci_testo_editoriale(t_tit_ese)}\n\n" + pulisci_testo_editoriale(res_e))
                             salva_stesura_immediata(opzioni_editor)
                             st.rerun()
 
@@ -3867,7 +3902,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             {mem_ricette[-4000:]}"""
                             
                             res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=10)
-                            st.session_state[k_sessione] += f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r)
+                            scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r))
                             salva_stesura_immediata(opzioni_editor)
                             st.rerun()
 
@@ -3895,12 +3930,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
             testo_editor = pulisci_testo_editoriale(st.session_state.get(k_sessione, ""))
             if k_sessione not in st.session_state:
-                st.session_state[k_sessione] = testo_editor
+                scrivi_sezione_memorizzata(sez_scelta, testo_editor)
             st.text_area(
                 L["label_editor"],
                 height=500,
                 key=k_sessione,
                 help="Le modifiche vengono salvate automaticamente nel progetto.",
+                on_change=sincronizza_modifica_manuale,
+                args=(sez_scelta,),
             )
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
