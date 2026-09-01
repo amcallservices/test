@@ -1605,12 +1605,16 @@ def salva_progetto_corrente(sidebar, sezioni):
     sidebar_completa = sidebar_memorizzata_corrente()
     sidebar_completa.update({nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO})
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar_completa)
-    # Partiamo dalla memoria stabile e aggiorniamo le sezioni presenti nella UI.
-    # Non eliminiamo mai una sezione già salvata solo perché l'utente in quel
-    # momento sta visualizzando un'altra voce dell'indice.
-    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    # Il salvataggio manuale non deve mai trasformarsi in una fotografia
+    # parziale. Prima conserva tutte le sezioni dell'ultima sessione cloud e
+    # poi applica i testi più recenti presenti nella pagina.
+    contenuti = {}
+    if not st.session_state.get("commercial_project_reset_requested"):
+        precedente = carica_progetto_automatico()
+        contenuti.update((precedente.get("contenuti", {}) or {}))
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in sezioni:
-        testo = st.session_state.get(chiave_sezione(sezione), "")
+        testo = leggi_sezione_memorizzata(sezione)
         if str(testo).strip():
             contenuti[sezione] = testo
     contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
@@ -2229,7 +2233,8 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         # Il cloud viene aggiornato esclusivamente con questo comando: durante
         # la stesura normale i testi restano nella memoria della pagina.
         sezioni_da_salvare = list(
-            set(st.session_state.get("lista_capitoli", []))
+            {L["preface"], L["ack"]}
+            | set(st.session_state.get("lista_capitoli", []))
             | set((st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys())
         )
         if salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_da_salvare):
