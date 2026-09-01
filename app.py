@@ -524,28 +524,31 @@ class EbookPDF(FPDF):
 # ======================================================================================================================
 PROFILI_LUNGHEZZA_STESURA = {
     "Compatto": {
-        "parole": "140-200 parole",
-        "min_parole": 140,
-        "max_parole": 200,
-        "max_completion_tokens": 330,
-        "descrizione": "capitoli rapidi, diretti e senza ripetizioni",
+        "parole": "480-560 parole",
+        "min_parole": 480,
+        "max_parole": 560,
+        "max_completion_tokens": 900,
+        "descrizione": "testo essenziale ma completo, pensato per almeno 100 pagine",
         "max_sezioni": 50,
+        "pagine_minime": 100,
     },
     "Standard KDP": {
-        "parole": "220-300 parole",
-        "min_parole": 220,
-        "max_parole": 300,
-        "max_completion_tokens": 480,
-        "descrizione": "equilibrio consigliato tra qualità, lettura e lunghezza finale",
+        "parole": "620-700 parole",
+        "min_parole": 620,
+        "max_parole": 700,
+        "max_completion_tokens": 1100,
+        "descrizione": "trattazione equilibrata, pensata per almeno 200 pagine",
         "max_sezioni": 80,
+        "pagine_minime": 200,
     },
     "Approfondito": {
-        "parole": "320-420 parole",
-        "min_parole": 320,
-        "max_parole": 420,
-        "max_completion_tokens": 680,
-        "descrizione": "trattazione più ampia per sezioni realmente complesse",
+        "parole": "700-800 parole",
+        "min_parole": 700,
+        "max_parole": 800,
+        "max_completion_tokens": 1250,
+        "descrizione": "trattazione ampia e approfondita, pensata per almeno 300 pagine",
         "max_sezioni": 110,
+        "pagine_minime": 300,
     },
 }
 
@@ -1446,12 +1449,13 @@ def stima_massima_crediti_stesura(sezione, indice, trama, obiettivo, genere):
     return 1
 
 
-def criticita_specificita(testo, genere, sezione):
+def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice=""):
     """Individua bozze genericamente motivazionali prima che finiscano nel manoscritto."""
     pulito = pulisci_testo_editoriale(testo or "").strip()
     parole = pulito.split()
     basso = pulito.lower()
-    if tipo_sezione_editoriale(sezione) == "parte":
+    tipo_sezione = tipo_sezione_editoriale(sezione)
+    if tipo_sezione == "parte":
         return ""
     # Un finale senza chiusura è spesso il segnale di una risposta interrotta dal limite di output.
     # Viene rigenerata prima di essere salvata, senza accettare un ragionamento lasciato a metà.
@@ -1459,7 +1463,20 @@ def criticita_specificita(testo, genere, sezione):
     connettivi_finali = (" e", " o", " ma", " perché", " quindi", " inoltre", " come", " per", " con")
     if finale and (finale[-1] not in ".!?…»”)]}" or any(finale.lower().endswith(connettivo) for connettivo in connettivi_finali)):
         return "ragionamento non concluso: chiudi l'ultima idea con una frase completa e utile"
-    if len(parole) < 150:
+    # I capitoli che possiedono sottocapitoli restano cornici intenzionalmente brevi:
+    # la trattazione completa è affidata alle sezioni figlie e non va duplicata.
+    capitolo_cornice = (
+        tipo_sezione == "capitolo"
+        and bool(individua_sottocapitoli_del_capitolo(sezione, (indice or "").splitlines()))
+    )
+    if profilo_lunghezza and not capitolo_cornice:
+        minimo_parole, _ = vincolo_parole_con_tolleranza(profilo_lunghezza)
+        if len(parole) < minimo_parole:
+            return (
+                f"testo troppo breve: servono almeno {minimo_parole} parole per il profilo "
+                f"'{profilo_lunghezza}', senza aggiungere ripetizioni"
+            )
+    elif len(parole) < 150:
         return "testo troppo breve per sviluppare l'argomento assegnato"
 
     if genere in {"Manuale Tecnico", "Manuale Pratico"}:
@@ -1512,7 +1529,7 @@ def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, g
     testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
         prompt, system_prompt, sezione, lingua, max_completion_tokens=limite_output
     ))
-    criticita = criticita_specificita(testo, genere, sezione)
+    criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
     if criticita:
         testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
             prompt + f"""
@@ -1712,7 +1729,9 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
         f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
         f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
-        "comprese Prefazione e Ringraziamenti. Tolleranza massima sulla lunghezza: 5%."
+        f"comprese Prefazione e Ringraziamenti. Obiettivo: almeno circa "
+        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
+        "Tolleranza massima sulla lunghezza: 5%."
     )
     limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
     # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
@@ -2365,6 +2384,7 @@ dettaglio assegnato senza anticipare o ripetere gli altri sottocapitoli.
 Profilo scelto: {val_lunghezza}.
 - Per una sezione autonoma, l'obiettivo è {profilo_lunghezza_corrente['parole']}.
 - Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
+- L'obiettivo del manoscritto completo è almeno {profilo_lunghezza_corrente['pagine_minime']} pagine nel formato 6×9; contribuisci a raggiungerlo con contenuto utile, senza gonfiare il testo.
 - Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
 - Completa sempre l'ultima idea con una frase significativa: se lo spazio non basta, riduci prima dettagli secondari, esempi o elenchi, senza interrompere ragionamenti, procedure o scene.
 - Questa direttiva prevale su ogni invito generico a essere estremamente dettagliato o a includere molte categorie di esempi.
@@ -2479,7 +2499,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Compila la barra laterale: titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
-2. Scegli Lunghezza delle sezioni: Compatto produce circa 140-200 parole per sezione e fino a 50 sezioni totali; Standard KDP (consigliato) circa 220-300 parole e fino a 80 sezioni; Approfondito circa 320-420 parole e fino a 110 sezioni. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
@@ -2889,9 +2909,9 @@ Per il PUNTO DI VISTA scegli un solo valore tra:
 
 Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
 
-- Compatto — circa 140-200 parole per sezione, massimo 50 sezioni totali
-- Standard KDP — circa 220-300 parole per sezione, massimo 80 sezioni totali
-- Approfondito — circa 320-420 parole per sezione, massimo 110 sezioni totali
+- Compatto — circa 480-560 parole per sezione, massimo 50 sezioni totali, obiettivo almeno 100 pagine
+- Standard KDP — circa 620-700 parole per sezione, massimo 80 sezioni totali, obiettivo almeno 200 pagine
+- Approfondito — circa 700-800 parole per sezione, massimo 110 sezioni totali, obiettivo almeno 300 pagine
 
 Scegli Standard KDP come impostazione predefinita. I limiti comprendono Prefazione e Ringraziamenti. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
 
