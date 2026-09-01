@@ -811,16 +811,32 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           const bookText = {testo_json}, bookParts = {parti_json}, L = {labels_json}, bookLanguage = {lingua_json};
           const synth = window.speechSynthesis;
           let chunks = [], position = 0, active = false, paused = false, voices = [], utteranceId = 0;
+          let currentUtterance = null, keepAliveTimer = null;
           const el = (id) => document.getElementById(id);
           el("title").textContent=L[0]; el("note").textContent=L[10]; el("start").textContent="▶ "+L[1];
           el("pause").textContent="⏸ "+L[2]; el("resume").textContent="▶ "+L[3]; el("stop").textContent="■ "+L[4];
           el("speedText").textContent=L[5]; el("status").textContent=L[7];
+          function clearKeepAlive() {{
+            if(keepAliveTimer) {{ clearInterval(keepAliveTimer); keepAliveTimer=null; }}
+          }}
+          function startKeepAlive() {{
+            clearKeepAlive();
+            // Chrome può interrompere in silenzio le letture molto lunghe.
+            // Un resume periodico mantiene viva la lettura senza cambiare testo.
+            keepAliveTimer=setInterval(()=>{{ if(active&&!paused&&synth) synth.resume(); }}, 10000);
+          }}
+          function stopReading() {{
+            active=false; paused=false; position=0; utteranceId++; currentUtterance=null;
+            clearKeepAlive(); if(synth) synth.cancel();
+            el("status").textContent=L[7]; el("currentSection").textContent=""; el("progressBar").style.width="0";
+          }}
           function split(value, sectionTitle) {{
             const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
             sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push({{text:current,section:sectionTitle}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
             if(current)result.push({{text:current,section:sectionTitle}}); return result;
           }}
           function loadVoices() {{
+            if(!synth) return;
             voices=synth.getVoices(); const select=el("voice"), old=select.value; select.innerHTML="";
             const automatic=document.createElement("option");automatic.value="";automatic.textContent=L[6];select.appendChild(automatic);
             voices.forEach((voice,index)=>{{const option=document.createElement("option");option.value=index;option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option);}});
@@ -828,24 +844,37 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           }}
           function next() {{
             if(!active||paused)return;
-            if(position>=chunks.length){{active=false;el("status").textContent=L[9];return;}}
+            if(position>=chunks.length){{active=false;currentUtterance=null;clearKeepAlive();el("status").textContent=L[9];return;}}
             const id=++utteranceId;
             const chunk=chunks[position];
-            const utterance=new SpeechSynthesisUtterance(chunk.text); utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
+            const utterance=new SpeechSynthesisUtterance(chunk.text); currentUtterance=utterance;
+            utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
             const chosen=el("voice").value; const voice=chosen!==""?voices[Number(chosen)]:voices.find(v=>v.lang.toLowerCase().startsWith(bookLanguage.slice(0,2).toLowerCase()));
             if(voice)utterance.voice=voice;
-            utterance.onend=()=>{{if(id!==utteranceId||paused||!active)return;position+=1;next();}};
-            utterance.onerror=()=>{{if(id===utteranceId&&!paused){{active=false;el("status").textContent=L[7];}}}};
+            utterance.onend=()=>{{
+              if(id!==utteranceId||paused||!active)return;
+              currentUtterance=null; position+=1; next();
+            }};
+            utterance.onerror=(event)=>{{
+              // L'evento "interrupted" viene emesso da alcuni browser durante
+              // una pausa o dopo un cancel volontario: non deve azzerare il libro.
+              if(id!==utteranceId||paused||!active||event.error==="interrupted"||event.error==="canceled") return;
+              active=false; currentUtterance=null; clearKeepAlive(); el("status").textContent=L[7];
+            }};
             el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")";
             el("currentSection").textContent=L[11]+": "+chunk.section;
             el("progressBar").style.width=Math.round(((position+1)/chunks.length)*100)+"%";
-            synth.speak(utterance);
+            synth.speak(utterance); startKeepAlive();
           }}
           el("start").onclick=()=>{{
-            utteranceId++; synth.cancel();
+            if(!synth||!window.SpeechSynthesisUtterance){{el("status").textContent="Lettore vocale non disponibile in questo browser.";return;}}
+            utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel();
             chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
             if(!chunks.length)chunks=split(bookText,"Libro");
-            position=0;active=true;paused=false;next();
+            position=0;active=true;paused=false;
+            // Dopo cancel Chrome richiede un brevissimo intervallo prima di
+            // accettare una nuova voce; senza questo l'avvio può non partire.
+            setTimeout(()=>{{if(active&&!paused)next();}},80);
           }};
           el("pause").onclick=()=>{{if(active){{paused=true;synth.pause();}}}};
           el("resume").onclick=()=>{{
@@ -854,10 +883,17 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             synth.resume();
             // Alcuni browser perdono la coda dopo una pausa: riparte dallo stesso blocco,
             // senza saltare testo, solo se la ripresa non è effettiva.
-            setTimeout(()=>{{if(active&&!paused&&!synth.speaking)next();}}, 450);
+            setTimeout(()=>{{
+              if(active&&!paused&&!synth.speaking){{utteranceId++;currentUtterance=null;next();}}
+            }}, 650);
           }};
-          el("stop").onclick=()=>{{active=false;paused=false;position=0;utteranceId++;synth.cancel();el("status").textContent=L[7];el("currentSection").textContent="";el("progressBar").style.width="0";}};
-          loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
+          el("stop").onclick=stopReading;
+          if(!synth||!window.SpeechSynthesisUtterance){{
+            el("status").textContent="Lettore vocale non disponibile in questo browser.";
+            el("start").disabled=el("pause").disabled=el("resume").disabled=true;
+          }} else {{
+            loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
+          }}
         </script>
         """,
         height=210,
@@ -1400,10 +1436,15 @@ def applica_snapshot_progetto(snapshot):
     if not snapshot:
         return False
     sidebar = snapshot.get("sidebar", {})
+    campi_ripristinati = []
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
-        valore = sidebar.get(nome)
-        if valore not in (None, ""):
+        # Il controllo deve essere sulla presenza della chiave, non sul suo
+        # contenuto: una casella lasciata volutamente vuota deve poter
+        # sostituire il valore eventualmente rimasto nella sessione corrente.
+        if nome in sidebar:
+            valore = sidebar.get(nome)
             st.session_state[chiave] = valore
+            campi_ripristinati.append(nome)
     indice = snapshot.get("indice_raw", "")
     if indice:
         st.session_state["indice_raw"] = indice
@@ -1417,8 +1458,8 @@ def applica_snapshot_progetto(snapshot):
             st.session_state[chiave] = fonti[chiave]
     aggiornato = snapshot.get("_autosave_updated_at", "")
     st.session_state["autosave_stato"] = (
-        f"✓ Progetto ripristinato automaticamente ({aggiornato[:16].replace('T', ' ')})."
-        if aggiornato else "✓ Progetto ripristinato automaticamente."
+        f"✓ Ultima stesura ripristinata: sidebar, indice e sezioni ({aggiornato[:16].replace('T', ' ')})."
+        if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice e sezioni."
     )
     return True
 
@@ -1445,7 +1486,7 @@ def prepara_ripristino_ultima_stesura():
 
 
 def salva_progetto_corrente(sidebar, sezioni):
-    """Crea una fotografia leggera di sidebar, indice e testi e la invia solo se è cambiata."""
+    """Crea una fotografia leggera di sidebar, indice e testi e la invia al cloud."""
     contenuti = {
         sezione: st.session_state.get(chiave_sezione(sezione), "")
         for sezione in sezioni
@@ -1465,14 +1506,30 @@ def salva_progetto_corrente(sidebar, sezioni):
     }
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     firma = hashlib.sha256(serializzato.encode("utf-8")).hexdigest()
-    if st.session_state.get("autosave_firma") == firma:
-        return
-    st.session_state["autosave_firma"] = firma
+    # Consideriamo concluso il salvataggio solo quando Supabase ha confermato
+    # la fotografia. In questo modo un errore transitorio non lascia nel cloud
+    # una vecchia bozza che poi potrebbe riapparire al rerun successivo.
+    if st.session_state.get("autosave_firma_cloud") == firma:
+        return True
     momento = datetime.datetime.now().strftime("%H:%M")
     if salva_progetto_automatico(snapshot):
+        st.session_state["autosave_firma"] = firma
+        st.session_state["autosave_firma_cloud"] = firma
         st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nel tuo account alle {momento}."
+        return True
     else:
+        st.session_state["autosave_firma"] = firma
         st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nella sessione alle {momento}."
+        return False
+
+
+def salva_stesura_immediata(sezioni):
+    """Salva subito dopo una modifica, prima di qualsiasi rerun di Streamlit."""
+    sidebar = {
+        nome: st.session_state.get(chiave, "")
+        for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items()
+    }
+    return salva_progetto_corrente(sidebar, sezioni)
 
 
 def sezioni_mancanti_per_esportazione(sezioni, genere):
@@ -3399,7 +3456,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
                     st.session_state["indice_raw"] = indice_generato
-                    sync_capitoli(); st.rerun()
+                    sync_capitoli(); salva_stesura_immediata(opzioni_editor); st.rerun()
                 else:
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
                     st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
@@ -3422,7 +3479,10 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.session_state["indice_raw"] = testo_input
                 st.session_state.pop("analisi_voto_indice", None)
                 
-        if st.button(L["btn_sync"]): sync_capitoli(); st.rerun()
+        if st.button(L["btn_sync"]):
+            sync_capitoli()
+            salva_stesura_immediata(opzioni_editor)
+            st.rerun()
 
         indice_da_valutare = st.session_state.get("indice_raw", "").strip()
         if indice_da_valutare:
@@ -3500,6 +3560,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state.pop("indice_proposto_dal_voto", None)
                         st.session_state.pop("analisi_voto_indice", None)
                         sync_capitoli()
+                        salva_stesura_immediata(opzioni_editor)
                         st.rerun()
 
     # TAB 2: SCRITTURA E QUIZ (E ORA ANCHE RICETTE)
@@ -3566,6 +3627,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         )
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                        # Ogni sezione viene confermata prima del rerun: se il
+                        # browser ricarica o Streamlit riavvia la sessione, le
+                        # sezioni generate in precedenza restano intatte.
+                        salva_stesura_immediata(opzioni_editor)
                         st.rerun()
                     except Exception as exc:
                         st.session_state["job_scrittura_attivo"] = False
@@ -3623,6 +3688,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 flags=flag_ricerca,
                             )
                         st.success(f"Sostituzione completata: {occorrenze} modifiche in {len(sezioni_trovate)} sezioni. Il salvataggio automatico verrà aggiornato.")
+                        salva_stesura_immediata(opzioni_editor)
                         st.rerun()
 
             sez_scelta = st.selectbox(L["lbl_sec"], opzioni_editor)
@@ -3675,6 +3741,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         if gia_presenti:
                             messaggio += f" Conservati senza modifiche: {gia_presenti}."
                         st.success(messaggio)
+                        salva_stesura_immediata(opzioni_editor)
                         st.rerun()
                 if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 2,
                                            "Verifica online solo i dati aggiornabili del capitolo selezionato.", use_container_width=True):
@@ -3702,6 +3769,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         )
+                        salva_stesura_immediata(opzioni_editor)
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
                 if pulsante_con_preventivo(f"rigenera_sezione_{k_sessione}", L["btn_edit"] + " 🪄", f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
@@ -3718,6 +3786,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state[k_sessione] = pulisci_testo_editoriale(
                             chiedi_gpt(prompt_rigenerazione, S_PROMPT, max_completion_tokens=limite_output)
                         )
+                        salva_stesura_immediata(opzioni_editor)
                         st.rerun()
             with c3:
                 if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", 1,
@@ -3725,7 +3794,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     if k_sessione in st.session_state:
                         with st.spinner("Generazione Quiz didattico..."):
                             res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}", "Learning Expert.")
-                            st.session_state[k_sessione] += f"\n\nTEST DI VALUTAZIONE\n\n" + pulisci_testo_editoriale(res_q); st.rerun()
+                            st.session_state[k_sessione] += f"\n\nTEST DI VALUTAZIONE\n\n" + pulisci_testo_editoriale(res_q)
+                            salva_stesura_immediata(opzioni_editor); st.rerun()
 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE ESEMPI ---
                 trad_esempi = {
@@ -3760,6 +3830,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             res_e = chiedi_gpt(p_esempi, f"Sei un autorevole esperto in {val_genere} e scrittore in lingua {lingua_sel}.")
                             st.session_state[k_sessione] += f"\n\n{pulisci_testo_editoriale(t_tit_ese)}\n\n" + pulisci_testo_editoriale(res_e)
+                            salva_stesura_immediata(opzioni_editor)
                             st.rerun()
 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE RICETTE ---
@@ -3797,6 +3868,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=10)
                             st.session_state[k_sessione] += f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r)
+                            salva_stesura_immediata(opzioni_editor)
                             st.rerun()
 
             st.divider()
