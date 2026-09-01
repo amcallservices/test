@@ -809,7 +809,20 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
         </div>
         <script>
           const bookText = {testo_json}, bookParts = {parti_json}, L = {labels_json}, bookLanguage = {lingua_json};
-          const synth = window.speechSynthesis;
+          // In alcune versioni di Chrome il componente Streamlit vive in un
+          // iframe: proviamo prima la sua API e, se disponibile, quella della
+          // pagina ospitante. Non usa alcun servizio esterno o credito.
+          function speechEngine() {{
+            try {{ if (window.speechSynthesis) return window.speechSynthesis; }} catch (_) {{}}
+            try {{ if (window.parent && window.parent.speechSynthesis) return window.parent.speechSynthesis; }} catch (_) {{}}
+            return null;
+          }}
+          function utteranceConstructor() {{
+            try {{ if (window.SpeechSynthesisUtterance) return window.SpeechSynthesisUtterance; }} catch (_) {{}}
+            try {{ if (window.parent && window.parent.SpeechSynthesisUtterance) return window.parent.SpeechSynthesisUtterance; }} catch (_) {{}}
+            return null;
+          }}
+          const synth = speechEngine(), Utterance = utteranceConstructor();
           let chunks = [], position = 0, active = false, paused = false, voices = [], utteranceId = 0;
           let currentUtterance = null, keepAliveTimer = null;
           const el = (id) => document.getElementById(id);
@@ -832,7 +845,8 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           }}
           function split(value, sectionTitle) {{
             const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
-            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push({{text:current,section:sectionTitle}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
+            // Blocchi brevi: Chrome può interrompere gli utterance troppo lunghi.
+            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>480&&current){{result.push({{text:current,section:sectionTitle}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
             if(current)result.push({{text:current,section:sectionTitle}}); return result;
           }}
           function loadVoices() {{
@@ -847,7 +861,8 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             if(position>=chunks.length){{active=false;currentUtterance=null;clearKeepAlive();el("status").textContent=L[9];return;}}
             const id=++utteranceId;
             const chunk=chunks[position];
-            const utterance=new SpeechSynthesisUtterance(chunk.text); currentUtterance=utterance;
+            if(!Utterance) {{ active=false; el("status").textContent="Lettore vocale non disponibile in questo browser."; return; }}
+            const utterance=new Utterance(chunk.text); currentUtterance=utterance;
             utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
             const chosen=el("voice").value; const voice=chosen!==""?voices[Number(chosen)]:voices.find(v=>v.lang.toLowerCase().startsWith(bookLanguage.slice(0,2).toLowerCase()));
             if(voice)utterance.voice=voice;
@@ -859,22 +874,34 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
               // L'evento "interrupted" viene emesso da alcuni browser durante
               // una pausa o dopo un cancel volontario: non deve azzerare il libro.
               if(id!==utteranceId||paused||!active||event.error==="interrupted"||event.error==="canceled") return;
-              active=false; currentUtterance=null; clearKeepAlive(); el("status").textContent=L[7];
+              active=false; currentUtterance=null; clearKeepAlive();
+              el("status").textContent="Il browser ha interrotto la lettura ("+(event.error||"errore sconosciuto")+"). Premi Ascolta il libro per riprovare.";
             }};
             el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")";
             el("currentSection").textContent=L[11]+": "+chunk.section;
             el("progressBar").style.width=Math.round(((position+1)/chunks.length)*100)+"%";
-            synth.speak(utterance); startKeepAlive();
+            try {{
+              synth.speak(utterance);
+              startKeepAlive();
+            }} catch(error) {{
+              active=false; currentUtterance=null; clearKeepAlive();
+              el("status").textContent="Impossibile avviare il lettore vocale: "+(error.message||error);
+            }}
           }}
           el("start").onclick=()=>{{
-            if(!synth||!window.SpeechSynthesisUtterance){{el("status").textContent="Lettore vocale non disponibile in questo browser.";return;}}
-            utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel();
-            chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
-            if(!chunks.length)chunks=split(bookText,"Libro");
-            position=0;active=true;paused=false;
-            // speak deve avvenire nello stesso click dell'utente: alcuni
-            // browser bloccano il lettore se lo rimandiamo con setTimeout.
-            next();
+            if(!synth||!Utterance){{el("status").textContent="Lettore vocale non disponibile: apri l'app con Chrome, Edge o Safari aggiornato.";return;}}
+            try {{
+              utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel(); synth.resume();
+              chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
+              if(!chunks.length)chunks=split(bookText,"Libro");
+              position=0;active=true;paused=false;
+              // speak deve avvenire nello stesso click dell'utente: alcuni
+              // browser bloccano il lettore se lo rimandiamo con setTimeout.
+              next();
+            }} catch(error) {{
+              active=false;
+              el("status").textContent="Impossibile preparare il lettore vocale: "+(error.message||error);
+            }}
           }};
           el("pause").onclick=()=>{{if(active){{paused=true;synth.pause();}}}};
           el("resume").onclick=()=>{{
@@ -888,11 +915,11 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             }}, 650);
           }};
           el("stop").onclick=stopReading;
-          if(!synth||!window.SpeechSynthesisUtterance){{
-            el("status").textContent="Lettore vocale non disponibile in questo browser.";
+          if(!synth||!Utterance){{
+            el("status").textContent="Lettore vocale non disponibile: usa Chrome, Edge o Safari aggiornato.";
             el("start").disabled=el("pause").disabled=el("resume").disabled=true;
           }} else {{
-            loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
+            loadVoices(); if("onvoiceschanged" in synth)synth.onvoiceschanged=loadVoices;
           }}
         </script>
         """,
