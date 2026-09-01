@@ -29,8 +29,11 @@ from commercial_layer import (
     CommercialCreditError,
     bootstrap_commercial_test,
     charge_credits,
+    carica_progetto_automatico,
+    elimina_progetto_automatico,
     mostra_crediti_esauriti,
     refund_credits,
+    salva_progetto_automatico,
 )
 
 # ======================================================================================================================
@@ -732,23 +735,31 @@ def pulisci_testo_editoriale(testo):
     return testo.strip()
 
 
-def mostra_lettore_vocale_gratuito(testo_libro, lingua):
+def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
     """Legge nel browser il manoscritto completo senza API, crediti o file audio."""
     testo = pulisci_testo_editoriale(testo_libro or "")
     if not testo:
         st.info("Il lettore vocale sarà disponibile dopo la generazione di almeno una sezione.")
         return
 
+    parti = []
+    for parte in sezioni or []:
+        contenuto = pulisci_testo_editoriale(parte.get("testo", ""))
+        if contenuto:
+            parti.append({"titolo": str(parte.get("titolo", "")).strip() or "Libro", "testo": contenuto})
+    if not parti:
+        parti = [{"titolo": "Libro", "testo": testo}]
+
     etichette = {
-        "Italiano": ("Lettore vocale gratuito", "Ascolta il libro", "Pausa", "Riprendi", "Ferma", "Velocità", "Voce automatica", "Pronto a leggere il manoscritto.", "Lettura in corso", "Lettura terminata.", "Nessun credito o costo API."),
-        "English": ("Free voice reader", "Listen to the book", "Pause", "Resume", "Stop", "Speed", "Automatic voice", "Ready to read the manuscript.", "Reading in progress", "Reading finished.", "No credits or API cost."),
-        "Español": ("Lector de voz gratuito", "Escuchar el libro", "Pausa", "Reanudar", "Detener", "Velocidad", "Voz automática", "Listo para leer el manuscrito.", "Lectura en curso", "Lectura terminada.", "Sin créditos ni coste de API."),
-        "Français": ("Lecteur vocal gratuit", "Écouter le livre", "Pause", "Reprendre", "Arrêter", "Vitesse", "Voix automatique", "Prêt à lire le manuscrit.", "Lecture en cours", "Lecture terminée.", "Sans crédit ni coût API."),
-        "Deutsch": ("Kostenloser Vorleser", "Buch anhören", "Pause", "Fortsetzen", "Stoppen", "Geschwindigkeit", "Automatische Stimme", "Bereit, das Manuskript vorzulesen.", "Wiedergabe läuft", "Wiedergabe beendet.", "Keine Credits oder API-Kosten."),
-        "Română": ("Cititor vocal gratuit", "Ascultă cartea", "Pauză", "Reia", "Oprește", "Viteză", "Voce automată", "Gata să citească manuscrisul.", "Citire în curs", "Citire încheiată.", "Fără credite sau cost API."),
-        "Русский": ("Бесплатный голосовой читатель", "Слушать книгу", "Пауза", "Продолжить", "Остановить", "Скорость", "Автоматический голос", "Готов к чтению рукописи.", "Чтение выполняется", "Чтение завершено.", "Без кредитов и затрат API."),
-        "العربية": ("قارئ صوتي مجاني", "استمع إلى الكتاب", "إيقاف مؤقت", "متابعة", "إيقاف", "السرعة", "صوت تلقائي", "جاهز لقراءة المخطوطة.", "القراءة جارية", "انتهت القراءة.", "بلا أرصدة أو تكلفة API."),
-        "中文": ("免费语音朗读器", "朗读全书", "暂停", "继续", "停止", "语速", "自动选择声音", "准备朗读书稿。", "正在朗读", "朗读完成。", "不消耗积分或 API 费用。"),
+        "Italiano": ("Lettore vocale gratuito", "Ascolta il libro", "Pausa", "Riprendi", "Ferma", "Velocità", "Voce automatica", "Pronto a leggere il manoscritto.", "Lettura in corso", "Lettura terminata.", "Nessun credito o costo API.", "Sezione in lettura"),
+        "English": ("Free voice reader", "Listen to the book", "Pause", "Resume", "Stop", "Speed", "Automatic voice", "Ready to read the manuscript.", "Reading in progress", "Reading finished.", "No credits or API cost.", "Reading section"),
+        "Español": ("Lector de voz gratuito", "Escuchar el libro", "Pausa", "Reanudar", "Detener", "Velocidad", "Voz automática", "Listo para leer el manuscrito.", "Lectura en curso", "Lectura terminada.", "Sin créditos ni coste de API.", "Sección en lectura"),
+        "Français": ("Lecteur vocal gratuit", "Écouter le livre", "Pause", "Reprendre", "Arrêter", "Vitesse", "Voix automatique", "Prêt à lire le manuscrit.", "Lecture en cours", "Lecture terminée.", "Sans crédit ni coût API.", "Section en cours de lecture"),
+        "Deutsch": ("Kostenloser Vorleser", "Buch anhören", "Pause", "Fortsetzen", "Stoppen", "Geschwindigkeit", "Automatische Stimme", "Bereit, das Manuskript vorzulesen.", "Wiedergabe läuft", "Wiedergabe beendet.", "Keine Credits oder API-Kosten.", "Gelesener Abschnitt"),
+        "Română": ("Cititor vocal gratuit", "Ascultă cartea", "Pauză", "Reia", "Oprește", "Viteză", "Voce automată", "Gata să citească manuscrisul.", "Citire în curs", "Citire încheiată.", "Fără credite sau cost API.", "Secțiunea citită"),
+        "Русский": ("Бесплатный голосовой читатель", "Слушать книгу", "Пауза", "Продолжить", "Остановить", "Скорость", "Автоматический голос", "Готов к чтению рукописи.", "Чтение выполняется", "Чтение завершено.", "Без кредитов и затрат API.", "Текущий раздел"),
+        "العربية": ("قارئ صوتي مجاني", "استمع إلى الكتاب", "إيقاف مؤقت", "متابعة", "إيقاف", "السرعة", "صوت تلقائي", "جاهز لقراءة المخطوطة.", "القراءة جارية", "انتهت القراءة.", "بلا أرصدة أو تكلفة API.", "القسم الجاري قراءته"),
+        "中文": ("免费语音朗读器", "朗读全书", "暂停", "继续", "停止", "语速", "自动选择声音", "准备朗读书稿。", "正在朗读", "朗读完成。", "不消耗积分或 API 费用。", "正在朗读的章节"),
     }
     codici_lingua = {
         "Italiano": "it-IT", "English": "en-US", "Español": "es-ES", "Français": "fr-FR",
@@ -756,6 +767,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
     }
     labels = etichette.get(lingua, etichette["Italiano"])
     testo_json = json.dumps(testo, ensure_ascii=False).replace("</", "<\\/")
+    parti_json = json.dumps(parti, ensure_ascii=False).replace("</", "<\\/")
     labels_json = json.dumps(labels, ensure_ascii=False).replace("</", "<\\/")
     lingua_json = json.dumps(codici_lingua.get(lingua, "it-IT"))
     components.html(
@@ -768,6 +780,9 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
           button,select{{border-radius:8px;padding:9px 11px;border:1px solid #cbd5e1;font-weight:700}}
           button{{background:#1689e8;color:#fff;border:0;cursor:pointer}} .stop{{background:#cf3345}}
           #status{{margin-top:10px;font-size:13px;font-weight:700;color:#1269ae}}
+          #currentSection{{margin-top:10px;padding:8px 10px;border-radius:7px;background:#dbeafe;color:#0f3f68;font-size:13px;font-weight:700}}
+          .progress{{height:7px;border-radius:999px;background:#d9e2ec;margin-top:8px;overflow:hidden}}
+          #progressBar{{height:100%;width:0;background:#1689e8;transition:width .25s ease}}
         </style>
         <div class="box">
           <h3>🔊 <span id="title"></span></h3><p id="note"></p>
@@ -775,20 +790,20 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
             <button id="start"></button><button id="pause"></button><button id="resume"></button><button class="stop" id="stop"></button>
             <label><span id="speedText"></span> <select id="speed"><option value="0.8">0,8×</option><option value="1" selected>1×</option><option value="1.2">1,2×</option><option value="1.4">1,4×</option></select></label>
             <select id="voice"></select>
-          </div><div id="status"></div>
+          </div><div id="status"></div><div id="currentSection"></div><div class="progress"><div id="progressBar"></div></div>
         </div>
         <script>
-          const bookText = {testo_json}, L = {labels_json}, bookLanguage = {lingua_json};
+          const bookText = {testo_json}, bookParts = {parti_json}, L = {labels_json}, bookLanguage = {lingua_json};
           const synth = window.speechSynthesis;
           let chunks = [], position = 0, active = false, paused = false, voices = [], utteranceId = 0;
           const el = (id) => document.getElementById(id);
           el("title").textContent=L[0]; el("note").textContent=L[10]; el("start").textContent="▶ "+L[1];
           el("pause").textContent="⏸ "+L[2]; el("resume").textContent="▶ "+L[3]; el("stop").textContent="■ "+L[4];
           el("speedText").textContent=L[5]; el("status").textContent=L[7];
-          function split(value) {{
+          function split(value, sectionTitle) {{
             const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
-            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push(current);current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
-            if(current)result.push(current); return result;
+            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push({{text:current,section:sectionTitle}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
+            if(current)result.push({{text:current,section:sectionTitle}}); return result;
           }}
           function loadVoices() {{
             voices=synth.getVoices(); const select=el("voice"), old=select.value; select.innerHTML="";
@@ -800,14 +815,23 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
             if(!active||paused)return;
             if(position>=chunks.length){{active=false;el("status").textContent=L[9];return;}}
             const id=++utteranceId;
-            const utterance=new SpeechSynthesisUtterance(chunks[position]); utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
+            const chunk=chunks[position];
+            const utterance=new SpeechSynthesisUtterance(chunk.text); utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
             const chosen=el("voice").value; const voice=chosen!==""?voices[Number(chosen)]:voices.find(v=>v.lang.toLowerCase().startsWith(bookLanguage.slice(0,2).toLowerCase()));
             if(voice)utterance.voice=voice;
             utterance.onend=()=>{{if(id!==utteranceId||paused||!active)return;position+=1;next();}};
             utterance.onerror=()=>{{if(id===utteranceId&&!paused){{active=false;el("status").textContent=L[7];}}}};
-            el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")"; synth.speak(utterance);
+            el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")";
+            el("currentSection").textContent=L[11]+": "+chunk.section;
+            el("progressBar").style.width=Math.round(((position+1)/chunks.length)*100)+"%";
+            synth.speak(utterance);
           }}
-          el("start").onclick=()=>{{utteranceId++;synth.cancel();chunks=split(bookText);position=0;active=true;paused=false;next();}};
+          el("start").onclick=()=>{{
+            utteranceId++; synth.cancel();
+            chunks=bookParts.flatMap((part)=>split(part.text,part.titolo));
+            if(!chunks.length)chunks=split(bookText,"Libro");
+            position=0;active=true;paused=false;next();
+          }};
           el("pause").onclick=()=>{{if(active){{paused=true;synth.pause();}}}};
           el("resume").onclick=()=>{{
             if(!active||!paused)return;
@@ -817,7 +841,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua):
             // senza saltare testo, solo se la ripresa non è effettiva.
             setTimeout(()=>{{if(active&&!paused&&!synth.speaking)next();}}, 450);
           }};
-          el("stop").onclick=()=>{{active=false;paused=false;position=0;utteranceId++;synth.cancel();el("status").textContent=L[7];}};
+          el("stop").onclick=()=>{{active=false;paused=false;position=0;utteranceId++;synth.cancel();el("status").textContent=L[7];el("currentSection").textContent="";el("progressBar").style.width="0";}};
           loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
         </script>
         """,
@@ -1340,6 +1364,73 @@ def chiave_sezione(sezione):
     return f"txt_{sezione.replace(' ', '_').replace('.', '')}"
 
 
+CAMPI_SALVATAGGIO_PROGETTO = {
+    "titolo": "book_title",
+    "autore": "book_author",
+    "lingua": "editor_language",
+    "genere": "book_genre",
+    "tipologia_scrittura": "book_writing_style",
+    "stile_racconto": "book_narrative_style",
+    "punto_di_vista": "book_point_of_view",
+    "obiettivo": "book_goal",
+    "risultato_finale": "book_desired_result",
+    "argomento": "book_plot",
+    "approfondimenti": "book_further_details",
+    "lunghezza": "profilo_lunghezza_stesura",
+}
+
+
+def ripristina_progetto_salvato():
+    """Ripristina una sola volta l'ultima bozza cloud dell'account corrente."""
+    if st.session_state.get("autosave_ripristino_verificato"):
+        return
+    st.session_state["autosave_ripristino_verificato"] = True
+    snapshot = carica_progetto_automatico()
+    if not snapshot:
+        return
+    sidebar = snapshot.get("sidebar", {})
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        valore = sidebar.get(nome)
+        if valore not in (None, ""):
+            st.session_state[chiave] = valore
+    indice = snapshot.get("indice_raw", "")
+    if indice:
+        st.session_state["indice_raw"] = indice
+        sync_capitoli()
+    for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
+        if contenuto:
+            st.session_state[chiave_sezione(sezione)] = contenuto
+    aggiornato = snapshot.get("_autosave_updated_at", "")
+    st.session_state["autosave_stato"] = (
+        f"✓ Progetto ripristinato automaticamente ({aggiornato[:16].replace('T', ' ')})."
+        if aggiornato else "✓ Progetto ripristinato automaticamente."
+    )
+
+
+def salva_progetto_corrente(sidebar, sezioni):
+    """Crea una fotografia leggera di sidebar, indice e testi e la invia solo se è cambiata."""
+    contenuti = {
+        sezione: st.session_state.get(chiave_sezione(sezione), "")
+        for sezione in sezioni
+        if st.session_state.get(chiave_sezione(sezione), "").strip()
+    }
+    snapshot = {
+        "sidebar": sidebar,
+        "indice_raw": st.session_state.get("indice_raw", ""),
+        "contenuti": contenuti,
+    }
+    serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
+    firma = hashlib.sha256(serializzato.encode("utf-8")).hexdigest()
+    if st.session_state.get("autosave_firma") == firma:
+        return
+    st.session_state["autosave_firma"] = firma
+    momento = datetime.datetime.now().strftime("%H:%M")
+    if salva_progetto_automatico(snapshot):
+        st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nel tuo account alle {momento}."
+    else:
+        st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nella sessione alle {momento}."
+
+
 def sezioni_mancanti_per_esportazione(sezioni, genere):
     """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
     mancanti = []
@@ -1667,12 +1758,14 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # ======================================================================================================================
 # 6. SIDEBAR: SETUP EDITORIALE AVANZATO E CARICAMENTO FONTI
 # ======================================================================================================================
+ripristina_progetto_salvato()
+
 with st.sidebar:
     lingua_sel = st.selectbox("🌐 Lingua / Language", list(TRADUZIONI.keys()), key="editor_language")
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     st.title(L["side_tit"])
-    val_titolo = st.text_input(L["lbl_tit"])
-    val_autore = st.text_input(L["lbl_auth"])
+    val_titolo = st.text_input(L["lbl_tit"], key="book_title")
+    val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
     # --- NUOVA SEZIONE CARICAMENTO FONTI ---
     st.markdown("### 📂 Fonti Esterne (Opzionale)")
@@ -1701,7 +1794,7 @@ with st.sidebar:
     st.markdown("---")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
-    val_genere = st.selectbox(L["lbl_gen"], lista_gen)
+    val_genere = st.selectbox(L["lbl_gen"], lista_gen, key="book_genre")
     
     stili_estesi = [
         "Standard", 
@@ -1715,7 +1808,7 @@ with st.sidebar:
         "Epico ed Evocativo", 
         "Minimalista ed Essenziale"
     ]
-    val_stile = st.selectbox(L["lbl_style"], stili_estesi)
+    val_stile = st.selectbox(L["lbl_style"], stili_estesi, key="book_writing_style")
 
     direttive_indice_tipologia = {
         "Standard": "Crea un percorso lineare da basi a sviluppo, applicazione, verifica e sintesi. Rispetta il budget di sezioni indicato nel prompt: non espandere l'indice con capitoli o sottocapitoli ripetitivi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
@@ -1736,7 +1829,7 @@ with st.sidebar:
     val_narrativa = st.selectbox(L["lbl_narrative"], [
         "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante", 
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale", "Diretto e Pratico (Action-oriented)", "Storico e Documentale"
-    ])
+    ], key="book_narrative_style")
     
     # NUOVO BLOCCO: Punto di Vista (POV)
     lista_pov = [
@@ -1745,7 +1838,7 @@ with st.sidebar:
         "Noi (Inclusivo, partecipativo e didattico)",
         "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)"
     ]
-    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), lista_pov)
+    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), lista_pov, key="book_point_of_view")
     
     # Definizioni disponibili prima del loro primo utilizzo nella UI.
     # Restano presenti anche nel modulo di memoria sottostante per compatibilità.
@@ -1790,7 +1883,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         if duplicati == 0: risultati.append("OK: nessuna duplicazione identica rilevata nel testo disponibile")
         return "\n".join(risultati)
 
-    val_goal = st.text_input(L["lbl_goal"], placeholder="Es: Mantenere l'attenzione alta, far emozionare...")
+    val_goal = st.text_input(L["lbl_goal"], placeholder="Es: Mantenere l'attenzione alta, far emozionare...", key="book_goal")
     etichette_risultato = {
         "Italiano": "Risultato finale desiderato",
         "English": "Desired final result",
@@ -1805,13 +1898,15 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     val_risultato = st.text_area(
         etichette_risultato.get(lingua_sel, "Risultato finale desiderato"),
         height=100,
-        placeholder="Es: Alla fine il lettore deve saper applicare il metodo in autonomia e verificare il risultato."
+        placeholder="Es: Alla fine il lettore deve saper applicare il metodo in autonomia e verificare il risultato.",
+        key="book_desired_result"
     )
-    val_trama = st.text_area(L["lbl_plot"], height=150)
+    val_trama = st.text_area(L["lbl_plot"], height=150, key="book_plot")
     val_approfondimenti = st.text_area(
         "Approfondimenti (facoltativo)",
         height=130,
-        placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori."
+        placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
+        key="book_further_details"
     )
     val_lunghezza = st.selectbox(
         "Lunghezza delle sezioni",
@@ -1866,9 +1961,13 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         st.session_state["firma_notifica_sidebar"] = firma_sidebar_pronta
     elif not sidebar_pronta:
         st.session_state.pop("firma_notifica_sidebar", None)
+
+    if st.session_state.get("autosave_stato"):
+        st.caption(st.session_state["autosave_stato"])
     
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(L["btn_res"]):
+        elimina_progetto_automatico()
         for key in list(st.session_state.keys()):
             if not key.startswith("commercial_"):
                 del st.session_state[key]
@@ -3441,6 +3540,44 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             elif st.session_state.get("job_scrittura_attivo") is False and not st.session_state.get("job_scrittura_coda") and st.session_state.get("job_scrittura_totale"):
                 notifica_sonora("libro_completato", lingua_sel)
                 st.success("Libro completato: tutte le sezioni previste sono state generate e salvate.")
+
+            with st.expander("🔎 Ricerca e sostituzione nel libro", expanded=False):
+                st.caption("Cerca un termine nelle sezioni già scritte e sostituiscilo in tutto il manoscritto. L'operazione non avvia l'AI e non consuma crediti.")
+                cerca_globale = st.text_input("Testo da cercare", key="ricerca_globale_testo")
+                sostituisci_globale = st.text_input("Sostituisci con", key="ricerca_globale_sostituzione")
+                rispetta_maiuscole = st.checkbox("Distingui maiuscole e minuscole", key="ricerca_globale_maiuscole")
+                if cerca_globale:
+                    flag_ricerca = 0 if rispetta_maiuscole else re.IGNORECASE
+                    occorrenze, sezioni_trovate = 0, []
+                    for sezione in opzioni_editor:
+                        testo_sezione = st.session_state.get(chiave_sezione(sezione), "")
+                        trovate = len(re.findall(re.escape(cerca_globale), testo_sezione, flags=flag_ricerca))
+                        if trovate:
+                            occorrenze += trovate
+                            sezioni_trovate.append(sezione)
+                    st.info(f"Trovate {occorrenze} occorrenze in {len(sezioni_trovate)} sezioni.")
+                    conferma_sostituzione = st.checkbox(
+                        "Confermo la sostituzione in tutte le sezioni trovate.",
+                        key="ricerca_globale_conferma",
+                    )
+                    if st.button(
+                        "🔁 SOSTITUISCI IN TUTTO IL LIBRO",
+                        type="primary",
+                        disabled=not conferma_sostituzione or occorrenze == 0,
+                        key="ricerca_globale_applica",
+                    ):
+                        for sezione in sezioni_trovate:
+                            chiave = chiave_sezione(sezione)
+                            testo_sezione = st.session_state.get(chiave, "")
+                            st.session_state[chiave] = re.sub(
+                                re.escape(cerca_globale),
+                                lambda _match: sostituisci_globale,
+                                testo_sezione,
+                                flags=flag_ricerca,
+                            )
+                        st.success(f"Sostituzione completata: {occorrenze} modifiche in {len(sezioni_trovate)} sezioni. Il salvataggio automatico verrà aggiornato.")
+                        st.rerun()
+
             sez_scelta = st.selectbox(L["lbl_sec"], opzioni_editor)
             k_sessione = f"txt_{sez_scelta.replace(' ', '_').replace('.', '')}"
             sottocapitoli_capitolo = individua_sottocapitoli_del_capitolo(sez_scelta, lista_cap_base)
@@ -3638,7 +3775,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.image(immagine_associata["bytes"], caption="Immagine associata al capitolo", width=420)
 
             testo_editor = pulisci_testo_editoriale(st.session_state.get(k_sessione, ""))
-            st.session_state[k_sessione] = st.text_area(L["label_editor"], value=testo_editor, height=500)
+            if k_sessione not in st.session_state:
+                st.session_state[k_sessione] = testo_editor
+            st.text_area(
+                L["label_editor"],
+                height=500,
+                key=k_sessione,
+                help="Le modifiche vengono salvate automaticamente nel progetto.",
+            )
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
                 if pulsante_con_preventivo(
@@ -3659,11 +3803,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         blocchi_lettore = [val_titolo]
         if val_autore:
             blocchi_lettore.append(val_autore)
+        sezioni_lettore = [{"titolo": val_titolo or "Libro", "testo": "\n".join(blocchi_lettore)}]
         for sezione, contenuto in contenuti_libro.items():
             testo_sezione = pulisci_testo_editoriale(contenuto)
             if testo_sezione:
                 blocchi_lettore.append(f"{sezione}. {testo_sezione}")
-        mostra_lettore_vocale_gratuito("\n\n".join(blocchi_lettore), lingua_sel)
+                sezioni_lettore.append({"titolo": sezione, "testo": testo_sezione})
+        mostra_lettore_vocale_gratuito("\n\n".join(blocchi_lettore), lingua_sel, sezioni_lettore)
         st.divider()
 
         firma_attuale_coerenza = firma_controllo_coerenza(
@@ -3886,6 +4032,25 @@ Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive
                     st.info("La formattazione completa è disponibile per file DOCX. Per un PDF puoi generare comunque i metadati a sinistra.")
 else:
     st.info(L["welcome"] + " " + L["guide"])
+
+# Salvataggio non bloccante: avviene alla fine del rerun solo quando il progetto
+# contiene almeno un dato. La firma evita richieste duplicate a Supabase.
+sidebar_salvataggio = {
+    "titolo": val_titolo,
+    "autore": val_autore,
+    "lingua": lingua_sel,
+    "genere": val_genere,
+    "tipologia_scrittura": val_stile,
+    "stile_racconto": val_narrativa,
+    "punto_di_vista": val_pov,
+    "obiettivo": val_goal,
+    "risultato_finale": val_risultato,
+    "argomento": val_trama,
+    "approfondimenti": val_approfondimenti,
+    "lunghezza": val_lunghezza,
+}
+if any(str(valore).strip() for valore in sidebar_salvataggio.values()) or st.session_state.get("indice_raw"):
+    salva_progetto_corrente(sidebar_salvataggio, opzioni_editor)
 
 # ======================================================================================================================
 # DOCUMENTAZIONE TECNICA E MODULI DI ESPANSIONE (SIMULAZIONE SCALABILITÀ 3000 RIGHE)
