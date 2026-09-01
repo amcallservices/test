@@ -5,6 +5,7 @@ import requests
 import re
 import json
 import csv
+import html
 import time
 import datetime
 import base64
@@ -751,6 +752,29 @@ def pulisci_testo_editoriale(testo):
     return testo.strip()
 
 
+def dividi_blocchi_lettura(testo, limite=480):
+    """Divide il testo con la stessa logica del lettore browser.
+
+    I blocchi ricevono poi un riferimento nell'anteprima, così l'evidenziazione
+    resta sincronizzata con la frase effettivamente pronunciata.
+    """
+    normalizzato = re.sub(r"\s+", " ", str(testo or "")).strip()
+    if not normalizzato:
+        return []
+    frasi = re.findall(r"[^.!?…]+[.!?…]+|[^.!?…]+$", normalizzato) or [normalizzato]
+    blocchi, corrente = [], ""
+    for frase in frasi:
+        candidata = (corrente + " " + frase).strip()
+        if len(candidata) > limite and corrente:
+            blocchi.append(corrente)
+            corrente = frase.strip()
+        else:
+            corrente = candidata
+    if corrente:
+        blocchi.append(corrente)
+    return blocchi
+
+
 def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
     """Legge nel browser il manoscritto completo senza API, crediti o file audio."""
     testo = pulisci_testo_editoriale(testo_libro or "")
@@ -762,7 +786,11 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
     for parte in sezioni or []:
         contenuto = pulisci_testo_editoriale(parte.get("testo", ""))
         if contenuto:
-            parti.append({"titolo": str(parte.get("titolo", "")).strip() or "Libro", "testo": contenuto})
+            parti.append({
+                "titolo": str(parte.get("titolo", "")).strip() or "Libro",
+                "testo": contenuto,
+                "anchor_prefix": str(parte.get("anchor_prefix", "")).strip(),
+            })
     if not parti:
         parti = [{"titolo": "Libro", "testo": testo}]
 
@@ -840,16 +868,38 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             // Un resume periodico mantiene viva la lettura senza cambiare testo.
             keepAliveTimer=setInterval(()=>{{ if(active&&!paused&&synth) synth.resume(); }}, 10000);
           }}
+          function clearPreviewHighlight() {{
+            try {{
+              const root=window.parent.document;
+              root.querySelectorAll(".voice-preview-active").forEach((node)=>{{
+                node.classList.remove("voice-preview-active");
+                node.style.background=""; node.style.boxShadow=""; node.style.borderRadius=""; node.style.padding="";
+              }});
+            }} catch (_) {{}}
+          }}
+          function highlightPreview(anchor) {{
+            clearPreviewHighlight();
+            if(!anchor) return;
+            try {{
+              const node=window.parent.document.getElementById(anchor);
+              if(node) {{
+                node.classList.add("voice-preview-active");
+                node.style.background="#fff3b0"; node.style.boxShadow="0 0 0 3px #f59e0b";
+                node.style.borderRadius="4px"; node.style.padding="2px 3px";
+              }}
+            }} catch (_) {{}}
+          }}
           function stopReading() {{
             active=false; paused=false; position=0; utteranceId++; currentUtterance=null;
             clearKeepAlive(); if(synth) synth.cancel();
+            clearPreviewHighlight();
             el("status").textContent=L[7]; el("currentSection").textContent=""; el("currentExcerpt").textContent=""; el("progressBar").style.width="0";
           }}
-          function split(value, sectionTitle) {{
+          function split(value, sectionTitle, anchorPrefix="") {{
             const sentences=value.replace(/\\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
             // Blocchi brevi: Chrome può interrompere gli utterance troppo lunghi.
-            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>480&&current){{result.push({{text:current,section:sectionTitle}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
-            if(current)result.push({{text:current,section:sectionTitle}}); return result;
+            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>480&&current){{result.push({{text:current,section:sectionTitle,anchor:anchorPrefix?anchorPrefix+"_"+result.length:""}});current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
+            if(current)result.push({{text:current,section:sectionTitle,anchor:anchorPrefix?anchorPrefix+"_"+result.length:""}}); return result;
           }}
           function loadVoices() {{
             if(!synth) return;
@@ -860,7 +910,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           }}
           function next() {{
             if(!active||paused)return;
-            if(position>=chunks.length){{active=false;currentUtterance=null;clearKeepAlive();el("status").textContent=L[9];return;}}
+            if(position>=chunks.length){{active=false;currentUtterance=null;clearKeepAlive();clearPreviewHighlight();el("status").textContent=L[9];return;}}
             const id=++utteranceId;
             const chunk=chunks[position];
             if(!Utterance) {{ active=false; el("status").textContent="Lettore vocale non disponibile in questo browser."; return; }}
@@ -882,6 +932,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")";
             el("currentSection").textContent=L[11]+": "+chunk.section;
             el("currentExcerpt").textContent="▶ "+chunk.text;
+            highlightPreview(chunk.anchor);
             el("progressBar").style.width=Math.round(((position+1)/chunks.length)*100)+"%";
             try {{
               synth.speak(utterance);
@@ -897,8 +948,8 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
               utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel(); synth.resume();
               // Le sezioni inviate da Python usano la chiave italiana
               // "testo"; supportiamo anche "text" per vecchi progetti.
-              chunks=bookParts.flatMap((part)=>split(part.testo||part.text||"",part.titolo||"Libro"));
-              if(!chunks.length)chunks=split(bookText,"Libro");
+              chunks=bookParts.flatMap((part)=>split(part.testo||part.text||"",part.titolo||"Libro",part.anchor_prefix||""));
+              if(!chunks.length)chunks=split(bookText,"Libro","");
               position=0;active=true;paused=false;
               // speak deve avvenire nello stesso click dell'utente: alcuni
               // browser bloccano il lettore se lo rimandiamo con setTimeout.
@@ -4327,7 +4378,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             testo_sezione = pulisci_testo_editoriale(contenuto)
             if testo_sezione:
                 blocchi_lettore.append(f"{sezione}. {testo_sezione}")
-                sezioni_lettore.append({"titolo": sezione, "testo": testo_sezione})
+                prefisso_ancora = "voice_preview_" + hashlib.sha256(sezione.encode("utf-8")).hexdigest()[:16]
+                sezioni_lettore.append({
+                    "titolo": sezione,
+                    "testo": testo_sezione,
+                    "anchor_prefix": prefisso_ancora,
+                })
         mostra_lettore_vocale_gratuito("\n\n".join(blocchi_lettore), lingua_sel, sezioni_lettore)
         st.divider()
 
@@ -4337,14 +4393,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         )
 
         # L'anteprima viene renderizzata prima dei controlli: resta consultabile mentre l'audit aggiorna la barra sotto.
-        html_p = f"<div class='preview-box'><h1 style='text-align:center;'>{val_titolo.upper()}</h1>"
+        html_p = f"<div class='preview-box'><h1 style='text-align:center;'>{html.escape(val_titolo.upper())}</h1>"
         if val_autore:
-            html_p += f"<h3 style='text-align:center;'>di {val_autore}</h3>"
+            html_p += f"<h3 style='text-align:center;'>di {html.escape(val_autore)}</h3>"
         html_p += "<hr><br>"
         for s in opzioni_editor:
             sk = chiave_sezione(s)
             if sk in st.session_state and st.session_state[sk].strip():
-                html_p += f"<h2>{s.upper()}</h2>"
+                html_p += f"<h2>{html.escape(s.upper())}</h2>"
                 img = st.session_state.get("immagini_capitoli", {}).get(s)
                 if img:
                     img_b64 = base64.b64encode(img["bytes"]).decode("ascii")
@@ -4356,7 +4412,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         f"<div style='font-size:13px;color:#555;font-style:italic;'>{caption}</div></div>"
                     )
                 testo_preview = pulisci_testo_editoriale(st.session_state[sk])
-                html_p += f"<p>{testo_preview.replace(chr(10), '<br>')}</p>"
+                prefisso_ancora = "voice_preview_" + hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+                blocchi_preview = dividi_blocchi_lettura(testo_preview)
+                testo_con_ancore = " ".join(
+                    f"<span id='{prefisso_ancora}_{indice}'>{html.escape(blocco)}</span>"
+                    for indice, blocco in enumerate(blocchi_preview)
+                )
+                html_p += f"<p>{testo_con_ancore}</p>"
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
         st.subheader("Controllo del manoscritto")
