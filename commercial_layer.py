@@ -691,7 +691,7 @@ def _landing_page() -> None:
     st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
     invito_a, invito_b = st.columns([1.35, 0.65])
     with invito_a:
-        if st.button("✒️ Inizia il tuo progetto con 15 crediti", type="primary", use_container_width=True, key="landing_signup_mid"):
+        if st.button("✒️ Inizia Gratis con 50 crediti", type="primary", use_container_width=True, key="landing_signup_mid"):
             st.session_state["commercial_show_auth"] = True
             st.session_state["commercial_auth_hint"] = "signup"
             st.rerun()
@@ -740,14 +740,6 @@ def _landing_page() -> None:
     with st.expander("Cosa accade se finiscono i crediti?"):
         st.write("Il lavoro già creato resta disponibile: puoi leggerlo, modificarlo manualmente ed esportare le parti già presenti. I crediti servono solo per avviare nuove elaborazioni IA.")
 
-    st.markdown(
-        """<div class='ss-trust' style='margin-top:2rem'>
-        <strong>Scrittore Site</strong> · Progetta, scrivi, controlla ed esporta con il tuo ritmo.
-        <br><a href='https://wa.me/393282693777?text=Scrivo%20da%20Scrittore%20Site' target='_blank' rel='noopener noreferrer'>💬 Contatta l'assistenza</a>
-        &nbsp; · &nbsp;<a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>La nostra Community</a>
-        </div>""",
-        unsafe_allow_html=True,
-    )
 
 
 def _account_gate() -> dict[str, Any]:
