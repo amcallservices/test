@@ -4,6 +4,7 @@ import os
 import requests
 import re
 import json
+import csv
 import time
 import datetime
 import base64
@@ -18,7 +19,7 @@ from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 from docx.oxml import OxmlElement, ns
-from io import BytesIO
+from io import BytesIO, StringIO
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import PyPDF2  # Libreria necessaria per leggere i PDF caricati
@@ -328,7 +329,7 @@ TRADUZIONI = {
         "lbl_tit": "Titolo del Libro", "lbl_auth": "Nome Autore", "lbl_lang": "Lingua", 
         "lbl_gen": "Genere Letterario", "lbl_style": "Tipologia Scrittura", "lbl_plot": "Trama o Argomento",
         "lbl_narrative": "Stile di Racconto", "lbl_goal": "Obiettivo del Libro", "lbl_pov": "Punto di Vista (Pronome)",
-        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrittura & Quiz", "📖 3. Anteprima", "📑 4. Esporta"],
+        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrittura & Quiz", "📖 3. Anteprima", "📑 4. Importa / Esporta"],
         "btn_idx": "🚀 Genera Indice Professionale", "btn_sync": "✅ Salva e Sincronizza Capitoli",
         "lbl_sec": "Seleziona sezione:", "btn_write": "✨ SCRIVI CONTENUTO (Dettagliato)",
         "btn_quiz": "🧠 AGGIUNGI QUIZ AL LIBRO", "btn_edit": "🚀 RIELABORA CON IA",
@@ -341,7 +342,7 @@ TRADUZIONI = {
     "English": {
         "side_tit": "⚙️ Editor Setup", "lbl_tit": "Book Title", "lbl_auth": "Author Name", "lbl_lang": "Language", 
         "lbl_gen": "Genre", "lbl_style": "Writing Style", "lbl_plot": "Plot", "lbl_narrative": "Narrative Style", "lbl_goal": "Book Goal", "lbl_pov": "Point of View (Pronoun)",
-        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write & Quiz", "📖 3. Preview", "📑 4. Export"],
+        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write & Quiz", "📖 3. Preview", "📑 4. Import / Export"],
         "btn_idx": "🚀 Generate Index", "btn_sync": "✅ Sync Chapters", "lbl_sec": "Select section:",
         "btn_write": "✨ WRITE CONTENT", "btn_quiz": "🧠 ADD QUIZ", "btn_edit": "🚀 REWRITE",
         "msg_run": "Native expert analyzing hierarchy, style and goal...", "preface": "Preface", "ack": "Acknowledgements",
@@ -352,7 +353,7 @@ TRADUZIONI = {
     "Español": {
         "side_tit": "⚙️ Configuración del Editor", "lbl_tit": "Título del Libro", "lbl_auth": "Nombre del Autor", "lbl_lang": "Idioma", 
         "lbl_gen": "Género Literario", "lbl_style": "Estilo de Escritura", "lbl_plot": "Trama o Argumento", "lbl_narrative": "Estilo Narrativo", "lbl_goal": "Objetivo del Libro", "lbl_pov": "Punto de Vista (Pronombre)",
-        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escritura y Quiz", "📖 3. Vista Previa", "📑 4. Exportar"],
+        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escritura y Quiz", "📖 3. Vista Previa", "📑 4. Importar / Exportar"],
         "btn_idx": "🚀 Generar Índice Profesional", "btn_sync": "✅ Guardar y Sincronizar", "lbl_sec": "Seleccionar sección:",
         "btn_write": "✨ ESCRIBIR CONTENIDO", "btn_quiz": "🧠 AÑADIR QUIZ", "btn_edit": "🚀 REESCRIBIR",
         "msg_run": "Analizando jerarquía y estilo...", "preface": "Prefacio", "ack": "Agradecimientos",
@@ -362,7 +363,7 @@ TRADUZIONI = {
     "Français": {
         "side_tit": "⚙️ Configuration de l'Éditeur", "lbl_tit": "Titre du Livre", "lbl_auth": "Nom de l'Auteur", "lbl_lang": "Langue", 
         "lbl_gen": "Genre Littéraire", "lbl_style": "Style d'Écriture", "lbl_plot": "Intrigue ou Sujet", "lbl_narrative": "Style Narratif", "lbl_goal": "Objectif du Livre", "lbl_pov": "Point de Vue (Pronom)",
-        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écriture & Quiz", "📖 3. Aperçu", "📑 4. Exporter"],
+        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écriture & Quiz", "📖 3. Aperçu", "📑 4. Importer / Exporter"],
         "btn_idx": "🚀 Générer l'Index", "btn_sync": "✅ Synchroniser", "lbl_sec": "Sélectionner la section:",
         "btn_write": "✨ ÉCRIRE LE CONTENU", "btn_quiz": "🧠 AJOUTER UN QUIZ", "btn_edit": "🚀 RÉÉCRIRE",
         "msg_run": "Analyse de la hiérarchie et du style...", "preface": "Préface", "ack": "Remerciements",
@@ -372,7 +373,7 @@ TRADUZIONI = {
     "Deutsch": {
         "side_tit": "⚙️ Editor-Setup", "lbl_tit": "Buchtitel", "lbl_auth": "Autorenname", "lbl_lang": "Sprache", 
         "lbl_gen": "Genre", "lbl_style": "Schreibstil", "lbl_plot": "Handlung", "lbl_narrative": "Erzählstil", "lbl_goal": "Buchziel", "lbl_pov": "Erzählperspektive (Pronomen)",
-        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Schreiben & Quiz", "📖 3. Vorschau", "📑 4. Exportieren"],
+        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Schreiben & Quiz", "📖 3. Vorschau", "📑 4. Importieren / Exportieren"],
         "btn_idx": "🚀 Index Generieren", "btn_sync": "✅ Synchronisieren", "lbl_sec": "Abschnitt wählen:",
         "btn_write": "✨ INHALT SCHREIBEN", "btn_quiz": "🧠 QUIZ HINZUFÜGEN", "btn_edit": "🚀 UMSCHREIBEN",
         "msg_run": "Analysiere Hierarchie und Stil...", "preface": "Vorwort", "ack": "Danksagungen",
@@ -382,7 +383,7 @@ TRADUZIONI = {
     "Română": {
         "side_tit": "⚙️ Configurare Editor", "lbl_tit": "Titlul Cărții", "lbl_auth": "Nume Autor", "lbl_lang": "Limbă", 
         "lbl_gen": "Gen Literar", "lbl_style": "Stil de Scriere", "lbl_plot": "Subiect", "lbl_narrative": "Stil Narativ", "lbl_goal": "Obiectivul Cărții", "lbl_pov": "Punct de Vedere (Pronume)",
-        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scriere & Quiz", "📖 3. Previzualizare", "📑 4. Export"],
+        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scriere & Quiz", "📖 3. Previzualizare", "📑 4. Import / Export"],
         "btn_idx": "🚀 Generare Cuprins", "btn_sync": "✅ Sincronizare", "lbl_sec": "Selectează secțiunea:",
         "btn_write": "✨ SCRIE CONȚINUT", "btn_quiz": "🧠 ADAUGĂ QUIZ", "btn_edit": "🚀 RESCRIE",
         "msg_run": "Se analizează ierarhia și stilul...", "preface": "Prefață", "ack": "Mulțumiri",
@@ -392,7 +393,7 @@ TRADUZIONI = {
     "Русский": {
         "side_tit": "⚙️ Настройки Редактора", "lbl_tit": "Название Книги", "lbl_auth": "Имя Автора", "lbl_lang": "Язык", 
         "lbl_gen": "Жанр", "lbl_style": "Стиль Написания", "lbl_plot": "Сюжет", "lbl_narrative": "Стиль Повествования", "lbl_goal": "Цель Книги", "lbl_pov": "Точка зрения (Местоимение)",
-        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Текст и Тест", "📖 3. Просмотр", "📑 4. Export"],
+        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Текст и Тест", "📖 3. Просмотр", "📑 4. Импорт / Экспорт"],
         "btn_idx": "🚀 Создать Оглавление", "btn_sync": "✅ Синхронизировать", "lbl_sec": "Выберите раздел:",
         "btn_write": "✨ НАПИСАТЬ ТЕКСТ", "btn_quiz": "🧠 ДОБАВИТЬ ТЕСТ", "btn_edit": "🚀 ПЕРЕПИСАТЬ",
         "msg_run": "Анализ иерархии и стиля...", "preface": "Предисловие", "ack": "Благодарности",
@@ -402,7 +403,7 @@ TRADUZIONI = {
     "العربية": {
         "side_tit": "⚙️ إعدادات المحرر", "lbl_tit": "عنوان الكتاب", "lbl_auth": "اسم المؤلف", "lbl_lang": "اللغة", 
         "lbl_gen": "النوع الأدبي", "lbl_style": "أسلوب الكتابة", "lbl_plot": "الحبكة أو الموضوع", "lbl_narrative": "الأسلوب السردي", "lbl_goal": "هدف الكتاب", "lbl_pov": "وجهة النظر (الضمير)",
-        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. الكتابة والاختبار", "📖 3. معاينة", "📑 4. تصدير"],
+        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. الكتابة والاختبار", "📖 3. معاينة", "📑 4. استيراد / تصدير"],
         "btn_idx": "🚀 إنشاء فهرس احترافي", "btn_sync": "✅ حفظ ومزامنة الفصول", "lbl_sec": "اختر القسم:",
         "btn_write": "✨ كتابة المحتوى", "btn_quiz": "🧠 إضافة اختبار", "btn_edit": "🚀 إعادة صياغة",
         "msg_run": "جاري تحليل التسلسل الهرمي والأسلوب...", "preface": "مقدمة", "ack": "شكر وتقدير",
@@ -412,7 +413,7 @@ TRADUZIONI = {
     "中文": {
         "side_tit": "⚙️ 编辑器设置", "lbl_tit": "书名", "lbl_auth": "作者姓名", "lbl_lang": "语言", 
         "lbl_gen": "文学体裁", "lbl_style": "写作类型", "lbl_plot": "情节或主题", "lbl_narrative": "叙事风格", "lbl_goal": "书籍目标", "lbl_pov": "叙事视角 (代词)",
-        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作与测试", "📖 3. 预览", "📑 4. 导出"],
+        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作与测试", "📖 3. 预览", "📑 4. 导入 / 导出"],
         "btn_idx": "🚀 生成专业目录", "btn_sync": "✅ 保存并同步章节", "lbl_sec": "选择章节:",
         "btn_write": "✨ 编写内容", "btn_quiz": "🧠 添加测试", "btn_edit": "🚀 用AI重写",
         "msg_run": "正在分析层级、风格和情感目标...", "preface": "前言", "ack": "致谢",
@@ -1546,6 +1547,89 @@ def sidebar_memorizzata_corrente():
     return memoria
 
 
+def esporta_progetto_editoriale_csv():
+    """Crea un CSV portabile con l'intero progetto editoriale corrente.
+
+    Il formato a righe evita limiti pratici delle celle: conserva campi della
+    sidebar, indice, sezioni, fonti e immagini associate senza dipendere da
+    Supabase o dalla sessione del browser.
+    """
+    buffer = StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=["tipo", "chiave", "valore"])
+    writer.writeheader()
+    writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "1"})
+
+    for nome, valore in sidebar_memorizzata_corrente().items():
+        writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
+    writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": st.session_state.get("indice_raw", "")})
+
+    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    for sezione in st.session_state.get("lista_capitoli", []):
+        testo = leggi_sezione_memorizzata(sezione)
+        if str(testo).strip():
+            contenuti[sezione] = testo
+    for sezione, testo in contenuti.items():
+        if str(testo).strip():
+            writer.writerow({"tipo": "sezione", "chiave": sezione, "valore": testo})
+
+    for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
+        valore = st.session_state.get(chiave, "")
+        if valore:
+            writer.writerow({"tipo": "fonte", "chiave": chiave, "valore": str(valore)})
+
+    for sezione, immagine in (st.session_state.get("immagini_capitoli", {}) or {}).items():
+        dati = dict(immagine or {})
+        raw = dati.pop("bytes", None)
+        if raw:
+            dati["bytes_b64"] = base64.b64encode(raw).decode("ascii")
+        if dati:
+            writer.writerow({"tipo": "immagine", "chiave": sezione, "valore": json.dumps(dati, ensure_ascii=False)})
+    return buffer.getvalue().encode("utf-8-sig")
+
+
+def importa_progetto_editoriale_csv(file_caricato):
+    """Legge un CSV esportato dall'app e restituisce una fotografia validata."""
+    try:
+        contenuto = file_caricato.getvalue().decode("utf-8-sig")
+        righe = list(csv.DictReader(StringIO(contenuto)))
+    except Exception as exc:
+        raise ValueError(f"Il file CSV non è leggibile: {exc}") from exc
+    if not righe or not {"tipo", "chiave", "valore"}.issubset(set(righe[0].keys())):
+        raise ValueError("Questo file non è un archivio CSV di Scrittore Site.")
+
+    snapshot = {"sidebar": {}, "indice_raw": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}}
+    formato_valido = False
+    for riga in righe:
+        tipo, chiave, valore = riga.get("tipo", ""), riga.get("chiave", ""), riga.get("valore", "")
+        if tipo == "formato" and chiave == "scrittore_site" and valore == "1":
+            formato_valido = True
+        elif tipo == "sidebar" and chiave in CAMPI_SALVATAGGIO_PROGETTO:
+            snapshot["sidebar"][chiave] = valore
+        elif tipo == "progetto" and chiave == "indice_raw":
+            snapshot["indice_raw"] = valore
+        elif tipo == "sezione" and chiave:
+            snapshot["contenuti"][chiave] = valore
+        elif tipo == "fonte" and chiave in {"conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"}:
+            snapshot["fonti"][chiave] = valore
+        elif tipo == "immagine" and chiave:
+            try:
+                dati = json.loads(valore)
+                raw_b64 = dati.pop("bytes_b64", "")
+                if raw_b64:
+                    dati["bytes"] = base64.b64decode(raw_b64)
+                if dati.get("bytes"):
+                    snapshot["immagini_capitoli"][chiave] = dati
+            except Exception:
+                # Una singola immagine danneggiata non impedisce il recupero
+                # di sidebar, indice e manoscritto.
+                continue
+    if not formato_valido:
+        raise ValueError("Questo CSV non è stato esportato da Scrittore Site o usa un formato non supportato.")
+    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["contenuti"]):
+        raise ValueError("Il CSV è valido ma non contiene ancora dati editoriali da ripristinare.")
+    return snapshot
+
+
 def mostra_memoria_visiva_progetto():
     """Pannello leggibile che rende verificabile la memoria reale del progetto."""
     sidebar = sidebar_memorizzata_corrente()
@@ -1613,15 +1697,21 @@ def applica_snapshot_progetto(snapshot):
     for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
         if contenuto:
             scrivi_sezione_memorizzata(sezione, contenuto)
+    immagini = snapshot.get("immagini_capitoli", {}) or {}
+    if immagini:
+        st.session_state["immagini_capitoli"] = immagini
     fonti = snapshot.get("fonti", {}) or {}
     for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
         if fonti.get(chiave):
             st.session_state[chiave] = fonti[chiave]
     aggiornato = snapshot.get("_autosave_updated_at", "")
-    st.session_state["autosave_stato"] = (
-        f"✓ Ultima stesura ripristinata: sidebar, indice e sezioni ({aggiornato[:16].replace('T', ' ')})."
-        if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice e sezioni."
-    )
+    if snapshot.get("_origine_importazione_csv"):
+        st.session_state["autosave_stato"] = "✓ Progetto CSV importato: sidebar, indice, sezioni, fonti e immagini sono nella sessione. Premi SALVA SESSIONE se vuoi conservarlo nel tuo account."
+    else:
+        st.session_state["autosave_stato"] = (
+            f"✓ Ultima stesura ripristinata: sidebar, indice e sezioni ({aggiornato[:16].replace('T', ' ')})."
+            if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice e sezioni."
+        )
     return True
 
 
@@ -4308,8 +4398,43 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     key="output_report_coerenza_libro"
                 )
 
-    # TAB 4: ESPORTAZIONE
+    # TAB 4: IMPORTAZIONE / ESPORTAZIONE
     with tabs[4]:
+        st.subheader("📦 Archivio del progetto editoriale")
+        st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Il CSV non consuma crediti.")
+        progetto_csv = esporta_progetto_editoriale_csv()
+        nome_archivio = re.sub(r"[^\w.-]+", "_", val_titolo.strip() or "progetto_scrittore_site", flags=re.UNICODE).strip("_")
+        col_csv_esporta, col_csv_importa = st.columns(2)
+        with col_csv_esporta:
+            st.download_button(
+                "📥 Esporta progetto completo (.csv)",
+                data=progetto_csv,
+                file_name=f"{nome_archivio}_scrittore_site.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="Crea una copia portabile del progetto attualmente aperto.",
+            )
+        with col_csv_importa:
+            csv_da_importare = st.file_uploader(
+                "Importa progetto CSV", type=["csv"], key="importa_progetto_editoriale_csv",
+                help="Accetta solo un CSV esportato da Scrittore Site.",
+            )
+            if csv_da_importare and st.button("📤 Importa e ripristina progetto", use_container_width=True, key="conferma_importazione_progetto_csv"):
+                try:
+                    snapshot_csv = importa_progetto_editoriale_csv(csv_da_importare)
+                    snapshot_csv["_origine_importazione_csv"] = True
+                    # L'applicazione avviene nel rerun seguente, prima della
+                    # sidebar: Streamlit può così aggiornare ogni widget senza
+                    # perdere campi o testi.
+                    st.session_state.pop("commercial_project_reset_requested", None)
+                    st.session_state["autosave_snapshot_da_ripristinare"] = snapshot_csv
+                    st.rerun()
+                except ValueError as exc:
+                    st.error(str(exc))
+                except Exception as exc:
+                    st.error(f"Importazione non riuscita: {exc}")
+        st.info("L'importazione sostituisce il progetto aperto solo nella pagina corrente. Per salvarla anche nel tuo account premi poi “💾 SALVA SESSIONE” nella sidebar.")
+        st.divider()
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
         contenuti_export = {
             sezione: st.session_state.get(chiave_sezione(sezione), "")
