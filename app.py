@@ -836,6 +836,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             <label><span id="speedText"></span> <select id="speed"><option value="0.8">0,8×</option><option value="1" selected>1×</option><option value="1.2">1,2×</option><option value="1.4">1,4×</option></select></label>
             <select id="voice"></select>
           </div><div id="status"></div><div id="currentSection"></div><div id="currentExcerpt"></div><div class="progress"><div id="progressBar"></div></div>
+          <div class="row" style="margin-top:10px"><label><span id="startFromText"></span> <select id="startFrom"></select></label></div>
         </div>
         <script>
           const bookText = {testo_json}, bookParts = {parti_json}, L = {labels_json}, bookLanguage = {lingua_json};
@@ -859,6 +860,8 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
           el("title").textContent=L[0]; el("note").textContent=L[10]; el("start").textContent="▶ "+L[1];
           el("pause").textContent="⏸ "+L[2]; el("resume").textContent="▶ "+L[3]; el("stop").textContent="■ "+L[4];
           el("speedText").textContent=L[5]; el("status").textContent=L[7];
+          const startLabels={{"it-IT":"Inizia da", "en-US":"Start from", "es-ES":"Empezar desde", "fr-FR":"Commencer à partir de", "de-DE":"Start ab", "ro-RO":"Începe de la", "ru-RU":"Начать с", "ar-SA":"ابدأ من", "zh-CN":"从这里开始"}};
+          el("startFromText").textContent=startLabels[bookLanguage]||"Start from";
           function clearKeepAlive() {{
             if(keepAliveTimer) {{ clearInterval(keepAliveTimer); keepAliveTimer=null; }}
           }}
@@ -908,6 +911,13 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             voices.forEach((voice,index)=>{{const option=document.createElement("option");option.value=index;option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option);}});
             select.value=old;
           }}
+          function loadStartPoints() {{
+            const select=el("startFrom"); select.innerHTML="";
+            bookParts.forEach((part,index)=>{{
+              const option=document.createElement("option"); option.value=String(index);
+              option.textContent=part.titolo||("Sezione "+(index+1)); select.appendChild(option);
+            }});
+          }}
           function next() {{
             if(!active||paused)return;
             if(position>=chunks.length){{active=false;currentUtterance=null;clearKeepAlive();clearPreviewHighlight();el("status").textContent=L[9];return;}}
@@ -948,7 +958,8 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
               utteranceId++; currentUtterance=null; clearKeepAlive(); synth.cancel(); synth.resume();
               // Le sezioni inviate da Python usano la chiave italiana
               // "testo"; supportiamo anche "text" per vecchi progetti.
-              chunks=bookParts.flatMap((part)=>split(part.testo||part.text||"",part.titolo||"Libro",part.anchor_prefix||""));
+              const startAt=Math.max(0, Number(el("startFrom").value||0));
+              chunks=bookParts.slice(startAt).flatMap((part)=>split(part.testo||part.text||"",part.titolo||"Libro",part.anchor_prefix||""));
               if(!chunks.length)chunks=split(bookText,"Libro","");
               position=0;active=true;paused=false;
               // speak deve avvenire nello stesso click dell'utente: alcuni
@@ -975,7 +986,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
             el("status").textContent="Lettore vocale non disponibile: usa Chrome, Edge o Safari aggiornato.";
             el("start").disabled=el("pause").disabled=el("resume").disabled=true;
           }} else {{
-            loadVoices(); if("onvoiceschanged" in synth)synth.onvoiceschanged=loadVoices;
+            loadVoices(); loadStartPoints(); if("onvoiceschanged" in synth)synth.onvoiceschanged=loadVoices;
           }}
         </script>
         """,
