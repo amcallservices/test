@@ -731,6 +731,88 @@ def pulisci_testo_editoriale(testo):
     testo = re.sub(r"\n{3,}", "\n\n", testo)
     return testo.strip()
 
+
+def mostra_lettore_vocale_gratuito(testo_libro, lingua):
+    """Legge nel browser il manoscritto completo senza API, crediti o file audio."""
+    testo = pulisci_testo_editoriale(testo_libro or "")
+    if not testo:
+        st.info("Il lettore vocale sarà disponibile dopo la generazione di almeno una sezione.")
+        return
+
+    etichette = {
+        "Italiano": ("Lettore vocale gratuito", "Ascolta il libro", "Pausa", "Riprendi", "Ferma", "Velocità", "Voce automatica", "Pronto a leggere il manoscritto.", "Lettura in corso", "Lettura terminata.", "Nessun credito o costo API."),
+        "English": ("Free voice reader", "Listen to the book", "Pause", "Resume", "Stop", "Speed", "Automatic voice", "Ready to read the manuscript.", "Reading in progress", "Reading finished.", "No credits or API cost."),
+        "Español": ("Lector de voz gratuito", "Escuchar el libro", "Pausa", "Reanudar", "Detener", "Velocidad", "Voz automática", "Listo para leer el manuscrito.", "Lectura en curso", "Lectura terminada.", "Sin créditos ni coste de API."),
+        "Français": ("Lecteur vocal gratuit", "Écouter le livre", "Pause", "Reprendre", "Arrêter", "Vitesse", "Voix automatique", "Prêt à lire le manuscrit.", "Lecture en cours", "Lecture terminée.", "Sans crédit ni coût API."),
+        "Deutsch": ("Kostenloser Vorleser", "Buch anhören", "Pause", "Fortsetzen", "Stoppen", "Geschwindigkeit", "Automatische Stimme", "Bereit, das Manuskript vorzulesen.", "Wiedergabe läuft", "Wiedergabe beendet.", "Keine Credits oder API-Kosten."),
+        "Română": ("Cititor vocal gratuit", "Ascultă cartea", "Pauză", "Reia", "Oprește", "Viteză", "Voce automată", "Gata să citească manuscrisul.", "Citire în curs", "Citire încheiată.", "Fără credite sau cost API."),
+        "Русский": ("Бесплатный голосовой читатель", "Слушать книгу", "Пауза", "Продолжить", "Остановить", "Скорость", "Автоматический голос", "Готов к чтению рукописи.", "Чтение выполняется", "Чтение завершено.", "Без кредитов и затрат API."),
+        "العربية": ("قارئ صوتي مجاني", "استمع إلى الكتاب", "إيقاف مؤقت", "متابعة", "إيقاف", "السرعة", "صوت تلقائي", "جاهز لقراءة المخطوطة.", "القراءة جارية", "انتهت القراءة.", "بلا أرصدة أو تكلفة API."),
+        "中文": ("免费语音朗读器", "朗读全书", "暂停", "继续", "停止", "语速", "自动选择声音", "准备朗读书稿。", "正在朗读", "朗读完成。", "不消耗积分或 API 费用。"),
+    }
+    codici_lingua = {
+        "Italiano": "it-IT", "English": "en-US", "Español": "es-ES", "Français": "fr-FR",
+        "Deutsch": "de-DE", "Română": "ro-RO", "Русский": "ru-RU", "العربية": "ar-SA", "中文": "zh-CN",
+    }
+    labels = etichette.get(lingua, etichette["Italiano"])
+    testo_json = json.dumps(testo, ensure_ascii=False).replace("</", "<\\/")
+    labels_json = json.dumps(labels, ensure_ascii=False).replace("</", "<\\/")
+    lingua_json = json.dumps(codici_lingua.get(lingua, "it-IT"))
+    components.html(
+        f"""
+        <style>
+          body{{margin:0;font-family:Arial,sans-serif;background:#fff;color:#102a43}}
+          .box{{border:1px solid #cbd5e1;border-radius:12px;padding:16px;background:#f8fafc}}
+          h3{{margin:0 0 5px}} p{{margin:0 0 12px;color:#486581;font-size:13px}}
+          .row{{display:flex;gap:8px;flex-wrap:wrap;align-items:center}}
+          button,select{{border-radius:8px;padding:9px 11px;border:1px solid #cbd5e1;font-weight:700}}
+          button{{background:#1689e8;color:#fff;border:0;cursor:pointer}} .stop{{background:#cf3345}}
+          #status{{margin-top:10px;font-size:13px;font-weight:700;color:#1269ae}}
+        </style>
+        <div class="box">
+          <h3>🔊 <span id="title"></span></h3><p id="note"></p>
+          <div class="row">
+            <button id="start"></button><button id="pause"></button><button id="resume"></button><button class="stop" id="stop"></button>
+            <label><span id="speedText"></span> <select id="speed"><option value="0.8">0,8×</option><option value="1" selected>1×</option><option value="1.2">1,2×</option><option value="1.4">1,4×</option></select></label>
+            <select id="voice"></select>
+          </div><div id="status"></div>
+        </div>
+        <script>
+          const bookText = {testo_json}, L = {labels_json}, bookLanguage = {lingua_json};
+          const synth = window.speechSynthesis; let chunks = [], position = 0, active = false, voices = [];
+          const el = (id) => document.getElementById(id);
+          el("title").textContent=L[0]; el("note").textContent=L[10]; el("start").textContent="▶ "+L[1];
+          el("pause").textContent="⏸ "+L[2]; el("resume").textContent="▶ "+L[3]; el("stop").textContent="■ "+L[4];
+          el("speedText").textContent=L[5]; el("status").textContent=L[7];
+          function split(value) {{
+            const sentences=value.replace(/\s+/g," ").match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[value], result=[]; let current="";
+            sentences.forEach((sentence)=>{{if((current+" "+sentence).length>1100&&current){{result.push(current);current=sentence.trim();}}else{{current=(current+" "+sentence).trim();}}}});
+            if(current)result.push(current); return result;
+          }}
+          function loadVoices() {{
+            voices=synth.getVoices(); const select=el("voice"), old=select.value; select.innerHTML="";
+            const automatic=document.createElement("option");automatic.value="";automatic.textContent=L[6];select.appendChild(automatic);
+            voices.forEach((voice,index)=>{{const option=document.createElement("option");option.value=index;option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option);}});
+            select.value=old;
+          }}
+          function next() {{
+            if(!active||position>=chunks.length){{active=false;el("status").textContent=L[9];return;}}
+            const utterance=new SpeechSynthesisUtterance(chunks[position]); utterance.lang=bookLanguage; utterance.rate=Number(el("speed").value);
+            const chosen=el("voice").value; const voice=chosen!==""?voices[Number(chosen)]:voices.find(v=>v.lang.toLowerCase().startsWith(bookLanguage.slice(0,2).toLowerCase()));
+            if(voice)utterance.voice=voice; utterance.onend=()=>{{position+=1;next();}}; utterance.onerror=()=>{{active=false;el("status").textContent=L[7];}};
+            el("status").textContent=L[8]+" ("+(position+1)+"/"+chunks.length+")"; synth.speak(utterance);
+          }}
+          el("start").onclick=()=>{{synth.cancel();chunks=split(bookText);position=0;active=true;next();}};
+          el("pause").onclick=()=>{{if(synth.speaking)synth.pause();}}; el("resume").onclick=()=>{{if(synth.paused)synth.resume();}};
+          el("stop").onclick=()=>{{active=false;position=0;synth.cancel();el("status").textContent=L[7];}};
+          loadVoices(); if("onvoiceschanged" in speechSynthesis)speechSynthesis.onvoiceschanged=loadVoices;
+        </script>
+        """,
+        height=210,
+        scrolling=False,
+    )
+
+
 def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
     """GPT-4o-mini prepara il brief; GPT-Image-1 Mini genera il visual economico."""
     contesto_basso = f"{titolo} {trama} {sezione}".lower()
@@ -3560,6 +3642,17 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             s: st.session_state.get(f"txt_{s.replace(' ', '_').replace('.', '')}", "")
             for s in opzioni_editor
         }
+
+        blocchi_lettore = [val_titolo]
+        if val_autore:
+            blocchi_lettore.append(val_autore)
+        for sezione, contenuto in contenuti_libro.items():
+            testo_sezione = pulisci_testo_editoriale(contenuto)
+            if testo_sezione:
+                blocchi_lettore.append(f"{sezione}. {testo_sezione}")
+        mostra_lettore_vocale_gratuito("\n\n".join(blocchi_lettore), lingua_sel)
+        st.divider()
+
         firma_attuale_coerenza = firma_controllo_coerenza(
             st.session_state.get("indice_raw", ""), contenuti_libro, val_titolo, val_trama,
             val_genere, val_stile, val_narrativa, val_pov, val_goal, val_risultato, val_approfondimenti
