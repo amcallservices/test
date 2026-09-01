@@ -1573,7 +1573,7 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # 6. SIDEBAR: SETUP EDITORIALE AVANZATO E CARICAMENTO FONTI
 # ======================================================================================================================
 with st.sidebar:
-    lingua_sel = st.selectbox("🌐 Lingua / Language", list(TRADUZIONI.keys()))
+    lingua_sel = st.selectbox("🌐 Lingua / Language", list(TRADUZIONI.keys()), key="editor_language")
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     st.title(L["side_tit"])
     val_titolo = st.text_input(L["lbl_tit"])
