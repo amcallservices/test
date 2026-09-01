@@ -1542,6 +1542,8 @@ def applica_snapshot_progetto(snapshot):
         # sostituire il valore eventualmente rimasto nella sessione corrente.
         if nome in sidebar:
             valore = sidebar.get(nome)
+            if valore is None:
+                valore = ""
             st.session_state[chiave] = valore
             campi_ripristinati.append(nome)
     # Mantiene una seconda fotografia locale dei valori ripristinati: così un
@@ -1979,10 +1981,15 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # ======================================================================================================================
 # 6. SIDEBAR: SETUP EDITORIALE AVANZATO E CARICAMENTO FONTI
 # ======================================================================================================================
-ripristina_progetto_salvato()
+# Il progetto cloud non viene più caricato automaticamente: l'utente sceglie
+# esplicitamente quando recuperarlo con “RIAGGIORNA ALL'ULTIMA STESURA”. Il
+# flag esiste soltanto nel rerun immediatamente successivo a quel pulsante.
+if st.session_state.get("autosave_snapshot_da_ripristinare"):
+    ripristina_progetto_salvato()
 
 with st.sidebar:
-    lingua_sel = st.selectbox("🌐 Lingua / Language", list(TRADUZIONI.keys()), key="editor_language")
+    lingua_scelta = st.selectbox("🌐 Lingua / Language", [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or "— Seleziona —")
+    lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     st.title(L["side_tit"])
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
@@ -2012,7 +2019,7 @@ with st.sidebar:
     st.markdown("---")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
-    val_genere = st.selectbox(L["lbl_gen"], lista_gen, key="book_genre")
+    val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or "— Seleziona —")
     
     stili_estesi = [
         "Standard", 
@@ -2026,7 +2033,7 @@ with st.sidebar:
         "Epico ed Evocativo", 
         "Minimalista ed Essenziale"
     ]
-    val_stile = st.selectbox(L["lbl_style"], stili_estesi, key="book_writing_style")
+    val_stile = st.selectbox(L["lbl_style"], [""] + stili_estesi, key="book_writing_style", format_func=lambda valore: valore or "— Seleziona —")
 
     direttive_indice_tipologia = {
         "Standard": "Crea un percorso lineare da basi a sviluppo, applicazione, verifica e sintesi. Rispetta il budget di sezioni indicato nel prompt: non espandere l'indice con capitoli o sottocapitoli ripetitivi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
@@ -2044,10 +2051,10 @@ with st.sidebar:
     
     st.markdown("---")
     # --- AGGIUNTA "STORICO E DOCUMENTALE" AGLI STILI DI RACCONTO ---
-    val_narrativa = st.selectbox(L["lbl_narrative"], [
+    val_narrativa = st.selectbox(L["lbl_narrative"], [""] + [
         "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante", 
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale", "Diretto e Pratico (Action-oriented)", "Storico e Documentale"
-    ], key="book_narrative_style")
+    ], key="book_narrative_style", format_func=lambda valore: valore or "— Seleziona —")
     
     # NUOVO BLOCCO: Punto di Vista (POV)
     lista_pov = [
@@ -2056,7 +2063,7 @@ with st.sidebar:
         "Noi (Inclusivo, partecipativo e didattico)",
         "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)"
     ]
-    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), lista_pov, key="book_point_of_view")
+    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or "— Seleziona —")
     
     # Definizioni disponibili prima del loro primo utilizzo nella UI.
     # Restano presenti anche nel modulo di memoria sottostante per compatibilità.
@@ -2126,19 +2133,24 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
         key="book_further_details"
     )
-    val_lunghezza = st.selectbox(
+    val_lunghezza_scelta = st.selectbox(
         "Lunghezza delle sezioni",
-        list(PROFILI_LUNGHEZZA_STESURA.keys()),
-        index=1,
+        [""] + list(PROFILI_LUNGHEZZA_STESURA.keys()),
+        index=0,
         key="profilo_lunghezza_stesura",
+        format_func=lambda valore: valore or "— Seleziona —",
         help="Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti."
     )
+    # Profilo tecnico sicuro solo per evitare errori prima che l'utente scelga;
+    # la tendina resta visivamente vuota e il progetto non è pronto finché non
+    # viene effettuata una selezione reale.
+    val_lunghezza = val_lunghezza_scelta or "Standard KDP"
     # Memorizza la sidebar in ogni esecuzione, prima di qualsiasi pulsante che
     # possa avviare una generazione o un rerun.
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
         "titolo": val_titolo,
         "autore": val_autore,
-        "lingua": lingua_sel,
+        "lingua": lingua_scelta,
         "genere": val_genere,
         "tipologia_scrittura": val_stile,
         "stile_racconto": val_narrativa,
@@ -2147,16 +2159,19 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "risultato_finale": val_risultato,
         "argomento": val_trama,
         "approfondimenti": val_approfondimenti,
-        "lunghezza": val_lunghezza,
+        "lunghezza": val_lunghezza_scelta,
     }
-    st.caption(
-        f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
-        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
-        f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
-        f"comprese Prefazione e Ringraziamenti. Obiettivo: almeno circa "
-        f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
-        "Tolleranza massima sulla lunghezza: 5%."
-    )
+    if val_lunghezza_scelta:
+        st.caption(
+            f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
+            f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
+            f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
+            f"comprese Prefazione e Ringraziamenti. Obiettivo: almeno circa "
+            f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
+            "Tolleranza massima sulla lunghezza: 5%."
+        )
+    else:
+        st.caption("Scegli una lunghezza delle sezioni per completare la sidebar.")
     limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
     # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
     limite_voci_indice = max(1, limite_sezioni_totali - 2)
@@ -2185,7 +2200,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         L["lbl_goal"]: val_goal,
         etichette_risultato.get(lingua_sel, "Risultato finale desiderato"): val_risultato,
         L["lbl_plot"]: val_trama,
-        "Lunghezza delle sezioni": val_lunghezza,
+        "Lunghezza delle sezioni": val_lunghezza_scelta,
     }
     campi_sidebar_mancanti = [etichetta for etichetta, valore in campi_obbligatori_sidebar.items() if not str(valore).strip()]
     sidebar_pronta = not campi_sidebar_mancanti
