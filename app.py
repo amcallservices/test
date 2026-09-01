@@ -1395,14 +1395,10 @@ CAMPI_SALVATAGGIO_PROGETTO = {
 }
 
 
-def ripristina_progetto_salvato():
-    """Ripristina una sola volta l'ultima bozza cloud dell'account corrente."""
-    if st.session_state.get("autosave_ripristino_verificato"):
-        return
-    st.session_state["autosave_ripristino_verificato"] = True
-    snapshot = carica_progetto_automatico()
+def applica_snapshot_progetto(snapshot):
+    """Applica una bozza già letta dal cloud prima che i widget dell'editor vengano creati."""
     if not snapshot:
-        return
+        return False
     sidebar = snapshot.get("sidebar", {})
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
         valore = sidebar.get(nome)
@@ -1424,6 +1420,28 @@ def ripristina_progetto_salvato():
         f"✓ Progetto ripristinato automaticamente ({aggiornato[:16].replace('T', ' ')})."
         if aggiornato else "✓ Progetto ripristinato automaticamente."
     )
+    return True
+
+
+def ripristina_progetto_salvato():
+    """Ripristina l'ultima bozza una sola volta, oppure una bozza richiesta dal pulsante manuale."""
+    snapshot_richiesto = st.session_state.pop("autosave_snapshot_da_ripristinare", None)
+    if snapshot_richiesto:
+        st.session_state["autosave_ripristino_verificato"] = True
+        return applica_snapshot_progetto(snapshot_richiesto)
+    if st.session_state.get("autosave_ripristino_verificato"):
+        return False
+    st.session_state["autosave_ripristino_verificato"] = True
+    return applica_snapshot_progetto(carica_progetto_automatico())
+
+
+def prepara_ripristino_ultima_stesura():
+    """Legge l'ultima bozza dell'account e la applica al rerun successivo in modo sicuro."""
+    snapshot = carica_progetto_automatico()
+    if not snapshot:
+        return False
+    st.session_state["autosave_snapshot_da_ripristinare"] = snapshot
+    return True
 
 
 def salva_progetto_corrente(sidebar, sezioni):
@@ -1995,6 +2013,12 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             if not key.startswith("commercial_"):
                 del st.session_state[key]
         st.rerun()
+
+    if st.button("🔄 RIAGGIORNA ALL'ULTIMA STESURA", use_container_width=True, key="ripristina_ultima_stesura"):
+        if prepara_ripristino_ultima_stesura():
+            st.rerun()
+        else:
+            st.warning("Non è stata trovata una stesura salvata nel tuo account. Verifica che il salvataggio automatico indichi “nel tuo account”.")
 
 # ======================================================================================================================
 # 7. LOGICA DI MEMORIA E COERENZA (EVITA RIPETIZIONI GLOBALI) E INTEGRAZIONE FONTI
