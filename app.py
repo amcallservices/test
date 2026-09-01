@@ -1571,6 +1571,10 @@ def applica_snapshot_progetto(snapshot):
 
 def ripristina_progetto_salvato():
     """Ripristina l'ultima bozza una sola volta, oppure una bozza richiesta dal pulsante manuale."""
+    # RESET PROGETTO ha priorità assoluta: anche se una vecchia riga cloud non
+    # fosse ancora stata eliminata, non deve ricomparire al rerun successivo.
+    if st.session_state.get("commercial_project_reset_requested"):
+        return False
     snapshot_richiesto = st.session_state.pop("autosave_snapshot_da_ripristinare", None)
     if snapshot_richiesto:
         st.session_state["autosave_ripristino_verificato"] = True
@@ -1586,6 +1590,7 @@ def prepara_ripristino_ultima_stesura():
     snapshot = carica_progetto_automatico()
     if not snapshot:
         return False
+    st.session_state.pop("commercial_project_reset_requested", None)
     st.session_state["autosave_snapshot_da_ripristinare"] = snapshot
     return True
 
@@ -1629,6 +1634,7 @@ def salva_progetto_corrente(sidebar, sezioni):
         return True
     momento = datetime.datetime.now().strftime("%H:%M")
     if salva_progetto_automatico(snapshot):
+        st.session_state.pop("commercial_project_reset_requested", None)
         st.session_state["autosave_firma"] = firma
         st.session_state["autosave_firma_cloud"] = firma
         st.session_state["autosave_stato"] = f"✓ Sessione salvata nel tuo account alle {momento}."
@@ -2196,6 +2202,9 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(L["btn_res"]):
         elimina_progetto_automatico()
+        # Chiave commerciale: non viene rimossa dal ciclo qui sotto e blocca
+        # ogni ripristino automatico di una fotografia precedente.
+        st.session_state["commercial_project_reset_requested"] = True
         for key in list(st.session_state.keys()):
             if not key.startswith("commercial_"):
                 del st.session_state[key]
