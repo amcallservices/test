@@ -181,6 +181,72 @@ def _supabase(method: str, path: str, *, payload: Any | None = None, params: dic
     return response.json()
 
 
+def carica_progetto_automatico() -> dict[str, Any]:
+    """Recupera l'ultima bozza dell'account senza interrompere l'editor se la tabella non è ancora configurata."""
+    user = st.session_state.get("commercial_user_context") or {}
+    if _mode() == "demo" or not _supabase_ready() or not user.get("id"):
+        return {}
+    try:
+        righe = _supabase(
+            "GET",
+            "rest/v1/writer_project_autosaves",
+            params={
+                "select": "snapshot,updated_at",
+                "user_id": f"eq.{user['id']}",
+                "limit": "1",
+            },
+        )
+        if not righe:
+            return {}
+        snapshot = righe[0].get("snapshot")
+        if isinstance(snapshot, dict):
+            snapshot["_autosave_updated_at"] = righe[0].get("updated_at", "")
+            return snapshot
+    except Exception:
+        # La funzione resta compatibile con installazioni che non hanno ancora
+        # eseguito la migrazione del salvataggio automatico.
+        return {}
+    return {}
+
+
+def salva_progetto_automatico(snapshot: dict[str, Any]) -> bool:
+    """Salva l'ultima bozza dell'account mediante upsert, senza crediti né chiamate IA."""
+    user = st.session_state.get("commercial_user_context") or {}
+    if _mode() == "demo" or not _supabase_ready() or not user.get("id"):
+        return False
+    try:
+        url = f"{_secret('SUPABASE_URL').rstrip('/')}/rest/v1/writer_project_autosaves"
+        headers = {
+            **_supabase_headers(),
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        }
+        response = requests.post(
+            url,
+            headers=headers,
+            params={"on_conflict": "user_id"},
+            json={"user_id": user["id"], "snapshot": snapshot},
+            timeout=20,
+        )
+        return bool(response.ok)
+    except Exception:
+        return False
+
+
+def elimina_progetto_automatico() -> None:
+    """Rimuove il salvataggio cloud dell'utente quando sceglie esplicitamente di azzerare il progetto."""
+    user = st.session_state.get("commercial_user_context") or {}
+    if _mode() == "demo" or not _supabase_ready() or not user.get("id"):
+        return
+    try:
+        _supabase(
+            "DELETE",
+            "rest/v1/writer_project_autosaves",
+            params={"user_id": f"eq.{user['id']}"},
+        )
+    except Exception:
+        pass
+
+
 def _init_demo_account() -> dict[str, Any]:
     if "commercial_demo_user" not in st.session_state:
         st.session_state["commercial_demo_user"] = {
