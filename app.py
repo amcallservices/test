@@ -29,12 +29,27 @@ from commercial_layer import (
     CommercialCreditError,
     bootstrap_commercial_test,
     charge_credits,
-    carica_progetto_automatico,
-    elimina_progetto_automatico,
     mostra_crediti_esauriti,
     refund_credits,
-    salva_progetto_automatico,
 )
+
+# Compatibilità temporanea: l'app resta avviabile anche se il file commerciale
+# su GitHub viene aggiornato qualche istante dopo app.py.
+try:
+    from commercial_layer import (
+        carica_progetto_automatico,
+        elimina_progetto_automatico,
+        salva_progetto_automatico,
+    )
+except ImportError:
+    def carica_progetto_automatico():
+        return {}
+
+    def salva_progetto_automatico(_snapshot):
+        return False
+
+    def elimina_progetto_automatico():
+        return None
 
 # ======================================================================================================================
 # 0. GESTIONE MEMORIA DI STATO E PREVENZIONE AUTO-RESET
