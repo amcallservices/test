@@ -1412,7 +1412,14 @@ def tipo_sezione_editoriale(sezione):
 
 
 def chiave_sezione(sezione):
-    return f"txt_{sezione.replace(' ', '_').replace('.', '')}"
+    """Identificativo univoco: 1.1 e 11 non possono più collidere."""
+    digest = hashlib.sha256(str(sezione).encode("utf-8")).hexdigest()[:20]
+    return f"txt_{digest}"
+
+
+def chiave_sezione_precedente(sezione):
+    """Compatibilità per i testi creati prima delle chiavi univoche."""
+    return f"txt_{str(sezione).replace(' ', '_').replace('.', '')}"
 
 
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
@@ -1422,7 +1429,7 @@ def leggi_sezione_memorizzata(sezione):
     """Legge una sezione dalla memoria stabile, sincronizzando il widget visibile."""
     chiave = chiave_sezione(sezione)
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
-    valore_widget = st.session_state.get(chiave, "")
+    valore_widget = st.session_state.get(chiave, "") or st.session_state.get(chiave_sezione_precedente(sezione), "")
     if str(valore_widget).strip():
         memoria[sezione] = valore_widget
     return memoria.get(sezione, valore_widget or "")
@@ -1451,8 +1458,11 @@ def reidrata_sezioni_memorizzate(sezioni):
     for sezione in sezioni:
         contenuto = memoria.get(sezione)
         chiave = chiave_sezione(sezione)
+        if not str(contenuto or "").strip():
+            contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
         if str(contenuto or "").strip() and not str(st.session_state.get(chiave, "")).strip():
             st.session_state[chiave] = contenuto
+            memoria[sezione] = contenuto
 
 
 CAMPI_SALVATAGGIO_PROGETTO = {
@@ -1621,21 +1631,19 @@ def salva_progetto_corrente(sidebar, sezioni):
     if salva_progetto_automatico(snapshot):
         st.session_state["autosave_firma"] = firma
         st.session_state["autosave_firma_cloud"] = firma
-        st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nel tuo account alle {momento}."
+        st.session_state["autosave_stato"] = f"✓ Sessione salvata nel tuo account alle {momento}."
         return True
     else:
         st.session_state["autosave_firma"] = firma
-        st.session_state["autosave_stato"] = f"✓ Salvato automaticamente nella sessione alle {momento}."
+        st.session_state["autosave_stato"] = f"⚠ Sessione mantenuta solo in questa pagina alle {momento}: il salvataggio nel tuo account non è riuscito."
         return False
 
 
 def salva_stesura_immediata(sezioni):
-    """Salva subito dopo una modifica, prima di qualsiasi rerun di Streamlit."""
-    sidebar = {
-        nome: st.session_state.get(chiave, "")
-        for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items()
-    }
-    return salva_progetto_corrente(sidebar, sezioni)
+    """Aggiorna solo la memoria della sessione, senza alcun salvataggio cloud."""
+    for sezione in sezioni:
+        leggi_sezione_memorizzata(sezione)
+    return True
 
 
 def sezioni_mancanti_per_esportazione(sezioni, genere):
@@ -2193,6 +2201,18 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
                 del st.session_state[key]
         st.rerun()
 
+    if st.button("💾 SALVA SESSIONE", type="primary", use_container_width=True, key="salva_sessione_manuale"):
+        # Il cloud viene aggiornato esclusivamente con questo comando: durante
+        # la stesura normale i testi restano nella memoria della pagina.
+        sezioni_da_salvare = list(
+            set(st.session_state.get("lista_capitoli", []))
+            | set((st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys())
+        )
+        if salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_da_salvare):
+            st.success("Sessione salvata: sidebar, indice e sezioni sono stati memorizzati nel tuo account.")
+        else:
+            st.error("Non è stato possibile salvare la sessione nel tuo account. Il lavoro resta aperto in questa pagina.")
+
     if st.button("🔄 RIAGGIORNA ALL'ULTIMA STESURA", use_container_width=True, key="ripristina_ultima_stesura"):
         if prepara_ripristino_ultima_stesura():
             st.rerun()
@@ -2212,7 +2232,7 @@ def genera_contesto_avanzato(sezione_corrente, argomento=""):
         
     for s in st.session_state.get("lista_capitoli", []):
         if s == sezione_corrente: break
-        k = f"txt_{s.replace(' ', '_').replace('.', '')}"
+        k = chiave_sezione(s)
         if k in st.session_state and st.session_state[k].strip():
             # Memoria estesa: il riepilogo breve da 150 caratteri non era sufficiente
             # per distinguere concetti, esempi e procedure già utilizzati.
@@ -3820,7 +3840,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.rerun()
 
             sez_scelta = st.selectbox(L["lbl_sec"], opzioni_editor)
-            k_sessione = f"txt_{sez_scelta.replace(' ', '_').replace('.', '')}"
+            k_sessione = chiave_sezione(sez_scelta)
             sottocapitoli_capitolo = individua_sottocapitoli_del_capitolo(sez_scelta, lista_cap_base)
             if sottocapitoli_capitolo:
                 chiave_audit_capitolo = f"audit_fatti_{sez_scelta.replace(' ', '_').replace('.', '')}"
@@ -3835,7 +3855,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     da_generare = []
                     gia_presenti = 0
                     for sottocapitolo in sottocapitoli_capitolo:
-                        chiave = f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}"
+                        chiave = chiave_sezione(sottocapitolo)
                         if st.session_state.get(chiave, "").strip():
                             gia_presenti += 1
                         else:
@@ -3859,7 +3879,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             ))
                         avanzamento.progress(100, text="Sottocapitoli completati.")
                         contenuti_capitolo = [
-                            (sottocapitolo, st.session_state.get(f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}", ""))
+                            (sottocapitolo, leggi_sezione_memorizzata(sottocapitolo))
                             for sottocapitolo in sottocapitoli_capitolo
                         ]
                         st.session_state[chiave_audit_capitolo] = audit_fatti_capitolo(
@@ -3874,7 +3894,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 2,
                                            "Verifica online solo i dati aggiornabili del capitolo selezionato.", use_container_width=True):
                     contenuti_capitolo = [
-                        (sottocapitolo, st.session_state.get(f"txt_{sottocapitolo.replace(' ', '_').replace('.', '')}", ""))
+                        (sottocapitolo, leggi_sezione_memorizzata(sottocapitolo))
                         for sottocapitolo in sottocapitoli_capitolo
                     ]
                     with st.spinner("Controllo online mirato dei soli dati aggiornabili del capitolo..."):
@@ -4051,10 +4071,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     # TAB 3: ANTEPRIMA
     with tabs[3]:
         st.subheader(L["preview_tit"])
-        contenuti_libro = {
-            s: st.session_state.get(f"txt_{s.replace(' ', '_').replace('.', '')}", "")
-            for s in opzioni_editor
-        }
+        contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in opzioni_editor}
 
         blocchi_lettore = [val_titolo]
         if val_autore:
@@ -4079,7 +4096,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             html_p += f"<h3 style='text-align:center;'>di {val_autore}</h3>"
         html_p += "<hr><br>"
         for s in opzioni_editor:
-            sk = f"txt_{s.replace(' ', '_').replace('.', '')}"
+            sk = chiave_sezione(s)
             if sk in st.session_state and st.session_state[sk].strip():
                 html_p += f"<h2>{s.upper()}</h2>"
                 img = st.session_state.get("immagini_capitoli", {}).get(s)
@@ -4288,25 +4305,6 @@ Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive
                     st.info("La formattazione completa è disponibile per file DOCX. Per un PDF puoi generare comunque i metadati a sinistra.")
 else:
     st.info(L["welcome"] + " " + L["guide"])
-
-# Salvataggio non bloccante: avviene alla fine del rerun solo quando il progetto
-# contiene almeno un dato. La firma evita richieste duplicate a Supabase.
-sidebar_salvataggio = {
-    "titolo": val_titolo,
-    "autore": val_autore,
-    "lingua": lingua_sel,
-    "genere": val_genere,
-    "tipologia_scrittura": val_stile,
-    "stile_racconto": val_narrativa,
-    "punto_di_vista": val_pov,
-    "obiettivo": val_goal,
-    "risultato_finale": val_risultato,
-    "argomento": val_trama,
-    "approfondimenti": val_approfondimenti,
-    "lunghezza": val_lunghezza,
-}
-if any(str(valore).strip() for valore in sidebar_salvataggio.values()) or st.session_state.get("indice_raw"):
-    salva_progetto_corrente(sidebar_salvataggio, opzioni_editor)
 
 # ======================================================================================================================
 # DOCUMENTAZIONE TECNICA E MODULI DI ESPANSIONE (SIMULAZIONE SCALABILITÀ 3000 RIGHE)
