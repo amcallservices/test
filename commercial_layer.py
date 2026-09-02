@@ -291,6 +291,54 @@ HOME_FAQ_COPY = {
 # Sezioni editoriali estese della home. Mantengono la presentazione completa
 # anche dopo la localizzazione: demo, destinatari, percorso, esempi, strumenti
 # e archivio vengono mostrati nella lingua selezionata.
+HOME_FAQ_EXTRA = {
+    "Italiano": [
+        ("Come vengono usate le fonti e come funziona il controllo copyright?", "Le fonti servono a studiare l'argomento e creare una mappa concettuale interna; il testo viene poi redatto in modo originale. I controlli di originalità segnalano possibili somiglianze e indicano le sezioni da rivedere, ma non sostituiscono una verifica legale."),
+        ("Posso scrivere una sola parte del libro?", "Sì. Puoi generare una singola sezione, un capitolo, tutti i sottocapitoli oppure il libro completo. Puoi anche modificare manualmente un testo e rigenerare soltanto la parte che vuoi migliorare."),
+        ("Cosa succede se un'operazione non riesce?", "Il software non elimina il lavoro già scritto. Per le azioni IA viene mostrato un preventivo; se una richiesta tecnica non parte o fallisce prima di produrre contenuto, i crediti vengono gestiti secondo l'esito dell'operazione."),
+    ],
+    "English": [
+        ("How are sources used and how does copyright checking work?", "Sources are used to study a subject and build an internal concept map; the text is then written in an original way. Originality checks flag possible similarities and identify sections to review, but they are not legal advice."),
+        ("Can I write only one part of the book?", "Yes. You can generate a single section, a chapter, all subsections or the whole book. You may also edit text manually and rewrite only the part you want to improve."),
+        ("What happens if an operation does not succeed?", "The software does not remove work already written. AI actions show an estimate; if a technical request does not start or fails before producing content, credits are handled according to that operation's outcome."),
+    ],
+    "Español": [
+        ("¿Cómo se usan las fuentes y cómo funciona el control de copyright?", "Las fuentes sirven para estudiar el tema y crear un mapa conceptual interno; después el texto se redacta de forma original. El control señala posibles similitudes y las secciones que conviene revisar, pero no sustituye una verificación legal."),
+        ("¿Puedo escribir solo una parte del libro?", "Sí. Puedes generar una sección, un capítulo, todos los apartados o el libro completo. También puedes editar manualmente y regenerar solo la parte que quieras mejorar."),
+        ("¿Qué ocurre si una operación no funciona?", "El software no elimina el trabajo ya escrito. Las acciones de IA muestran una estimación; si una solicitud técnica no empieza o falla antes de producir contenido, los créditos se gestionan según el resultado."),
+    ],
+    "Français": [
+        ("Comment les sources et le contrôle du copyright sont-ils utilisés ?", "Les sources servent à étudier le sujet et à créer une carte conceptuelle interne ; le texte est ensuite rédigé de façon originale. Le contrôle signale des similitudes possibles et les sections à revoir, sans remplacer un avis juridique."),
+        ("Puis-je écrire seulement une partie du livre ?", "Oui. Vous pouvez générer une section, un chapitre, tous les sous-chapitres ou le livre entier. Vous pouvez aussi modifier le texte manuellement et ne réécrire que la partie à améliorer."),
+        ("Que se passe-t-il si une opération échoue ?", "Le logiciel ne supprime jamais le travail déjà écrit. Les actions IA affichent une estimation ; si une demande technique ne démarre pas ou échoue avant de produire du contenu, les crédits sont gérés selon son résultat."),
+    ],
+    "Deutsch": [
+        ("Wie werden Quellen genutzt und wie funktioniert die Copyright-Prüfung?", "Quellen dienen zum Studium eines Themas und für eine interne Konzeptkarte; der Text wird anschließend eigenständig verfasst. Die Prüfung markiert mögliche Ähnlichkeiten und zu prüfende Abschnitte, ersetzt aber keine Rechtsberatung."),
+        ("Kann ich nur einen Teil des Buches schreiben?", "Ja. Sie können einen einzelnen Abschnitt, ein Kapitel, alle Unterkapitel oder das ganze Buch erstellen. Sie können Text auch manuell ändern und nur den gewünschten Teil neu schreiben lassen."),
+        ("Was geschieht, wenn eine Aktion nicht gelingt?", "Bereits geschriebene Arbeit wird nicht entfernt. KI-Aktionen zeigen eine Schätzung; falls eine technische Anfrage nicht startet oder vor der Inhaltserstellung scheitert, werden Credits entsprechend dem Ergebnis behandelt."),
+    ],
+    "Română": [
+        ("Cum sunt folosite sursele și cum funcționează controlul de copyright?", "Sursele sunt folosite pentru studierea subiectului și pentru o hartă conceptuală internă; textul este apoi redactat original. Controlul semnalează posibile similitudini și secțiunile de revizuit, fără a înlocui consultanța juridică."),
+        ("Pot scrie doar o parte a cărții?", "Da. Poți genera o secțiune, un capitol, toate subcapitolele sau întreaga carte. Poți modifica manual și regenera doar partea pe care vrei să o îmbunătățești."),
+        ("Ce se întâmplă dacă o operațiune nu reușește?", "Software-ul nu elimină munca deja scrisă. Acțiunile IA afișează o estimare; dacă o cerere tehnică nu începe sau eșuează înainte de conținut, creditele sunt gestionate după rezultat."),
+    ],
+    "Русский": [
+        ("Как используются источники и работает проверка авторских прав?", "Источники нужны для изучения темы и внутренней концептуальной карты; затем текст создаётся оригинально. Проверка отмечает возможные совпадения и разделы для просмотра, но не заменяет юридическую экспертизу."),
+        ("Можно написать только часть книги?", "Да. Можно создать один раздел, главу, все подразделы или целую книгу. Можно вручную изменить текст и переработать только нужную часть."),
+        ("Что будет, если операция не выполнится?", "Программа не удаляет уже написанную работу. Для ИИ-действий показывается расчёт; если технический запрос не запускается или завершается до создания содержания, кредиты обрабатываются по результату операции."),
+    ],
+    "العربية": [
+        ("كيف تُستخدم المصادر وكيف يعمل فحص حقوق النشر؟", "تُستخدم المصادر لدراسة الموضوع وبناء خريطة مفاهيم داخلية، ثم يُكتب النص بصورة أصلية. يشير الفحص إلى التشابهات المحتملة والأقسام التي تحتاج مراجعة، لكنه ليس استشارة قانونية."),
+        ("هل يمكنني كتابة جزء واحد فقط من الكتاب؟", "نعم. يمكنك إنشاء قسم واحد أو فصل أو كل الأقسام الفرعية أو الكتاب كاملاً. ويمكنك تعديل النص يدوياً وإعادة إنشاء الجزء الذي تريد تحسينه فقط."),
+        ("ماذا يحدث إذا لم تنجح عملية؟", "لا يحذف البرنامج العمل المكتوب سابقاً. تعرض عمليات الذكاء الاصطناعي تقديراً؛ وإذا لم يبدأ طلب تقني أو فشل قبل إنتاج المحتوى، تُدار الأرصدة بحسب النتيجة."),
+    ],
+    "中文": [
+        ("来源如何使用，版权检查如何运作？", "来源用于研究主题并创建内部概念图，之后会以原创方式撰写文本。检查会标记可能的相似内容和需要复核的小节，但不构成法律意见。"),
+        ("我可以只写图书的一部分吗？", "可以。你可以生成单个小节、一章、全部子章节或整本书。也可以手动修改文本，仅重新生成希望改进的部分。"),
+        ("如果某项操作失败会怎样？", "软件不会删除已经写好的内容。AI 操作会显示预估；如果技术请求未启动或在生成内容前失败，积分会根据该操作的结果处理。"),
+    ],
+}
+
 HOME_RICH_COPY = {
     "Italiano": """<div class='ss-section'><h2>Da un'idea a un libro: un esempio concreto</h2><p class='ss-muted'>La sidebar diventa indice, poi un manoscritto modificabile: ogni passaggio resta visibile e sotto il tuo controllo.</p></div><div class='ss-proof'><div class='ss-proof-top'><b>Demo di un progetto editoriale</b><span class='ss-proof-label'>ESEMPIO</span></div><div class='ss-proof-grid'><div class='ss-proof-index'><b>1. SIDEBAR COMPILATA</b><span><strong>Titolo:</strong> Yoga per il benessere</span><span><strong>Genere:</strong> Meditazione / Mindfulness</span><span><strong>Obiettivo:</strong> creare una pratica quotidiana</span><span class='active'>2. INDICE: capitoli e sottocapitoli ordinati</span></div><div class='ss-proof-page'><small>3. MANOSCRITTO GENERATO E MODIFICABILE</small><h3>Creare una routine che dura</h3><p>Correggi, rigenera una sola parte, ascolta e verifica la coerenza prima dell'esportazione.</p><div class='ss-proof-lines'><i></i><i></i><i></i></div></div></div></div><div class='ss-section'><h2>Per chi è Scrittore Site</h2><p class='ss-muted'>Non serve esperienza tecnica: scegli il punto da cui vuoi partire.</p></div><div class='ss-priority-grid'><div class='ss-step'><strong>🌱 Autori esordienti</strong>Trasforma un'idea in una struttura ordinata e modificabile.</div><div class='ss-step'><strong>🛠️ Professionisti e formatori</strong>Organizza competenze e procedure in manuali, guide e percorsi didattici.</div><div class='ss-step'><strong>🎓 Docenti e Test Prep</strong>Crea teoria, quiz, simulazioni e soluzioni commentate mantenendo il controllo.</div></div><div class='ss-section'><h2>Come funziona</h2><p class='ss-muted'>Un percorso semplice, senza perdere il controllo editoriale.</p></div><div class='ss-priority-grid'><div class='ss-step'><strong>1. Definisci il progetto</strong>Titolo, lingua, pubblico, genere, obiettivo e approfondimenti.</div><div class='ss-step'><strong>2. Crea e migliora</strong>Genera l'indice, valutalo e sviluppa sezioni, capitoli o libro completo.</div><div class='ss-step'><strong>3. Controlla e salva</strong>Anteprima, lettore vocale, verifiche, salvataggio volontario e export.</div></div><div class='ss-section'><h2>Esempi di progetti</h2><p class='ss-muted'>Titolo, tono e contenuti restano sempre scelti da te.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>🧘 Benessere</b>Guide su yoga, mindfulness e abitudini quotidiane.</div><div class='ss-benefit'><b>🧪 Manuali tecnici</b>Procedure, esempi, controlli e avvertenze.</div><div class='ss-benefit'><b>📚 Test Prep</b>Teoria, quiz, simulazioni e soluzioni separate.</div><div class='ss-benefit'><b>✨ Narrativa</b>Personaggi, conflitto e conclusione coerente.</div></div><div class='ss-section'><h2>Tutte le funzioni, senza complessità</h2><p class='ss-muted'>Strumenti concreti per progettare, scrivere, revisionare, ascoltare e preparare il manoscritto.</p></div><div class='ss-priority-grid'><div class='ss-feature-group'><h3>🧭 Progetta</h3><p><strong>Brief, fonti e indice</strong><br>Sidebar guidata, dossier delle fonti e indice professionale con voto e rigenerazione.</p></div><div class='ss-feature-group'><h3>✍️ Scrivi e modifica</h3><p><strong>Sezione, capitolo o libro</strong><br>Rigenerazione mirata, quiz, ricette, Test Prep e ricerca/sostituzione globale.</p></div><div class='ss-feature-group'><h3>🔎 Controlla e pubblica</h3><p><strong>Qualità e originalità</strong><br>Coerenza, fatti, copyright, anteprima vocale, Word, PDF e formattazione KDP.</p></div></div><div class='ss-section'><h2>Importa / Esporta: il progetto è sempre nelle tue mani</h2><p class='ss-muted'>CSV salva e ripristina il progetto completo, mentre Word e PDF servono per revisione e lettura.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📥 Esporta CSV completo</b>Sidebar, indice, testi, fonti e immagini in una copia portabile.</div><div class='ss-benefit'><b>📤 Importa e riprendi</b>Riapri un CSV di Scrittore Site e controlla il risultato prima di salvare.</div><div class='ss-benefit'><b>💾 Salva quando vuoi</b>Il progetto viene conservato solo quando premi SALVA SESSIONE.</div></div><div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div><div class='ss-credit-note'>I crediti vengono usati solo per le elaborazioni IA. Le funzioni gratuite includono lettura, modifiche manuali, CSV, Word e PDF.</div><div class='ss-trust'>Il libro non viene mai pubblicato automaticamente: decidi sempre tu cosa modificare, esportare o pubblicare.</div>""",
     "English": """<div class='ss-section'><h2>From an idea to a book: a real example</h2><p class='ss-muted'>The sidebar becomes an outline, then an editable manuscript: every step remains visible and under your control.</p></div><div class='ss-proof'><div class='ss-proof-top'><b>Editorial project demo</b><span class='ss-proof-label'>EXAMPLE</span></div><div class='ss-proof-grid'><div class='ss-proof-index'><b>1. COMPLETED SIDEBAR</b><span><strong>Title:</strong> Yoga for wellbeing</span><span><strong>Genre:</strong> Meditation / Mindfulness</span><span><strong>Goal:</strong> build a daily practice</span><span class='active'>2. OUTLINE: ordered chapters and sections</span></div><div class='ss-proof-page'><small>3. GENERATED, EDITABLE MANUSCRIPT</small><h3>Building a lasting routine</h3><p>Revise, rewrite one part, listen and check consistency before exporting.</p><div class='ss-proof-lines'><i></i><i></i><i></i></div></div></div></div><div class='ss-section'><h2>Who Scrittore Site is for</h2><p class='ss-muted'>No technical experience is required: choose your starting point.</p></div><div class='ss-priority-grid'><div class='ss-step'><strong>🌱 First-time authors</strong>Turn an idea into an organized, editable structure.</div><div class='ss-step'><strong>🛠️ Professionals and trainers</strong>Organize expertise and procedures into manuals, guides and learning paths.</div><div class='ss-step'><strong>🎓 Teachers and Test Prep creators</strong>Create theory, quizzes, simulations and explained answers while staying in control.</div></div><div class='ss-section'><h2>How it works</h2><p class='ss-muted'>A straightforward path without giving up editorial control.</p></div><div class='ss-priority-grid'><div class='ss-step'><strong>1. Define the project</strong>Title, language, audience, genre, goal and depth.</div><div class='ss-step'><strong>2. Create and improve</strong>Generate and assess the outline, then develop sections, chapters or the whole book.</div><div class='ss-step'><strong>3. Review and save</strong>Preview, voice reader, checks, voluntary saving and export.</div></div><div class='ss-section'><h2>Project examples</h2><p class='ss-muted'>You always choose the title, voice and content.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>🧘 Wellbeing</b>Guides about yoga, mindfulness and daily habits.</div><div class='ss-benefit'><b>🧪 Technical manuals</b>Procedures, examples, checks and warnings.</div><div class='ss-benefit'><b>📚 Test Prep</b>Theory, quizzes, simulations and separate answers.</div><div class='ss-benefit'><b>✨ Fiction</b>Characters, conflict and a coherent ending.</div></div><div class='ss-section'><h2>All the features, without complexity</h2><p class='ss-muted'>Practical tools to plan, write, revise, listen to and prepare a manuscript.</p></div><div class='ss-priority-grid'><div class='ss-feature-group'><h3>🧭 Plan</h3><p><strong>Brief, sources and outline</strong><br>Guided sidebar, source dossier and professional outline with score and rewrite.</p></div><div class='ss-feature-group'><h3>✍️ Write and edit</h3><p><strong>Section, chapter or book</strong><br>Targeted rewriting, quizzes, recipes, Test Prep and global search/replace.</p></div><div class='ss-feature-group'><h3>🔎 Review and publish</h3><p><strong>Quality and originality</strong><br>Consistency, facts, copyright, voice preview, Word, PDF and KDP formatting.</p></div></div><div class='ss-section'><h2>Import / Export: your project stays in your hands</h2><p class='ss-muted'>CSV saves and restores the complete project; Word and PDF are for revision and reading.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📥 Export a complete CSV</b>Sidebar, outline, text, sources and images in a portable copy.</div><div class='ss-benefit'><b>📤 Import and resume</b>Open a Scrittore Site CSV and review it before saving.</div><div class='ss-benefit'><b>💾 Save when you choose</b>The project is stored only when you select SAVE SESSION.</div></div><div class='ss-section'><h2>Clear credits, total control</h2></div><div class='ss-credit-note'>Credits are used only for AI work. Reading, manual edits, CSV, Word and PDF remain free.</div><div class='ss-trust'>Your book is never published automatically: you always decide what to revise, export or publish.</div>""",
@@ -672,23 +720,24 @@ def _landing_page() -> None:
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
             border-radius:13px; padding:1.05rem .95rem; min-height:112px; box-shadow:none}
+          .ss-card {text-align:center}
           .ss-card h3 {margin:0 0 .34rem; color:#1269ae; font-size:1rem}
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
           .ss-price {font-size:1.35rem; font-weight:800; color:#1269ae; margin:.15rem 0}
           .ss-muted {color:#486581; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
           .ss-step {background:#fff; border:1px solid #d9e5f0; border-radius:13px; padding:1.15rem 1.05rem;
-            min-height:150px; text-align:left; font-size:1rem; line-height:1.48}
+            min-height:150px; text-align:center; font-size:1rem; line-height:1.48}
           .ss-step strong {display:block; color:#1269ae; margin-bottom:.3rem; font-size:1.18rem}
           .ss-feature {background:transparent; border:0; border-top:1px solid #cbd9e6; border-radius:0; padding:1rem .3rem;
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
           .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:1.1rem 0 2.25rem}
-          .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1.25rem 1.12rem;min-height:210px;box-shadow:0 10px 24px rgba(20,77,120,.08)}
+          .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1.25rem 1.12rem;min-height:210px;box-shadow:0 10px 24px rgba(20,77,120,.08);text-align:center}
           .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
           .ss-priority-icon {font-size:1.72rem;margin-bottom:.75rem}.ss-priority b {display:block;color:#102a43;font-size:1.12rem;margin-bottom:.45rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.43;font-size:.93rem}
           .ss-priority-tag {display:inline-block;margin-top:.72rem;padding:.22rem .48rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.7rem}
-          .ss-feature-group {background:rgba(255,255,255,.64);border:1px solid #d9e5f0;border-radius:14px;padding:1.1rem 1.05rem;height:100%}
+          .ss-feature-group {background:rgba(255,255,255,.64);border:1px solid #d9e5f0;border-radius:14px;padding:1.1rem 1.05rem;height:100%;text-align:center}
           .ss-feature-group h3 {margin:0 0 .42rem;color:#1269ae;font-size:1.06rem}.ss-feature-group p {margin:.42rem 0;color:#486581;font-size:.9rem;line-height:1.38}
           .ss-language-wrap {max-width:1500px; margin:0 auto -2.3rem; display:flex; justify-content:flex-end}
           .ss-creator {display:flex; align-items:center; gap:1rem; min-height:145px; padding:1rem 1.15rem; background:#fff; border:1px solid #d9e5f0; border-radius:13px; box-shadow:0 8px 22px rgba(20,77,120,.055)}
@@ -703,7 +752,7 @@ def _landing_page() -> None:
           .ss-dot {width:10px; height:10px; border-radius:50%; background:#fb7185; display:inline-block}
           .ss-dot:nth-child(2) {background:#fbbf24}.ss-dot:nth-child(3) {background:#4ade80}
           .ss-proof-label {margin-left:auto; font-size:.72rem; border:1px solid rgba(125,211,252,.45); padding:.2rem .48rem; border-radius:99px}
-          .ss-proof-grid {display:grid; grid-template-columns:43% 1fr; gap:1.05rem; padding-top:1.1rem; text-align:left}
+          .ss-proof-grid {display:grid; grid-template-columns:43% 1fr; gap:1.05rem; padding-top:1.1rem; text-align:center}
           .ss-proof-index,.ss-proof-page {border-radius:12px; padding:1.05rem; background:rgba(255,255,255,.075)}
           .ss-proof-index b {display:block; color:#f9a8d4; margin-bottom:.55rem}
           .ss-proof-index span {display:block; padding:.32rem 0; border-bottom:1px solid rgba(255,255,255,.09); font-size:.84rem}
@@ -728,7 +777,7 @@ def _landing_page() -> None:
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
           .ss-benefits {max-width:1160px; margin:.7rem auto 2.25rem; padding:.55rem .25rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 10px 26px rgba(20,77,120,.07)}
-          .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0}
+          .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0; text-align:center}
           .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
           @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid{grid-template-columns:1fr}}
@@ -829,7 +878,9 @@ def _landing_page() -> None:
     # Il corpo della home è localizzato integralmente, inclusi funzioni,
     # salvataggio, import/export, crediti e FAQ. La scelta lingua non cambia
     # né il libro né i dati dell'account.
-    st.markdown(f"<div dir='{direzione_home}'>{C['body']}</div>", unsafe_allow_html=True)
+    # La FAQ viene mostrata una sola volta, in fondo alla home.
+    corpo_home_senza_faq = C["body"].rsplit("<div class='ss-section'><h2>", 1)[0]
+    st.markdown(f"<div dir='{direzione_home}'>{corpo_home_senza_faq}</div>", unsafe_allow_html=True)
     st.markdown(
         f"<div dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
         unsafe_allow_html=True,
@@ -851,6 +902,7 @@ def _landing_page() -> None:
             )
 
     faq_title, faq_subtitle, faq_items = HOME_FAQ_COPY[home_language]
+    faq_items = [*faq_items, *HOME_FAQ_EXTRA[home_language]]
     st.markdown(
         f"<div class='ss-section' dir='{direzione_home}'><h2>{faq_title}</h2>"
         f"<p class='ss-muted'>{faq_subtitle}</p></div>",
