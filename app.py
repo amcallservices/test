@@ -2951,6 +2951,8 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
         profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
     minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(profilo_lunghezza)
+    riserva_chiusura = max(55, round(profilo_lunghezza_dati["max_parole"] * 0.12))
+    soglia_sviluppo = profilo_lunghezza_dati["max_parole"] - riserva_chiusura
     ha_sottocapitoli = bool(individua_sottocapitoli_del_capitolo(sezione, indice.splitlines()))
     if tipo_sezione == "capitolo" and ha_sottocapitoli:
         istruzione_lunghezza = (
@@ -2961,7 +2963,9 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
         istruzione_lunghezza = (
             f"Obiettivo: {profilo_lunghezza_dati['parole']}. Tolleranza massima del 5%: non scrivere meno di "
             f"{minimo_parole_tolleranza} né più di {massimo_parole_tolleranza} parole. La qualità dipende dalla densità "
-            "delle informazioni, non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo."
+            "delle informazioni, non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo. "
+            f"Completa lo sviluppo principale entro circa {soglia_sviluppo} parole e conserva le ultime circa "
+            f"{riserva_chiusura} parole per chiudere con calma l'ultima idea."
         )
     direttiva_test_prep = ""
     if genere == "Test Prep (Preparazione Esami)":
@@ -3004,7 +3008,9 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Tratta con priorità gli approfondimenti forniti, ma soltanto nelle sezioni cui sono pertinenti; non ripeterli artificialmente e non anticipare contenuti assegnati a sezioni successive.
 - Sii profondo ed esaustivo nell'ambito della sezione, senza rubare materiale alle altre.
 - {istruzione_lunghezza}
-- Pianifica il contenuto prima di scrivere: dedica l'ultima parte della sezione a chiudere esplicitamente il ragionamento, la procedura, l'esempio o la scena. Se lo spazio non basta, riduci i dettagli secondari invece di interrompere una frase, un elenco o una conclusione.
+- Pianifica internamente prima di scrivere, senza mostrare il piano: apri il tema, sviluppa solo i passaggi indispensabili e riserva già lo spazio finale indicato per concludere.
+- Non iniziare mai un nuovo esempio, elenco, periodo o ragionamento quando non hai spazio per terminarlo. Raggiunta la soglia di sviluppo, smetti di aggiungere dettagli secondari e completa con ordine il concetto già avviato.
+- L'ultimo paragrafo deve concludere il ragionamento, la procedura, l'esempio o la scena con una frase piena e definitiva. Non usare ellissi, frasi sospese, elenchi lasciati aperti o collegamenti rimandati alla sezione successiva.
 - Redigi contenuto concreto suggerito dal titolo, senza preamboli inutili.
 - Non scrivere e non ripetere mai '{sezione}' come intestazione. Inizia direttamente con il contenuto.
 - Usa formattazione editoriale pulita: non usare Markdown, simboli ###, ##, **, __, ``` o intestazioni tecniche. Se servono elenchi, usa semplici punti o numeri senza caratteri decorativi.
@@ -3513,6 +3519,7 @@ Profilo scelto: {val_lunghezza}.
 - Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
 - L'obiettivo del manoscritto completo è almeno {profilo_lunghezza_corrente['pagine_minime']} pagine nel formato 6×9; contribuisci a raggiungerlo con contenuto utile, senza gonfiare il testo.
 - Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
+- Prima di iniziare, distribuisci mentalmente lo spazio: sviluppa prima i passaggi essenziali e riserva sempre circa il 12% finale della sezione alla conclusione. Non avviare un nuovo esempio, elenco o periodo se non puoi terminarlo entro il limite.
 - Completa sempre l'ultima idea con una frase significativa: se lo spazio non basta, riduci prima dettagli secondari, esempi o elenchi, senza interrompere ragionamenti, procedure o scene.
 - Questa direttiva prevale su ogni invito generico a essere estremamente dettagliato o a includere molte categorie di esempi.
 - Una sezione è valida quando risponde bene al suo titolo con informazioni nuove, non quando ripete o aggiunge dettagli non necessari.
