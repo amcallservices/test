@@ -158,6 +158,77 @@ HOME_COPY = {
     "中文": {"presenta":"Antonino 的 AI 呈现", "language":"语言", "headline":"写下你的书。<br>兼顾方法、品质与掌控。", "subtitle":"从想法到完整书稿：借助 AI 规划、写作和导出，同时始终保持掌控。", "bonus":"🎁 50 个免费积分。无需银行卡。", "start":"免费开始，获赠 50 积分", "login":"登录", "b1":"专业目录", "b1t":"用清晰、完整且灵活的章节和小节组织你的书。", "b2":"引导式写作", "b2t":"AI 逐章协助你保持内容连贯与质量。", "b3":"Word 和 PDF", "b3t":"将图书导出为 Word 或 PDF，方便审阅或出版。", "create":"你可以创作什么", "create_sub":"一款适合你出版项目的工具。", "c1":"指南与手册", "c1t":"以清晰、专业的方式讲解、教学并分享你的专长。", "c2":"食谱书", "c2t":"用良好的风格、目录和版式收集并整理你的食谱。", "c3":"小说、测验与备考", "c3t":"创作引人入胜的故事或有效且结构完善的学习材料。"},
 }
 
+# Tutta la parte descrittiva della home usa contenuti nativi nella lingua
+# selezionata. Non effettua traduzioni con l'AI e non consuma crediti.
+HOME_BODY_COPY = {
+    "Italiano": {
+        "community": "La nostra Community", "version": "Versione app",
+        "body": """<div class='ss-section'><h2>Dall'idea al libro, con controllo reale</h2><p class='ss-muted'>Compila la sidebar, crea un indice studiato, sviluppa il testo e decidi tu ogni modifica.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Progetto su misura</b><p>Brief, pubblico, genere, stile e obiettivo guidano ogni fase del libro.</p><span class='ss-priority-tag'>SIDEBAR GUIDATA</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Indice studiato</b><p>Ricerca preliminare, struttura professionale, voto editoriale e correzioni mirate.</p><span class='ss-priority-tag'>STRUTTURA</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scrittura controllabile</b><p>Genera una sezione, un capitolo o tutto il libro; correggi soltanto ciò che desideri.</p><span class='ss-priority-tag'>TESTO</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualità e originalità</b><p>Controlli su coerenza, completezza, fonti e possibili somiglianze prima dell'esportazione.</p><span class='ss-priority-tag'>REVISIONE</span></div></div><div class='ss-section'><h2>Tutto il progetto resta recuperabile</h2><p class='ss-muted'>Salva manualmente la sessione, esporta un CSV completo e riprendi il lavoro quando vuoi.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importa ed esporta</b>CSV completo con sidebar, indice, testi, fonti e immagini associate.</div><div class='ss-benefit'><b>🔊 Anteprima e lettura vocale</b>Leggi, ascolta, metti in pausa e riprendi il manoscritto direttamente nel browser.</div><div class='ss-benefit'><b>📄 Word, PDF e KDP</b>Prepara il manoscritto per revisione, stampa o pubblicazione.</div></div><div class='ss-section'><h2>Domande frequenti</h2><p class='ss-muted'>Crediti solo per le elaborazioni IA; lettura, modifiche manuali, CSV ed export restano gratuiti. Il libro non viene mai pubblicato automaticamente.</p></div>""",
+        "packages": "Pacchetti crediti chiari", "package_sub": "Scegli il pacchetto in base al tuo progetto. Le stime sono prudenti e includono margine per i controlli.", "credit_word": "crediti",
+        "package_hints": ["Per provare le funzioni principali.", "Per un primo progetto completo.", "Per più guide o Test Prep.", "Per lavoro editoriale continuativo.", "Per cataloghi e uso professionale."],
+    },
+    "English": {
+        "community": "Our Community", "version": "App version",
+        "body": """<div class='ss-section'><h2>From idea to book, with real control</h2><p class='ss-muted'>Complete the sidebar, build a researched outline, develop the text, and decide every change yourself.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>A tailored project</b><p>Your brief, audience, genre, style and goal guide every stage of the book.</p><span class='ss-priority-tag'>GUIDED SIDEBAR</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>A researched outline</b><p>Preliminary research, professional structure, editorial scoring and targeted improvements.</p><span class='ss-priority-tag'>STRUCTURE</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Writing you control</b><p>Generate one section, a chapter or the whole book; revise only what you choose.</p><span class='ss-priority-tag'>WRITING</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Quality and originality</b><p>Checks for consistency, completeness, sources and possible similarities before export.</p><span class='ss-priority-tag'>REVIEW</span></div></div><div class='ss-section'><h2>Your whole project remains recoverable</h2><p class='ss-muted'>Save your session manually, export a complete CSV file and resume work whenever you wish.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import and export</b>A complete CSV with sidebar, outline, text, sources and linked images.</div><div class='ss-benefit'><b>🔊 Preview and voice reader</b>Read, listen, pause and resume the manuscript directly in your browser.</div><div class='ss-benefit'><b>📄 Word, PDF and KDP</b>Prepare your manuscript for editing, printing or publishing.</div></div><div class='ss-section'><h2>Frequently asked questions</h2><p class='ss-muted'>Credits are used only for AI work; reading, manual edits, CSV and export remain free. Your book is never published automatically.</p></div>""",
+        "packages": "Clear credit packages", "package_sub": "Choose a package for your project. Estimates are conservative and include room for checks.", "credit_word": "credits",
+        "package_hints": ["To try the main features.", "For a first complete project.", "For several guides or Test Prep books.", "For ongoing editorial work.", "For catalogs and professional use."],
+    },
+    "Español": {
+        "community": "Nuestra Comunidad", "version": "Versión de la app",
+        "body": """<div class='ss-section'><h2>De la idea al libro, con control real</h2><p class='ss-muted'>Completa la barra lateral, crea un índice documentado, desarrolla el texto y decide cada cambio.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Proyecto a medida</b><p>El briefing, público, género, estilo y objetivo guían cada fase del libro.</p><span class='ss-priority-tag'>BARRA GUIADA</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Índice estudiado</b><p>Investigación previa, estructura profesional, evaluación editorial y mejoras específicas.</p><span class='ss-priority-tag'>ESTRUCTURA</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Escritura controlable</b><p>Genera una sección, un capítulo o todo el libro; revisa solo lo que elijas.</p><span class='ss-priority-tag'>TEXTO</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Calidad y originalidad</b><p>Controles de coherencia, integridad, fuentes y posibles similitudes antes de exportar.</p><span class='ss-priority-tag'>REVISIÓN</span></div></div><div class='ss-section'><h2>Todo tu proyecto se puede recuperar</h2><p class='ss-muted'>Guarda la sesión manualmente, exporta un CSV completo y retoma el trabajo cuando quieras.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importar y exportar</b>CSV completo con barra lateral, índice, textos, fuentes e imágenes vinculadas.</div><div class='ss-benefit'><b>🔊 Vista previa y lector de voz</b>Lee, escucha, pausa y reanuda el manuscrito en el navegador.</div><div class='ss-benefit'><b>📄 Word, PDF y KDP</b>Prepara el manuscrito para revisión, impresión o publicación.</div></div><div class='ss-section'><h2>Preguntas frecuentes</h2><p class='ss-muted'>Los créditos solo se usan para elaboraciones con IA; lectura, edición manual, CSV y exportación son gratis. El libro nunca se publica automáticamente.</p></div>""",
+        "packages": "Paquetes de créditos claros", "package_sub": "Elige un paquete según tu proyecto. Las estimaciones son prudentes e incluyen margen para controles.", "credit_word": "créditos",
+        "package_hints": ["Para probar las funciones principales.", "Para un primer proyecto completo.", "Para varias guías o Test Prep.", "Para trabajo editorial continuo.", "Para catálogos y uso profesional."],
+    },
+    "Français": {
+        "community": "Notre communauté", "version": "Version de l’application",
+        "body": """<div class='ss-section'><h2>De l’idée au livre, avec un vrai contrôle</h2><p class='ss-muted'>Remplissez la barre latérale, créez un plan documenté, développez le texte et décidez de chaque modification.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Projet sur mesure</b><p>Le brief, le public, le genre, le style et l’objectif guident chaque étape.</p><span class='ss-priority-tag'>BARRE GUIDÉE</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Plan étudié</b><p>Recherche préalable, structure professionnelle, évaluation éditoriale et améliorations ciblées.</p><span class='ss-priority-tag'>STRUCTURE</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Rédaction maîtrisée</b><p>Générez une section, un chapitre ou tout le livre; modifiez seulement ce que vous choisissez.</p><span class='ss-priority-tag'>TEXTE</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualité et originalité</b><p>Contrôles de cohérence, complétude, sources et similitudes possibles avant l’export.</p><span class='ss-priority-tag'>RÉVISION</span></div></div><div class='ss-section'><h2>Votre projet reste récupérable</h2><p class='ss-muted'>Sauvegardez la session manuellement, exportez un CSV complet et reprenez le travail quand vous le souhaitez.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importer et exporter</b>CSV complet avec barre latérale, plan, textes, sources et images liées.</div><div class='ss-benefit'><b>🔊 Aperçu et lecteur vocal</b>Lisez, écoutez, mettez en pause et reprenez le manuscrit dans le navigateur.</div><div class='ss-benefit'><b>📄 Word, PDF et KDP</b>Préparez le manuscrit pour révision, impression ou publication.</div></div><div class='ss-section'><h2>Questions fréquentes</h2><p class='ss-muted'>Les crédits servent seulement aux travaux IA; lecture, modifications manuelles, CSV et export restent gratuits. Le livre n’est jamais publié automatiquement.</p></div>""",
+        "packages": "Forfaits de crédits clairs", "package_sub": "Choisissez un forfait selon votre projet. Les estimations sont prudentes et incluent une marge pour les contrôles.", "credit_word": "crédits",
+        "package_hints": ["Pour essayer les fonctions principales.", "Pour un premier projet complet.", "Pour plusieurs guides ou Test Prep.", "Pour un travail éditorial continu.", "Pour catalogues et usage professionnel."],
+    },
+    "Deutsch": {
+        "community": "Unsere Community", "version": "App-Version",
+        "body": """<div class='ss-section'><h2>Von der Idee zum Buch – mit echter Kontrolle</h2><p class='ss-muted'>Füllen Sie die Seitenleiste aus, erstellen Sie eine recherchierte Gliederung und entscheiden Sie über jede Änderung.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Maßgeschneidertes Projekt</b><p>Briefing, Zielgruppe, Genre, Stil und Ziel steuern jede Phase des Buchs.</p><span class='ss-priority-tag'>GEFÜHRTE SIDEBAR</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Durchdachte Gliederung</b><p>Vorabrecherche, professionelle Struktur, Bewertung und gezielte Verbesserungen.</p><span class='ss-priority-tag'>STRUKTUR</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Kontrollierbares Schreiben</b><p>Erstellen Sie einen Abschnitt, ein Kapitel oder das ganze Buch und ändern Sie nur Gewünschtes.</p><span class='ss-priority-tag'>TEXT</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualität und Originalität</b><p>Prüfungen auf Kohärenz, Vollständigkeit, Quellen und mögliche Ähnlichkeiten vor dem Export.</p><span class='ss-priority-tag'>PRÜFUNG</span></div></div><div class='ss-section'><h2>Ihr Projekt bleibt wiederherstellbar</h2><p class='ss-muted'>Speichern Sie die Sitzung manuell, exportieren Sie eine vollständige CSV-Datei und setzen Sie später fort.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import und Export</b>Vollständige CSV mit Sidebar, Gliederung, Texten, Quellen und Bildern.</div><div class='ss-benefit'><b>🔊 Vorschau und Sprachleser</b>Lesen, hören, pausieren und fortsetzen direkt im Browser.</div><div class='ss-benefit'><b>📄 Word, PDF und KDP</b>Bereiten Sie das Manuskript für Überarbeitung, Druck oder Veröffentlichung vor.</div></div><div class='ss-section'><h2>Häufige Fragen</h2><p class='ss-muted'>Credits gelten nur für KI-Verarbeitungen; Lesen, manuelle Änderungen, CSV und Export bleiben kostenlos. Das Buch wird nie automatisch veröffentlicht.</p></div>""",
+        "packages": "Klare Credit-Pakete", "package_sub": "Wählen Sie ein Paket für Ihr Projekt. Die Schätzungen sind vorsichtig und enthalten Spielraum für Prüfungen.", "credit_word": "Credits",
+        "package_hints": ["Zum Testen der Hauptfunktionen.", "Für ein erstes vollständiges Projekt.", "Für mehrere Ratgeber oder Test Prep.", "Für laufende Redaktionsarbeit.", "Für Kataloge und professionelle Nutzung."],
+    },
+    "Română": {
+        "community": "Comunitatea noastră", "version": "Versiunea aplicației",
+        "body": """<div class='ss-section'><h2>De la idee la carte, cu control real</h2><p class='ss-muted'>Completează bara laterală, creează un cuprins documentat, dezvoltă textul și decide fiecare modificare.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Proiect personalizat</b><p>Brief-ul, publicul, genul, stilul și obiectivul ghidează fiecare etapă.</p><span class='ss-priority-tag'>BARĂ GHIDATĂ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Cuprins studiat</b><p>Cercetare preliminară, structură profesională, evaluare editorială și îmbunătățiri țintite.</p><span class='ss-priority-tag'>STRUCTURĂ</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scriere controlabilă</b><p>Generează o secțiune, un capitol sau întreaga carte și modifică doar ce alegi.</p><span class='ss-priority-tag'>TEXT</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Calitate și originalitate</b><p>Verificări de coerență, completitudine, surse și similitudini înainte de export.</p><span class='ss-priority-tag'>REVIZUIRE</span></div></div><div class='ss-section'><h2>Proiectul tău rămâne recuperabil</h2><p class='ss-muted'>Salvează manual sesiunea, exportă un CSV complet și reia lucrul oricând.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import și export</b>CSV complet cu bara laterală, cuprins, texte, surse și imagini.</div><div class='ss-benefit'><b>🔊 Previziualizare și cititor vocal</b>Citește, ascultă, întrerupe și reia manuscrisul în browser.</div><div class='ss-benefit'><b>📄 Word, PDF și KDP</b>Pregătește manuscrisul pentru revizie, tipar sau publicare.</div></div><div class='ss-section'><h2>Întrebări frecvente</h2><p class='ss-muted'>Creditele sunt folosite doar pentru prelucrări IA; citirea, modificările manuale, CSV și exportul rămân gratuite. Cartea nu se publică automat.</p></div>""",
+        "packages": "Pachete de credite clare", "package_sub": "Alege pachetul pentru proiectul tău. Estimările sunt prudente și includ spațiu pentru verificări.", "credit_word": "credite",
+        "package_hints": ["Pentru a testa funcțiile principale.", "Pentru un prim proiect complet.", "Pentru mai multe ghiduri sau Test Prep.", "Pentru activitate editorială continuă.", "Pentru cataloage și utilizare profesională."],
+    },
+    "Русский": {
+        "community": "Наше сообщество", "version": "Версия приложения",
+        "body": """<div class='ss-section'><h2>От идеи до книги — с реальным контролем</h2><p class='ss-muted'>Заполните боковую панель, создайте продуманный план, развивайте текст и решайте каждое изменение.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Индивидуальный проект</b><p>Бриф, аудитория, жанр, стиль и цель направляют каждый этап книги.</p><span class='ss-priority-tag'>ПАНЕЛЬ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Продуманный план</b><p>Предварительное исследование, профессиональная структура и целевые улучшения.</p><span class='ss-priority-tag'>СТРУКТУРА</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Управляемый текст</b><p>Создавайте раздел, главу или всю книгу и изменяйте только выбранное.</p><span class='ss-priority-tag'>ТЕКСТ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Качество и оригинальность</b><p>Проверки связности, полноты, источников и возможных совпадений перед экспортом.</p><span class='ss-priority-tag'>ПРОВЕРКА</span></div></div><div class='ss-section'><h2>Проект можно восстановить</h2><p class='ss-muted'>Сохраняйте сессию вручную, экспортируйте полный CSV и продолжайте работу в любое время.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Импорт и экспорт</b>Полный CSV с панелью, планом, текстами, источниками и изображениями.</div><div class='ss-benefit'><b>🔊 Предпросмотр и чтение вслух</b>Читайте, слушайте, ставьте на паузу и продолжайте в браузере.</div><div class='ss-benefit'><b>📄 Word, PDF и KDP</b>Подготовьте рукопись к редактированию, печати или публикации.</div></div><div class='ss-section'><h2>Частые вопросы</h2><p class='ss-muted'>Кредиты используются только для ИИ; чтение, ручное редактирование, CSV и экспорт бесплатны. Книга никогда не публикуется автоматически.</p></div>""",
+        "packages": "Понятные пакеты кредитов", "package_sub": "Выберите пакет для своего проекта. Оценки осторожны и включают запас на проверки.", "credit_word": "кредитов",
+        "package_hints": ["Чтобы попробовать основные функции.", "Для первого полного проекта.", "Для нескольких руководств или Test Prep.", "Для постоянной редакционной работы.", "Для каталогов и профессионального использования."],
+    },
+    "العربية": {
+        "community": "مجتمعنا", "version": "إصدار التطبيق",
+        "body": """<div class='ss-section'><h2>من الفكرة إلى الكتاب، بتحكم حقيقي</h2><p class='ss-muted'>أكمل الشريط الجانبي، أنشئ فهرساً مدروساً، طوّر النص وقرر كل تعديل بنفسك.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>مشروع مخصص</b><p>الملخص والجمهور والنوع والأسلوب والهدف توجه كل مرحلة من الكتاب.</p><span class='ss-priority-tag'>شريط موجه</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>فهرس مدروس</b><p>بحث أولي وبنية احترافية وتقييم تحريري وتحسينات موجهة.</p><span class='ss-priority-tag'>البنية</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>كتابة قابلة للتحكم</b><p>أنشئ قسماً أو فصلاً أو الكتاب كاملاً وعدّل فقط ما تختاره.</p><span class='ss-priority-tag'>النص</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>الجودة والأصالة</b><p>فحوص للاتساق والاكتمال والمصادر والتشابهات المحتملة قبل التصدير.</p><span class='ss-priority-tag'>مراجعة</span></div></div><div class='ss-section'><h2>يمكن استعادة مشروعك دائماً</h2><p class='ss-muted'>احفظ الجلسة يدوياً وصدّر ملف CSV كاملاً واستأنف العمل متى شئت.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 استيراد وتصدير</b>CSV كامل للشريط الجانبي والفهرس والنصوص والمصادر والصور.</div><div class='ss-benefit'><b>🔊 معاينة وقارئ صوتي</b>اقرأ واستمع وأوقف واستأنف المخطوطة في المتصفح.</div><div class='ss-benefit'><b>📄 Word وPDF وKDP</b>جهّز المخطوطة للمراجعة أو الطباعة أو النشر.</div></div><div class='ss-section'><h2>أسئلة شائعة</h2><p class='ss-muted'>تُستخدم الأرصدة فقط لمعالجة الذكاء الاصطناعي؛ القراءة والتعديل اليدوي وCSV والتصدير مجانية. لا يُنشر الكتاب تلقائياً أبداً.</p></div>""",
+        "packages": "باقات أرصدة واضحة", "package_sub": "اختر الباقة المناسبة لمشروعك. التقديرات حذرة وتشمل هامشاً للفحوص.", "credit_word": "رصيداً",
+        "package_hints": ["لتجربة الوظائف الرئيسية.", "لأول مشروع كامل.", "لأدلة أو Test Prep متعددة.", "لعمل تحريري مستمر.", "للكتالوجات والاستخدام الاحترافي."],
+    },
+    "中文": {
+        "community": "我们的社区", "version": "应用版本",
+        "body": """<div class='ss-section'><h2>从想法到图书，始终掌控</h2><p class='ss-muted'>填写侧边栏，创建经过研究的目录，发展文本，并由你决定每一项修改。</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>量身定制的项目</b><p>简介、读者、类型、风格和目标指导图书的每一步。</p><span class='ss-priority-tag'>引导侧边栏</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>经过研究的目录</b><p>前期研究、专业结构、编辑评分和有针对性的改进。</p><span class='ss-priority-tag'>结构</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>可控写作</b><p>生成一个小节、一章或整本书，只修改你选择的部分。</p><span class='ss-priority-tag'>文本</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>质量与原创性</b><p>导出前检查连贯性、完整性、来源和可能的相似性。</p><span class='ss-priority-tag'>审校</span></div></div><div class='ss-section'><h2>你的项目始终可恢复</h2><p class='ss-muted'>手动保存会话，导出完整 CSV，并可随时继续工作。</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 导入和导出</b>完整 CSV，包含侧边栏、目录、文本、来源和关联图片。</div><div class='ss-benefit'><b>🔊 预览与语音阅读器</b>直接在浏览器中阅读、聆听、暂停和继续书稿。</div><div class='ss-benefit'><b>📄 Word、PDF 和 KDP</b>为编辑、印刷或出版准备书稿。</div></div><div class='ss-section'><h2>常见问题</h2><p class='ss-muted'>积分仅用于 AI 处理；阅读、手动编辑、CSV 和导出免费。图书绝不会自动发布。</p></div>""",
+        "packages": "清晰的积分套餐", "package_sub": "根据你的项目选择套餐。估算较为谨慎，并包含检查余量。", "credit_word": "积分",
+        "package_hints": ["试用主要功能。", "完成第一个完整项目。", "制作多本指南或 Test Prep。", "持续进行编辑工作。", "目录与专业用途。"],
+    },
+}
+
+HOME_PACKAGE_NAMES = {
+    "Italiano": ("Prova", "Base", "Creator", "Studio", "Professionale"),
+    "English": ("Try", "Base", "Creator", "Studio", "Professional"),
+    "Español": ("Prueba", "Base", "Creator", "Studio", "Profesional"),
+    "Français": ("Essai", "Base", "Creator", "Studio", "Professionnel"),
+    "Deutsch": ("Test", "Basis", "Creator", "Studio", "Professionell"),
+    "Română": ("Probă", "Bază", "Creator", "Studio", "Profesional"),
+    "Русский": ("Пробный", "Базовый", "Creator", "Studio", "Профессиональный"),
+    "العربية": ("تجربة", "أساسي", "Creator", "Studio", "احترافي"),
+    "中文": ("试用", "基础", "创作者", "工作室", "专业版"),
+}
+
 
 class CommercialCreditError(RuntimeError):
     """L'operazione IA non può iniziare perché il saldo è insufficiente."""
@@ -609,13 +680,15 @@ def _landing_page() -> None:
             label_visibility="collapsed",
         )
     H = HOME_COPY[home_language]
+    C = HOME_BODY_COPY[home_language]
+    direzione_home = "rtl" if home_language == "العربية" else "ltr"
 
     hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
     with hero_copy:
         st.markdown(
             f"""<div class='ss-hero-copy'>
               <div class='ss-kicker'>{H['presenta']}</div>
-              <div class='ss-version'>Versione app: {COMMERCIAL_VERSION}</div>
+              <div class='ss-version'>{C['version']}: {COMMERCIAL_VERSION}</div>
               <h1 class='ss-title' style='color:#cf3345 !important'>Scrittore Site</h1>
               <div class='ss-title-line'></div>
               <div class='ss-headline'>{H['headline']}</div>
@@ -636,7 +709,7 @@ def _landing_page() -> None:
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
         st.markdown(
-            "<a class='ss-community-button' href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>La nostra Community</a>",
+            f"<a class='ss-community-button' href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>{C['community']}</a>",
             unsafe_allow_html=True,
         )
     with hero_visual:
@@ -672,6 +745,27 @@ def _landing_page() -> None:
         </div>""",
         unsafe_allow_html=True,
     )
+
+    # Il corpo della home è localizzato integralmente, inclusi funzioni,
+    # salvataggio, import/export, crediti e FAQ. La scelta lingua non cambia
+    # né il libro né i dati dell'account.
+    st.markdown(f"<div dir='{direzione_home}'>{C['body']}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='ss-section'><h2>{C['packages']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
+        unsafe_allow_html=True,
+    )
+    price_columns = st.columns(len(PACKAGES))
+    nomi_pacchetti = HOME_PACKAGE_NAMES[home_language]
+    for posizione, (column, (_, package)) in enumerate(zip(price_columns, PACKAGES.items())):
+        price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
+        with column:
+            st.markdown(
+                f"<div class='ss-card'><h3>{nomi_pacchetti[posizione]}</h3>"
+                f"<div class='ss-price'>{price}</div><p>{package['credits']} {C['credit_word']}</p>"
+                f"<p>{C['package_hints'][posizione]}</p></div>",
+                unsafe_allow_html=True,
+            )
+    return
 
     st.markdown("<div class='ss-section'><h2>Da un’idea a un libro: un esempio concreto</h2><p class='ss-muted'>La stessa idea passa dalla sidebar all’indice, poi diventa un manoscritto controllabile e modificabile.</p></div>", unsafe_allow_html=True)
     st.markdown(
