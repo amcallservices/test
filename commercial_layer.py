@@ -11,7 +11,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "beta 3c"
+COMMERCIAL_VERSION = "beta 3d"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -44,6 +44,50 @@ CREDIT_COSTS = {
     # passaggio con GPT-5.4 completo + ricerca web.
     "copyright_lotto_revisione_gpt54": 2,
 }
+
+# DeepSeek V4 Pro viene conteggiato in mezzi-crediti interni: il saldo
+# mostrato all'utente resta sempre espresso in crediti interi. Due unità
+# equivalgono a un credito. In questo modo una sezione DeepSeek costa davvero
+# mezzo credito senza decimali, anche se l'utente esce e rientra nell'app.
+DEEPSEEK_UNITI_PER_CREDITO = 2
+
+
+def _provider_ia_corrente() -> str:
+    """Legge la scelta fatta nella sidebar senza memorizzarla nel codice."""
+    return str(st.session_state.get("provider_ia", "GPT-5.4")).strip()
+
+
+def usa_deepseek() -> bool:
+    return _provider_ia_corrente().casefold().startswith("deepseek")
+
+
+def _unita_deepseek(reason: str, amount: int) -> int:
+    """Converte il tariffario GPT nell'equivalente DeepSeek Pro approvato.
+
+    Le unità dispari sono le operazioni a mezzo credito (una sezione, un
+    blocco modificato o uno screening copyright); la parte residua viene
+    custodita nel profilo dell'utente e non si perde al logout.
+    """
+    amount = max(1, int(amount or 1))
+    tariffe = {
+        "ricerca_preliminare_indice": 2,          # 1 credito
+        "genera_indice_controllato": 2,           # 1 credito
+        "verifica_fatti": 2,                      # 1 credito
+        "audit_fatti": 2,                         # 1 credito
+        "audit_editoriale": 2,                    # 1 credito
+        "controllo_coerenza": 6 if amount >= 10 else amount,
+        "report_sintattico": 2,                   # 1 credito
+        "metadati_kdp": 2,                        # 1 credito
+        "verifica_originalita_copyright_web": 2,  # 1 credito
+        "verifica_copyright_web_completa": 1,     # 1 credito ogni 2 lotti
+        "verifica_copyright_web_revisione_gpt54": 2,
+        "generazione_immagine": amount * DEEPSEEK_UNITI_PER_CREDITO,
+    }
+    if reason == "generazione_testo":
+        # Sezioni, quiz ed esempi: 1 credito ogni 2 richieste. Le dieci
+        # ricette hanno una tariffa dedicata di 4 crediti.
+        return 8 if amount >= CREDIT_COSTS["ricette_dieci"] else 1
+    return int(tariffe.get(reason, amount * DEEPSEEK_UNITI_PER_CREDITO))
 # Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
 # ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
@@ -1179,6 +1223,37 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
     if _is_admin(user):
         # Nessun movimento e nessun consumo: l'amministratore dispone di crediti illimitati.
         return reference
+    if usa_deepseek():
+        unita = _unita_deepseek(reason, amount)
+        if _mode() == "demo" or not _supabase_ready():
+            residue = int(st.session_state.get("commercial_demo_deepseek_units", 0))
+            totale = residue + unita
+            addebito = totale // DEEPSEEK_UNITI_PER_CREDITO
+            balance = _balance(user["id"])
+            if balance < addebito:
+                st.session_state["commercial_credit_limit"] = True
+                raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
+            st.session_state["commercial_demo_deepseek_units"] = totale % DEEPSEEK_UNITI_PER_CREDITO
+            st.session_state["commercial_demo_credits"] = balance - addebito
+            st.session_state.setdefault("commercial_deepseek_charges", {})[reference] = {
+                "units": unita, "charged": addebito,
+            }
+            if addebito:
+                _demo_ledger(reason, -addebito, reference)
+            return reference
+
+        result = _supabase(
+            "POST", "rest/v1/rpc/spend_deepseek_units",
+            payload={"p_user_id": user["id"], "p_units": unita, "p_reason": reason, "p_reference": reference},
+        )
+        if not isinstance(result, dict) or not result.get("ok"):
+            st.session_state["commercial_credit_limit"] = True
+            raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
+        st.session_state.setdefault("commercial_deepseek_charges", {})[reference] = {
+            "units": unita, "charged": int(result.get("charged", 0)),
+        }
+        return reference
+
     if _mode() == "demo" or not _supabase_ready():
         balance = _balance(user["id"])
         if balance < amount:
@@ -1200,6 +1275,25 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
     if not user:
         return
     if _is_admin(user):
+        return
+    movimento_deepseek = (st.session_state.get("commercial_deepseek_charges", {}) or {}).pop(reference, None)
+    if movimento_deepseek:
+        unita = int(movimento_deepseek.get("units", 0))
+        addebito = int(movimento_deepseek.get("charged", 0))
+        if _mode() == "demo" or not _supabase_ready():
+            residue = int(st.session_state.get("commercial_demo_deepseek_units", 0))
+            st.session_state["commercial_demo_deepseek_units"] = (residue - unita) % DEEPSEEK_UNITI_PER_CREDITO
+            if addebito:
+                st.session_state["commercial_demo_credits"] = _balance(user["id"]) + addebito
+                _demo_ledger(reason, addebito, reference)
+            return
+        _supabase(
+            "POST", "rest/v1/rpc/refund_deepseek_units",
+            payload={
+                "p_user_id": user["id"], "p_units": unita, "p_charged": addebito,
+                "p_reason": reason, "p_reference": reference,
+            },
+        )
         return
     if _mode() == "demo" or not _supabase_ready():
         st.session_state["commercial_demo_credits"] = _balance(user["id"]) + amount
