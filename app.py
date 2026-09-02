@@ -4544,10 +4544,15 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         ))
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
-                        # Ogni sezione generata e addebitata viene confermata
-                        # nel cloud prima del rerun: una ricarica del browser
-                        # o un riavvio Streamlit non fa perdere il lavoro.
-                        salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
+                        # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
+                        # sezione conclusa viene inviata immediatamente al
+                        # cloud, prima del rerun che avvia quella successiva.
+                        # Un'interruzione lascia quindi recuperabili tutte le
+                        # sezioni già pagate e concluse; rilanciando il comando
+                        # verranno elaborate solo le sezioni ancora vuote.
+                        salva_stesura_generata_in_cloud(
+                            [sezione_corrente], "sezione del libro generata"
+                        )
                         st.rerun()
                     except Exception as exc:
                         st.session_state["job_scrittura_attivo"] = False
@@ -4680,6 +4685,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 # Non sostituiamo mai testi già presenti. Qui arrivano soltanto
                                 # sottocapitoli dichiarati vuoti al momento del click.
                                 scrivi_sezione_memorizzata(sottocapitolo, contenuto)
+                                # Protezione immediata: non attendere che il
+                                # capitolo intero termini. Se la pagina si
+                                # aggiorna durante il ciclo, ogni sezione già
+                                # completata è recuperabile dall'account.
+                                salva_stesura_generata_in_cloud(
+                                    opzioni_editor, "sezione generata"
+                                )
                                 completati.append(sottocapitolo)
                             except Exception as exc:
                                 errori.append(f"{sottocapitolo}: {exc}")
