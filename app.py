@@ -286,17 +286,18 @@ def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
         return "Servono almeno una sezione sostanziale già scritta per la verifica web."
     # Campione distribuito: evita di inviare un manoscritto intero e permette
     # al modello di cercare le formulazioni più distintive nella ricerca web.
-    passo = max(1, len(testo_libro) // 7)
-    campioni = [testo_libro[posizione:posizione + 550] for posizione in range(0, len(testo_libro), passo)][:7]
+    passo = max(1, len(testo_libro) // 10)
+    campioni = [testo_libro[posizione:posizione + 650] for posizione in range(0, len(testo_libro), passo)][:10]
     riferimento = addebita_azione_diretta("verifica_originalita_copyright_web", amount=2)
     try:
         risposta = client.responses.create(
             model=MODELLO_ANALISI_FONTI,
             tools=[{"type": "web_search_preview"}],
             input=(
-                "Agisci come revisore editoriale prudente. Cerca sul web possibili corrispondenze letterali "
-                "o troppo ravvicinate per i campioni di un manoscritto, dando priorità alle fonti consultate nel "
-                "registro. Non dichiarare mai che il libro è libero da copyright e non dare pareri legali. "
+                "Agisci come revisore editoriale prudente. Cerca sul web possibili corrispondenze letterali, "
+                "parafrasi molto vicine o struttura troppo derivativa per i campioni di un manoscritto, dando priorità "
+                "alle fonti consultate nel registro. Confronta anche titoli, esempi distintivi, elenchi e sequenze "
+                "argomentative. Non dichiarare mai che il libro è libero da copyright e non dare pareri legali. "
                 "Restituisci solo: ESITO (nessuna corrispondenza evidente / attenzione / rischio elevato); "
                 "PASSAGGI DA RIVEDERE (massimo 5, senza riportare oltre 12 parole per passaggio); "
                 "MOTIVO; AZIONE CONSIGLIATA. Se non trovi riscontri, spiega che è uno screening limitato e "
@@ -313,6 +314,68 @@ def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
     except Exception:
         refund_credits(riferimento, reason="verifica_originalita_web_fallita", amount=2)
         return "La verifica web non è riuscita. Nessun credito è stato addebitato; puoi riprovare più tardi."
+
+
+def prepara_blocchi_verifica_web_completa(sezioni, massimo_caratteri=2400):
+    """Suddivide tutte le sezioni, conservando il riferimento editoriale di origine."""
+    blocchi = []
+    for titolo, testo in sezioni:
+        testo = (testo or "").strip()
+        if not testo:
+            continue
+        for inizio in range(0, len(testo), massimo_caratteri):
+            estratto = testo[inizio:inizio + massimo_caratteri]
+            blocchi.append((titolo, estratto))
+    return blocchi
+
+
+def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
+    """Analizza tutto il manoscritto a lotti, con uno screening web per blocco."""
+    blocchi = prepara_blocchi_verifica_web_completa(sezioni)
+    if not blocchi:
+        return "Servono sezioni già scritte per eseguire la verifica completa.", 0
+    dimensione_lotto = 8
+    lotti = [blocchi[indice:indice + dimensione_lotto] for indice in range(0, len(blocchi), dimensione_lotto)]
+    esiti, completati = [], 0
+    for numero_lotto, lotto in enumerate(lotti, start=1):
+        if aggiorna:
+            aggiorna(numero_lotto - 1, len(lotti))
+        riferimento = addebita_azione_diretta("verifica_copyright_web_completa", amount=1)
+        testo_lotto = "\n\n---\n\n".join(
+            f"SEZIONE: {titolo}\nBLOCCO: {testo}" for titolo, testo in lotto
+        )
+        try:
+            risposta = client.responses.create(
+                model=MODELLO_ANALISI_FONTI,
+                tools=[{"type": "web_search_preview"}],
+                input=(
+                    "Agisci come revisore editoriale prudente. Analizza TUTTI i blocchi ricevuti in questo lotto "
+                    "e cerca sul web corrispondenze letterali, parafrasi troppo vicine, titoli, esempi, elenchi o "
+                    "sviluppi argomentativi distintivi, con priorità alle fonti del registro. Non emettere pareri legali "
+                    "né certificazioni di assenza copyright. Non citare più di 12 parole di un testo potenzialmente protetto. "
+                    "Per ogni rischio indica la sezione esatta, il livello (attenzione/rischio elevato), il motivo e una "
+                    "azione concreta di riscrittura. Se non trovi elementi, scrivi: 'Nessuna corrispondenza evidente nel lotto'.\n\n"
+                    f"REGISTRO FONTI CONSULTATE:\n{registro_fonti}\n\n"
+                    f"LOTTO {numero_lotto}/{len(lotti)}\n{testo_lotto}"
+                ),
+            )
+            esito = (getattr(risposta, "output_text", "") or "").strip()
+            if esito:
+                esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito}")
+                completati += 1
+            else:
+                refund_credits(riferimento, reason="verifica_copyright_completa_vuota", amount=1)
+        except Exception:
+            refund_credits(riferimento, reason="verifica_copyright_completa_fallita", amount=1)
+            esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\nVerifica non completata: nessun credito addebitato per questo lotto.")
+    if aggiorna:
+        aggiorna(len(lotti), len(lotti))
+    intestazione = (
+        f"VERIFICA WEB COMPLETA — {len(blocchi)} blocchi controllati in {len(lotti)} lotti; "
+        f"{completati} lotti completati.\n\n"
+        "Questo è uno screening di rischio sul web, non una certificazione legale né una verifica antiplagio universale.\n\n"
+    )
+    return intestazione + "\n\n".join(esiti), len(lotti)
 
 
 def notifica_sonora(evento, lingua="Italiano", ripeti=False):
@@ -4624,7 +4687,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 except Exception as exc:
                     st.error(f"Importazione non riuscita: {exc}")
         st.info("L'importazione sostituisce il progetto aperto solo nella pagina corrente. Per salvarla anche nel tuo account premi poi “💾 SALVA SESSIONE” nella sidebar.")
-        with st.expander("🛡️ Controllo originalità e copyright", expanded=False):
+        with st.expander(
+            "🛡️ Controllo originalità e copyright",
+            expanded=bool(
+                st.session_state.get("report_originalita_fonti")
+                or st.session_state.get("report_originalita_web")
+                or st.session_state.get("report_originalita_web_completa")
+            ),
+        ):
             st.caption(
                 "Il controllo locale confronta gratuitamente il manoscritto con i PDF/DOCX caricati. La verifica web opzionale analizza campioni del testo e le fonti web registrate dalla ricerca. "
                 "Nessuno dei due sostituisce una certificazione legale o un servizio antiplagio completo."
@@ -4660,14 +4730,45 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state["report_originalita_web"] = verifica_originalita_web_con_ai(
                             testo_per_controllo, registro_web
                         )
+                sezioni_complete_copyright = [
+                    (sezione, leggi_sezione_memorizzata(sezione)) for sezione in opzioni_editor
+                    if leggi_sezione_memorizzata(sezione).strip()
+                ]
+                blocchi_completi = prepara_blocchi_verifica_web_completa(sezioni_complete_copyright)
+                costo_verifica_completa = max(1, math.ceil(len(blocchi_completi) / 8))
+                st.caption(
+                    f"Verifica completa: {len(blocchi_completi)} blocchi, {costo_verifica_completa} crediti stimati. "
+                    "Analizza tutto il manoscritto, sezione per sezione; può richiedere alcuni minuti."
+                )
+                if pulsante_con_preventivo(
+                    "verifica_originalita_web_completa", "🛡️ VERIFICA COPYRIGHT WEB COMPLETA", costo_verifica_completa,
+                    "Controlla tutto il manoscritto a lotti, usando la ricerca web e il registro delle fonti. Ogni lotto completato costa 1 credito.",
+                    use_container_width=True,
+                    disabled=not blocchi_completi,
+                ):
+                    barra_copyright = st.progress(0, text="Preparazione della verifica completa...")
+                    stato_copyright = st.empty()
+                    def aggiorna_verifica_copyright(completati, totale):
+                        percentuale = int((completati / max(1, totale)) * 100)
+                        barra_copyright.progress(percentuale, text=f"Verifica copyright web: lotto {completati}/{totale}")
+                        stato_copyright.caption(f"Controllo di tutte le sezioni in corso — {completati}/{totale} lotti analizzati.")
+                    with st.spinner("Verifica completa del manoscritto in corso..."):
+                        report_completo, lotti_effettivi = verifica_originalita_web_completa(
+                            sezioni_complete_copyright, registro_web, aggiorna_verifica_copyright
+                        )
+                    st.session_state["report_originalita_web_completa"] = report_completo
+                    st.session_state["report_originalita_web_completa_lotti"] = lotti_effettivi
+                    stato_copyright.success("Verifica completa conclusa.")
             else:
                 st.info("La verifica web sarà disponibile dopo la generazione dell'indice: la ricerca preliminare creerà qui il registro delle fonti consultate.")
             if st.session_state.get("report_originalita_web"):
-                st.text_area(
-                    "Esito della verifica copyright sul web",
-                    value=st.session_state["report_originalita_web"], height=260,
-                    key="output_report_originalita_web",
-                )
+                st.markdown("#### Esito della verifica copyright sul web")
+                st.info(st.session_state["report_originalita_web"])
+                st.caption("Il risultato resta visibile finché non esegui RESET PROGETTO o avvii un nuovo controllo.")
+            if st.session_state.get("report_originalita_web_completa"):
+                st.markdown("#### Esito della verifica copyright web completa")
+                st.info(st.session_state["report_originalita_web_completa"])
+                st.caption("L'esito resta visibile finché non esegui RESET PROGETTO o avvii un nuovo controllo completo.")
         st.divider()
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
         contenuti_export = {
