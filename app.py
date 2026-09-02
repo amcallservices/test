@@ -977,7 +977,7 @@ def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     """Verifica soltanto i fatti aggiornabili che meritano una ricerca online."""
     riferimento = None
     try:
-        riferimento = charge_credits("verifica_fatti", amount=2)
+        riferimento = charge_credits("verifica_fatti", amount=CREDIT_COSTS["verifica_fatti_web"])
         risposta = client.responses.create(
             model=MODELLO_STESURA,
             tools=[{"type": "web_search_preview"}],
@@ -997,7 +997,7 @@ def verifica_e_correggi_fatti_online(testo, sezione, lingua):
         return pulisci_testo_editoriale(getattr(risposta, "output_text", None) or testo)
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento, amount=2)
+            refund_credits(riferimento, amount=CREDIT_COSTS["verifica_fatti_web"])
         st.warning(f"Verifica online non disponibile: {e}")
         return pulisci_testo_editoriale(testo)
 
@@ -1021,7 +1021,7 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
         return "Controllo fatti del capitolo non necessario: nessun dato variabile rilevato."
     riferimento = None
     try:
-        riferimento = charge_credits("audit_fatti", amount=2)
+        riferimento = charge_credits("audit_fatti", amount=CREDIT_COSTS["audit_fatti_capitolo"])
         risposta = client.responses.create(
             model=MODELLO_STESURA,
             tools=[{"type": "web_search_preview"}],
@@ -1036,7 +1036,7 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
         return pulisci_testo_editoriale(getattr(risposta, "output_text", "") or "Controllo non disponibile.")
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento, amount=2)
+            refund_credits(riferimento, amount=CREDIT_COSTS["audit_fatti_capitolo"])
         return f"Controllo fatti del capitolo non disponibile: {e}"
 
 def pulisci_testo_editoriale(testo):
@@ -1346,7 +1346,7 @@ def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
     )
     riferimento = None
     try:
-        riferimento = charge_credits("generazione_immagine", amount=5)
+        riferimento = charge_credits("generazione_immagine", amount=CREDIT_COSTS["immagine_capitolo"])
         risposta = client.images.generate(model="gpt-image-1-mini", prompt=f"Crea un'immagine didattica di alta qualità per il genere '{genere}' e il sottocapitolo '{sezione}'. Segui alla lettera questo brief visivo, senza aggiungere elementi non richiesti:\n{descrizione}\n\n{vincoli_dominio}\nLa scena deve avere corrispondenza uno-a-uno con il testo. Scegli composizione, livello di dettaglio e linguaggio visivo appropriati al dominio e al pubblico: diagramma o tavola tecnica per manuali, scena concreta per procedure, composizione narrativa per narrativa, visualizzazione concettuale per saggistica. Non creare immagini generiche o astratte e non inventare funzioni, dati, persone o oggetti. Nessun testo, lettera, numero, titolo, didascalia o logo nell'immagine. Mantieni sfondo bianco, tratto nero, scala di grigi e stile monocromatico pulito.", size="1024x1024", quality="medium")
         dato = risposta.data[0]
         raw = None
@@ -1361,7 +1361,7 @@ def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
         raise ValueError("Risposta immagini priva di dati utilizzabili")
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento, reason="generazione_immagine_fallita", amount=5)
+            refund_credits(riferimento, reason="generazione_immagine_fallita", amount=CREDIT_COSTS["immagine_capitolo"])
         st.error(f"Errore nella generazione dell'immagine: {e}")
         return None, None
 
@@ -1719,13 +1719,13 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
                               budget_strutturale=""):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
-    riferimento = addebita_azione_diretta("genera_indice_controllato", amount=3)
+    riferimento = addebita_azione_diretta("genera_indice_controllato", amount=CREDIT_COSTS["indice_generazione_editoriale"])
     try:
         # L'indice resta affidato al modello editoriale completo: è la base
         # dell'intero libro e deve distribuire correttamente argomenti e sezioni.
         corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
     except Exception:
-        refund_credits(riferimento, reason="genera_indice_fallito", amount=3)
+        refund_credits(riferimento, reason="genera_indice_fallito", amount=CREDIT_COSTS["indice_generazione_editoriale"])
         raise
     indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
@@ -2994,7 +2994,7 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
     riferimento = None
     try:
         if addebita:
-            riferimento = charge_credits("audit_editoriale", amount=1)
+            riferimento = charge_credits("audit_editoriale", amount=CREDIT_COSTS["voto_indice"])
         risposta = client.responses.create(
             model=MODELLO_EDITORIALE,
             input=prompt
@@ -3003,7 +3003,7 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
         return pulisci_testo_editoriale(testo).strip()
     except Exception as e:
         if riferimento:
-            refund_credits(riferimento, amount=1)
+            refund_credits(riferimento, amount=CREDIT_COSTS["voto_indice"])
         return f"ERRORE AUDIT: {str(e)}"
 
 
@@ -4709,7 +4709,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     f"report_sintattico_{k_sessione}", "Genera Report Sintattico", 1,
                     "Analizza qualità, chiarezza e criticità della sezione selezionata.",
                 ):
-                    addebita_azione_diretta("report_sintattico", amount=1)
+                    addebita_azione_diretta("report_sintattico", amount=CREDIT_COSTS["report_sintattico"])
                     st.write(analizza_qualita_prosa(st.session_state.get(k_sessione, "")))
 
     # TAB 3: ANTEPRIMA
@@ -4897,13 +4897,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         )
                 blocchi_completi = prepara_blocchi_verifica_web_completa(sezioni_complete_copyright)
                 costo_verifica_completa = max(1, math.ceil(len(blocchi_completi) / 8))
+                costo_massimo_verifica_completa = (
+                    costo_verifica_completa
+                    + costo_verifica_completa * CREDIT_COSTS["copyright_lotto_revisione_gpt54"]
+                )
                 st.caption(
-                    f"Verifica completa: {len(blocchi_completi)} blocchi, {costo_verifica_completa} crediti stimati. "
-                    "Analizza tutto il manoscritto, sezione per sezione; può richiedere alcuni minuti."
+                    f"Verifica completa: {len(blocchi_completi)} blocchi, da {costo_verifica_completa} a "
+                    f"{costo_massimo_verifica_completa} crediti. Analizza tutto il manoscritto, sezione per sezione; può richiedere alcuni minuti."
                 )
                 if pulsante_con_preventivo(
-                    "verifica_originalita_web_completa", "🛡️ VERIFICA COPYRIGHT WEB COMPLETA", costo_verifica_completa,
-                    "GPT-5.4 mini controlla tutto il manoscritto a lotti; GPT-5.4 rivede soltanto i lotti segnalati. Ogni lotto completato costa 1 credito.",
+                    "verifica_originalita_web_completa", "🛡️ VERIFICA COPYRIGHT WEB COMPLETA",
+                    f"da {costo_verifica_completa} a {costo_massimo_verifica_completa}",
+                    "GPT-5.4 mini controlla tutti i lotti a 1 credito ciascuno. Solo se un lotto è segnalato, GPT-5.4 esegue una revisione mirata a 2 crediti aggiuntivi. Paghi solo le revisioni effettivamente completate.",
                     use_container_width=True,
                     disabled=not blocchi_completi,
                 ):
