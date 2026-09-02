@@ -122,6 +122,10 @@ MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
 # Il modello completo viene usato solo dove il ragionamento editoriale pesa davvero.
 MODELLO_EDITORIALE = os.getenv("EDITORIAL_MODEL", "gpt-5.4")
 MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_EDITORIALE)
+# Il copyright completo usa il mini su ogni blocco e riserva il modello completo
+# ai soli lotti che presentano un rischio: qualità dove serve, costi contenuti.
+MODELLO_CONTROLLO_COPYRIGHT_COMPLETO = os.getenv("COPYRIGHT_SCREENING_MODEL", MODELLO_STESURA)
+MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO = os.getenv("COPYRIGHT_REVIEW_MODEL", MODELLO_EDITORIALE)
 
 
 def studia_fonti_con_ai(testo, limite_input=30000):
@@ -279,6 +283,53 @@ def controllo_originalita_fonti(contenuti, fonti, parole_per_sequenza=9):
     }
 
 
+def sezioni_segnalate_per_originalita(sezioni, report_locale=None, *report_web):
+    """Collega i risultati del controllo alle singole sezioni da rielaborare.
+
+    Il controllo locale restituisce sequenze precise; i controlli web sono
+    istruiti a riportare il titolo della sezione. Non vengono mai incluse
+    sezioni non realmente indicate dal report.
+    """
+    segnalate = set()
+    sequenze = (report_locale or {}).get("trovate", []) if isinstance(report_locale, dict) else []
+    rapporti = "\n".join(str(report or "") for report in report_web).casefold()
+    for titolo, testo in sezioni:
+        testo_norm = re.sub(r"\s+", " ", (testo or "").casefold())
+        if any(re.sub(r"\s+", " ", sequenza.casefold()) in testo_norm for sequenza in sequenze):
+            segnalate.add(titolo)
+        # Il titolo viene aggiunto solo se il report lo cita esplicitamente.
+        if titolo and titolo.casefold() in rapporti:
+            segnalate.add(titolo)
+    return [titolo for titolo, _ in sezioni if titolo in segnalate]
+
+
+def rielabora_sezione_per_originalita(sezione, indice, trama, genere, stile, narrativa, pov,
+                                      obiettivo, lingua, approfondimenti, profilo_lunghezza):
+    """Riscrive da zero una sola sezione segnalata, senza alterare le altre."""
+    testo_precedente = leggi_sezione_memorizzata(sezione)
+    prompt_base = crea_prompt_stesura_sezione(
+        sezione, indice, trama, genere, stile, narrativa, pov, obiettivo,
+        lingua, approfondimenti, profilo_lunghezza
+    )
+    richiesta = prompt_base + f"""
+
+RIELABORAZIONE PER ORIGINALITÀ E COPYRIGHT
+Questa sezione è stata segnalata da un controllo prudenziale. Riscrivila integralmente da zero:
+- conserva esclusivamente tema, obiettivo, dati necessari e livello di approfondimento della sezione;
+- crea una nuova progressione di idee, nuovi esempi, nuove frasi e nuovi collegamenti;
+- non conservare struttura dei paragrafi, elenchi, metafore o formulazioni del testo precedente;
+- non riprodurre alcuna sequenza di sei o più parole del testo precedente, salvo nomi propri, termini tecnici inevitabili o titoli;
+- non citare fonti, URL, autori, controlli o copyright nel libro;
+- rispetta rigorosamente la lunghezza prevista e chiudi il ragionamento con una frase completa.
+
+TESTO PRECEDENTE DA SUPERARE (non copiarne la forma):
+{testo_precedente}
+"""
+    return genera_contenuto_editoriale(
+        richiesta, S_PROMPT, sezione, indice, trama, genere, obiettivo, lingua, profilo_lunghezza
+    )
+
+
 def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
     """Schermo supplementare sul web: segnala rischi, non certifica diritti."""
     testo_libro = (testo_libro or "").strip()
@@ -329,14 +380,26 @@ def prepara_blocchi_verifica_web_completa(sezioni, massimo_caratteri=2400):
     return blocchi
 
 
+def richiede_revisione_copyright(esito):
+    """Individua gli esiti del mini che meritano una seconda lettura più rigorosa."""
+    testo = (esito or "").lower()
+    if "rischio elevato" in testo or "attenzione" in testo:
+        return True
+    indicatori = (
+        "passaggi da rivedere", "somiglianza",
+        "corrispondenza", "parafrasi", "troppo vicin", "derivativ",
+    )
+    return any(indicatore in testo for indicatore in indicatori) and "nessuna corrispondenza evidente" not in testo
+
+
 def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
-    """Analizza tutto il manoscritto a lotti, con uno screening web per blocco."""
+    """Analizza tutto il manoscritto: mini su ogni lotto, completo solo sui dubbi."""
     blocchi = prepara_blocchi_verifica_web_completa(sezioni)
     if not blocchi:
         return "Servono sezioni già scritte per eseguire la verifica completa.", 0
     dimensione_lotto = 8
     lotti = [blocchi[indice:indice + dimensione_lotto] for indice in range(0, len(blocchi), dimensione_lotto)]
-    esiti, completati = [], 0
+    esiti, completati, revisioni_approfondite = [], 0, 0
     for numero_lotto, lotto in enumerate(lotti, start=1):
         if aggiorna:
             aggiorna(numero_lotto - 1, len(lotti))
@@ -346,7 +409,7 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
         )
         try:
             risposta = client.responses.create(
-                model=MODELLO_ANALISI_FONTI,
+                model=MODELLO_CONTROLLO_COPYRIGHT_COMPLETO,
                 tools=[{"type": "web_search_preview"}],
                 input=(
                     "Agisci come revisore editoriale prudente. Analizza TUTTI i blocchi ricevuti in questo lotto "
@@ -361,7 +424,31 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
             )
             esito = (getattr(risposta, "output_text", "") or "").strip()
             if esito:
-                esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito}")
+                esito_finale = f"Screening GPT-5.4 mini\n{esito}"
+                if richiede_revisione_copyright(esito):
+                    try:
+                        revisione = client.responses.create(
+                            model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
+                            tools=[{"type": "web_search_preview"}],
+                            input=(
+                                "Sei un revisore editoriale senior specializzato in rischi di originalità. Riesamina "
+                                "il lotto segnalato da un primo screening. Cerca sul web e nelle fonti registrate solo "
+                                "riscontri concreti; riduci i falsi positivi. Non dare pareri legali né certificazioni. "
+                                "Restituisci: ESITO FINALE (nessuna corrispondenza evidente / attenzione / rischio elevato); "
+                                "SEZIONE O BLOCCO; MOTIVO; AZIONE DI RISCRITTURA. Non riportare più di 12 parole di "
+                                "materiale potenzialmente protetto.\n\n"
+                                f"REGISTRO FONTI CONSULTATE:\n{registro_fonti}\n\n"
+                                f"PRIMO SCREENING:\n{esito}\n\n"
+                                f"LOTTO DA RIESAMINARE:\n{testo_lotto}"
+                            ),
+                        )
+                        esito_revisione = (getattr(revisione, "output_text", "") or "").strip()
+                        if esito_revisione:
+                            esito_finale += f"\n\nRevisione mirata GPT-5.4\n{esito_revisione}"
+                            revisioni_approfondite += 1
+                    except Exception:
+                        esito_finale += "\n\nRevisione mirata GPT-5.4 non disponibile: conserva lo screening mini e valuta manualmente il lotto."
+                esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito_finale}")
                 completati += 1
             else:
                 refund_credits(riferimento, reason="verifica_copyright_completa_vuota", amount=1)
@@ -372,7 +459,8 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
         aggiorna(len(lotti), len(lotti))
     intestazione = (
         f"VERIFICA WEB COMPLETA — {len(blocchi)} blocchi controllati in {len(lotti)} lotti; "
-        f"{completati} lotti completati.\n\n"
+        f"{completati} lotti completati; {revisioni_approfondite} revisioni mirate GPT-5.4.\n\n"
+        "Metodo: GPT-5.4 mini analizza tutti i lotti; GPT-5.4 viene usato solo per i lotti segnalati.\n\n"
         "Questo è uno screening di rischio sul web, non una certificazione legale né una verifica antiplagio universale.\n\n"
     )
     return intestazione + "\n\n".join(esiti), len(lotti)
@@ -4703,6 +4791,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 leggi_sezione_memorizzata(sezione) for sezione in opzioni_editor
                 if leggi_sezione_memorizzata(sezione).strip()
             )
+            sezioni_complete_copyright = [
+                (sezione, leggi_sezione_memorizzata(sezione)) for sezione in opzioni_editor
+                if leggi_sezione_memorizzata(sezione).strip()
+            ]
             if st.button("🔎 CONTROLLO ORIGINALITÀ LOCALE", use_container_width=True, key="controllo_originalita_fonti"):
                 st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
                     testo_per_controllo, st.session_state.get("conoscenza_extra", "")
@@ -4730,10 +4822,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state["report_originalita_web"] = verifica_originalita_web_con_ai(
                             testo_per_controllo, registro_web
                         )
-                sezioni_complete_copyright = [
-                    (sezione, leggi_sezione_memorizzata(sezione)) for sezione in opzioni_editor
-                    if leggi_sezione_memorizzata(sezione).strip()
-                ]
                 blocchi_completi = prepara_blocchi_verifica_web_completa(sezioni_complete_copyright)
                 costo_verifica_completa = max(1, math.ceil(len(blocchi_completi) / 8))
                 st.caption(
@@ -4742,7 +4830,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 )
                 if pulsante_con_preventivo(
                     "verifica_originalita_web_completa", "🛡️ VERIFICA COPYRIGHT WEB COMPLETA", costo_verifica_completa,
-                    "Controlla tutto il manoscritto a lotti, usando la ricerca web e il registro delle fonti. Ogni lotto completato costa 1 credito.",
+                    "GPT-5.4 mini controlla tutto il manoscritto a lotti; GPT-5.4 rivede soltanto i lotti segnalati. Ogni lotto completato costa 1 credito.",
                     use_container_width=True,
                     disabled=not blocchi_completi,
                 ):
@@ -4769,6 +4857,66 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.markdown("#### Esito della verifica copyright web completa")
                 st.info(st.session_state["report_originalita_web_completa"])
                 st.caption("L'esito resta visibile finché non esegui RESET PROGETTO o avvii un nuovo controllo completo.")
+            sezioni_da_rielaborare = sezioni_segnalate_per_originalita(
+                sezioni_complete_copyright,
+                st.session_state.get("report_originalita_fonti"),
+                st.session_state.get("report_originalita_web"),
+                st.session_state.get("report_originalita_web_completa"),
+            )
+            messaggio_rielaborazione = st.session_state.pop("messaggio_rielaborazione_originalita", "")
+            if messaggio_rielaborazione:
+                st.success(messaggio_rielaborazione)
+            if sezioni_da_rielaborare:
+                st.warning(
+                    f"Il controllo ha segnalato {len(sezioni_da_rielaborare)} sezione/i. "
+                    "Puoi rielaborarle ora: saranno riscritte solo quelle indicate, senza modificare le altre."
+                )
+                with st.expander("Sezioni segnalate dal controllo", expanded=False):
+                    for sezione in sezioni_da_rielaborare:
+                        st.write("- " + sezione)
+                stima_rielaborazione = sum(
+                    stima_massima_crediti_stesura(
+                        sezione, st.session_state.get("indice_raw", ""), val_trama, val_goal, val_genere
+                    ) for sezione in sezioni_da_rielaborare
+                )
+                if pulsante_con_preventivo(
+                    "rielabora_sezioni_originalita", "✍️ RIELABORA LE SEZIONI SEGNALATE",
+                    f"fino a {stima_rielaborazione}",
+                    "Riscrive da zero solo le sezioni segnalate, con formulazioni, esempi e struttura nuovi. Le altre sezioni restano intatte.",
+                    use_container_width=True,
+                ):
+                    rielaborate, errori_rielaborazione = [], []
+                    barra_rielaborazione = st.progress(0, text="Preparazione della rielaborazione originale...")
+                    for posizione, sezione in enumerate(sezioni_da_rielaborare, start=1):
+                        try:
+                            nuovo_testo = rielabora_sezione_per_originalita(
+                                sezione, st.session_state.get("indice_raw", ""), val_trama, val_genere,
+                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                                val_approfondimenti, val_lunghezza
+                            )
+                            if nuovo_testo and not nuovo_testo.startswith("ERRORE:"):
+                                scrivi_sezione_memorizzata(sezione, nuovo_testo)
+                                rielaborate.append(sezione)
+                            else:
+                                errori_rielaborazione.append(sezione)
+                        except Exception:
+                            errori_rielaborazione.append(sezione)
+                        barra_rielaborazione.progress(
+                            int(posizione / len(sezioni_da_rielaborare) * 100),
+                            text=f"Rielaborazione originalità: {posizione}/{len(sezioni_da_rielaborare)} sezioni"
+                        )
+                    salva_stesura_immediata(opzioni_editor)
+                    # I report riguardano la versione precedente e non devono essere
+                    # mostrati come validi dopo che l'utente ha approvato una riscrittura.
+                    for chiave_report in (
+                        "report_originalita_fonti", "report_originalita_web", "report_originalita_web_completa"
+                    ):
+                        st.session_state.pop(chiave_report, None)
+                    esito = f"Rielaborate {len(rielaborate)} sezione/i segnalate con testo nuovo. Esegui di nuovo il controllo copyright sulla versione aggiornata."
+                    if errori_rielaborazione:
+                        esito += f" Da riprovare: {', '.join(errori_rielaborazione)}."
+                    st.session_state["messaggio_rielaborazione_originalita"] = esito
+                    st.rerun()
         st.divider()
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
         contenuti_export = {
