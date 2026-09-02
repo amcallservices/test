@@ -192,36 +192,44 @@ def separa_mappa_e_registro_fonti_web(testo):
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
     """Cerca e sintetizza fonti autorevoli prima dell'indice; il dossier resta interno al progetto."""
-    if usa_deepseek_pro():
-        st.session_state["ultimo_esito_ricerca_preliminare"] = (
-            "Con DeepSeek Pro l'indice è progettato sul brief e sulle fonti caricate, senza usare il motore web GPT."
-        )
-        return ""
     firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
     if st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
 
     riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=CREDIT_COSTS["indice_ricerca_web"])
     try:
-        risposta = client.responses.create(
-            model=MODELLO_ANALISI_FONTI,
-            tools=[{"type": "web_search_preview"}],
-            input=(
-                "Sei un ricercatore editoriale. Cerca sul web fonti autorevoli e aggiornate utili "
-                "per progettare un libro. Non scrivere il libro e non produrre citazioni per il lettore. "
-                "Restituisci prima una MAPPA CONCETTUALE INTERNA concisa, non un riassunto delle pagine lette: "
-                "concetti e definizioni affidabili; fatti, norme, date o dati da verificare; controversie o limiti; "
-                "progressione didattica consigliata; aspetti concreti da assegnare all'indice. Riformula tutto con "
-                "parole indipendenti, senza citazioni, titoli o formulazioni riconoscibili delle fonti. Non inserire URL, "
-                "link Markdown o bibliografie nella MAPPA.\n\n"
-                "Alla fine inserisci obbligatoriamente una riga sola 'REGISTRO FONTI WEB' e sotto, massimo 8 righe nel "
-                "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata "
-                "interna dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
-                f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
-                f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
-                f"Approfondimenti: {approfondimenti or 'Nessuno'}"
-            ),
+        istruzioni_ricerca = (
+            "Sei un ricercatore editoriale. Cerca sul web fonti autorevoli e aggiornate utili "
+            "per progettare un libro. Non scrivere il libro e non produrre citazioni per il lettore. "
+            "Restituisci prima una MAPPA CONCETTUALE INTERNA concisa, non un riassunto delle pagine lette: "
+            "concetti e definizioni affidabili; fatti, norme, date o dati da verificare; controversie o limiti; "
+            "progressione didattica consigliata; aspetti concreti da assegnare all'indice. Riformula tutto con "
+            "parole indipendenti, senza citazioni, titoli o formulazioni riconoscibili delle fonti. Non inserire URL, "
+            "link Markdown o bibliografie nella MAPPA.\n\n"
+            "Alla fine inserisci obbligatoriamente una riga sola 'REGISTRO FONTI WEB' e sotto, massimo 8 righe nel "
+            "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata "
+            "interna dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
+            f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
+            f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
+            f"Approfondimenti: {approfondimenti or 'Nessuno'}"
         )
+        if usa_deepseek_pro():
+            # Ricerca nativa DeepSeek: nessuna chiamata a GPT. Il registro
+            # viene conservato e mostrato nella stessa area delle fonti GPT.
+            risposta = client_deepseek.responses.create(
+                model=MODELLO_DEEPSEEK_PRO,
+                tools=[{"type": "web_search"}],
+                tool_choice={"type": "web_search"},
+                instructions="Usa la ricerca web integrata prima di rispondere. "
+                "Le fonti servono solo alla progettazione interna e devono essere elencate nel registro richiesto.",
+                input=istruzioni_ricerca,
+            )
+        else:
+            risposta = client.responses.create(
+                model=MODELLO_ANALISI_FONTI,
+                tools=[{"type": "web_search_preview"}],
+                input=istruzioni_ricerca,
+            )
         risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
         mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
         if not mappa:
@@ -938,11 +946,11 @@ def _client_e_modello_testuale(modello_richiesto=None):
     return client_openai, (modello_richiesto or MODELLO_STESURA)
 
 
-def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None):
+def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None, reason="generazione_testo"):
     riferimento = None
     try:
         if addebita:
-            riferimento = charge_credits("generazione_testo", amount=amount)
+            riferimento = charge_credits(reason, amount=amount)
         client_testuale, modello_effettivo = _client_e_modello_testuale(model or MODELLO_STESURA)
         richiesta = {
             "model": modello_effettivo,
@@ -979,15 +987,15 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
         return stima_gpt
     azione = str(azione_id).casefold()
     if "genera_indice" in azione:
-        return "2"
+        return "circa 2"
     if any(parola in azione for parola in ("scrivi_sezione", "scrivi_tutti", "rielabora", "quiz", "esempi")):
-        return "1 ogni 2 operazioni"
+        return "1 ogni 3 operazioni"
     if "ricette" in azione:
-        return "4"
+        return "circa 4"
     if "coerenza" in azione:
-        return "3 (primo controllo); poi 1 ogni 2 blocchi"
+        return "circa 4 (primo controllo); poi 1 ogni 3 blocchi"
     if any(parola in azione for parola in ("voto_indice", "report_sintattico", "metadati", "controlla_fatti")):
-        return "1"
+        return "1 ogni 3 controlli equivalenti"
     if "copyright" in azione or "immagine" in azione:
         return "non disponibile con DeepSeek Pro"
     return stima_gpt
@@ -2779,13 +2787,14 @@ with st.sidebar:
         help="GPT conserva tutte le funzioni, compresi ricerca web e immagini. DeepSeek Pro usa un motore separato per indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
     if usa_deepseek_pro():
-        st.info("DeepSeek Pro attivo: scrittura, indice, fonti caricate e controlli editoriali usano esclusivamente DeepSeek. Ricerca web, verifica copyright web e immagini richiedono il cervello GPT e restano disattivate per evitare un uso misto.")
+        st.info("DeepSeek Pro attivo: scrittura, indice, ricerca fonti web, fonti caricate e controlli editoriali usano esclusivamente DeepSeek. Il registro delle fonti trovate è visibile sotto il caricamento fonti. Verifica copyright web e immagini richiedono GPT e restano disattivate per evitare un uso misto.")
         with st.expander("Tariffario DeepSeek Pro", expanded=False):
-            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 2 operazioni.")
-            st.write("• Indice completo (studio del brief + indice): 2 crediti.")
-            st.write("• Voto indice, fatti, report sintattico e metadati: 1 credito.")
-            st.write("• Coerenza completa: 3 crediti; aggiornamenti: 1 credito ogni 2 blocchi.")
-            st.write("• 10 ricette: 4 crediti. Le immagini restano disponibili soltanto con GPT.")
+            st.write("• Rapporto DeepSeek/GPT: 1 a 3. Tre operazioni equivalenti da 1 credito GPT consumano 1 credito DeepSeek.")
+            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.")
+            st.write("• Ricerca fonti web nativa + indice completo: circa 2 crediti in totale.")
+            st.write("• Voto indice, report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.")
+            st.write("• Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.")
+            st.write("• 10 ricette: circa 4 crediti. Verifica copyright web e immagini restano disponibili soltanto con GPT.")
     else:
         st.info("GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.")
         with st.expander("Tariffario GPT-5.4", expanded=False):
@@ -3220,6 +3229,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
         "Sei un editor senior specializzato in architettura di libri. Sei rigoroso, concreto e non usi valutazioni vaghe.",
         addebita=addebita,
         model=MODELLO_EDITORIALE,
+        reason="voto_indice",
     ))
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
@@ -3265,6 +3275,7 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
         addebita=addebita,
         amount=CREDIT_COSTS["voto_indice"],
         model=MODELLO_EDITORIALE,
+        reason="audit_editoriale",
     )).strip()
 
 
@@ -5581,6 +5592,7 @@ Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive
                                 prompt_metadati,
                                 "Sei un esperto di metadati KDP. Produci soltanto il risultato editoriale richiesto.",
                                 amount=CREDIT_COSTS["metadati_kdp"],
+                                reason="metadati_kdp",
                             ))
                         except Exception as e:
                             if 'riferimento_metadati' in locals() and riferimento_metadati:
