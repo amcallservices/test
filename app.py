@@ -2787,7 +2787,14 @@ with st.sidebar:
             st.write("• Coerenza completa: 3 crediti; aggiornamenti: 1 credito ogni 2 blocchi.")
             st.write("• 10 ricette: 4 crediti. Le immagini restano disponibili soltanto con GPT.")
     else:
-        st.caption("GPT attivo: include ricerca web, controllo copyright web e generazione immagini.")
+        st.info("GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.")
+        with st.expander("Tariffario GPT-5.4", expanded=False):
+            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito per ogni operazione.")
+            st.write("• Indice completo: 5 crediti (2 per ricerca web + 3 per progettazione editoriale).")
+            st.write("• Voto indice: 1 credito; rigenerazione indice: 3 crediti.")
+            st.write("• Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.")
+            st.write("• Coerenza completa del manoscritto: 10 crediti; controllo successivo: 1 credito per blocco modificato.")
+            st.write("• 10 ricette: 10 crediti; immagine di capitolo: 5 crediti; controllo copyright web: da 2 crediti.")
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
