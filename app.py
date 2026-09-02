@@ -3776,7 +3776,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 """
 
     guide_localizzate = {
-        "Italiano": ("Come usare Scrittore Site", """1. Compila la barra laterale: titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
+        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per indice, fonti caricate, stesura e controlli editoriali; non usa GPT e per questo non attiva ricerca web, copyright web o immagini. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
 2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
@@ -3980,6 +3980,17 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "العربية": "🛡️ **حماية العمل المدفوع:** يُحفظ كل محتوى تم إنشاؤه أو إعادة صياغته بالذكاء الاصطناعي تلقائياً في حسابك بعد نجاح العملية. يظل **حفظ الجلسة** مفيداً للتعديلات اليدوية والصور والتغييرات دون الذكاء الاصطناعي.",
         "中文": "🛡️ **已付费内容保护：** 每次 AI 成功生成或改写的内容都会自动保存到你的账户。**保存会话** 仍适用于手动修改、图片和未使用 AI 的其他变更。",
     }
+    avviso_cervelli_ia = {
+        "Italiano": "🧠 **Due cervelli separati.** Con **GPT-5.4** restano disponibili tutte le funzioni e il tariffario GPT. Con **DeepSeek V4 Pro** indice, fonti caricate, scrittura e controlli editoriali sono eseguiti solo da DeepSeek: scrittura/quiz/esempi costano 1 credito ogni 2 operazioni, indice completo 2 crediti, coerenza iniziale 3 e dieci ricette 4. Per evitare utilizzi misti, ricerca web, controllo copyright web e immagini si usano soltanto selezionando GPT.",
+        "English": "🧠 **Two separate AI engines.** **GPT-5.4** keeps every feature and the GPT pricing. **DeepSeek V4 Pro** alone handles indexes, uploaded sources, writing and editorial checks: writing/quizzes/examples cost 1 credit every 2 operations, a full index costs 2 credits, the first consistency check costs 3 and ten recipes cost 4. Web research, web copyright checks and images require GPT to avoid mixed usage.",
+        "Español": "🧠 **Dos motores de IA separados.** **GPT-5.4** conserva todas las funciones y tarifas GPT. **DeepSeek V4 Pro** realiza por sí solo índices, fuentes cargadas, escritura y controles editoriales: escritura/cuestionarios/ejemplos cuestan 1 crédito cada 2 operaciones, el índice completo 2, el primer control de coherencia 3 y diez recetas 4. La búsqueda web, el copyright web y las imágenes requieren GPT para evitar un uso mixto.",
+        "Français": "🧠 **Deux moteurs IA séparés.** **GPT-5.4** conserve toutes les fonctions et le tarif GPT. **DeepSeek V4 Pro** traite seul les index, sources importées, rédaction et contrôles éditoriaux : rédaction/quiz/exemples coûtent 1 crédit toutes les 2 opérations, l’index complet 2, le premier contrôle de cohérence 3 et dix recettes 4. Recherche web, copyright web et images nécessitent GPT afin d’éviter un usage mixte.",
+        "Deutsch": "🧠 **Zwei getrennte KI-Engines.** **GPT-5.4** behält alle Funktionen und die GPT-Tarife. **DeepSeek V4 Pro** bearbeitet Index, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen allein: Schreiben/Quiz/Beispiele kosten 1 Kredit je 2 Vorgänge, der vollständige Index 2, die erste Kohärenzprüfung 3 und zehn Rezepte 4. Websuche, Web-Copyrightprüfung und Bilder erfordern GPT, damit kein Mischbetrieb entsteht.",
+        "Română": "🧠 **Două motoare IA separate.** **GPT-5.4** păstrează toate funcțiile și tarifele GPT. **DeepSeek V4 Pro** gestionează singur indexul, sursele încărcate, scrierea și controalele editoriale: scrierea/testele/exemplele costă 1 credit la 2 operațiuni, indexul complet 2, primul control de coerență 3 și zece rețete 4. Căutarea web, copyrightul web și imaginile necesită GPT pentru a evita folosirea mixtă.",
+        "Русский": "🧠 **Два отдельных ИИ-движка.** **GPT-5.4** сохраняет все функции и тариф GPT. **DeepSeek V4 Pro** самостоятельно выполняет индекс, анализ загруженных источников, написание и редакторские проверки: текст/тесты/примеры стоят 1 кредит за 2 операции, полный индекс — 2, первая проверка согласованности — 3, десять рецептов — 4. Веб-поиск, проверка copyright в интернете и изображения требуют GPT, чтобы не смешивать движки.",
+        "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يحتفظ **GPT-5.4** بكل الوظائف وتسعيرة GPT. أما **DeepSeek V4 Pro** فينفذ وحده الفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل عمليتين، والفهرس الكامل رصيدين، وفحص الاتساق الأول 3، وعشر وصفات 4. البحث على الويب وفحص حقوق النشر على الويب والصور تتطلب GPT لتجنب الخلط بين المحركين.",
+        "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 保留所有功能及 GPT 计费。**DeepSeek V4 Pro** 独立完成目录、已上传来源、写作和编辑检查：写作/测验/示例每 2 次操作消耗 1 积分，完整目录 2 积分，首次一致性检查 3 积分，10 道食谱 4 积分。网页搜索、网页版权检查和图片需要 GPT，以避免混用引擎。",
+    }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
@@ -3988,6 +3999,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.markdown(testo_guida)
         st.divider()
         st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
+        st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
         st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
         etichette_prova_notifiche = {
             "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
@@ -4200,7 +4212,7 @@ Dopo la risposta dell'utente:
 2. Se pubblico, obiettivo e argomento sono abbastanza chiari, prepara subito la scheda finale.
 3. Fai una sola domanda aggiuntiva soltanto se manca una scelta che cambia davvero il progetto, per esempio il pubblico o il tipo di libro.
 4. La domanda aggiuntiva deve essere molto breve e offrire al massimo tre alternative concrete.
-5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista o lunghezza: sceglili tu.
+5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista, lunghezza o Cervello AI: sceglili tu.
 6. Non fare più di due domande complessive, salvo che l'idea sia troppo vaga per creare una scheda affidabile.
 
 Esempio di unica domanda aggiuntiva utile:
@@ -4283,6 +4295,13 @@ Scegli Standard KDP come impostazione predefinita. I limiti comprendono Prefazio
 
 Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearne di nuovi.
 
+Per CERVELLO AI scegli un solo valore tra:
+
+- GPT-5.4 (OpenAI)
+- DeepSeek V4 Pro
+
+Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di ricerca web, verifica copyright web o generazione immagini. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
+
 REGOLE DI QUALITÀ
 
 - Proponi un titolo unico, senza sottotitolo, se l'utente non ne ha già fornito uno.
@@ -4320,6 +4339,8 @@ PUNTO DI VISTA:
 
 LUNGHEZZA DELLE SEZIONI:
 
+CERVELLO AI:
+
 OBIETTIVO DEL LIBRO:
 
 RISULTATO FINALE DESIDERATO:
@@ -4344,7 +4365,7 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
         }
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
-            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (140-200 words, max 50 sections); Standard KDP (220-300 words, max 80 sections); Approfondito (320-420 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures."""
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web research, web copyright checks, and image generation are not required."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
 {istruzioni_multilingue[lingua_sel]}
@@ -4368,6 +4389,8 @@ STILE DI RACCONTO:
 PUNTO DI VISTA:
 
 LUNGHEZZA DELLE SEZIONI:
+
+CERVELLO AI:
 
 OBIETTIVO DEL LIBRO:
 
