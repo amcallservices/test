@@ -209,7 +209,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
         mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
         if not mappa:
-        refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=CREDIT_COSTS["indice_ricerca_web"])
+            refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=CREDIT_COSTS["indice_ricerca_web"])
             return ""
         st.session_state["firma_ricerca_preliminare"] = firma
         st.session_state["dossier_ricerca_preliminare"] = mappa
@@ -4664,7 +4664,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             {mem_ricette[-4000:]}"""
                             
-                            res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=10)
+                            res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=CREDIT_COSTS["ricette_dieci"])
                             scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r))
                             salva_stesura_immediata(opzioni_editor)
                             st.rerun()
@@ -4710,7 +4710,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
                 if pulsante_con_preventivo(
-                    f"report_sintattico_{k_sessione}", "Genera Report Sintattico", 1,
+                    f"report_sintattico_{k_sessione}", "Genera Report Sintattico", CREDIT_COSTS["report_sintattico"],
                     "Analizza qualità, chiarezza e criticità della sezione selezionata.",
                 ):
                     addebita_azione_diretta("report_sintattico", amount=CREDIT_COSTS["report_sintattico"])
@@ -4773,7 +4773,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
         st.subheader("Controllo del manoscritto")
-        stima_coerenza = 10 if not st.session_state.get("cache_audit_blocchi") else "1 per ogni blocco nuovo o modificato"
+        stima_coerenza = (
+            CREDIT_COSTS["controllo_coerenza_iniziale"]
+            if not st.session_state.get("cache_audit_blocchi")
+            else f"{CREDIT_COSTS['controllo_coerenza_blocco_modificato']} per ogni blocco nuovo o modificato"
+        )
         if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", stima_coerenza,
                                    f"Il primo controllo completo costa {CREDIT_COSTS['controllo_coerenza_iniziale']} crediti. I controlli successivi riutilizzano la cache e consumano solo {CREDIT_COSTS['controllo_coerenza_blocco_modificato']} credito per ogni blocco nuovo o modificato."):
             barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
