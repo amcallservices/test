@@ -2328,6 +2328,50 @@ def stati_sezioni_editoriali(sezioni, genere, contenuti=None):
     return stati
 
 
+def controllo_completezza_testi_gratuito(sezioni, contenuti=None):
+    """Controllo locale e gratuito contro testi assenti o evidentemente interrotti.
+
+    Non usa IA e non valuta lo stile: segnala soltanto problemi tecnici che
+    l'utente può risolvere prima del controllo editoriale finale.
+    """
+    contenuti = dict(contenuti or {})
+    risultati = []
+    parole_sospese = {
+        "a", "ad", "al", "alla", "alle", "allo", "che", "con", "da", "dal", "dalla",
+        "delle", "dello", "di", "ed", "e", "fra", "gli", "il", "in", "la", "le", "lo",
+        "nel", "nella", "nelle", "nello", "o", "per", "sul", "sulla", "sulle", "sullo",
+        "tra", "un", "una", "uno", "with", "and", "or", "of", "to", "for", "the",
+    }
+    for sezione in sezioni:
+        testo = pulisci_testo_editoriale(
+            contenuti.get(sezione) or leggi_sezione_memorizzata(sezione)
+        ).strip()
+        if not testo:
+            stato, dettaglio = "MANCANTE", "nessun testo presente"
+        elif testo.startswith("ERRORE:"):
+            stato, dettaglio = "DA RIVEDERE", "la generazione precedente ha restituito un errore"
+        elif len(testo.split()) < 12:
+            stato, dettaglio = "TROPPO BREVE", "meno di 12 parole: verifica che la sezione sia stata realmente completata"
+        else:
+            # Tolti virgolette e parentesi di chiusura, l'ultima frase deve
+            # terminare normalmente. Non imponiamo punteggiatura ai punti di un
+            # elenco, perché possono essere volutamente sintetici.
+            finale = testo.rstrip(" \t\r\n\"'»”)]}")
+            ultima_riga = next((r.strip() for r in reversed(testo.splitlines()) if r.strip()), "")
+            ultima_parola = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", finale.lower())
+            elenco_sintetico = bool(re.match(r"^(?:[-•*]|\d+[.)])\s*", ultima_riga))
+            if finale.endswith((",", ";", ":", "—", "–", "-", "…")):
+                stato, dettaglio = "INTERROTTA", "il testo termina con una punteggiatura sospesa"
+            elif not elenco_sintetico and (not finale or finale[-1] not in ".!?"):
+                stato, dettaglio = "INTERROTTA", "l'ultima frase non risulta chiusa"
+            elif ultima_parola and ultima_parola[-1] in parole_sospese:
+                stato, dettaglio = "INTERROTTA", "l'ultima frase sembra terminare con una parola di collegamento"
+            else:
+                stato, dettaglio = "COMPLETA", f"{len(testo.split())} parole — nessuna interruzione tecnica rilevata"
+        risultati.append({"Sezione": sezione, "Esito": stato, "Dettaglio": dettaglio})
+    return risultati
+
+
 def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, genere, obiettivo):
     """Controllo gratuito e non distruttivo: decide soltanto se il download è finale o BOZZA."""
     stati = stati_sezioni_editoriali(sezioni, genere, contenuti)
@@ -3643,7 +3687,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 6. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
 
-7. In Importa / Esporta / Copyright il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI; il software non modifica nulla automaticamente. Dalla stessa area esporti Word, PDF o il CSV completo del progetto e puoi reimportare il CSV in seguito. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
+7. In Importa / Esporta / Copyright premi prima Controlla completezza del manoscritto: è gratuito, non usa API e segnala soltanto sezioni mancanti, troppo brevi o tecnicamente interrotte. Poi il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI; il software non modifica nulla automaticamente. Dalla stessa area esporti Word, PDF o il CSV completo del progetto e puoi reimportare il CSV in seguito. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
 
 Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte o termina Scrivi tutto il libro, in caso di errore, al termine di Voto Indice, Controllo coerenza, formattazione ed esportazione. Controlla sempre testo e file finale prima di pubblicare."""),
         "English": ("How to use Scrittore Site", """1. Complete the sidebar: title, author, language, genre, style, goal, topic and desired final result. Use Further details for priorities, constraints and required examples.
@@ -3764,7 +3808,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
 **Editor, anteprima e ascolto.** L'Editor professionale modifica una sezione alla volta; l'anteprima legge la memoria completa del progetto. Nel lettore vocale puoi scegliere il punto di partenza, avviare, mettere in pausa e riprendere; nella vista lettura il testo letto viene evidenziato quando il browser lo consente.
 
-**Controllo finale.** Prima di Word/PDF il software segnala contenuti mancanti, deboli o completi e propone correzioni da applicare soltanto con la tua approvazione. Rileggi sempre il manoscritto e il file esportato prima della pubblicazione.""",
+**Controllo completezza e finale.** Prima del controllo finale puoi usare **Controlla completezza del manoscritto**: è gratuito, non usa API e rileva testi mancanti, troppo brevi o tecnicamente interrotti senza modificare il libro. Prima di Word/PDF, il controllo finale segnala poi contenuti mancanti, deboli o completi e propone correzioni da applicare soltanto con la tua approvazione. Rileggi sempre il manoscritto e il file esportato prima della pubblicazione.""",
         "English": """### Updated features: saving, sources and copyright
 
 **Save and recover.** The project opens clean after sign-in. Use **💾 SAVE SESSION** to store sidebar fields, index, texts, sources, images and project settings in your account. Use **🔄 REFRESH TO LATEST DRAFT** only when you want to restore that saved work. **RESET PROJECT** clears the open project and the sidebar.
@@ -5271,6 +5315,36 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             sezione: leggi_sezione_memorizzata(sezione)
             for sezione in sezioni_controllo_finale
         }
+        with st.expander("🔎 Controlla completezza del manoscritto", expanded=bool(st.session_state.get("report_completezza_manoscritto"))):
+            st.caption(
+                "Controllo gratuito e locale: individua sezioni mancanti, troppo brevi o tecnicamente interrotte. "
+                "Non usa API, non consuma crediti e non modifica il libro."
+            )
+            if st.button(
+                "🔎 CONTROLLA COMPLETEZZA TESTI",
+                use_container_width=True,
+                key="controlla_completezza_manoscritto",
+                disabled=not bool(sezioni_controllo_finale),
+            ):
+                st.session_state["report_completezza_manoscritto"] = controllo_completezza_testi_gratuito(
+                    sezioni_controllo_finale, contenuti_export
+                )
+            report_completezza = st.session_state.get("report_completezza_manoscritto", [])
+            if report_completezza:
+                problemi_completezza = [
+                    voce for voce in report_completezza if voce["Esito"] != "COMPLETA"
+                ]
+                if problemi_completezza:
+                    st.warning(
+                        f"Trovate {len(problemi_completezza)} sezione/i da rivedere. "
+                        "Apri Scrittura e Quiz e completa o rigenera solo quelle indicate."
+                    )
+                    st.dataframe(problemi_completezza, hide_index=True, use_container_width=True)
+                else:
+                    st.success(
+                        f"Controllo completato: {len(report_completezza)} sezione/i presenti e senza interruzioni tecniche rilevate."
+                    )
+        st.divider()
         esito_finale_export = controllo_finale_pre_export(
             st.session_state.get("indice_raw", ""), sezioni_controllo_finale, contenuti_export,
             val_titolo, val_trama, val_genere, val_goal
