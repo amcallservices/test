@@ -4966,12 +4966,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if not report_originalita.get("eseguito"):
                     st.info(report_originalita["messaggio"])
                 elif report_originalita.get("trovate"):
-                    st.error(report_originalita["messaggio"])
-                    st.write("Passaggi da riscrivere o rigenerare:")
+                    st.error("Il controllo locale ha trovato passaggi da rielaborare.")
+                    st.write("Modifiche richieste:")
                     for passaggio in report_originalita["trovate"]:
                         st.write("- “" + passaggio + "…”")
                 else:
-                    st.success(report_originalita["messaggio"])
+                    st.success("Controllo locale concluso: non sono emerse somiglianze rilevanti con le fonti caricate.")
             registro_web = st.session_state.get("registro_fonti_web", "").strip()
             if registro_web:
                 st.caption("La verifica web costa 2 crediti e non modifica il manoscritto.")
@@ -5016,14 +5016,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     stato_copyright.success("Verifica completa conclusa.")
             else:
                 st.info("La verifica web sarà disponibile dopo la generazione dell'indice: la ricerca preliminare creerà qui il registro delle fonti consultate.")
-            if st.session_state.get("report_originalita_web"):
-                st.markdown("#### Esito della verifica copyright sul web")
-                st.info(st.session_state["report_originalita_web"])
-                st.caption("Il risultato resta visibile finché non esegui RESET PROGETTO o avvii un nuovo controllo.")
-            if st.session_state.get("report_originalita_web_completa"):
-                st.markdown("#### Esito della verifica copyright web completa")
-                st.info(st.session_state["report_originalita_web_completa"])
-                st.caption("L'esito resta visibile finché non esegui RESET PROGETTO o avvii un nuovo controllo completo.")
             sezioni_da_rielaborare = sezioni_segnalate_per_originalita(
                 sezioni_complete_copyright,
                 st.session_state.get("report_originalita_fonti"),
@@ -5035,12 +5027,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.success(messaggio_rielaborazione)
             if sezioni_da_rielaborare:
                 st.warning(
-                    f"Il controllo ha segnalato {len(sezioni_da_rielaborare)} sezione/i. "
-                    "Puoi rielaborarle ora: saranno riscritte solo quelle indicate, senza modificare le altre."
+                    f"Modifiche richieste in {len(sezioni_da_rielaborare)} sezione/i. "
+                    "Puoi rielaborare solo quelle indicate: le altre restano intatte."
                 )
-                with st.expander("Sezioni segnalate dal controllo", expanded=False):
-                    for sezione in sezioni_da_rielaborare:
-                        st.write("- " + sezione)
+                for sezione in sezioni_da_rielaborare:
+                    st.write("- " + sezione)
                 stima_rielaborazione = sum(
                     stima_massima_crediti_stesura(
                         sezione, st.session_state.get("indice_raw", ""), val_trama, val_goal, val_genere
@@ -5099,6 +5090,31 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         esito += f" Da riprovare: {', '.join(errori_rielaborazione)}."
                     st.session_state["messaggio_rielaborazione_originalita"] = esito
                     st.rerun()
+            elif any((
+                st.session_state.get("report_originalita_fonti"),
+                st.session_state.get("report_originalita_web"),
+                st.session_state.get("report_originalita_web_completa"),
+            )):
+                st.success("Nessuna sezione risulta da rielaborare in base agli ultimi controlli eseguiti.")
+
+            # I report completi possono essere molto lunghi: l'esito operativo
+            # mostra sopra solo le correzioni necessarie; qui resta disponibile
+            # il dettaglio per chi desidera leggerlo.
+            if report_originalita:
+                with st.expander("Dettaglio tecnico — controllo locale", expanded=False):
+                    st.write(report_originalita.get("messaggio", "Nessun dettaglio disponibile."))
+                    if report_originalita.get("trovate"):
+                        st.caption("Passaggi segnalati in forma completa:")
+                        for passaggio in report_originalita["trovate"]:
+                            st.code(passaggio, language=None)
+            if st.session_state.get("report_originalita_web"):
+                with st.expander("Dettaglio tecnico — verifica copyright sul web", expanded=False):
+                    st.info(st.session_state["report_originalita_web"])
+                    st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo web.")
+            if st.session_state.get("report_originalita_web_completa"):
+                with st.expander("Dettaglio tecnico — verifica copyright web completa", expanded=False):
+                    st.info(st.session_state["report_originalita_web_completa"])
+                    st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo completo.")
         st.divider()
         sezioni_controllo_finale = elenco_sezioni_progetto(lista_cap_base)
         # Prefazione e ringraziamenti entrano nel controllo solo se sono già
