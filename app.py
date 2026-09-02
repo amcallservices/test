@@ -786,46 +786,89 @@ st.markdown("""
 [data-testid="collapsedControl"] { display: none !important; }
 
 section[data-testid="stSidebar"] { 
-    min-width: 420px !important; max-width: 420px !important;
-    width: 420px !important; display: block !important; visibility: visible !important;
-    transform: none !important; background-color: #1e1e1e !important; border-right: 1px solid #333;
+    min-width: 370px !important; max-width: 370px !important;
+    width: 370px !important; display: block !important; visibility: visible !important;
+    transform: none !important; background: linear-gradient(180deg, #0b172a 0%, #101d31 100%) !important;
+    border-right: 1px solid #29405f;
 }
 /* Sidebar fissa: impedisce il collasso accidentale della barra laterale. */
 section[data-testid="stSidebar"][aria-expanded="false"],
 [data-testid="stSidebar"][aria-expanded="false"] {
-    min-width: 420px !important; max-width: 420px !important; width: 420px !important;
+    min-width: 370px !important; max-width: 370px !important; width: 370px !important;
     display: block !important; visibility: visible !important; transform: none !important;
 }
 section[data-testid="stSidebar"] > div:first-child {
-    width: 420px !important; min-width: 420px !important; display: block !important;
+    width: 370px !important; min-width: 370px !important; display: block !important;
+    padding: 1rem .9rem 2rem !important;
 }
 section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, 
 section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
     color: #ffffff !important;
 }
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    font-size: .83rem !important; font-weight: 700 !important; letter-spacing: .01em;
+}
+section[data-testid="stSidebar"] .stTextInput input,
+section[data-testid="stSidebar"] .stTextArea textarea,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background: #16263d !important; border-color: #385574 !important;
+    border-radius: 9px !important;
+}
 .stButton>button {
-    width: 100% !important; border-radius: 10px !important; height: 4.2em !important;
-    font-weight: bold !important; background-color: #1e1e1e !important; color: #ffffff !important;
-    font-size: 18px !important; border: 2px solid #333 !important;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4) !important; transition: all 0.3s ease !important;
+    width: 100% !important; border-radius: 10px !important; height: 3.15em !important;
+    font-weight: 700 !important; background: #14243a !important; color: #f8fbff !important;
+    font-size: .98rem !important; border: 1px solid #355273 !important;
+    box-shadow: none !important; transition: all .18s ease !important;
 }
 .stButton>button:hover { 
-    background-color: #333333 !important; border-color: #007BFF !important;
-    color: #007BFF !important; transform: translateY(-2px) !important;
+    background: #1d3655 !important; border-color: #65a8ff !important;
+    color: #ffffff !important; transform: translateY(-1px) !important;
 }
+.stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] {
+    background: linear-gradient(135deg, #1976e9, #2997ef) !important;
+    border-color: #4aa8ff !important;
+}
+.stButton>button[kind="primary"]:hover, .stButton>button[data-testid="baseButton-primary"]:hover {
+    background: linear-gradient(135deg, #1669cf, #1e88e5) !important;
+}
+[data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
+[data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
+[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid #2c405b; }
+[data-testid="stTabs"] button[role="tab"] { border-radius: 9px 9px 0 0; padding: .65rem .9rem; color: #b7c8df; }
+[data-testid="stTabs"] button[aria-selected="true"] { color: #ffffff; background: #162a44; }
+.ss-workspace-header {
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:1.05rem 1.25rem; margin:0 0 1.15rem; border-radius:16px;
+    border:1px solid #314a68; background:linear-gradient(135deg, rgba(22,42,68,.96), rgba(12,27,47,.96));
+    box-shadow:0 14px 36px rgba(0,0,0,.20);
+}
+.ss-workspace-brand { display:flex; align-items:center; gap:.9rem; min-width:0; }
+.ss-workspace-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#e7bd69; color:#17253a; font-size:1.3rem; }
+.ss-workspace-title { color:#fff; font-size:1.25rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ss-workspace-subtitle { color:#aac0da; font-size:.78rem; margin-top:.18rem; }
+.ss-workspace-meta { display:flex; gap:.55rem; flex-wrap:wrap; justify-content:flex-end; }
+.ss-workspace-chip { color:#e8f3ff; background:#12243b; border:1px solid #3a5878; padding:.42rem .65rem; border-radius:999px; font-size:.78rem; font-weight:700; }
+.ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
+.ss-workspace-chip.ai { color:#bcdcff; }
+.ss-workspace-chip.credit { color:#ffe3a1; }
+.ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
+.ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
 .preview-box {
-    background-color: #ffffff !important; padding: 80px; border: 1px solid #ccc;
-    border-radius: 4px; height: 900px; overflow-y: scroll;
+    background-color: #fffdf7 !important; padding: min(6vw,80px); border: 1px solid #d8c9a8;
+    border-radius: 12px; height: 900px; overflow-y: scroll;
     font-family: 'Times New Roman', serif; line-height: 2.0; 
-    color: #111 !important; box-shadow: 0px 25px 60px rgba(0,0,0,0.2); margin: 0 auto;
+    color: #182236 !important; box-shadow: 0px 25px 60px rgba(0,0,0,.28); margin: 0 auto;
 }
 .custom-title {
-    font-size: 38px; font-weight: 900; color: #111; text-align: center;
-    padding: 30px; background-color: #ffffff; border-radius: 12px;
-    margin-bottom: 30px; border-bottom: 6px solid #1e1e1e;
+    display:none;
 }
-div[data-baseweb="select"] > div { background-color: #2b2b2b !important; color: white !important; }
+div[data-baseweb="select"] > div { background-color: #16263d !important; color: white !important; }
+@media (max-width: 900px) {
+    section[data-testid="stSidebar"], section[data-testid="stSidebar"] > div:first-child { min-width: 320px !important; width:320px !important; }
+    .ss-workspace-header { align-items:flex-start; flex-direction:column; }
+    .ss-workspace-meta { justify-content:flex-start; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -3562,9 +3605,6 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 # ======================================================================================================================
 # 8. UI PRINCIPALE & GENERAZIONE PROMPT DINAMICO
 # ======================================================================================================================
-st.markdown(f'<div class="custom-title">Scrittore Site — {val_titolo if val_titolo else "Editor professionale"}</div>', unsafe_allow_html=True)
-st.caption(VERSIONE_DEPLOY)
-
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
 opzioni_editor = [L["preface"]] + lista_cap_base + [L["ack"]]
@@ -3572,6 +3612,37 @@ opzioni_editor = [L["preface"]] + lista_cap_base + [L["ack"]]
 # del progetto. Il cambio della sezione selezionata non può quindi svuotare le
 # altre caselle o nasconderle dall'anteprima/esportazione.
 reidrata_sezioni_memorizzate(opzioni_editor)
+
+# Intestazione di lavoro: riassume il progetto senza occupare lo spazio della
+# scrittura. I pulsanti operativi restano nelle rispettive sezioni, così non
+# cambiano il flusso o la logica esistente dell'editor.
+titolo_workspace = html.escape((val_titolo or "Editor professionale").strip())
+motore_workspace = html.escape(provider_ia.replace(" (OpenAI)", ""))
+sezioni_con_testo_workspace = sum(
+    1 for contenuto in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).values()
+    if str(contenuto).strip()
+)
+stato_workspace = "Progetto pronto" if sidebar_pronta else "Completa la configurazione"
+classe_stato_workspace = "ok" if sidebar_pronta else ""
+st.markdown(
+    f'''<div class="ss-workspace-header">
+        <div class="ss-workspace-brand">
+            <div class="ss-workspace-mark">✒</div>
+            <div>
+                <div class="ss-workspace-title">{titolo_workspace}</div>
+                <div class="ss-workspace-subtitle">Scrittore Site · spazio di lavoro editoriale</div>
+            </div>
+        </div>
+        <div class="ss-workspace-meta">
+            <span class="ss-workspace-chip {classe_stato_workspace}">{stato_workspace}</span>
+            <span class="ss-workspace-chip ai">🧠 {motore_workspace}</span>
+            <span class="ss-workspace-chip">✍ {sezioni_con_testo_workspace} sezioni scritte</span>
+            <span class="ss-workspace-chip credit">💾 Salvataggio disponibile</span>
+        </div>
+    </div>''',
+    unsafe_allow_html=True,
+)
+st.caption(VERSIONE_DEPLOY)
 
 # La guida deve essere disponibile anche al primo avvio, prima che l'utente compili il brief.
 interfaccia_editor_disponibile = True
