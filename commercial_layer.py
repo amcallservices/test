@@ -11,7 +11,7 @@ import requests
 import streamlit as st
 
 
-COMMERCIAL_VERSION = "beta 3b"
+COMMERCIAL_VERSION = "beta 3c"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -19,6 +19,31 @@ DEMO_INITIAL_CREDITS = 50
 # 75 crediti (60 sezioni, indice, voto, controllo finale e metadati).
 AI_REQUEST_CREDITS = 1
 STANDARD_BOOK_CREDITS = 75
+# Tariffario unico delle azioni IA. Un credito dei pacchetti principali vale
+# circa €0,0667: le azioni leggere con GPT-5.4 mini restano a 1 credito,
+# mentre ricerca web e revisioni GPT-5.4 usano una quota superiore in rapporto
+# al costo API. Le azioni senza IA (lettura, export, CSV e modifica manuale)
+# restano gratuite.
+CREDIT_COSTS = {
+    "scrittura_sezione": 1,
+    "indice_ricerca_web": 2,
+    "indice_generazione_editoriale": 3,
+    "voto_indice": 1,
+    "rigenera_indice": 3,
+    "verifica_fatti_web": 2,
+    "audit_fatti_capitolo": 2,
+    "controllo_coerenza_iniziale": 10,
+    "controllo_coerenza_blocco_modificato": 1,
+    "report_sintattico": 1,
+    "metadati_kdp": 1,
+    "immagine_capitolo": 5,
+    "ricette_dieci": 10,
+    "copyright_web_rapido": 2,
+    "copyright_lotto_screening_mini": 1,
+    # Si applica soltanto se il lotto è segnalato e richiede il secondo
+    # passaggio con GPT-5.4 completo + ricerca web.
+    "copyright_lotto_revisione_gpt54": 2,
+}
 # Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
 # ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
