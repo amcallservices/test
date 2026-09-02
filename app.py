@@ -1837,13 +1837,22 @@ CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 
 
 def leggi_sezione_memorizzata(sezione):
-    """Legge una sezione dalla memoria stabile, sincronizzando il widget visibile."""
+    """Legge una sezione dando priorità alla memoria stabile del progetto.
+
+    Un widget Streamlit può conservare nel browser un testo precedente anche
+    dopo una rigenerazione. Non deve mai sovrascrivere la nuova versione mentre
+    vengono salvate o generate altre sezioni: le modifiche manuali passano
+    invece dal callback ``sincronizza_modifica_manuale``.
+    """
     chiave = chiave_sezione(sezione)
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     valore_widget = st.session_state.get(chiave, "") or st.session_state.get(chiave_sezione_precedente(sezione), "")
-    if str(valore_widget).strip():
+    if not str(memoria.get(sezione, "")).strip() and str(valore_widget).strip():
         memoria[sezione] = valore_widget
-    return memoria.get(sezione, valore_widget or "")
+    valore_memoria = memoria.get(sezione, "")
+    if str(valore_memoria).strip():
+        return valore_memoria
+    return valore_widget or ""
 
 
 def scrivi_sezione_memorizzata(sezione, contenuto):
