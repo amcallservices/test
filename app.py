@@ -1867,6 +1867,21 @@ def contenuto_memorizzato_puro(sezione):
     return contenuto or ""
 
 
+def elenco_sezioni_progetto(sezioni_base):
+    """Unisce indice e memoria senza perdere testi già generati.
+
+    Alcune sezioni possono esistere nella memoria dopo un ripristino CSV/cloud
+    anche prima che il relativo widget venga ridisegnato. Anteprima, editor,
+    controlli ed export devono quindi usare questo elenco, non soltanto le
+    sezioni che Streamlit ha reso visibili nell'ultimo rerun.
+    """
+    risultato = []
+    for sezione in [*(sezioni_base or []), *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys()]:
+        if sezione and sezione not in risultato:
+            risultato.append(sezione)
+    return risultato
+
+
 def sincronizza_modifica_manuale(sezione):
     """Callback dell'editor: conserva subito anche le modifiche digitate a mano."""
     scrivi_sezione_memorizzata(sezione, st.session_state.get(chiave_sezione(sezione), ""))
@@ -1936,7 +1951,12 @@ def esporta_progetto_editoriale_csv():
     Supabase o dalla sessione del browser.
     """
     buffer = StringIO(newline="")
-    writer = csv.DictWriter(buffer, fieldnames=["tipo", "chiave", "valore"])
+    # Virgola e UTF-8 con BOM permettono sia un'importazione fedele
+    # nell'app sia l'apertura leggibile in Excel. L'import supporta anche
+    # file risalvati da Excel con punto e virgola.
+    writer = csv.DictWriter(
+        buffer, fieldnames=["tipo", "chiave", "valore"], lineterminator="\n"
+    )
     writer.writeheader()
     writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "1"})
 
@@ -1972,10 +1992,52 @@ def esporta_progetto_editoriale_csv():
 
 
 def importa_progetto_editoriale_csv(file_caricato):
-    """Legge un CSV esportato dall'app e restituisce una fotografia validata."""
+    """Legge un CSV di Scrittore Site, anche se è stato riaperto in Excel.
+
+    Il file originale usa UTF-8 con virgole. Sono supportati anche separatore
+    ``;`` / tabulazione, il prefisso ``sep=;`` e le codifiche che Excel usa
+    più spesso: così un salvataggio manuale non rende il backup inutilizzabile.
+    """
     try:
-        contenuto = file_caricato.getvalue().decode("utf-8-sig")
-        righe = list(csv.DictReader(StringIO(contenuto)))
+        dati_grezzi = file_caricato.getvalue()
+        if not dati_grezzi:
+            raise ValueError("il file è vuoto")
+
+        contenuto = None
+        ultimo_errore = None
+        for codifica in ("utf-8-sig", "utf-16", "cp1252"):
+            try:
+                contenuto = dati_grezzi.decode(codifica)
+                break
+            except UnicodeDecodeError as exc:
+                ultimo_errore = exc
+        if contenuto is None:
+            raise ultimo_errore or ValueError("codifica non supportata")
+
+        contenuto = contenuto.lstrip("\ufeff").replace("\x00", "")
+        # Alcune versioni di Excel aggiungono questa prima riga per dichiarare
+        # il separatore. Non è un dato del progetto e va ignorata.
+        righe_testo = contenuto.splitlines()
+        separatore_dichiarato = ""
+        if righe_testo and righe_testo[0].strip().lower().startswith("sep="):
+            separatore_dichiarato = righe_testo.pop(0).strip()[4:5]
+            contenuto = "\n".join(righe_testo)
+        try:
+            dialect = csv.Sniffer().sniff(
+                contenuto[:8192], delimiters=separatore_dichiarato or ",;\t|"
+            )
+        except csv.Error:
+            dialect = csv.excel
+            if separatore_dichiarato:
+                dialect.delimiter = separatore_dichiarato
+        righe_originali = list(csv.DictReader(StringIO(contenuto, newline=""), dialect=dialect))
+        righe = [
+            {
+                str(nome or "").strip().lower().lstrip("\ufeff"): valore
+                for nome, valore in riga.items()
+            }
+            for riga in righe_originali
+        ]
     except Exception as exc:
         raise ValueError(f"Il file CSV non è leggibile: {exc}") from exc
     if not righe or not {"tipo", "chiave", "valore"}.issubset(set(righe[0].keys())):
@@ -2200,18 +2262,29 @@ def sezioni_mancanti_per_esportazione(sezioni, genere):
     mancanti = []
     minimi = {"parte": 35, "capitolo": 90 if genere == "Ricettario" else 120, "sottocapitolo": 120, "frontespizio": 40}
     for sezione in sezioni:
-        testo = pulisci_testo_editoriale(st.session_state.get(chiave_sezione(sezione), "")).strip()
+        # La sezione può non essere il widget attualmente visibile, ma essere
+        # già presente nella memoria stabile del progetto o dopo un ripristino.
+        testo = pulisci_testo_editoriale(leggi_sezione_memorizzata(sezione)).strip()
         if len(testo.split()) < minimi[tipo_sezione_editoriale(sezione)]:
             mancanti.append(sezione)
     return mancanti
 
 
-def stati_sezioni_editoriali(sezioni, genere):
-    """Distingue chiaramente sezioni mancanti, deboli e complete senza alterare il manoscritto."""
+def stati_sezioni_editoriali(sezioni, genere, contenuti=None):
+    """Distingue sezioni mancanti, deboli e complete usando la memoria reale.
+
+    ``contenuti`` permette al controllo finale di usare una fotografia unica,
+    senza dipendere dal solo widget della sezione che l'utente ha aperto per
+    ultima nell'editor.
+    """
     minimi = {"parte": 35, "capitolo": 90 if genere == "Ricettario" else 120, "sottocapitolo": 120, "frontespizio": 40}
+    contenuti = dict(contenuti or {})
     stati = []
     for sezione in sezioni:
-        testo = pulisci_testo_editoriale(st.session_state.get(chiave_sezione(sezione), "")).strip()
+        testo = contenuti.get(sezione)
+        if not str(testo or "").strip():
+            testo = leggi_sezione_memorizzata(sezione)
+        testo = pulisci_testo_editoriale(testo).strip()
         minimo = minimi[tipo_sezione_editoriale(sezione)]
         parole = len(testo.split())
         if not testo:
@@ -2226,7 +2299,7 @@ def stati_sezioni_editoriali(sezioni, genere):
 
 def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, genere, obiettivo):
     """Controllo gratuito e non distruttivo: decide soltanto se il download è finale o BOZZA."""
-    stati = stati_sezioni_editoriali(sezioni, genere)
+    stati = stati_sezioni_editoriali(sezioni, genere, contenuti)
     problemi, prompt_correzione = [], []
     for voce in stati:
         if voce["Stato"] != "COMPLETA":
@@ -2807,11 +2880,10 @@ def genera_contesto_avanzato(sezione_corrente, argomento=""):
         
     for s in st.session_state.get("lista_capitoli", []):
         if s == sezione_corrente: break
-        k = chiave_sezione(s)
-        if k in st.session_state and st.session_state[k].strip():
+        testo_precedente = leggi_sezione_memorizzata(s)
+        if str(testo_precedente).strip():
             # Memoria estesa: il riepilogo breve da 150 caratteri non era sufficiente
             # per distinguere concetti, esempi e procedure già utilizzati.
-            testo_precedente = st.session_state[k]
             contesto += f"- Trattato in {s}:\n{testo_precedente[:1200]}\n"
     return contesto
 
@@ -4305,7 +4377,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # Questo rende la pausa effettiva tra una richiesta AI e la successiva.
             da_generare_libro = [
                     sezione for sezione in sezioni_intero_libro
-                    if not st.session_state.get(chiave_sezione(sezione), "").strip()
+                    if not leggi_sezione_memorizzata(sezione).strip()
             ]
             stima_libro = sum(
                 stima_massima_crediti_stesura(sezione, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
@@ -4389,7 +4461,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     flag_ricerca = 0 if rispetta_maiuscole else re.IGNORECASE
                     occorrenze, sezioni_trovate = 0, []
                     for sezione in opzioni_editor:
-                        testo_sezione = st.session_state.get(chiave_sezione(sezione), "")
+                        testo_sezione = leggi_sezione_memorizzata(sezione)
                         trovate = len(re.findall(re.escape(cerca_globale), testo_sezione, flags=flag_ricerca))
                         if trovate:
                             occorrenze += trovate
@@ -4406,8 +4478,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         key="ricerca_globale_applica",
                     ):
                         for sezione in sezioni_trovate:
-                            chiave = chiave_sezione(sezione)
-                            testo_sezione = st.session_state.get(chiave, "")
+                            testo_sezione = leggi_sezione_memorizzata(sezione)
                             scrivi_sezione_memorizzata(sezione, re.sub(
                                 re.escape(cerca_globale),
                                 lambda _match: sostituisci_globale,
@@ -4691,11 +4762,21 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if immagine_associata:
                 st.image(immagine_associata["bytes"], caption="Immagine associata al capitolo", width=420)
 
-            # L'editor deve sempre partire dalla memoria della sezione selezionata,
-            # non dal valore rimasto nel widget della sezione precedente. Questo rende
-            # visibili anche tutte le sezioni create con il comando del capitolo.
-            testo_editor = pulisci_testo_editoriale(contenuto_memorizzato_puro(sez_scelta))
-            if testo_editor and not str(st.session_state.get(k_sessione, "")).strip():
+            # L'editor deve visualizzare la copia stabile della sezione scelta.
+            # Un solo widget alla volta è realmente visibile in Streamlit: se
+            # si leggeva solo quel widget, le altre sezioni già generate
+            # apparivano vuote pur essendo presenti nella memoria del progetto.
+            testo_editor = pulisci_testo_editoriale(leggi_sezione_memorizzata(sez_scelta))
+            sezione_caricata = st.session_state.get("editor_testo_caricato_per")
+            if sezione_caricata != sez_scelta:
+                # Il cambio sezione avviene prima della creazione della textarea:
+                # è quindi sicuro sostituire il valore visualizzato senza
+                # sovrascrivere una modifica manuale della sezione precedente.
+                st.session_state[k_sessione] = testo_editor
+                st.session_state["editor_testo_caricato_per"] = sez_scelta
+            elif testo_editor and not str(st.session_state.get(k_sessione, "")).strip():
+                # Ripristino da CSV/cloud o rerun con widget temporaneamente
+                # vuoto: la memoria ha priorità e il testo torna leggibile.
                 st.session_state[k_sessione] = testo_editor
             elif k_sessione not in st.session_state:
                 st.session_state[k_sessione] = ""
@@ -4719,7 +4800,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     # TAB 3: ANTEPRIMA
     with tabs[3]:
         st.subheader(L["preview_tit"])
-        contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in opzioni_editor}
+        sezioni_anteprima = elenco_sezioni_progetto(opzioni_editor)
+        contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
 
         blocchi_lettore = [val_titolo]
         if val_autore:
@@ -4748,9 +4830,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         if val_autore:
             html_p += f"<h3 style='text-align:center;'>di {html.escape(val_autore)}</h3>"
         html_p += "<hr><br>"
-        for s in opzioni_editor:
-            sk = chiave_sezione(s)
-            if sk in st.session_state and st.session_state[sk].strip():
+        for s in sezioni_anteprima:
+            testo_preview = pulisci_testo_editoriale(contenuti_libro.get(s, ""))
+            if testo_preview:
                 html_p += f"<h2>{html.escape(s.upper())}</h2>"
                 img = st.session_state.get("immagini_capitoli", {}).get(s)
                 if img:
@@ -4762,7 +4844,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         f"style='max-width:58%;height:auto;max-height:360px;object-fit:contain;'>"
                         f"<div style='font-size:13px;color:#555;font-style:italic;'>{caption}</div></div>"
                     )
-                testo_preview = pulisci_testo_editoriale(st.session_state[sk])
                 prefisso_ancora = "voice_preview_" + hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
                 blocchi_preview = dividi_blocchi_lettura(testo_preview)
                 testo_con_ancore = " ".join(
@@ -5019,13 +5100,22 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["messaggio_rielaborazione_originalita"] = esito
                     st.rerun()
         st.divider()
-        sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
+        sezioni_controllo_finale = elenco_sezioni_progetto(lista_cap_base)
+        # Prefazione e ringraziamenti entrano nel controllo solo se sono già
+        # stati creati: non rendono "incompleto" un progetto che non li usa.
+        for sezione_apertura in (L["preface"], L["ack"]):
+            if leggi_sezione_memorizzata(sezione_apertura).strip() and sezione_apertura not in sezioni_controllo_finale:
+                sezioni_controllo_finale.append(sezione_apertura)
+        sezioni_incomplete_export = sezioni_mancanti_per_esportazione(sezioni_controllo_finale, val_genere)
+        # Il controllo finale deve leggere la stessa memoria stabile usata da
+        # scrittura, CSV, salvataggio e ripristino; altrimenti le sezioni non
+        # aperte nell'editor apparivano falsamente come "nessun contenuto".
         contenuti_export = {
-            sezione: st.session_state.get(chiave_sezione(sezione), "")
-            for sezione in lista_cap_base
+            sezione: leggi_sezione_memorizzata(sezione)
+            for sezione in sezioni_controllo_finale
         }
         esito_finale_export = controllo_finale_pre_export(
-            st.session_state.get("indice_raw", ""), lista_cap_base, contenuti_export,
+            st.session_state.get("indice_raw", ""), sezioni_controllo_finale, contenuti_export,
             val_titolo, val_trama, val_genere, val_goal
         ) if lista_cap_base else {"pronto": False, "problemi": ["Indice assente."], "prompt_correzione": [], "stati": []}
         export_boza = not esito_finale_export["pronto"]
