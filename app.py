@@ -27,6 +27,7 @@ import PyPDF2  # Libreria necessaria per leggere i PDF caricati
 from PIL import Image
 from commercial_layer import (
     AI_REQUEST_CREDITS,
+    CREDIT_COSTS,
     COMMERCIAL_TEST_VERSION,
     CommercialCreditError,
     bootstrap_commercial_test,
@@ -184,7 +185,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
     if st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
 
-    riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=2)
+    riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=CREDIT_COSTS["indice_ricerca_web"])
     try:
         risposta = client.responses.create(
             model=MODELLO_ANALISI_FONTI,
@@ -208,14 +209,14 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
         mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
         if not mappa:
-            refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=2)
+        refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=CREDIT_COSTS["indice_ricerca_web"])
             return ""
         st.session_state["firma_ricerca_preliminare"] = firma
         st.session_state["dossier_ricerca_preliminare"] = mappa
         st.session_state["registro_fonti_web"] = registro
         return mappa
     except Exception:
-        refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=2)
+        refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=CREDIT_COSTS["indice_ricerca_web"])
         return ""
 
 
@@ -245,7 +246,7 @@ def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
     return f"MAPPA CONCETTUALE INTERNA (NON È TESTO DA RIPRENDERE):\n{materiali[:limite]}"
 
 
-def controllo_originalita_fonti(contenuti, fonti, parole_per_sequenza=9):
+def controllo_originalita_fonti(contenuti, fonti, parole_per_sequenza=9, sezioni=None):
     """Controllo locale di sequenze identiche rispetto ai soli documenti caricati.
 
     Non sostituisce una verifica legale o una banca dati editoriale globale, ma
@@ -272,9 +273,16 @@ def controllo_originalita_fonti(contenuti, fonti, parole_per_sequenza=9):
             trovate.append(sequenza)
             if len(trovate) >= 12:
                 break
+    segnalazioni_sezioni = {}
+    for titolo, testo_sezione in sezioni or []:
+        parole_sezione = " ".join(parole(testo_sezione))
+        corrispondenze = [sequenza for sequenza in trovate if sequenza in parole_sezione]
+        if corrispondenze:
+            segnalazioni_sezioni[titolo] = corrispondenze
     return {
         "eseguito": True,
         "trovate": trovate,
+        "segnalazioni_sezioni": segnalazioni_sezioni,
         "messaggio": (
             "Nessuna sequenza letterale di almeno 9 parole in comune con le fonti caricate: controllo locale superato."
             if not trovate else
@@ -292,6 +300,7 @@ def sezioni_segnalate_per_originalita(sezioni, report_locale=None, *report_web):
     """
     segnalate = set()
     sequenze = (report_locale or {}).get("trovate", []) if isinstance(report_locale, dict) else []
+    segnalate.update((report_locale or {}).get("segnalazioni_sezioni", {}).keys() if isinstance(report_locale, dict) else [])
     rapporti = "\n".join(str(report or "") for report in report_web).casefold()
     for titolo, testo in sezioni:
         testo_norm = re.sub(r"\s+", " ", (testo or "").casefold())
@@ -303,13 +312,43 @@ def sezioni_segnalate_per_originalita(sezioni, report_locale=None, *report_web):
     return [titolo for titolo, _ in sezioni if titolo in segnalate]
 
 
+def contesto_report_web_per_sezione(sezione, *report_web):
+    """Restituisce solo i passaggi del report web associati al titolo indicato."""
+    estratti = []
+    for report in report_web:
+        report = str(report or "")
+        for corrispondenza in re.finditer(re.escape(sezione), report, flags=re.IGNORECASE):
+            inizio = max(0, corrispondenza.start() - 180)
+            fine = min(len(report), corrispondenza.end() + 1100)
+            estratto = report[inizio:fine].strip()
+            if estratto and estratto not in estratti:
+                estratti.append(estratto)
+    return "\n\n---\n\n".join(estratti)[:3500]
+
+
 def rielabora_sezione_per_originalita(sezione, indice, trama, genere, stile, narrativa, pov,
-                                      obiettivo, lingua, approfondimenti, profilo_lunghezza):
+                                      obiettivo, lingua, approfondimenti, profilo_lunghezza,
+                                      report_locale=None, *report_web):
     """Riscrive da zero una sola sezione segnalata, senza alterare le altre."""
     testo_precedente = leggi_sezione_memorizzata(sezione)
     prompt_base = crea_prompt_stesura_sezione(
         sezione, indice, trama, genere, stile, narrativa, pov, obiettivo,
         lingua, approfondimenti, profilo_lunghezza
+    )
+    frasi_vietate = []
+    if isinstance(report_locale, dict):
+        frasi_vietate = report_locale.get("segnalazioni_sezioni", {}).get(sezione, [])
+    contesto_web = contesto_report_web_per_sezione(sezione, *report_web)
+    blocco_frasi_vietate = (
+        "\nSEQUENZE ESATTE SEGNALATE DAL CONTROLLO LOCALE — NON RIPRODURLE, "
+        "NÉ RIPRENDERNE L'ORDINE O LA FORMA:\n- " + "\n- ".join(frasi_vietate[:12])
+        if frasi_vietate else ""
+    )
+    blocco_web = (
+        "\nCONTESTO DEL CONTROLLO WEB PER QUESTA SOLA SEZIONE — usa queste indicazioni "
+        "per cambiare radicalmente formulazione, esempio e sviluppo, senza citarle nel libro:\n"
+        f"{contesto_web}"
+        if contesto_web else ""
     )
     richiesta = prompt_base + f"""
 
@@ -318,9 +357,12 @@ Questa sezione è stata segnalata da un controllo prudenziale. Riscrivila integr
 - conserva esclusivamente tema, obiettivo, dati necessari e livello di approfondimento della sezione;
 - crea una nuova progressione di idee, nuovi esempi, nuove frasi e nuovi collegamenti;
 - non conservare struttura dei paragrafi, elenchi, metafore o formulazioni del testo precedente;
-- non riprodurre alcuna sequenza di sei o più parole del testo precedente, salvo nomi propri, termini tecnici inevitabili o titoli;
+- non riprodurre alcuna sequenza segnalata qui sotto, né una sua parafrasi ravvicinata; usa un percorso esplicativo alternativo;
 - non citare fonti, URL, autori, controlli o copyright nel libro;
 - rispetta rigorosamente la lunghezza prevista e chiudi il ragionamento con una frase completa.
+
+{blocco_frasi_vietate}
+{blocco_web}
 
 TESTO PRECEDENTE DA SUPERARE (non copiarne la forma):
 {testo_precedente}
@@ -339,7 +381,7 @@ def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
     # al modello di cercare le formulazioni più distintive nella ricerca web.
     passo = max(1, len(testo_libro) // 10)
     campioni = [testo_libro[posizione:posizione + 650] for posizione in range(0, len(testo_libro), passo)][:10]
-    riferimento = addebita_azione_diretta("verifica_originalita_copyright_web", amount=2)
+    riferimento = addebita_azione_diretta("verifica_originalita_copyright_web", amount=CREDIT_COSTS["copyright_web_rapido"])
     try:
         risposta = client.responses.create(
             model=MODELLO_ANALISI_FONTI,
@@ -359,11 +401,11 @@ def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
         )
         esito = (getattr(risposta, "output_text", "") or "").strip()
         if not esito:
-            refund_credits(riferimento, reason="verifica_originalita_web_vuota", amount=2)
+            refund_credits(riferimento, reason="verifica_originalita_web_vuota", amount=CREDIT_COSTS["copyright_web_rapido"])
             return "La verifica web non ha prodotto un esito. Nessun credito è stato addebitato."
         return esito
     except Exception:
-        refund_credits(riferimento, reason="verifica_originalita_web_fallita", amount=2)
+        refund_credits(riferimento, reason="verifica_originalita_web_fallita", amount=CREDIT_COSTS["copyright_web_rapido"])
         return "La verifica web non è riuscita. Nessun credito è stato addebitato; puoi riprovare più tardi."
 
 
@@ -399,11 +441,14 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
         return "Servono sezioni già scritte per eseguire la verifica completa.", 0
     dimensione_lotto = 8
     lotti = [blocchi[indice:indice + dimensione_lotto] for indice in range(0, len(blocchi), dimensione_lotto)]
-    esiti, completati, revisioni_approfondite = [], 0, 0
+    esiti, completati, revisioni_approfondite, crediti_effettivi = [], 0, 0, 0
     for numero_lotto, lotto in enumerate(lotti, start=1):
         if aggiorna:
             aggiorna(numero_lotto - 1, len(lotti))
-        riferimento = addebita_azione_diretta("verifica_copyright_web_completa", amount=1)
+        riferimento = addebita_azione_diretta(
+            "verifica_copyright_web_completa",
+            amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+        )
         testo_lotto = "\n\n---\n\n".join(
             f"SEZIONE: {titolo}\nBLOCCO: {testo}" for titolo, testo in lotto
         )
@@ -424,8 +469,13 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
             )
             esito = (getattr(risposta, "output_text", "") or "").strip()
             if esito:
+                crediti_effettivi += CREDIT_COSTS["copyright_lotto_screening_mini"]
                 esito_finale = f"Screening GPT-5.4 mini\n{esito}"
                 if richiede_revisione_copyright(esito):
+                    riferimento_revisione = addebita_azione_diretta(
+                        "verifica_copyright_web_revisione_gpt54",
+                        amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                    )
                     try:
                         revisione = client.responses.create(
                             model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
@@ -446,21 +496,43 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                         if esito_revisione:
                             esito_finale += f"\n\nRevisione mirata GPT-5.4\n{esito_revisione}"
                             revisioni_approfondite += 1
+                            crediti_effettivi += CREDIT_COSTS["copyright_lotto_revisione_gpt54"]
+                        else:
+                            refund_credits(
+                                riferimento_revisione,
+                                reason="verifica_copyright_revisione_vuota",
+                                amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                            )
                     except Exception:
+                        refund_credits(
+                            riferimento_revisione,
+                            reason="verifica_copyright_revisione_fallita",
+                            amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                        )
                         esito_finale += "\n\nRevisione mirata GPT-5.4 non disponibile: conserva lo screening mini e valuta manualmente il lotto."
                 esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito_finale}")
                 completati += 1
             else:
-                refund_credits(riferimento, reason="verifica_copyright_completa_vuota", amount=1)
+                refund_credits(
+                    riferimento,
+                    reason="verifica_copyright_completa_vuota",
+                    amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+                )
         except Exception:
-            refund_credits(riferimento, reason="verifica_copyright_completa_fallita", amount=1)
+            refund_credits(
+                riferimento,
+                reason="verifica_copyright_completa_fallita",
+                amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+            )
             esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\nVerifica non completata: nessun credito addebitato per questo lotto.")
     if aggiorna:
         aggiorna(len(lotti), len(lotti))
     intestazione = (
         f"VERIFICA WEB COMPLETA — {len(blocchi)} blocchi controllati in {len(lotti)} lotti; "
-        f"{completati} lotti completati; {revisioni_approfondite} revisioni mirate GPT-5.4.\n\n"
-        "Metodo: GPT-5.4 mini analizza tutti i lotti; GPT-5.4 viene usato solo per i lotti segnalati.\n\n"
+        f"{completati} lotti completati; {revisioni_approfondite} revisioni mirate GPT-5.4; "
+        f"{crediti_effettivi} crediti effettivamente addebitati.\n\n"
+        "Metodo e costi: GPT-5.4 mini analizza tutti i lotti (1 credito ciascuno); "
+        "GPT-5.4 viene usato solo per i lotti segnalati (2 crediti aggiuntivi per revisione completata).\n\n"
         "Questo è uno screening di rischio sul web, non una certificazione legale né una verifica antiplagio universale.\n\n"
     )
     return intestazione + "\n\n".join(esiti), len(lotti)
@@ -4797,7 +4869,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             ]
             if st.button("🔎 CONTROLLO ORIGINALITÀ LOCALE", use_container_width=True, key="controllo_originalita_fonti"):
                 st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
-                    testo_per_controllo, st.session_state.get("conoscenza_extra", "")
+                    testo_per_controllo, st.session_state.get("conoscenza_extra", ""),
+                    sezioni=sezioni_complete_copyright,
                 )
             report_originalita = st.session_state.get("report_originalita_fonti")
             if report_originalita:
@@ -4892,7 +4965,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             nuovo_testo = rielabora_sezione_per_originalita(
                                 sezione, st.session_state.get("indice_raw", ""), val_trama, val_genere,
                                 val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
-                                val_approfondimenti, val_lunghezza
+                                val_approfondimenti, val_lunghezza,
+                                st.session_state.get("report_originalita_fonti"),
+                                st.session_state.get("report_originalita_web"),
+                                st.session_state.get("report_originalita_web_completa"),
                             )
                             if nuovo_testo and not nuovo_testo.startswith("ERRORE:"):
                                 scrivi_sezione_memorizzata(sezione, nuovo_testo)
@@ -4906,13 +4982,25 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             text=f"Rielaborazione originalità: {posizione}/{len(sezioni_da_rielaborare)} sezioni"
                         )
                     salva_stesura_immediata(opzioni_editor)
-                    # I report riguardano la versione precedente e non devono essere
-                    # mostrati come validi dopo che l'utente ha approvato una riscrittura.
-                    for chiave_report in (
-                        "report_originalita_fonti", "report_originalita_web", "report_originalita_web_completa"
-                    ):
-                        st.session_state.pop(chiave_report, None)
-                    esito = f"Rielaborate {len(rielaborate)} sezione/i segnalate con testo nuovo. Esegui di nuovo il controllo copyright sulla versione aggiornata."
+                    # Il confronto con le fonti caricate è gratuito: viene
+                    # rieseguito subito sulla nuova versione. I report web,
+                    # invece, restano correttamente da rinnovare con il pulsante
+                    # dedicato perché dipendono da ricerche esterne a consumo.
+                    nuove_sezioni_copyright = [
+                        (titolo, leggi_sezione_memorizzata(titolo)) for titolo in opzioni_editor
+                        if leggi_sezione_memorizzata(titolo).strip()
+                    ]
+                    nuovo_testo_controllo = "\n\n".join(testo for _, testo in nuove_sezioni_copyright)
+                    st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
+                        nuovo_testo_controllo, st.session_state.get("conoscenza_extra", ""),
+                        sezioni=nuove_sezioni_copyright,
+                    )
+                    st.session_state.pop("report_originalita_web", None)
+                    st.session_state.pop("report_originalita_web_completa", None)
+                    esito = (
+                        f"Rielaborate {len(rielaborate)} sezione/i usando le sequenze segnalate come vincoli di esclusione. "
+                        "Il controllo locale è stato aggiornato automaticamente; per il controllo web esegui una nuova verifica sulla versione aggiornata."
+                    )
                     if errori_rielaborazione:
                         esito += f" Da riprovare: {', '.join(errori_rielaborazione)}."
                     st.session_state["messaggio_rielaborazione_originalita"] = esito
