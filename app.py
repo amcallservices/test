@@ -127,6 +127,16 @@ MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_EDITORIALE)
 # ai soli lotti che presentano un rischio: qualità dove serve, costi contenuti.
 MODELLO_CONTROLLO_COPYRIGHT_COMPLETO = os.getenv("COPYRIGHT_SCREENING_MODEL", MODELLO_STESURA)
 MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO = os.getenv("COPYRIGHT_REVIEW_MODEL", MODELLO_EDITORIALE)
+MODELLO_DEEPSEEK_PRO = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+
+
+def provider_ia_selezionato():
+    """La scelta è dell'utente e viene conservata nel progetto esportabile."""
+    return str(st.session_state.get("provider_ia", "GPT-5.4")).strip()
+
+
+def usa_deepseek_pro():
+    return provider_ia_selezionato().casefold().startswith("deepseek")
 
 
 def studia_fonti_con_ai(testo, limite_input=30000):
@@ -140,9 +150,8 @@ def studia_fonti_con_ai(testo, limite_input=30000):
         return ""
     estratto = testo[:limite_input]
     try:
-        risposta = client.responses.create(
-            model=MODELLO_ANALISI_FONTI,
-            input=(
+        dossier = chiedi_gpt(
+            (
                 "Sei un ricercatore editoriale e un progettista didattico. Trasforma le fonti "
                 "qui sotto in una MAPPA CONCETTUALE INTERNA per un libro davvero autonomo. "
                 "Non fare un riassunto lineare, non mantenere ordine, titoli, esempi distintivi "
@@ -155,9 +164,11 @@ def studia_fonti_con_ai(testo, limite_input=30000):
                 "4) esempi nuovi che l'autore può costruire; 5) confini e cautele; 6) competenze da "
                 "assegnare a capitoli e sottocapitoli. Questo materiale non sarà pubblicato.\n\nFONTI:\n" + estratto
             ),
+            "Produci solo una mappa concettuale interna, originale e non pubblicabile.",
+            addebita=False,
+            model=MODELLO_ANALISI_FONTI,
         )
-        dossier = (getattr(risposta, "output_text", "") or "").strip()
-        return dossier
+        return (dossier or "").strip() if not str(dossier).startswith("ERRORE:") else ""
     except Exception:
         # In caso di indisponibilità dell'AI non passiamo brani originali alla
         # stesura: è più prudente sospendere l'uso editoriale delle fonti.
@@ -181,6 +192,11 @@ def separa_mappa_e_registro_fonti_web(testo):
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
     """Cerca e sintetizza fonti autorevoli prima dell'indice; il dossier resta interno al progetto."""
+    if usa_deepseek_pro():
+        st.session_state["ultimo_esito_ricerca_preliminare"] = (
+            "Con DeepSeek Pro l'indice è progettato sul brief e sulle fonti caricate, senza usare il motore web GPT."
+        )
+        return ""
     firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
     if st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
@@ -374,6 +390,8 @@ TESTO PRECEDENTE DA SUPERARE (non copiarne la forma):
 
 def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
     """Schermo supplementare sul web: segnala rischi, non certifica diritti."""
+    if usa_deepseek_pro():
+        return "La verifica copyright sul web è disponibile solo con il cervello GPT: DeepSeek Pro resta separato e non usa strumenti GPT. Puoi comunque usare gratuitamente il controllo locale sulle fonti caricate."
     testo_libro = (testo_libro or "").strip()
     if len(testo_libro.split()) < 80:
         return "Servono almeno una sezione sostanziale già scritta per la verifica web."
@@ -436,6 +454,8 @@ def richiede_revisione_copyright(esito):
 
 def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
     """Analizza tutto il manoscritto: mini su ogni lotto, completo solo sui dubbi."""
+    if usa_deepseek_pro():
+        return "La verifica copyright completa sul web è disponibile solo con il cervello GPT. DeepSeek Pro non utilizza il motore web GPT.", 0
     blocchi = prepara_blocchi_verifica_web_completa(sezioni)
     if not blocchi:
         return "Servono sezioni già scritte per eseguire la verifica completa.", 0
@@ -617,11 +637,25 @@ def notifica_sonora(evento, lingua="Italiano", ripeti=False):
 VERSIONE_DEPLOY = f"Scrittore Site commerciale — {COMMERCIAL_TEST_VERSION}"
 VERSIONE_AUDIT_COHERENZA = "3"
 
-# --- AGGIORNAMENTO SICUREZZA API ---
+# --- CONNESSIONI AI: due cervelli separati, selezionabili dall'utente ---
+client_openai = None
+client_deepseek = None
 try:
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-except Exception as e:
-    st.error("ERRORE CRITICO: Chiave API OpenAI non trovata nei Secrets di Streamlit. Assicurati di aver creato il file secrets.toml o configurato i Secrets online.")
+    client_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+except Exception:
+    pass
+try:
+    client_deepseek = OpenAI(
+        api_key=st.secrets["DEEPSEEK_API_KEY"],
+        base_url="https://api.deepseek.com",
+    )
+except Exception:
+    pass
+
+# Compatibilità con gli strumenti esclusivi OpenAI già presenti (immagini e
+# ricerca web). Non viene mai usato per la scrittura se l'utente sceglie
+# DeepSeek Pro.
+client = client_openai
 
 st.set_page_config(
     page_title="Scrittore Site",
@@ -893,18 +927,37 @@ def vincolo_parole_con_tolleranza(profilo_lunghezza):
     return minimo, massimo
 
 
+def _client_e_modello_testuale(modello_richiesto=None):
+    """Restituisce uno solo dei due cervelli, senza fallback nascosti."""
+    if usa_deepseek_pro():
+        if not client_deepseek:
+            raise RuntimeError("DeepSeek Pro non è configurato. Aggiungi DEEPSEEK_API_KEY nei Secrets di Streamlit oppure seleziona GPT-5.4.")
+        return client_deepseek, MODELLO_DEEPSEEK_PRO
+    if not client_openai:
+        raise RuntimeError("GPT non è configurato. Aggiungi OPENAI_API_KEY nei Secrets di Streamlit oppure seleziona DeepSeek Pro.")
+    return client_openai, (modello_richiesto or MODELLO_STESURA)
+
+
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None):
     riferimento = None
     try:
         if addebita:
             riferimento = charge_credits("generazione_testo", amount=amount)
+        client_testuale, modello_effettivo = _client_e_modello_testuale(model or MODELLO_STESURA)
         richiesta = {
-            "model": model or MODELLO_STESURA,
+            "model": modello_effettivo,
             "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
         }
         if max_completion_tokens:
-            richiesta["max_completion_tokens"] = max_completion_tokens
-        response = client.chat.completions.create(**richiesta)
+            richiesta["max_tokens" if usa_deepseek_pro() else "max_completion_tokens"] = max_completion_tokens
+        # Per la stesura ordinaria DeepSeek Pro lavora senza ragionamento
+        # esteso: testo più rapido, costo più prevedibile. I prompt editoriali
+        # complessi attivano invece la modalità high.
+        if usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
+            richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
+        elif usa_deepseek_pro():
+            richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
+        response = client_testuale.chat.completions.create(**richiesta)
         testo = response.choices[0].message.content.strip()
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
@@ -918,6 +971,26 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if riferimento:
             refund_credits(riferimento, amount=amount)
         return f"ERRORE: {str(e)}"
+
+
+def stima_crediti_per_cervello(azione_id, stima_gpt):
+    """Mostra un preventivo coerente con il cervello selezionato."""
+    if not usa_deepseek_pro():
+        return stima_gpt
+    azione = str(azione_id).casefold()
+    if "genera_indice" in azione:
+        return "2"
+    if any(parola in azione for parola in ("scrivi_sezione", "scrivi_tutti", "rielabora", "quiz", "esempi")):
+        return "1 ogni 2 operazioni"
+    if "ricette" in azione:
+        return "4"
+    if "coerenza" in azione:
+        return "3 (primo controllo); poi 1 ogni 2 blocchi"
+    if any(parola in azione for parola in ("voto_indice", "report_sintattico", "metadati", "controlla_fatti")):
+        return "1"
+    if "copyright" in azione or "immagine" in azione:
+        return "non disponibile con DeepSeek Pro"
+    return stima_gpt
 
 
 def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
@@ -939,7 +1012,7 @@ def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
     if st.button(**parametri):
         st.session_state["preventivo_crediti_attesa"] = {
             "azione_id": azione_id,
-            "stima": str(stima_crediti),
+            "stima": str(stima_crediti_per_cervello(azione_id, stima_crediti)),
             "descrizione": descrizione,
         }
 
@@ -975,6 +1048,9 @@ def addebita_azione_diretta(reason, amount):
 
 def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     """Verifica soltanto i fatti aggiornabili che meritano una ricerca online."""
+    if usa_deepseek_pro():
+        st.info("Il controllo fatti online richiede GPT perché utilizza ricerca web. Con DeepSeek Pro il testo resta invariato.")
+        return pulisci_testo_editoriale(testo)
     riferimento = None
     try:
         riferimento = charge_credits("verifica_fatti", amount=CREDIT_COSTS["verifica_fatti_web"])
@@ -1016,6 +1092,8 @@ def richiede_verifica_fatti(testo, sezione=""):
 
 def audit_fatti_capitolo(capitolo, contenuti, lingua):
     """Esegue un solo controllo online sul capitolo completo, senza riscrivere le singole sezioni."""
+    if usa_deepseek_pro():
+        return "Controllo fatti online disponibile con il cervello GPT. DeepSeek Pro rimane separato e non usa la ricerca web GPT."
     testo = "\n\n".join(f"SEZIONE: {nome}\n{contenuto}" for nome, contenuto in contenuti if contenuto.strip())
     if not testo or not richiede_verifica_fatti(testo, capitolo):
         return "Controllo fatti del capitolo non necessario: nessun dato variabile rilevato."
@@ -1312,6 +1390,9 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
 
 def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
     """GPT-4o-mini prepara il brief; GPT-Image-1 Mini genera il visual economico."""
+    if usa_deepseek_pro():
+        st.warning("La generazione immagini richiede il cervello GPT. Seleziona GPT-5.4 per creare immagini del capitolo.")
+        return None, ""
     contesto_basso = f"{titolo} {trama} {sezione}".lower()
     if "fusion 360" in contesto_basso:
         vincoli_dominio = (
@@ -1938,6 +2019,7 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "argomento": "book_plot",
     "approfondimenti": "book_further_details",
     "lunghezza": "profilo_lunghezza_stesura",
+    "provider_ia": "provider_ia",
 }
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 
@@ -2690,6 +2772,22 @@ with st.sidebar:
     lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     st.title(L["side_tit"])
+    provider_ia = st.selectbox(
+        "🧠 Cervello AI",
+        ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
+        key="provider_ia",
+        help="GPT conserva tutte le funzioni, compresi ricerca web e immagini. DeepSeek Pro usa un motore separato per indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
+    )
+    if usa_deepseek_pro():
+        st.info("DeepSeek Pro attivo: scrittura, indice, fonti caricate e controlli editoriali usano esclusivamente DeepSeek. Ricerca web, verifica copyright web e immagini richiedono il cervello GPT e restano disattivate per evitare un uso misto.")
+        with st.expander("Tariffario DeepSeek Pro", expanded=False):
+            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 2 operazioni.")
+            st.write("• Indice completo (studio del brief + indice): 2 crediti.")
+            st.write("• Voto indice, fatti, report sintattico e metadati: 1 credito.")
+            st.write("• Coerenza completa: 3 crediti; aggiornamenti: 1 credito ogni 2 blocchi.")
+            st.write("• 10 ricette: 4 crediti. Le immagini restano disponibili soltanto con GPT.")
+    else:
+        st.caption("GPT attivo: include ricerca web, controllo copyright web e generazione immagini.")
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
@@ -2714,7 +2812,7 @@ with st.sidebar:
                 st.session_state["firma_fonti"] = firma_fonti
         if st.session_state.get("conoscenza_extra"):
             st.success(f"Studiati {len(file_caricati)} documenti. La mappa concettuale originale guiderà indice e stesura.")
-            st.caption(f"Analisi fonti: {MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
+            st.caption(f"Analisi fonti: {'DeepSeek V4 Pro' if usa_deepseek_pro() else MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
     elif st.session_state.get("conoscenza_extra"):
         st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
     registro_fonti_web = st.session_state.get("registro_fonti_web", "").strip()
@@ -2867,6 +2965,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "argomento": val_trama,
         "approfondimenti": val_approfondimenti,
         "lunghezza": val_lunghezza_scelta,
+        "provider_ia": provider_ia,
     }
     if val_lunghezza_scelta:
         st.caption(
@@ -3153,20 +3252,13 @@ def blocchi_per_audit_manoscritto(contenuti, limite_caratteri=18000):
 
 def chiedi_audit_editoriale(prompt, *, addebita=True):
     """Esegue l'audit editoriale completo con il modello rapido dedicato ai controlli."""
-    riferimento = None
-    try:
-        if addebita:
-            riferimento = charge_credits("audit_editoriale", amount=CREDIT_COSTS["voto_indice"])
-        risposta = client.responses.create(
-            model=MODELLO_EDITORIALE,
-            input=prompt
-        )
-        testo = getattr(risposta, "output_text", "") or ""
-        return pulisci_testo_editoriale(testo).strip()
-    except Exception as e:
-        if riferimento:
-            refund_credits(riferimento, amount=CREDIT_COSTS["voto_indice"])
-        return f"ERRORE AUDIT: {str(e)}"
+    return pulisci_testo_editoriale(chiedi_gpt(
+        prompt,
+        "Sei un direttore editoriale rigoroso. Restituisci solo l'audit richiesto, senza ragionamento interno.",
+        addebita=addebita,
+        amount=CREDIT_COSTS["voto_indice"],
+        model=MODELLO_EDITORIALE,
+    )).strip()
 
 
 def mappa_capitoli_e_sottocapitoli(indice):
@@ -4294,8 +4386,13 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
+        descrizione_indice = (
+            "DeepSeek Pro studia il brief e le fonti caricate, poi genera, valuta e corregge l'indice senza usare GPT o ricerca web."
+            if usa_deepseek_pro() else
+            "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice."
+        )
         if pulsante_con_preventivo("genera_indice", L["btn_idx"], CREDIT_COSTS["indice_ricerca_web"] + CREDIT_COSTS["indice_generazione_editoriale"],
-                                   "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice.",
+                                   descrizione_indice,
                                    disabled=not sidebar_pronta):
             with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
                 dossier_ricerca_web = ricerca_preliminare_per_indice(
@@ -5168,11 +5265,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.success("Controllo locale concluso: non sono emerse somiglianze rilevanti con le fonti caricate.")
             registro_web = st.session_state.get("registro_fonti_web", "").strip()
             if registro_web:
+                if usa_deepseek_pro():
+                    st.info("Le verifiche copyright sul web sono sospese in modalità DeepSeek Pro: richiedono il cervello GPT con ricerca web. Il controllo locale sulle fonti caricate resta disponibile e gratuito.")
                 st.caption("La verifica web costa 2 crediti e non modifica il manoscritto.")
                 if pulsante_con_preventivo(
                     "verifica_originalita_web", "🌐 VERIFICA COPYRIGHT SUL WEB", CREDIT_COSTS["copyright_web_rapido"],
                     "Cerca online possibili somiglianze nei campioni del manoscritto, dando priorità alle fonti web registrate.",
-                    use_container_width=True,
+                    use_container_width=True, disabled=usa_deepseek_pro(),
                 ):
                     with st.spinner("Verifica web delle possibili somiglianze in corso..."):
                         st.session_state["report_originalita_web"] = verifica_originalita_web_con_ai(
@@ -5193,7 +5292,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     f"da {costo_verifica_completa} a {costo_massimo_verifica_completa}",
                     "GPT-5.4 mini controlla tutti i lotti a 1 credito ciascuno. Solo se un lotto è segnalato, GPT-5.4 esegue una revisione mirata a 2 crediti aggiuntivi. Paghi solo le revisioni effettivamente completate.",
                     use_container_width=True,
-                    disabled=not blocchi_completi,
+                    disabled=(not blocchi_completi) or usa_deepseek_pro(),
                 ):
                     barra_copyright = st.progress(0, text="Preparazione della verifica completa...")
                     stato_copyright = st.empty()
@@ -5448,17 +5547,11 @@ Una descrizione di vendita completa di almeno 450 parole, con apertura coinvolge
 
 7 KEYWORD A CODA LUNGA
 Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive."""
-                            riferimento_metadati = charge_credits("metadati_kdp")
-                            risposta_metadati = client.chat.completions.create(
-                                model=MODELLO_STESURA,
-                                messages=[
-                                    {"role": "system", "content": "Sei un esperto di metadati KDP. Produci soltanto il risultato editoriale richiesto."},
-                                    {"role": "user", "content": prompt_metadati}
-                                ]
-                            )
-                            st.session_state["metadati_formattazione"] = pulisci_testo_editoriale(
-                                risposta_metadati.choices[0].message.content
-                            )
+                            st.session_state["metadati_formattazione"] = pulisci_testo_editoriale(chiedi_gpt(
+                                prompt_metadati,
+                                "Sei un esperto di metadati KDP. Produci soltanto il risultato editoriale richiesto.",
+                                amount=CREDIT_COSTS["metadati_kdp"],
+                            ))
                         except Exception as e:
                             if 'riferimento_metadati' in locals() and riferimento_metadati:
                                 refund_credits(riferimento_metadati, reason="metadati_kdp_falliti")
