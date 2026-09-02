@@ -835,25 +835,45 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
 [data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid #2c405b; }
-[data-testid="stTabs"] button[role="tab"] { border-radius: 9px 9px 0 0; padding: .65rem .9rem; color: #b7c8df; }
-[data-testid="stTabs"] button[aria-selected="true"] { color: #ffffff; background: #162a44; }
+[data-testid="stTabs"] button[role="tab"] {
+    border-radius: 9px 9px 0 0; padding: .68rem .95rem; color: #aebed2;
+    font-size: .86rem; font-weight: 700; border: 1px solid transparent;
+}
+[data-testid="stTabs"] button[role="tab"]:hover { color:#fff; background:#142842; }
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #ffffff; background: #162f4d; border-color:#31587d; border-bottom-color:#162f4d;
+}
+[data-testid="stExpander"] {
+    border:1px solid #2d4664 !important; border-radius:11px !important;
+    background:rgba(14,30,50,.62) !important; overflow:hidden;
+}
+[data-testid="stExpander"] summary { padding:.68rem .85rem !important; font-weight:700 !important; }
+[data-testid="stExpander"] details > div { padding:0 .3rem .35rem !important; }
+[data-testid="stAlert"] { border-radius:11px !important; border-width:1px !important; }
+[data-testid="stDataFrame"], [data-testid="stTable"] { border-radius:11px; overflow:hidden; border:1px solid #2e4967; }
+[data-testid="stTextArea"] textarea { border-radius:11px !important; line-height:1.55 !important; }
+[data-testid="stNumberInput"] input, [data-testid="stTextInput"] input { border-radius:9px !important; }
+.stDivider { border-color:#2a425e !important; }
 .ss-workspace-header {
     display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:1.05rem 1.25rem; margin:0 0 1.15rem; border-radius:16px;
-    border:1px solid #314a68; background:linear-gradient(135deg, rgba(22,42,68,.96), rgba(12,27,47,.96));
-    box-shadow:0 14px 36px rgba(0,0,0,.20);
+    padding:1.1rem 1.35rem; margin:0 0 .85rem; border-radius:16px;
+    border:1px solid #314d6c; background:linear-gradient(100deg, rgba(13,30,51,.98), rgba(23,48,78,.96));
+    box-shadow:0 16px 42px rgba(0,0,0,.23);
 }
 .ss-workspace-brand { display:flex; align-items:center; gap:.9rem; min-width:0; }
-.ss-workspace-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#e7bd69; color:#17253a; font-size:1.3rem; }
-.ss-workspace-title { color:#fff; font-size:1.25rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ss-workspace-subtitle { color:#aac0da; font-size:.78rem; margin-top:.18rem; }
+.ss-workspace-mark { width:42px; height:42px; display:grid; place-items:center; border-radius:13px; background:linear-gradient(135deg,#f4d888,#cf9d3f); color:#13243b; font-size:1.35rem; box-shadow:0 6px 16px rgba(0,0,0,.18); }
+.ss-workspace-title { color:#fff; font-size:1.28rem; font-weight:800; letter-spacing:-.015em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ss-workspace-subtitle { color:#afc4dd; font-size:.78rem; margin-top:.18rem; }
 .ss-workspace-meta { display:flex; gap:.55rem; flex-wrap:wrap; justify-content:flex-end; }
-.ss-workspace-chip { color:#e8f3ff; background:#12243b; border:1px solid #3a5878; padding:.42rem .65rem; border-radius:999px; font-size:.78rem; font-weight:700; }
+.ss-workspace-chip { color:#e8f3ff; background:rgba(8,21,37,.68); border:1px solid #3a5878; padding:.43rem .68rem; border-radius:999px; font-size:.78rem; font-weight:700; }
 .ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
+.ss-editor-toolbar { display:flex; align-items:center; justify-content:space-between; gap:.65rem; margin:.1rem 0 .9rem; padding:.66rem .8rem; border-radius:11px; background:rgba(16,34,56,.75); border:1px solid #2e4b6a; }
+.ss-editor-toolbar-title { color:#fff; font-weight:800; font-size:.93rem; }
+.ss-editor-toolbar-note { color:#a9bed7; font-size:.78rem; text-align:right; }
 .preview-box {
     background-color: #fffdf7 !important; padding: min(6vw,80px); border: 1px solid #d8c9a8;
     border-radius: 12px; height: 900px; overflow-y: scroll;
@@ -4088,6 +4108,23 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 保留所有功能及 GPT 计费。**DeepSeek V4 Pro** 独立完成目录、已上传来源、写作和编辑检查：写作/测验/示例每 2 次操作消耗 1 积分，完整目录 2 积分，首次一致性检查 3 积分，10 道食谱 4 积分。网页搜索、网页版权检查和图片需要 GPT，以避免混用引擎。",
     }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
+    etichetta_area_editor = {
+        "Italiano": ("Area editoriale", "Configura, genera, controlla ed esporta il tuo libro."),
+        "English": ("Editorial workspace", "Configure, generate, review and export your book."),
+        "Español": ("Área editorial", "Configura, genera, revisa y exporta tu libro."),
+        "Français": ("Espace éditorial", "Configurez, générez, vérifiez et exportez votre livre."),
+        "Deutsch": ("Redaktioneller Bereich", "Konfigurieren, erstellen, prüfen und exportieren Sie Ihr Buch."),
+        "Română": ("Spațiu editorial", "Configurează, generează, verifică și exportă cartea."),
+        "Русский": ("Редакционное пространство", "Настраивайте, создавайте, проверяйте и экспортируйте книгу."),
+        "العربية": ("مساحة التحرير", "اضبط كتابك وأنشئه وراجعه وصدّره."),
+        "中文": ("编辑工作区", "配置、生成、检查并导出您的图书。"),
+    }
+    etichetta_toolbar, nota_toolbar = etichetta_area_editor.get(lingua_sel, etichetta_area_editor["Italiano"])
+    st.markdown(
+        f'<div class="ss-editor-toolbar"><span class="ss-editor-toolbar-title">{html.escape(etichetta_toolbar)}</span>'
+        f'<span class="ss-editor-toolbar-note">{html.escape(nota_toolbar)}</span></div>',
+        unsafe_allow_html=True,
+    )
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
     with tabs[0]:
