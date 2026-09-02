@@ -229,6 +229,65 @@ HOME_PACKAGE_NAMES = {
     "中文": ("试用", "基础", "创作者", "工作室", "专业版"),
 }
 
+# FAQ complete della home. Non viene tradotta al volo: ogni lingua ha testi
+# curati e coerenti con le funzioni effettivamente disponibili nel software.
+HOME_FAQ_COPY = {
+    "Italiano": ("Domande frequenti", "Le informazioni essenziali prima di iniziare.", [
+        ("Come funzionano i crediti?", "I crediti servono solo per elaborazioni IA: indice, scrittura, rigenerazioni e controlli. Prima di un'azione a consumo vedi il preventivo. Se i crediti terminano, il lavoro già creato resta leggibile, modificabile ed esportabile."),
+        ("I miei dati e il mio libro sono privati?", "Ogni account mantiene separati crediti e progetto. Il manoscritto non viene pubblicato automaticamente. Usa una password personale e conserva un CSV dei progetti importanti."),
+        ("Come salvo, recupero o trasferisco un progetto?", "Premi SALVA SESSIONE per conservarlo nel tuo account. Dopo un nuovo accesso l'editor parte pulito: premi RIAGGIORNA ALL'ULTIMA STESURA solo quando vuoi riaprire il progetto. Il CSV conserva sidebar, indice, testi, fonti e immagini per backup o trasferimento."),
+        ("A cosa servono Word e PDF e come ricevo assistenza?", "Il CSV ripristina il progetto modificabile; Word serve per la revisione editoriale e PDF per lettura, stampa o condivisione. Per assistenza usa CONTATTI nella sidebar oppure entra nella Community."),
+    ]),
+    "English": ("Frequently asked questions", "Essential information before you start.", [
+        ("How do credits work?", "Credits are used only for AI work: outline creation, writing, rewrites and checks. You see an estimate before a paid action. If credits run out, existing work remains readable, editable and exportable."),
+        ("Are my data and book private?", "Each account keeps credits and projects separate. Your manuscript is never published automatically. Use a personal password and keep a CSV copy of important projects."),
+        ("How do I save, restore or move a project?", "Select SAVE SESSION to store it in your account. After a new login the editor starts empty: select REFRESH TO THE LATEST DRAFT only when you want to reopen it. CSV keeps the sidebar, outline, text, sources and images for backup or transfer."),
+        ("What are Word and PDF for, and how do I get help?", "CSV restores the editable project; Word is for editorial revision and PDF for reading, printing or sharing. For help, use CONTACTS in the sidebar or join the Community."),
+    ]),
+    "Español": ("Preguntas frecuentes", "Información esencial antes de empezar.", [
+        ("¿Cómo funcionan los créditos?", "Los créditos se usan solo para tareas de IA: índice, redacción, regeneraciones y controles. Verás una estimación antes de cada acción de pago. Si se terminan, el trabajo creado sigue siendo legible, editable y exportable."),
+        ("¿Mis datos y mi libro son privados?", "Cada cuenta mantiene separados los créditos y los proyectos. El manuscrito nunca se publica automáticamente. Usa una contraseña personal y conserva un CSV de los proyectos importantes."),
+        ("¿Cómo guardo, recupero o traslado un proyecto?", "Pulsa GUARDAR SESIÓN para conservarlo en tu cuenta. Tras un nuevo acceso el editor empieza vacío: pulsa ACTUALIZAR AL ÚLTIMO BORRADOR solo cuando quieras reabrirlo. El CSV guarda barra lateral, índice, textos, fuentes e imágenes."),
+        ("¿Para qué sirven Word y PDF y cómo recibo ayuda?", "El CSV restaura el proyecto editable; Word sirve para revisión editorial y PDF para leer, imprimir o compartir. Para ayuda, usa CONTACTOS en la barra lateral o entra en la Comunidad."),
+    ]),
+    "Français": ("Questions fréquentes", "Les informations essentielles avant de commencer.", [
+        ("Comment fonctionnent les crédits ?", "Les crédits sont utilisés seulement pour l'IA : plan, rédaction, réécritures et contrôles. Une estimation est affichée avant toute action payante. Si les crédits sont épuisés, le travail créé reste lisible, modifiable et exportable."),
+        ("Mes données et mon livre sont-ils privés ?", "Chaque compte conserve séparément ses crédits et ses projets. Le manuscrit n'est jamais publié automatiquement. Utilisez un mot de passe personnel et gardez une copie CSV des projets importants."),
+        ("Comment sauvegarder, restaurer ou déplacer un projet ?", "Choisissez SAUVEGARDER LA SESSION pour le conserver dans votre compte. Après une nouvelle connexion, l'éditeur démarre vide : choisissez ACTUALISER LA DERNIÈRE VERSION seulement pour le rouvrir. Le CSV contient la barre latérale, le plan, les textes, sources et images."),
+        ("À quoi servent Word et PDF, et comment obtenir de l'aide ?", "Le CSV restaure le projet modifiable ; Word sert à la révision éditoriale et PDF à la lecture, l'impression ou au partage. Pour obtenir de l'aide, utilisez CONTACTS dans la barre latérale ou rejoignez la Community."),
+    ]),
+    "Deutsch": ("Häufige Fragen", "Die wichtigsten Informationen vor dem Start.", [
+        ("Wie funktionieren Credits?", "Credits werden nur für KI-Arbeit genutzt: Inhaltsverzeichnis, Schreiben, Überarbeitungen und Prüfungen. Vor jeder kostenpflichtigen Aktion sehen Sie eine Schätzung. Bei fehlenden Credits bleibt vorhandene Arbeit lesbar, bearbeitbar und exportierbar."),
+        ("Sind meine Daten und mein Buch privat?", "Jedes Konto hält Credits und Projekte getrennt. Das Manuskript wird nie automatisch veröffentlicht. Verwenden Sie ein persönliches Passwort und bewahren Sie eine CSV-Kopie wichtiger Projekte auf."),
+        ("Wie speichere, stelle ich wieder her oder übertrage ein Projekt?", "Wählen Sie SITZUNG SPEICHERN, um es im Konto abzulegen. Nach einer neuen Anmeldung startet der Editor leer: wählen Sie LETZTEN ENTWURF LADEN nur zum erneuten Öffnen. CSV enthält Seitenleiste, Inhaltsverzeichnis, Texte, Quellen und Bilder."),
+        ("Wofür sind Word und PDF gedacht und wie erhalte ich Hilfe?", "CSV stellt das bearbeitbare Projekt wieder her; Word dient der redaktionellen Überarbeitung und PDF dem Lesen, Drucken oder Teilen. Hilfe erhalten Sie über KONTAKTE in der Seitenleiste oder die Community."),
+    ]),
+    "Română": ("Întrebări frecvente", "Informațiile esențiale înainte de începere.", [
+        ("Cum funcționează creditele?", "Creditele sunt folosite doar pentru IA: cuprins, redactare, rescrieri și verificări. Vezi o estimare înainte de fiecare acțiune cu plată. Dacă se termină, lucrarea creată rămâne lizibilă, editabilă și exportabilă."),
+        ("Datele și cartea mea sunt private?", "Fiecare cont păstrează separat creditele și proiectele. Manuscrisul nu este publicat automat. Folosește o parolă personală și păstrează un CSV al proiectelor importante."),
+        ("Cum salvez, restaurez sau mut un proiect?", "Apasă SALVEAZĂ SESIUNEA pentru a-l păstra în cont. După o autentificare nouă, editorul pornește gol: apasă REÎNCARCĂ ULTIMA VERSIUNE doar pentru a-l redeschide. CSV păstrează bara laterală, cuprinsul, textele, sursele și imaginile."),
+        ("La ce folosesc Word și PDF și cum primesc ajutor?", "CSV restaurează proiectul editabil; Word este pentru revizie editorială, iar PDF pentru citire, tipărire sau distribuire. Pentru ajutor, folosește CONTACTE din bara laterală sau Community."),
+    ]),
+    "Русский": ("Частые вопросы", "Основная информация перед началом работы.", [
+        ("Как работают кредиты?", "Кредиты используются только для работы ИИ: плана, написания, переработки и проверок. Перед платным действием показывается расчёт. Когда кредиты закончатся, созданная работа останется доступной для чтения, редактирования и экспорта."),
+        ("Мои данные и книга конфиденциальны?", "У каждого аккаунта отдельно хранятся кредиты и проекты. Рукопись никогда не публикуется автоматически. Используйте личный пароль и храните CSV-копии важных проектов."),
+        ("Как сохранить, восстановить или перенести проект?", "Нажмите СОХРАНИТЬ СЕССИЮ, чтобы сохранить проект в аккаунте. После нового входа редактор пуст: нажимайте ЗАГРУЗИТЬ ПОСЛЕДНЮЮ ВЕРСИЮ, только когда хотите открыть проект. CSV содержит панель, план, тексты, источники и изображения."),
+        ("Для чего нужны Word и PDF и как получить помощь?", "CSV восстанавливает редактируемый проект; Word служит для редакторской правки, PDF — для чтения, печати или отправки. Для помощи используйте КОНТАКТЫ на боковой панели или Community."),
+    ]),
+    "العربية": ("الأسئلة الشائعة", "المعلومات الأساسية قبل البدء.", [
+        ("كيف تعمل الأرصدة؟", "تُستخدم الأرصدة فقط لعمليات الذكاء الاصطناعي: الفهرس والكتابة وإعادة الصياغة والفحوص. سترى تقديراً قبل كل عملية مدفوعة. عند نفاد الأرصدة يبقى العمل الذي أنشأته قابلاً للقراءة والتعديل والتصدير."),
+        ("هل بياناتي وكتابي خاصان؟", "يحتفظ كل حساب بأرصدة ومشروعات منفصلة. لا تُنشر المخطوطة تلقائياً أبداً. استخدم كلمة مرور شخصية واحتفظ بنسخة CSV من المشروعات المهمة."),
+        ("كيف أحفظ مشروعاً أو أستعيده أو أنقله؟", "اضغط حفظ الجلسة للاحتفاظ به في حسابك. بعد تسجيل دخول جديد يبدأ المحرر فارغاً: اضغط تحديث إلى آخر مسودة فقط عندما تريد فتحه. يحفظ CSV الشريط الجانبي والفهرس والنصوص والمصادر والصور."),
+        ("ما فائدة Word وPDF وكيف أحصل على المساعدة؟", "يعيد CSV المشروع القابل للتعديل؛ Word للمراجعة التحريرية وPDF للقراءة أو الطباعة أو المشاركة. للمساعدة استخدم جهات الاتصال في الشريط الجانبي أو Community."),
+    ]),
+    "中文": ("常见问题", "开始前需要了解的关键信息。", [
+        ("积分如何使用？", "积分仅用于 AI 操作：目录、写作、重写和检查。每次付费操作前都会显示预估。积分用完后，已有内容仍可阅读、编辑和导出。"),
+        ("我的数据和图书是否私密？", "每个账户的积分和项目彼此独立。书稿绝不会被自动发布。请使用个人密码，并保留重要项目的 CSV 副本。"),
+        ("如何保存、恢复或转移项目？", "选择保存会话即可保存在账户中。重新登录后编辑器为空：仅在需要重新打开项目时选择加载最新草稿。CSV 保存侧边栏、目录、文本、来源和图片。"),
+        ("Word 和 PDF 有什么用途，如何获得帮助？", "CSV 可恢复可编辑项目；Word 用于编辑修订，PDF 用于阅读、打印或分享。需要帮助时，请使用侧边栏中的联系人或 Community。"),
+    ]),
+}
+
 
 class CommercialCreditError(RuntimeError):
     """L'operazione IA non può iniziare perché il saldo è insufficiente."""
@@ -765,6 +824,16 @@ def _landing_page() -> None:
                 f"<p>{C['package_hints'][posizione]}</p></div>",
                 unsafe_allow_html=True,
             )
+
+    faq_title, faq_subtitle, faq_items = HOME_FAQ_COPY[home_language]
+    st.markdown(
+        f"<div class='ss-section' dir='{direzione_home}'><h2>{faq_title}</h2>"
+        f"<p class='ss-muted'>{faq_subtitle}</p></div>",
+        unsafe_allow_html=True,
+    )
+    for posizione, (domanda, risposta) in enumerate(faq_items):
+        with st.expander(domanda, expanded=False):
+            st.write(risposta)
     return
 
     st.markdown("<div class='ss-section'><h2>Da un’idea a un libro: un esempio concreto</h2><p class='ss-muted'>La stessa idea passa dalla sidebar all’indice, poi diventa un manoscritto controllabile e modificabile.</p></div>", unsafe_allow_html=True)
