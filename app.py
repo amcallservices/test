@@ -125,11 +125,10 @@ MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_EDITORIALE)
 
 
 def studia_fonti_con_ai(testo, limite_input=30000):
-    """Crea un dossier editoriale delle fonti prima di progettare indice e testi.
+    """Trasforma le fonti in una mappa concettuale interna e indipendente.
 
-    Il dossier non viene mai mostrato nel libro: serve soltanto come memoria ragionata
-    per l'indice e per le singole sezioni. Se il modello configurato non fosse
-    disponibile, l'app continua a funzionare con il riepilogo locale.
+    La mappa non viene mai mostrata nel libro e non conserva formulazioni delle fonti:
+    serve soltanto come base concettuale per indice e stesura.
     """
     testo = (testo or "").strip()
     if not testo:
@@ -139,27 +138,40 @@ def studia_fonti_con_ai(testo, limite_input=30000):
         risposta = client.responses.create(
             model=MODELLO_ANALISI_FONTI,
             input=(
-                "Sei un ricercatore editoriale. Studia le fonti qui sotto per preparare "
-                "la redazione di un libro originale. Non copiare frasi estese e non "
-                "inventare informazioni. Restituisci un DOSSIER INTERNO strutturato con: "
-                "1) tesi e concetti centrali; 2) fatti, definizioni e terminologia da "
-                "rispettare; 3) collegamenti logici e progressione didattica consigliata; "
-                "4) esempi, procedure o dati realmente presenti; 5) limiti, contraddizioni "
-                "e punti da verificare; 6) argomenti da assegnare a capitoli e sottocapitoli. "
-                "Sii specifico e denso: questo testo guidera indice e stesura, ma non verra "
-                "pubblicato.\n\nFONTI:\n" + estratto
+                "Sei un ricercatore editoriale e un progettista didattico. Trasforma le fonti "
+                "qui sotto in una MAPPA CONCETTUALE INTERNA per un libro davvero autonomo. "
+                "Non fare un riassunto lineare, non mantenere ordine, titoli, esempi distintivi "
+                "o formulazioni delle fonti e non copiare mai sequenze di sei o più parole. "
+                "Scomponi invece la conoscenza in principi, relazioni causali, domande del lettore, "
+                "procedure generiche, limiti e verifiche. Ricombina i concetti in una progressione "
+                "editoriale nuova, adatta a un testo originale. Non inventare fatti.\n\n"
+                "Restituisci esclusivamente queste voci interne: 1) concetti da spiegare con parole "
+                "nuove; 2) fatti e dati da verificare prima della pubblicazione; 3) nessi logici; "
+                "4) esempi nuovi che l'autore può costruire; 5) confini e cautele; 6) competenze da "
+                "assegnare a capitoli e sottocapitoli. Questo materiale non sarà pubblicato.\n\nFONTI:\n" + estratto
             ),
         )
         dossier = (getattr(risposta, "output_text", "") or "").strip()
-        return dossier or crea_scheda_fonti(testo, limite=3600)
+        return dossier
     except Exception:
-        return crea_scheda_fonti(testo, limite=3600)
+        # In caso di indisponibilità dell'AI non passiamo brani originali alla
+        # stesura: è più prudente sospendere l'uso editoriale delle fonti.
+        return ""
 
 
 def firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti):
     """La ricerca viene riutilizzata finché il brief non cambia."""
     base = "\n".join([titolo or "", genere or "", trama or "", obiettivo or "", lingua or "", approfondimenti or ""])
     return hashlib.sha256(base.encode("utf-8", "ignore")).hexdigest()
+
+
+def separa_mappa_e_registro_fonti_web(testo):
+    """Separa la mappa usata dall'AI dal registro leggibile delle fonti web."""
+    testo = (testo or "").strip()
+    marcatore = re.search(r"(?im)^REGISTRO FONTI WEB\s*:?[ \t]*$", testo)
+    if not marcatore:
+        return testo, ""
+    return testo[:marcatore.start()].strip(), testo[marcatore.end():].strip()
 
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
@@ -176,33 +188,40 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             input=(
                 "Sei un ricercatore editoriale. Cerca sul web fonti autorevoli e aggiornate utili "
                 "per progettare un libro. Non scrivere il libro e non produrre citazioni per il lettore. "
-                "Restituisci un DOSSIER INTERNO conciso con: concetti e definizioni affidabili; "
-                "fatti, norme, date o dati da verificare; controversie o limiti; progressione didattica consigliata; "
-                "aspetti concreti da assegnare all'indice. Non inserire URL, link Markdown o bibliografie.\n\n"
+                "Restituisci prima una MAPPA CONCETTUALE INTERNA concisa, non un riassunto delle pagine lette: "
+                "concetti e definizioni affidabili; fatti, norme, date o dati da verificare; controversie o limiti; "
+                "progressione didattica consigliata; aspetti concreti da assegnare all'indice. Riformula tutto con "
+                "parole indipendenti, senza citazioni, titoli o formulazioni riconoscibili delle fonti. Non inserire URL, "
+                "link Markdown o bibliografie nella MAPPA.\n\n"
+                "Alla fine inserisci obbligatoriamente una riga sola 'REGISTRO FONTI WEB' e sotto, massimo 8 righe nel "
+                "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata "
+                "interna dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
                 f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
                 f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
                 f"Approfondimenti: {approfondimenti or 'Nessuno'}"
             ),
         )
-        dossier = (getattr(risposta, "output_text", "") or "").strip()
-        if not dossier:
+        risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
+        mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
+        if not mappa:
             refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=2)
             return ""
         st.session_state["firma_ricerca_preliminare"] = firma
-        st.session_state["dossier_ricerca_preliminare"] = dossier
-        return dossier
+        st.session_state["dossier_ricerca_preliminare"] = mappa
+        st.session_state["registro_fonti_web"] = registro
+        return mappa
     except Exception:
         refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=2)
         return ""
 
 
 def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
-    """Recupera soltanto i brani più attinenti al titolo della sezione."""
-    fonte = st.session_state.get("conoscenza_extra", "")
-    if not fonte:
+    """Restituisce solo la mappa concettuale, mai i brani originali caricati."""
+    mappa = st.session_state.get("brief_fonti_originale") or st.session_state.get("dossier_fonti_ai", "")
+    if not mappa:
         return ""
     parole = set(re.findall(r"[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{4,}", f"{sezione} {argomento}".lower()))
-    paragrafi = [re.sub(r"\s+", " ", p).strip() for p in re.split(r"\n\s*\n|(?<=\.)\s{2,}", fonte)]
+    paragrafi = [re.sub(r"\s+", " ", p).strip() for p in re.split(r"\n\s*\n|(?<=\.)\s{2,}", mappa)]
     valutati = []
     for posizione, paragrafo in enumerate(paragrafi):
         if len(paragrafo) < 80:
@@ -218,12 +237,82 @@ def estratti_fonti_pertinenti(sezione, argomento, limite=3500):
             continue
         scelti.append(paragrafo)
         usati += len(paragrafo)
-    dossier = st.session_state.get("dossier_fonti_ai", "")
-    materiali = "\n\n".join(scelti) or st.session_state.get("scheda_fonti", "")[:limite]
-    if dossier:
-        spazio_dossier = max(900, limite // 2)
-        return f"DOSSIER RAGIONATO DELLE FONTI:\n{dossier[:spazio_dossier]}\n\nESTRATTI ORIGINALI PERTINENTI:\n{materiali[:limite - spazio_dossier]}"
-    return materiali
+    materiali = "\n\n".join(scelti) or mappa[:limite]
+    return f"MAPPA CONCETTUALE INTERNA (NON È TESTO DA RIPRENDERE):\n{materiali[:limite]}"
+
+
+def controllo_originalita_fonti(contenuti, fonti, parole_per_sequenza=9):
+    """Controllo locale di sequenze identiche rispetto ai soli documenti caricati.
+
+    Non sostituisce una verifica legale o una banca dati editoriale globale, ma
+    individua con precisione le somiglianze letterali che non devono arrivare
+    nell'esportazione.
+    """
+    def parole(testo):
+        return re.findall(r"[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{2,}", (testo or "").lower())
+
+    parole_fonti = parole(fonti)[:80000]
+    parole_libro = parole(contenuti)[:120000]
+    if len(parole_fonti) < parole_per_sequenza or len(parole_libro) < parole_per_sequenza:
+        return {"eseguito": False, "messaggio": "Servono fonti caricate e almeno una sezione scritta per eseguire il confronto."}
+
+    sequenze_fonti = {
+        " ".join(parole_fonti[indice:indice + parole_per_sequenza])
+        for indice in range(len(parole_fonti) - parole_per_sequenza + 1)
+    }
+    trovate, viste = [], set()
+    for indice in range(len(parole_libro) - parole_per_sequenza + 1):
+        sequenza = " ".join(parole_libro[indice:indice + parole_per_sequenza])
+        if sequenza in sequenze_fonti and sequenza not in viste:
+            viste.add(sequenza)
+            trovate.append(sequenza)
+            if len(trovate) >= 12:
+                break
+    return {
+        "eseguito": True,
+        "trovate": trovate,
+        "messaggio": (
+            "Nessuna sequenza letterale di almeno 9 parole in comune con le fonti caricate: controllo locale superato."
+            if not trovate else
+            f"Rilevate {len(trovate)} sequenze letterali di almeno 9 parole in comune con le fonti caricate. Rigenerale o riscrivile prima della pubblicazione."
+        ),
+    }
+
+
+def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
+    """Schermo supplementare sul web: segnala rischi, non certifica diritti."""
+    testo_libro = (testo_libro or "").strip()
+    if len(testo_libro.split()) < 80:
+        return "Servono almeno una sezione sostanziale già scritta per la verifica web."
+    # Campione distribuito: evita di inviare un manoscritto intero e permette
+    # al modello di cercare le formulazioni più distintive nella ricerca web.
+    passo = max(1, len(testo_libro) // 7)
+    campioni = [testo_libro[posizione:posizione + 550] for posizione in range(0, len(testo_libro), passo)][:7]
+    riferimento = addebita_azione_diretta("verifica_originalita_copyright_web", amount=2)
+    try:
+        risposta = client.responses.create(
+            model=MODELLO_ANALISI_FONTI,
+            tools=[{"type": "web_search_preview"}],
+            input=(
+                "Agisci come revisore editoriale prudente. Cerca sul web possibili corrispondenze letterali "
+                "o troppo ravvicinate per i campioni di un manoscritto, dando priorità alle fonti consultate nel "
+                "registro. Non dichiarare mai che il libro è libero da copyright e non dare pareri legali. "
+                "Restituisci solo: ESITO (nessuna corrispondenza evidente / attenzione / rischio elevato); "
+                "PASSAGGI DA RIVEDERE (massimo 5, senza riportare oltre 12 parole per passaggio); "
+                "MOTIVO; AZIONE CONSIGLIATA. Se non trovi riscontri, spiega che è uno screening limitato e "
+                "che non equivale a una verifica antiplagio completa.\n\n"
+                f"REGISTRO FONTI CONSULTATE:\n{registro_fonti or 'Nessun registro disponibile'}\n\n"
+                "CAMPIONI DEL MANOSCRITTO DA VERIFICARE:\n" + "\n\n---\n\n".join(campioni)
+            ),
+        )
+        esito = (getattr(risposta, "output_text", "") or "").strip()
+        if not esito:
+            refund_credits(riferimento, reason="verifica_originalita_web_vuota", amount=2)
+            return "La verifica web non ha prodotto un esito. Nessun credito è stato addebitato."
+        return esito
+    except Exception:
+        refund_credits(riferimento, reason="verifica_originalita_web_fallita", amount=2)
+        return "La verifica web non è riuscita. Nessun credito è stato addebitato; puoi riprovare più tardi."
 
 
 def notifica_sonora(evento, lingua="Italiano", ripeti=False):
@@ -330,7 +419,7 @@ TRADUZIONI = {
         "lbl_tit": "Titolo del Libro", "lbl_auth": "Nome Autore", "lbl_lang": "Lingua", 
         "lbl_gen": "Genere Letterario", "lbl_style": "Tipologia Scrittura", "lbl_plot": "Trama o Argomento",
         "lbl_narrative": "Stile di Racconto", "lbl_goal": "Obiettivo del Libro", "lbl_pov": "Punto di Vista (Pronome)",
-        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrittura & Quiz", "📖 3. Anteprima", "📑 4. Importa / Esporta"],
+        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrittura & Quiz", "📖 3. Anteprima", "📑 4. Importa / Esporta / Copyright"],
         "btn_idx": "🚀 Genera Indice Professionale", "btn_sync": "✅ Salva e Sincronizza Capitoli",
         "lbl_sec": "Seleziona sezione:", "btn_write": "✨ SCRIVI CONTENUTO (Dettagliato)",
         "btn_quiz": "🧠 AGGIUNGI QUIZ AL LIBRO", "btn_edit": "🚀 RIELABORA CON IA",
@@ -343,7 +432,7 @@ TRADUZIONI = {
     "English": {
         "side_tit": "⚙️ Editor Setup", "lbl_tit": "Book Title", "lbl_auth": "Author Name", "lbl_lang": "Language", 
         "lbl_gen": "Genre", "lbl_style": "Writing Style", "lbl_plot": "Plot", "lbl_narrative": "Narrative Style", "lbl_goal": "Book Goal", "lbl_pov": "Point of View (Pronoun)",
-        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write & Quiz", "📖 3. Preview", "📑 4. Import / Export"],
+        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write & Quiz", "📖 3. Preview", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generate Index", "btn_sync": "✅ Sync Chapters", "lbl_sec": "Select section:",
         "btn_write": "✨ WRITE CONTENT", "btn_quiz": "🧠 ADD QUIZ", "btn_edit": "🚀 REWRITE",
         "msg_run": "Native expert analyzing hierarchy, style and goal...", "preface": "Preface", "ack": "Acknowledgements",
@@ -354,7 +443,7 @@ TRADUZIONI = {
     "Español": {
         "side_tit": "⚙️ Configuración del Editor", "lbl_tit": "Título del Libro", "lbl_auth": "Nombre del Autor", "lbl_lang": "Idioma", 
         "lbl_gen": "Género Literario", "lbl_style": "Estilo de Escritura", "lbl_plot": "Trama o Argumento", "lbl_narrative": "Estilo Narrativo", "lbl_goal": "Objetivo del Libro", "lbl_pov": "Punto de Vista (Pronombre)",
-        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escritura y Quiz", "📖 3. Vista Previa", "📑 4. Importar / Exportar"],
+        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escritura y Quiz", "📖 3. Vista Previa", "📑 4. Importar / Exportar / Copyright"],
         "btn_idx": "🚀 Generar Índice Profesional", "btn_sync": "✅ Guardar y Sincronizar", "lbl_sec": "Seleccionar sección:",
         "btn_write": "✨ ESCRIBIR CONTENIDO", "btn_quiz": "🧠 AÑADIR QUIZ", "btn_edit": "🚀 REESCRIBIR",
         "msg_run": "Analizando jerarquía y estilo...", "preface": "Prefacio", "ack": "Agradecimientos",
@@ -364,7 +453,7 @@ TRADUZIONI = {
     "Français": {
         "side_tit": "⚙️ Configuration de l'Éditeur", "lbl_tit": "Titre du Livre", "lbl_auth": "Nom de l'Auteur", "lbl_lang": "Langue", 
         "lbl_gen": "Genre Littéraire", "lbl_style": "Style d'Écriture", "lbl_plot": "Intrigue ou Sujet", "lbl_narrative": "Style Narratif", "lbl_goal": "Objectif du Livre", "lbl_pov": "Point de Vue (Pronom)",
-        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écriture & Quiz", "📖 3. Aperçu", "📑 4. Importer / Exporter"],
+        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écriture & Quiz", "📖 3. Aperçu", "📑 4. Importer / Exporter / Copyright"],
         "btn_idx": "🚀 Générer l'Index", "btn_sync": "✅ Synchroniser", "lbl_sec": "Sélectionner la section:",
         "btn_write": "✨ ÉCRIRE LE CONTENU", "btn_quiz": "🧠 AJOUTER UN QUIZ", "btn_edit": "🚀 RÉÉCRIRE",
         "msg_run": "Analyse de la hiérarchie et du style...", "preface": "Préface", "ack": "Remerciements",
@@ -374,7 +463,7 @@ TRADUZIONI = {
     "Deutsch": {
         "side_tit": "⚙️ Editor-Setup", "lbl_tit": "Buchtitel", "lbl_auth": "Autorenname", "lbl_lang": "Sprache", 
         "lbl_gen": "Genre", "lbl_style": "Schreibstil", "lbl_plot": "Handlung", "lbl_narrative": "Erzählstil", "lbl_goal": "Buchziel", "lbl_pov": "Erzählperspektive (Pronomen)",
-        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Schreiben & Quiz", "📖 3. Vorschau", "📑 4. Importieren / Exportieren"],
+        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Schreiben & Quiz", "📖 3. Vorschau", "📑 4. Importieren / Exportieren / Copyright"],
         "btn_idx": "🚀 Index Generieren", "btn_sync": "✅ Synchronisieren", "lbl_sec": "Abschnitt wählen:",
         "btn_write": "✨ INHALT SCHREIBEN", "btn_quiz": "🧠 QUIZ HINZUFÜGEN", "btn_edit": "🚀 UMSCHREIBEN",
         "msg_run": "Analysiere Hierarchie und Stil...", "preface": "Vorwort", "ack": "Danksagungen",
@@ -384,7 +473,7 @@ TRADUZIONI = {
     "Română": {
         "side_tit": "⚙️ Configurare Editor", "lbl_tit": "Titlul Cărții", "lbl_auth": "Nume Autor", "lbl_lang": "Limbă", 
         "lbl_gen": "Gen Literar", "lbl_style": "Stil de Scriere", "lbl_plot": "Subiect", "lbl_narrative": "Stil Narativ", "lbl_goal": "Obiectivul Cărții", "lbl_pov": "Punct de Vedere (Pronume)",
-        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scriere & Quiz", "📖 3. Previzualizare", "📑 4. Import / Export"],
+        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scriere & Quiz", "📖 3. Previzualizare", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generare Cuprins", "btn_sync": "✅ Sincronizare", "lbl_sec": "Selectează secțiunea:",
         "btn_write": "✨ SCRIE CONȚINUT", "btn_quiz": "🧠 ADAUGĂ QUIZ", "btn_edit": "🚀 RESCRIE",
         "msg_run": "Se analizează ierarhia și stilul...", "preface": "Prefață", "ack": "Mulțumiri",
@@ -394,7 +483,7 @@ TRADUZIONI = {
     "Русский": {
         "side_tit": "⚙️ Настройки Редактора", "lbl_tit": "Название Книги", "lbl_auth": "Имя Автора", "lbl_lang": "Язык", 
         "lbl_gen": "Жанр", "lbl_style": "Стиль Написания", "lbl_plot": "Сюжет", "lbl_narrative": "Стиль Повествования", "lbl_goal": "Цель Книги", "lbl_pov": "Точка зрения (Местоимение)",
-        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Текст и Тест", "📖 3. Просмотр", "📑 4. Импорт / Экспорт"],
+        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Текст и Тест", "📖 3. Просмотр", "📑 4. Импорт / Экспорт / Copyright"],
         "btn_idx": "🚀 Создать Оглавление", "btn_sync": "✅ Синхронизировать", "lbl_sec": "Выберите раздел:",
         "btn_write": "✨ НАПИСАТЬ ТЕКСТ", "btn_quiz": "🧠 ДОБАВИТЬ ТЕСТ", "btn_edit": "🚀 ПЕРЕПИСАТЬ",
         "msg_run": "Анализ иерархии и стиля...", "preface": "Предисловие", "ack": "Благодарности",
@@ -404,7 +493,7 @@ TRADUZIONI = {
     "العربية": {
         "side_tit": "⚙️ إعدادات المحرر", "lbl_tit": "عنوان الكتاب", "lbl_auth": "اسم المؤلف", "lbl_lang": "اللغة", 
         "lbl_gen": "النوع الأدبي", "lbl_style": "أسلوب الكتابة", "lbl_plot": "الحبكة أو الموضوع", "lbl_narrative": "الأسلوب السردي", "lbl_goal": "هدف الكتاب", "lbl_pov": "وجهة النظر (الضمير)",
-        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. الكتابة والاختبار", "📖 3. معاينة", "📑 4. استيراد / تصدير"],
+        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. الكتابة والاختبار", "📖 3. معاينة", "📑 4. استيراد / تصدير / Copyright"],
         "btn_idx": "🚀 إنشاء فهرس احترافي", "btn_sync": "✅ حفظ ومزامنة الفصول", "lbl_sec": "اختر القسم:",
         "btn_write": "✨ كتابة المحتوى", "btn_quiz": "🧠 إضافة اختبار", "btn_edit": "🚀 إعادة صياغة",
         "msg_run": "جاري تحليل التسلسل الهرمي والأسلوب...", "preface": "مقدمة", "ack": "شكر وتقدير",
@@ -414,7 +503,7 @@ TRADUZIONI = {
     "中文": {
         "side_tit": "⚙️ 编辑器设置", "lbl_tit": "书名", "lbl_auth": "作者姓名", "lbl_lang": "语言", 
         "lbl_gen": "文学体裁", "lbl_style": "写作类型", "lbl_plot": "情节或主题", "lbl_narrative": "叙事风格", "lbl_goal": "书籍目标", "lbl_pov": "叙事视角 (代词)",
-        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作与测试", "📖 3. 预览", "📑 4. 导入 / 导出"],
+        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作与测试", "📖 3. 预览", "📑 4. 导入 / 导出 / Copyright"],
         "btn_idx": "🚀 生成专业目录", "btn_sync": "✅ 保存并同步章节", "lbl_sec": "选择章节:",
         "btn_write": "✨ 编写内容", "btn_quiz": "🧠 添加测试", "btn_edit": "🚀 用AI重写",
         "msg_run": "正在分析层级、风格和情感目标...", "preface": "前言", "ack": "致谢",
@@ -1641,7 +1730,10 @@ def esporta_progetto_editoriale_csv():
         if str(testo).strip():
             writer.writerow({"tipo": "sezione", "chiave": sezione, "valore": testo})
 
-    for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
+    for chiave in (
+        "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
+        "dossier_ricerca_preliminare", "registro_fonti_web",
+    ):
         valore = st.session_state.get(chiave, "")
         if valore:
             writer.writerow({"tipo": "fonte", "chiave": chiave, "valore": str(valore)})
@@ -1678,7 +1770,10 @@ def importa_progetto_editoriale_csv(file_caricato):
             snapshot["indice_raw"] = valore
         elif tipo == "sezione" and chiave:
             snapshot["contenuti"][chiave] = valore
-        elif tipo == "fonte" and chiave in {"conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"}:
+        elif tipo == "fonte" and chiave in {
+            "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
+            "dossier_ricerca_preliminare", "registro_fonti_web",
+        }:
             snapshot["fonti"][chiave] = valore
         elif tipo == "immagine" and chiave:
             try:
@@ -1770,7 +1865,10 @@ def applica_snapshot_progetto(snapshot):
     if immagini:
         st.session_state["immagini_capitoli"] = immagini
     fonti = snapshot.get("fonti", {}) or {}
-    for chiave in ("conoscenza_extra", "scheda_fonti", "dossier_fonti_ai"):
+    for chiave in (
+        "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
+        "dossier_ricerca_preliminare", "registro_fonti_web",
+    ):
         if fonti.get(chiave):
             st.session_state[chiave] = fonti[chiave]
     aggiornato = snapshot.get("_autosave_updated_at", "")
@@ -1842,6 +1940,9 @@ def salva_progetto_corrente(sidebar, sezioni):
             "conoscenza_extra": st.session_state.get("conoscenza_extra", ""),
             "scheda_fonti": st.session_state.get("scheda_fonti", ""),
             "dossier_fonti_ai": st.session_state.get("dossier_fonti_ai", ""),
+            "brief_fonti_originale": st.session_state.get("brief_fonti_originale", ""),
+            "dossier_ricerca_preliminare": st.session_state.get("dossier_ricerca_preliminare", ""),
+            "registro_fonti_web": st.session_state.get("registro_fonti_web", ""),
         },
     }
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
@@ -2213,8 +2314,8 @@ with st.sidebar:
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
     # --- NUOVA SEZIONE CARICAMENTO FONTI ---
-    st.markdown("### 📂 Fonti Esterne (Opzionale)")
-    st.markdown("<small>Carica PDF o DOCX per aiutare l'IA nel ragionamento di stesura.</small>", unsafe_allow_html=True)
+    st.markdown("### 📂 Fonti esterne e ricerca web (opzionale)")
+    st.markdown("<small>Carica PDF o DOCX: l'IA ne ricava una mappa concettuale interna e scrive un testo autonomo, senza riprendere formulazioni delle fonti.</small>", unsafe_allow_html=True)
     file_caricati = st.file_uploader("Carica Fonti Esterne", type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     if file_caricati:
         if len(file_caricati) > 10:
@@ -2225,13 +2326,22 @@ with st.sidebar:
             with st.spinner("Lettura, studio editoriale e preparazione delle fonti in corso..."):
                 st.session_state["conoscenza_extra"] = estrai_testo_da_files(file_caricati)
                 st.session_state["scheda_fonti"] = crea_scheda_fonti(st.session_state["conoscenza_extra"])
-                st.session_state["dossier_fonti_ai"] = studia_fonti_con_ai(st.session_state["conoscenza_extra"])
+                mappa_fonti = studia_fonti_con_ai(st.session_state["conoscenza_extra"])
+                st.session_state["brief_fonti_originale"] = mappa_fonti
+                # Compatibilità con salvataggi e CSV precedenti: il dossier ora
+                # contiene esclusivamente la mappa concettuale, non estratti.
+                st.session_state["dossier_fonti_ai"] = mappa_fonti
                 st.session_state["firma_fonti"] = firma_fonti
         if st.session_state.get("conoscenza_extra"):
-            st.success(f"Studiati {len(file_caricati)} documenti. Il dossier editoriale viene riutilizzato per indice e stesura.")
-            st.caption(f"Analisi fonti: {MODELLO_ANALISI_FONTI}. Le fonti guidano il ragionamento e non compaiono come citazioni automatiche nel testo finale.")
+            st.success(f"Studiati {len(file_caricati)} documenti. La mappa concettuale originale guiderà indice e stesura.")
+            st.caption(f"Analisi fonti: {MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
     elif st.session_state.get("conoscenza_extra"):
         st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
+    registro_fonti_web = st.session_state.get("registro_fonti_web", "").strip()
+    if registro_fonti_web:
+        with st.expander("🌐 Fonti trovate nella ricerca web", expanded=False):
+            st.caption("Registro interno delle fonti consultate per progettare l'indice. Non viene inserito nel libro.")
+            st.markdown(registro_fonti_web)
     
     st.markdown("---")
     # --- AGGIUNTA "STORICO" AI GENERI ---
@@ -2573,7 +2683,8 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Non scrivere e non ripetere mai '{sezione}' come intestazione. Inizia direttamente con il contenuto.
 - Usa formattazione editoriale pulita: non usare Markdown, simboli ###, ##, **, __, ``` o intestazioni tecniche. Se servono elenchi, usa semplici punti o numeri senza caratteri decorativi.
 - Non inserire URL, link, citazioni, note bibliografiche o sezioni fonti.
-- Se sono disponibili fonti esterne, usale solo per ragionare e integrare concetti pertinenti, senza citarle nel testo finale.
+- Se sono disponibili fonti esterne, la memoria contiene soltanto una mappa concettuale interna: usa i concetti come conoscenza da rielaborare, mai come testo da parafrasare riga per riga.
+- ORIGINALITÀ OBBLIGATORIA: costruisci una spiegazione nuova con ordine, esempi, collegamenti, frasi e sviluppo propri. Non imitare la struttura della fonte, non riprendere formulazioni caratteristiche e non riprodurre sequenze di sei o più parole che potrebbero provenire dalle fonti. Se un fatto è necessario, esprimilo in modo autonomo e contestualizzalo per questo specifico libro.
 - Prima di consegnare, verifica internamente che il contenuto sia completo per la sezione assegnata, che non sia una bozza o un frammento, che l'ultima frase sia completa e che il ragionamento abbia una chiusura utile entro il limite di parole.
 
 === PROFONDITÀ ADATTIVA E SPIEGAZIONE PASSO PASSO ===
@@ -2982,15 +3093,13 @@ Fornisci dati, structures deduttive e un linguaggio pulito, tipico delle pubblic
     modulo_fonti = ""
     if st.session_state.get("conoscenza_extra"):
         modulo_fonti = """
-=== INTEGRAZIONE FONTI ESTERNE (RAGIONAMENTO AI) ===
-I documenti forniti serve per arricchire il tuo ragionamento, estrarre dati e terminologia tecnica.
-È TASSATIVAMENTE VIETATO FARE COPIA E INCOLLA dei testi originali. Usa queste fonti esclusivamente come "cervello esterno" per scrivere le tue sezioni originali basandoti su quei concetti, con lo stile e il POV richiesto per il libro.
-
-=== STUDIO ATTIVO E ASSIMILAZIONE CONCETTI ===
-Devi agire come uno studioso che ha appena letto le fonti caricate dall'utente. 
-1. ESTRAZIONE E ANALISI: Individua i princìpi cardine, i framework, i concetti chiave e i dati presenti nei documenti.
-2. RAGIONAMENTO PROFONDO: Non limitarti a citare i concetti a pappagallo. Sviscerali, spiegane il "perché", il contesto e come si applicano operativamente all'argomento del libro.
-3. ELABORAZIONE ORIGINALE: Fai tuoi questi concetti. Intrecciali fluidamente con la tua base di conoscenza per creare un testo ricco e autorevole, dimostrando assoluta padronanza della materia, mantenendo il divieto di copia-incolla.
+=== FONTI ESTERNE: METODO DI ORIGINALITÀ OBBLIGATORIO ===
+Hai a disposizione soltanto una mappa concettuale interna già separata dai documenti caricati. I documenti non sono un modello di stile, struttura o formulazione.
+1. Usa le fonti per verificare concetti e terminologia, non per riscriverle frase per frase.
+2. Progetta sempre una spiegazione indipendente: cambia ordine, angolazione, esempi, connessioni e sviluppo logico in funzione del brief di questo libro.
+3. Non riprendere formulazioni distintive, titoli, elenchi, dialoghi, casi, metafore o sequenze di sei o più parole provenienti dalle fonti.
+4. Produci contenuto nuovo e contestualizzato, non una parafrasi. Se un fatto deve restare invariato, spiega il suo significato con parole e un esempio propri.
+5. Non inserire citazioni o riferimenti nel manoscritto salvo istruzione esplicita dell'utente e disponibilità dei relativi diritti.
 """
 
     # --- INIZIO NUOVE RIGHE PER ADATTAMENTO PROMPT IN BASE AL GENERE ---
@@ -3797,11 +3906,12 @@ a un altro, trattalo nello stesso sottocapitolo invece di creare una nuova voce.
 la somma di Parti + Capitoli + sottocapitoli resti nel budget.
 """
                 if st.session_state.get("conoscenza_extra"):
-                    dossier_fonti = st.session_state.get("dossier_fonti_ai") or st.session_state.get("scheda_fonti", "")
+                    dossier_fonti = st.session_state.get("brief_fonti_originale") or st.session_state.get("dossier_fonti_ai", "")
                     prompt_idx += (
-                        "\n\nDOSSIER DELLE FONTI ESTERNE (STUDIATO PRIMA DELLA PROGETTAZIONE):\n"
-                        "Usa il dossier per distribuire i concetti con precisione nell'indice; "
-                        "non citare fonti, non copiare il testo e non aggiungere argomenti non supportati.\n"
+                        "\n\nMAPPA CONCETTUALE INTERNA DELLE FONTI (GIA' RIELABORATA):\n"
+                        "Usa solo principi, verifiche e competenze presenti nella mappa; non riprodurre struttura, "
+                        "formulazioni, esempi distintivi o ordine delle fonti. Progetta un percorso nuovo e autonomo, "
+                        "senza citare fonti e senza aggiungere argomenti non supportati.\n"
                         f"{dossier_fonti[:7000]}\n"
                     )
                 if dossier_ricerca_web:
@@ -4480,8 +4590,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
     # TAB 4: IMPORTAZIONE / ESPORTAZIONE
     with tabs[4]:
-        st.subheader("📦 Archivio del progetto editoriale")
-        st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Il CSV non consuma crediti.")
+        st.subheader("📦 Importa / Esporta / Copyright")
+        st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Qui trovi anche i controlli di originalità e copyright. Il CSV non consuma crediti.")
         progetto_csv = esporta_progetto_editoriale_csv()
         nome_archivio = re.sub(r"[^\w.-]+", "_", val_titolo.strip() or "progetto_scrittore_site", flags=re.UNICODE).strip("_")
         col_csv_esporta, col_csv_importa = st.columns(2)
@@ -4514,6 +4624,50 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 except Exception as exc:
                     st.error(f"Importazione non riuscita: {exc}")
         st.info("L'importazione sostituisce il progetto aperto solo nella pagina corrente. Per salvarla anche nel tuo account premi poi “💾 SALVA SESSIONE” nella sidebar.")
+        with st.expander("🛡️ Controllo originalità e copyright", expanded=False):
+            st.caption(
+                "Il controllo locale confronta gratuitamente il manoscritto con i PDF/DOCX caricati. La verifica web opzionale analizza campioni del testo e le fonti web registrate dalla ricerca. "
+                "Nessuno dei due sostituisce una certificazione legale o un servizio antiplagio completo."
+            )
+            testo_per_controllo = "\n\n".join(
+                leggi_sezione_memorizzata(sezione) for sezione in opzioni_editor
+                if leggi_sezione_memorizzata(sezione).strip()
+            )
+            if st.button("🔎 CONTROLLO ORIGINALITÀ LOCALE", use_container_width=True, key="controllo_originalita_fonti"):
+                st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
+                    testo_per_controllo, st.session_state.get("conoscenza_extra", "")
+                )
+            report_originalita = st.session_state.get("report_originalita_fonti")
+            if report_originalita:
+                if not report_originalita.get("eseguito"):
+                    st.info(report_originalita["messaggio"])
+                elif report_originalita.get("trovate"):
+                    st.error(report_originalita["messaggio"])
+                    st.write("Passaggi da riscrivere o rigenerare:")
+                    for passaggio in report_originalita["trovate"]:
+                        st.write("- “" + passaggio + "…”")
+                else:
+                    st.success(report_originalita["messaggio"])
+            registro_web = st.session_state.get("registro_fonti_web", "").strip()
+            if registro_web:
+                st.caption("La verifica web costa 2 crediti e non modifica il manoscritto.")
+                if pulsante_con_preventivo(
+                    "verifica_originalita_web", "🌐 VERIFICA COPYRIGHT SUL WEB", 2,
+                    "Cerca online possibili somiglianze nei campioni del manoscritto, dando priorità alle fonti web registrate.",
+                    use_container_width=True,
+                ):
+                    with st.spinner("Verifica web delle possibili somiglianze in corso..."):
+                        st.session_state["report_originalita_web"] = verifica_originalita_web_con_ai(
+                            testo_per_controllo, registro_web
+                        )
+            else:
+                st.info("La verifica web sarà disponibile dopo la generazione dell'indice: la ricerca preliminare creerà qui il registro delle fonti consultate.")
+            if st.session_state.get("report_originalita_web"):
+                st.text_area(
+                    "Esito della verifica copyright sul web",
+                    value=st.session_state["report_originalita_web"], height=260,
+                    key="output_report_originalita_web",
+                )
         st.divider()
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(lista_cap_base, val_genere)
         contenuti_export = {
