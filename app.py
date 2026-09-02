@@ -3605,7 +3605,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 6. In Anteprima leggi il libro e usa Controllo coerenza completo. La barra mostra l'avanzamento; il report indica capitolo, sottocapitolo, priorità e prompt da copiare in Rigenera con AI.
 
-7. In Esporta il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI; puoi comunque esportare il file e decidere tu quando è pronto per la pubblicazione. Il software non modifica nulla automaticamente. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
+7. In Importa / Esporta / Copyright il controllo finale distingue sezioni mancanti, deboli e complete. Se rileva difetti, ricevi i prompt pronti per Rigenera con AI; il software non modifica nulla automaticamente. Dalla stessa area esporti Word, PDF o il CSV completo del progetto e puoi reimportare il CSV in seguito. In Formattazione carichi un manoscritto, crei metadati KDP e formatti un DOCX 6×9.
 
 Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte o termina Scrivi tutto il libro, in caso di errore, al termine di Voto Indice, Controllo coerenza, formattazione ed esportazione. Controlla sempre testo e file finale prima di pubblicare."""),
         "English": ("How to use Scrittore Site", """1. Complete the sidebar: title, author, language, genre, style, goal, topic and desired final result. Use Further details for priorities, constraints and required examples.
@@ -3713,12 +3713,87 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
 声音通知会在侧边栏准备好、整本书开始或结束、发生错误以及目录评分、一致性检查、格式化或导出完成时提醒你。发布前务必检查文本和最终文件。""")
     }
+    aggiornamenti_guida_localizzati = {
+        "Italiano": """### Funzioni aggiornate: salvataggio, fonti e copyright
+
+**Salvare e recuperare.** Il progetto resta pulito quando accedi. Quando vuoi conservarlo, premi **💾 SALVA SESSIONE** nella sidebar: vengono salvati campi della sidebar, indice, testi, fonti, immagini e impostazioni del progetto nel tuo account. Per recuperare deliberatamente il lavoro salvato premi **🔄 RIAGGIORNA ALL'ULTIMA STESURA**. **RESET PROGETTO** cancella invece il progetto aperto e svuota anche la sidebar.
+
+**Importa / Esporta / Copyright.** Esporta progetto completo crea un CSV che contiene sidebar, indice, sezioni, fonti e immagini associate. Importa progetto CSV ripristina questi dati nella pagina; premi poi **SALVA SESSIONE** se vuoi conservarli anche nel tuo account. Word e PDF restano disponibili nella stessa area dopo il controllo finale.
+
+**Fonti e testo originale.** Prima dell'indice, la ricerca preliminare raccoglie fonti pertinenti e le trasforma in una mappa concettuale interna: il libro viene scritto con struttura, esempi e formulazioni nuovi, non copiando le fonti. Le fonti caricate e quelle web sono consultabili nell'area Importa / Esporta / Copyright. Per argomenti aggiornabili verifica sempre l'accuratezza prima di pubblicare.
+
+**Controllo originalità e copyright.** Il controllo locale confronta gratuitamente il testo con PDF/DOCX caricati; il controllo web rapido analizza campioni; quello completo controlla tutto il manoscritto a lotti. L'esito mostra subito solo le sezioni da rielaborare. Apri **Dettaglio tecnico** soltanto se vuoi leggere l'intero report. **RIELABORA LE SEZIONI SEGNALATE** riscrive solo quelle sezioni, senza toccare le altre. È uno screening editoriale di rischio, non una certificazione legale o antiplagio universale.
+
+**Editor, anteprima e ascolto.** L'Editor professionale modifica una sezione alla volta; l'anteprima legge la memoria completa del progetto. Nel lettore vocale puoi scegliere il punto di partenza, avviare, mettere in pausa e riprendere; nella vista lettura il testo letto viene evidenziato quando il browser lo consente.
+
+**Controllo finale.** Prima di Word/PDF il software segnala contenuti mancanti, deboli o completi e propone correzioni da applicare soltanto con la tua approvazione. Rileggi sempre il manoscritto e il file esportato prima della pubblicazione.""",
+        "English": """### Updated features: saving, sources and copyright
+
+**Save and recover.** The project opens clean after sign-in. Use **💾 SAVE SESSION** to store sidebar fields, index, texts, sources, images and project settings in your account. Use **🔄 REFRESH TO LATEST DRAFT** only when you want to restore that saved work. **RESET PROJECT** clears the open project and the sidebar.
+
+**Import / Export / Copyright.** Complete project export creates a CSV containing the sidebar, index, sections, sources and linked images. Importing it restores those data in the page; then use **SAVE SESSION** to keep them in your account. Word and PDF remain available there after the final check.
+
+**Sources and original writing.** Before the index, preliminary research turns relevant sources into an internal concept map. The book is written with new structure, examples and wording, not copied from sources. The local, quick web and complete web checks show only sections needing revision; technical details are optional. Rewriting affects only flagged sections. These are editorial risk checks, not legal certification.
+
+**Editor, preview and listening.** The Professional Editor edits one section at a time; Preview reads the full project memory. In the voice reader choose a starting point, play, pause and resume. The reading view highlights spoken text when the browser supports it. Always review the manuscript and exported file before publishing.""",
+        "Español": """### Funciones actualizadas: guardado, fuentes y copyright
+
+**Guardar y recuperar.** El proyecto se abre limpio al iniciar sesión. Usa **💾 GUARDAR SESIÓN** para guardar en tu cuenta los campos, índice, textos, fuentes, imágenes y ajustes. Usa **🔄 ACTUALIZAR A LA ÚLTIMA VERSIÓN** solo para restaurar ese trabajo. **RESETEAR PROYECTO** borra el proyecto abierto y la barra lateral.
+
+**Importar / Exportar / Copyright.** La exportación completa crea un CSV con barra lateral, índice, secciones, fuentes e imágenes. Al importarlo se restaura en la página; después pulsa **GUARDAR SESIÓN** para conservarlo en tu cuenta. Los controles de originalidad muestran solo las secciones que requieren cambios; el detalle técnico es opcional. No sustituye una certificación legal.
+
+**Fuentes, edición y escucha.** La investigación previa crea un mapa conceptual interno; el libro se redacta con estructura y formulación nuevas, no copiando fuentes. El editor modifica una sección, la vista previa lee todo el proyecto y el lector de voz permite elegir inicio, reproducir, pausar y reanudar. Revisa siempre el archivo antes de publicar.""",
+        "Français": """### Fonctions mises à jour : sauvegarde, sources et copyright
+
+**Sauvegarder et récupérer.** Le projet s’ouvre vide après connexion. Utilisez **💾 SAUVEGARDER LA SESSION** pour enregistrer dans votre compte les champs, l’index, les textes, les sources, les images et les réglages. Utilisez **🔄 ACTUALISER LA DERNIÈRE VERSION** uniquement pour restaurer ce travail. **RÉINITIALISER LE PROJET** efface le projet ouvert et la barre latérale.
+
+**Importer / Exporter / Copyright.** L’export complet crée un CSV avec barre latérale, index, sections, sources et images. L’import le restaure dans la page ; sauvegardez ensuite la session pour le conserver. Les contrôles d’originalité affichent seulement les sections à corriger ; le détail technique est facultatif. Ce n’est pas une certification juridique.
+
+**Sources, édition et écoute.** La recherche prépare une carte conceptuelle interne ; le livre est écrit avec une structure et des formulations nouvelles. L’éditeur modifie une section, l’aperçu lit tout le projet et le lecteur vocal permet de choisir le départ, lire, mettre en pause et reprendre. Vérifiez toujours le fichier avant publication.""",
+        "Deutsch": """### Aktualisierte Funktionen: Speichern, Quellen und Urheberrecht
+
+**Speichern und Wiederherstellen.** Nach der Anmeldung öffnet sich ein leeres Projekt. Mit **💾 SITZUNG SPEICHERN** sichern Sie Seitenleiste, Index, Texte, Quellen, Bilder und Einstellungen im Konto. **🔄 LETZTEN ENTWURF AKTUALISIEREN** stellt diesen Stand bewusst wieder her. **PROJEKT ZURÜCKSETZEN** leert Projekt und Seitenleiste.
+
+**Import / Export / Copyright.** Der vollständige Export erzeugt eine CSV mit allen Projektdaten. Der Import stellt sie auf der Seite wieder her; speichern Sie danach die Sitzung. Originalitätsprüfungen zeigen direkt nur zu überarbeitende Abschnitte, technische Details sind optional. Sie ersetzen keine rechtliche Zertifizierung.
+
+**Quellen, Editor und Vorlesen.** Die Recherche erstellt eine interne Konzeptkarte; der Text wird neu strukturiert und formuliert. Der Editor bearbeitet einen Abschnitt, die Vorschau liest das gesamte Projekt, und der Sprachleser kann Startpunkt, Wiedergabe, Pause und Fortsetzen steuern. Prüfen Sie das Enddokument immer vor der Veröffentlichung.""",
+        "Română": """### Funcții actualizate: salvare, surse și copyright
+
+**Salvare și recuperare.** Proiectul se deschide gol după autentificare. Folosește **💾 SALVEAZĂ SESIUNEA** pentru câmpuri, cuprins, texte, surse, imagini și setări. **🔄 ACTUALIZEAZĂ LA ULTIMA VERSIUNE** restaurează intenționat versiunea salvată. **RESETARE PROIECT** golește proiectul și bara laterală.
+
+**Import / Export / Copyright.** Exportul complet creează un CSV cu toate datele proiectului; importul le restaurează în pagină, apoi salvează sesiunea. Controalele de originalitate arată doar secțiunile de corectat, iar detaliul tehnic este opțional; nu reprezintă o certificare juridică.
+
+**Surse, editor și citire vocală.** Cercetarea creează o hartă conceptuală internă, iar textul este formulat original. Editorul modifică o secțiune, previzualizarea citește proiectul integral, iar cititorul vocal permite alegerea începutului, redare, pauză și reluare. Verifică mereu fișierul final înainte de publicare.""",
+        "Русский": """### Обновлённые функции: сохранение, источники и авторское право
+
+**Сохранение и восстановление.** После входа проект открывается чистым. Кнопка **💾 СОХРАНИТЬ СЕССИЮ** сохраняет поля, оглавление, тексты, источники, изображения и настройки в аккаунте. **🔄 ОБНОВИТЬ ПОСЛЕДНЮЮ ВЕРСИЮ** намеренно восстанавливает сохранённую работу. Сброс очищает проект и боковую панель.
+
+**Импорт / экспорт / copyright.** Полный экспорт создаёт CSV со всеми данными проекта; импорт восстанавливает их на странице, после чего сохраните сессию. Проверки оригинальности сразу показывают только разделы для исправления, а технические подробности открываются по желанию. Это не юридическая сертификация.
+
+**Источники, редактор и озвучивание.** Исследование создаёт внутреннюю карту понятий, а текст формулируется заново. Редактор меняет один раздел, предпросмотр читает весь проект, голосовой читатель позволяет выбрать начало, воспроизвести, поставить на паузу и продолжить. Всегда проверяйте итоговый файл перед публикацией.""",
+        "العربية": """### ميزات محدّثة: الحفظ والمصادر وحقوق النشر
+
+**الحفظ والاستعادة.** يفتح المشروع فارغاً بعد تسجيل الدخول. استخدم **💾 حفظ الجلسة** لحفظ حقول الشريط الجانبي والفهرس والنصوص والمصادر والصور والإعدادات في حسابك. استخدم **🔄 تحديث إلى آخر نسخة** فقط لاستعادة العمل المحفوظ. إعادة ضبط المشروع تمسح المشروع والشريط الجانبي.
+
+**استيراد / تصدير / حقوق النشر.** ينشئ التصدير الكامل ملف CSV يحوي كل بيانات المشروع، ويعيد الاستيراد هذه البيانات إلى الصفحة ثم احفظ الجلسة. تعرض فحوص الأصالة الأقسام التي تحتاج تعديلاً فقط، بينما التفاصيل التقنية اختيارية. لا تمثل هذه الفحوص شهادة قانونية.
+
+**المصادر والتحرير والقراءة.** ينشئ البحث خريطة مفاهيم داخلية ويُكتب النص بصياغة جديدة. يعدّل المحرر قسماً واحداً، وتقرأ المعاينة المشروع كاملاً، ويتيح القارئ الصوتي اختيار نقطة البداية والتشغيل والإيقاف والاستئناف. راجع الملف النهائي دائماً قبل النشر.""",
+        "中文": """### 更新功能：保存、来源与版权
+
+**保存和恢复。** 登录后项目会以干净状态打开。使用 **💾 保存会话** 将侧边栏、目录、文本、来源、图片和设置保存到账号。仅在需要恢复时使用 **🔄 更新到最新草稿**。重置项目会清空当前项目和侧边栏。
+
+**导入 / 导出 / 版权。** 完整导出会创建包含所有项目数据的 CSV；导入会在页面中恢复数据，随后请保存会话。原创性检查只显示需要修改的部分，技术详情可按需展开；它不是法律认证。
+
+**来源、编辑与朗读。** 前期研究会建立内部概念图，正文会以新的结构和表述创作。专业编辑器一次编辑一个部分，预览读取整个项目，语音阅读器可选择起点、播放、暂停和继续。发布前请始终检查最终文件。""",
+    }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
     with tabs[0]:
         st.subheader(titolo_guida)
         st.markdown(testo_guida)
+        st.divider()
+        st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
         etichette_prova_notifiche = {
             "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
             "Français": "🔔 TESTER LES NOTIFICATIONS", "Deutsch": "🔔 BENACHRICHTIGUNGEN TESTEN", "Română": "🔔 TESTEAZĂ NOTIFICĂRILE",
