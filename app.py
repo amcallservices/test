@@ -3098,7 +3098,11 @@ INTERVENTI PROPOSTI:"""
     if da_analizzare:
         # Se nessun blocco del manoscritto corrente è in cache è un primo
         # controllo, anche se la sessione contiene cache di un progetto passato.
-        costo_controllo = 10 if completati == 0 else len(da_analizzare)
+        costo_controllo = (
+            CREDIT_COSTS["controllo_coerenza_iniziale"]
+            if completati == 0
+            else len(da_analizzare) * CREDIT_COSTS["controllo_coerenza_blocco_modificato"]
+        )
         addebita_azione_diretta("controllo_coerenza", amount=costo_controllo)
         with ThreadPoolExecutor(max_workers=3) as esecutore:
             lavori = {
@@ -4040,8 +4044,8 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
-        if pulsante_con_preventivo("genera_indice", L["btn_idx"], 5,
-                                   "Include ricerca preliminare online (2 crediti), generazione, valutazione editoriale e possibili correzioni automatiche dell'indice (3 crediti).",
+        if pulsante_con_preventivo("genera_indice", L["btn_idx"], CREDIT_COSTS["indice_ricerca_web"] + CREDIT_COSTS["indice_generazione_editoriale"],
+                                   "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice.",
                                    disabled=not sidebar_pronta):
             with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
                 dossier_ricerca_web = ricerca_preliminare_per_indice(
@@ -4209,7 +4213,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
 
         indice_da_valutare = st.session_state.get("indice_raw", "").strip()
         if indice_da_valutare:
-            if pulsante_con_preventivo("voto_indice", "⭐ VOTO INDICE", 1,
+            if pulsante_con_preventivo("voto_indice", "⭐ VOTO INDICE", CREDIT_COSTS["voto_indice"],
                                        "Analizza l'indice rispetto al brief editoriale.", use_container_width=True):
                 with st.spinner("Analisi editoriale dell'indice in corso..."):
                     st.session_state["analisi_voto_indice"] = valuta_indice_editoriale(
@@ -4224,7 +4228,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     height=320,
                     key="output_voto_indice"
                 )
-                if pulsante_con_preventivo("rigenera_indice_voto", "🔄 RIGENERA INDICE SEGUENDO IL VOTO", 3,
+                if pulsante_con_preventivo("rigenera_indice_voto", "🔄 RIGENERA INDICE SEGUENDO IL VOTO", CREDIT_COSTS["rigenera_indice"],
                                            "Include rigenerazione, valutazione editoriale e possibili correzioni automatiche.", use_container_width=True):
                     with st.spinner("Creazione della proposta migliorata in corso..."):
                         prompt_rigenerazione = f"""Riscrivi esclusivamente l'indice del libro sotto indicato, rigorosamente in lingua {lingua_sel}.
@@ -4530,7 +4534,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     with st.expander("Dettaglio dei sottocapitoli da riprovare", expanded=False):
                         for dettaglio in dettaglio_errori_sottocapitoli:
                             st.write("- " + dettaglio)
-                if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", 2,
+                if pulsante_con_preventivo(f"controlla_fatti_{k_sessione}", "🔎 CONTROLLA I FATTI DEL CAPITOLO", CREDIT_COSTS["audit_fatti_capitolo"],
                                            "Verifica online solo i dati aggiornabili del capitolo selezionato.", use_container_width=True):
                     contenuti_capitolo = [
                         (sottocapitolo, leggi_sezione_memorizzata(sottocapitolo))
@@ -4583,7 +4587,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         salva_stesura_immediata(opzioni_editor)
                         st.rerun()
             with c3:
-                if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", 1,
+                if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", CREDIT_COSTS["scrittura_sezione"],
                                            "Saranno aggiunte 10 domande alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner("Generazione Quiz didattico..."):
@@ -4608,7 +4612,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # --- FINE NUOVE RIGHE ---
 
                 # --- AGGIUNTA PULSANTE GENERATORE ESEMPI ---
-                if pulsante_con_preventivo(f"esempi_{k_sessione}", t_btn_ese, 1,
+                if pulsante_con_preventivo(f"esempi_{k_sessione}", t_btn_ese, CREDIT_COSTS["scrittura_sezione"],
                                            "Saranno aggiunti 10 esempi pratici alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner(f"Creazione 10 esempi in {lingua_sel}..."):
@@ -4645,7 +4649,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # --- FINE NUOVE RIGHE ---
                 
                 # --- AGGIUNTA PULSANTE GENERATORE RICETTE ---
-                if pulsante_con_preventivo(f"ricette_{k_sessione}", t_btn_ric, 10,
+                if pulsante_con_preventivo(f"ricette_{k_sessione}", t_btn_ric, CREDIT_COSTS["ricette_dieci"],
                                            "Saranno aggiunte 10 ricette alla sezione selezionata."):
                     if k_sessione in st.session_state:
                         with st.spinner(f"Creazione 10 ricette uniche in {lingua_sel}..."):
@@ -4771,7 +4775,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.subheader("Controllo del manoscritto")
         stima_coerenza = 10 if not st.session_state.get("cache_audit_blocchi") else "1 per ogni blocco nuovo o modificato"
         if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", stima_coerenza,
-                                   "Il primo controllo completo costa 10 crediti. I controlli successivi riutilizzano la cache e consumano solo 1 credito per ogni blocco nuovo o modificato."):
+                                   f"Il primo controllo completo costa {CREDIT_COSTS['controllo_coerenza_iniziale']} crediti. I controlli successivi riutilizzano la cache e consumano solo {CREDIT_COSTS['controllo_coerenza_blocco_modificato']} credito per ogni blocco nuovo o modificato."):
             barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
             stato_coerenza = st.empty()
 
@@ -4887,7 +4891,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if registro_web:
                 st.caption("La verifica web costa 2 crediti e non modifica il manoscritto.")
                 if pulsante_con_preventivo(
-                    "verifica_originalita_web", "🌐 VERIFICA COPYRIGHT SUL WEB", 2,
+                    "verifica_originalita_web", "🌐 VERIFICA COPYRIGHT SUL WEB", CREDIT_COSTS["copyright_web_rapido"],
                     "Cerca online possibili somiglianze nei campioni del manoscritto, dando priorità alle fonti web registrate.",
                     use_container_width=True,
                 ):
@@ -5094,7 +5098,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     ["Italiano", "Inglese", "Spagnolo", "Francese", "Tedesco", "Rumeno", "Russo", "Arabo", "Cinese"],
                     key="lingua_metadati"
                 )
-                if pulsante_con_preventivo("metadati_kdp", "Genera metadati dettagliati", 1,
+                if pulsante_con_preventivo("metadati_kdp", "Genera metadati dettagliati", CREDIT_COSTS["metadati_kdp"],
                                            "Genera descrizione marketing e sette keyword a coda lunga."):
                     with st.spinner("Analisi del manoscritto e generazione metadati in corso..."):
                         try:
