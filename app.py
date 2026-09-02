@@ -986,9 +986,16 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     if not usa_deepseek_pro():
         return stima_gpt
     azione = str(azione_id).casefold()
+    # Per i comandi che redigono più sezioni il valore ricevuto è del tipo
+    # "fino a 71". Il preventivo DeepSeek deve ridurre il totale, non limitarsi
+    # a descrivere il costo della singola sezione.
+    numeri_stima = re.findall(r"\d+", str(stima_gpt))
+    totale_gpt = int(numeri_stima[0]) if numeri_stima else 0
     if "genera_indice" in azione:
         return "circa 2"
-    if any(parola in azione for parola in ("scrivi_sezione", "scrivi_tutti", "rielabora", "quiz", "esempi")):
+    if any(parola in azione for parola in ("scrivi_tutto", "scrivi_sottocapitoli")):
+        return f"fino a {max(1, math.ceil(totale_gpt / 3))}"
+    if any(parola in azione for parola in ("scrivi_sezione", "rielabora", "quiz", "esempi")):
         return "1 ogni 3 operazioni"
     if "ricette" in azione:
         return "circa 4"
