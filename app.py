@@ -2257,6 +2257,37 @@ def salva_stesura_immediata(sezioni):
     return True
 
 
+def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
+    """Protegge nel cloud il contenuto appena creato dall'IA.
+
+    Il salvataggio automatico è volutamente limitato agli esiti di operazioni
+    IA concluse con successo: le modifiche manuali restano sotto il controllo
+    del pulsante ``SALVA SESSIONE``. Un errore di rete non annulla né nasconde
+    mai il testo già ricevuto e conservato nella memoria della pagina.
+    """
+    salva_stesura_immediata(sezioni)
+    sezioni_progetto = list(dict.fromkeys([
+        *sezioni,
+        *st.session_state.get("lista_capitoli", []),
+        *st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}).keys(),
+    ]))
+    try:
+        salvato = salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_progetto)
+    except Exception:
+        salvato = False
+    if salvato:
+        momento = datetime.datetime.now().strftime("%H:%M")
+        st.session_state["autosave_stato"] = (
+            f"✓ {descrizione.capitalize()} salvato automaticamente nel tuo account alle {momento}."
+        )
+    else:
+        st.session_state["autosave_stato"] = (
+            f"⚠ {descrizione.capitalize()} conservato in questa pagina, ma il salvataggio automatico "
+            "nel tuo account non è riuscito: premi SALVA SESSIONE appena possibile."
+        )
+    return salvato
+
+
 def sezioni_mancanti_per_esportazione(sezioni, genere):
     """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
     mancanti = []
@@ -3786,6 +3817,17 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
 **来源、编辑与朗读。** 前期研究会建立内部概念图，正文会以新的结构和表述创作。专业编辑器一次编辑一个部分，预览读取整个项目，语音阅读器可选择起点、播放、暂停和继续。发布前请始终检查最终文件。""",
     }
+    avviso_salvataggio_ia = {
+        "Italiano": "🛡️ **Protezione del lavoro pagato:** ogni contenuto creato o rielaborato con l’IA viene salvato automaticamente nel tuo account dopo una generazione riuscita. **SALVA SESSIONE** resta utile per conservare anche modifiche manuali, immagini o altre modifiche fatte senza IA.",
+        "English": "🛡️ **Protection for paid work:** every AI-created or AI-reworked item is automatically saved to your account after a successful generation. **SAVE SESSION** remains useful for manual edits, images and changes made without AI.",
+        "Español": "🛡️ **Protección del trabajo pagado:** cada contenido creado o reelaborado con IA se guarda automáticamente en tu cuenta tras una generación correcta. **GUARDAR SESIÓN** sigue siendo útil para cambios manuales, imágenes y modificaciones sin IA.",
+        "Français": "🛡️ **Protection du travail payé :** chaque contenu créé ou réécrit avec l’IA est enregistré automatiquement dans votre compte après une génération réussie. **SAUVEGARDER LA SESSION** reste utile pour les modifications manuelles, images et changements sans IA.",
+        "Deutsch": "🛡️ **Schutz bezahlter Arbeit:** Jeder mit KI erstellte oder überarbeitete Inhalt wird nach erfolgreicher Generierung automatisch im Konto gespeichert. **SITZUNG SPEICHERN** bleibt für manuelle Änderungen, Bilder und Änderungen ohne KI wichtig.",
+        "Română": "🛡️ **Protecția muncii plătite:** fiecare conținut creat sau rescris cu IA se salvează automat în cont după o generare reușită. **SALVEAZĂ SESIUNEA** rămâne util pentru modificări manuale, imagini și schimbări fără IA.",
+        "Русский": "🛡️ **Защита оплаченной работы:** каждый созданный или переработанный ИИ материал автоматически сохраняется в аккаунте после успешной генерации. **СОХРАНИТЬ СЕССИЮ** по-прежнему нужен для ручных правок, изображений и изменений без ИИ.",
+        "العربية": "🛡️ **حماية العمل المدفوع:** يُحفظ كل محتوى تم إنشاؤه أو إعادة صياغته بالذكاء الاصطناعي تلقائياً في حسابك بعد نجاح العملية. يظل **حفظ الجلسة** مفيداً للتعديلات اليدوية والصور والتغييرات دون الذكاء الاصطناعي.",
+        "中文": "🛡️ **已付费内容保护：** 每次 AI 成功生成或改写的内容都会自动保存到你的账户。**保存会话** 仍适用于手动修改、图片和未使用 AI 的其他变更。",
+    }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
@@ -3794,6 +3836,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.markdown(testo_guida)
         st.divider()
         st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
+        st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
         etichette_prova_notifiche = {
             "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
             "Français": "🔔 TESTER LES NOTIFICATIONS", "Deutsch": "🔔 BENACHRICHTIGUNGEN TESTEN", "Română": "🔔 TESTEAZĂ NOTIFICĂRILE",
@@ -4330,7 +4373,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
                     st.session_state["indice_raw"] = indice_generato
-                    sync_capitoli(); salva_stesura_immediata(opzioni_editor); st.rerun()
+                    sync_capitoli(); salva_stesura_generata_in_cloud(opzioni_editor, "indice generato"); st.rerun()
                 else:
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
                     st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
@@ -4501,10 +4544,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         ))
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
-                        # Ogni sezione viene confermata prima del rerun: se il
-                        # browser ricarica o Streamlit riavvia la sessione, le
-                        # sezioni generate in precedenza restano intatte.
-                        salva_stesura_immediata(opzioni_editor)
+                        # Ogni sezione generata e addebitata viene confermata
+                        # nel cloud prima del rerun: una ricarica del browser
+                        # o un riavvio Streamlit non fa perdere il lavoro.
+                        salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
                         st.rerun()
                     except Exception as exc:
                         st.session_state["job_scrittura_attivo"] = False
@@ -4667,7 +4710,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         if errori:
                             messaggio += " Alcune sezioni non sono state generate; riprova solo quelle indicate."
                         if completati:
-                            salva_stesura_immediata(opzioni_editor)
+                            salva_stesura_generata_in_cloud(opzioni_editor, "capitolo generato")
                             st.session_state["messaggio_stesura_sottocapitoli"] = {
                                 "testo": messaggio,
                                 "errori": bool(errori),
@@ -4709,8 +4752,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
                             val_genere, val_goal, lingua_sel, val_lunghezza
                         ))
-                        salva_stesura_immediata(opzioni_editor)
-                        st.session_state["messaggio_stesura_sezione"] = f"Sezione salvata: {sez_scelta}."
+                        salvata_nel_cloud = salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
+                        st.session_state["messaggio_stesura_sezione"] = (
+                            f"Sezione salvata nel tuo account: {sez_scelta}."
+                            if salvata_nel_cloud else
+                            f"Sezione creata: {sez_scelta}. Salvataggio nel tuo account da riprovare con SALVA SESSIONE."
+                        )
                         # Ricrea l'interfaccia dopo il salvataggio: il pulsante
                         # resta subito disponibile per la sezione selezionata.
                         st.rerun()
@@ -4730,7 +4777,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         scrivi_sezione_memorizzata(sez_scelta, pulisci_testo_editoriale(
                             chiedi_gpt(prompt_rigenerazione, S_PROMPT, max_completion_tokens=limite_output)
                         ))
-                        salva_stesura_immediata(opzioni_editor)
+                        salva_stesura_generata_in_cloud(opzioni_editor, "sezione rielaborata")
                         st.rerun()
             with c3:
                 if pulsante_con_preventivo(f"quiz_{k_sessione}", "🧠 QUIZ", CREDIT_COSTS["scrittura_sezione"],
@@ -4739,7 +4786,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         with st.spinner("Generazione Quiz didattico..."):
                             res_q = chiedi_gpt(f"Crea quiz di 10 domande in lingua {lingua_sel} dando del {val_pov} al lettore su:\n{st.session_state[k_sessione]}", "Learning Expert.")
                             scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\nTEST DI VALUTAZIONE\n\n" + pulisci_testo_editoriale(res_q))
-                            salva_stesura_immediata(opzioni_editor); st.rerun()
+                            salva_stesura_generata_in_cloud(opzioni_editor, "quiz generato"); st.rerun()
 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE ESEMPI ---
                 trad_esempi = {
@@ -4774,7 +4821,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             res_e = chiedi_gpt(p_esempi, f"Sei un autorevole esperto in {val_genere} e scrittore in lingua {lingua_sel}.")
                             scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\n{pulisci_testo_editoriale(t_tit_ese)}\n\n" + pulisci_testo_editoriale(res_e))
-                            salva_stesura_immediata(opzioni_editor)
+                            salva_stesura_generata_in_cloud(opzioni_editor, "esempi generati")
                             st.rerun()
 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE RICETTE ---
@@ -4812,7 +4859,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             
                             res_r = chiedi_gpt(p_ricette, f"Sei un autorevole Chef stellato e scrittore di ricettari in lingua {lingua_sel}.", amount=CREDIT_COSTS["ricette_dieci"])
                             scrivi_sezione_memorizzata(sez_scelta, st.session_state[k_sessione] + f"\n\n{pulisci_testo_editoriale(t_tit_ric)}\n\n" + pulisci_testo_editoriale(res_r))
-                            salva_stesura_immediata(opzioni_editor)
+                            salva_stesura_generata_in_cloud(opzioni_editor, "ricette generate")
                             st.rerun()
 
             st.divider()
@@ -5141,7 +5188,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             int(posizione / len(sezioni_da_rielaborare) * 100),
                             text=f"Rielaborazione originalità: {posizione}/{len(sezioni_da_rielaborare)} sezioni"
                         )
-                    salva_stesura_immediata(opzioni_editor)
+                    salva_stesura_generata_in_cloud(opzioni_editor, "sezioni rielaborate per originalità")
                     # Il confronto con le fonti caricate è gratuito: viene
                     # rieseguito subito sulla nuova versione. I report web,
                     # invece, restano correttamente da rinnovare con il pulsante
