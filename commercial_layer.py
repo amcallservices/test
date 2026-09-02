@@ -45,11 +45,11 @@ CREDIT_COSTS = {
     "copyright_lotto_revisione_gpt54": 2,
 }
 
-# DeepSeek V4 Pro viene conteggiato in mezzi-crediti interni: il saldo
-# mostrato all'utente resta sempre espresso in crediti interi. Due unità
-# equivalgono a un credito. In questo modo una sezione DeepSeek costa davvero
-# mezzo credito senza decimali, anche se l'utente esce e rientra nell'app.
-DEEPSEEK_UNITI_PER_CREDITO = 2
+# DeepSeek V4 Pro viene conteggiato in terzi di credito interni: il saldo
+# mostrato all'utente resta sempre espresso in crediti interi. Tre unità
+# equivalgono a un credito. Quindi un'azione DeepSeek costa un terzo della
+# corrispondente azione GPT, senza usare decimali visibili all'utente.
+DEEPSEEK_UNITI_PER_CREDITO = 3
 
 
 def _provider_ia_corrente() -> str:
@@ -64,30 +64,31 @@ def usa_deepseek() -> bool:
 def _unita_deepseek(reason: str, amount: int) -> int:
     """Converte il tariffario GPT nell'equivalente DeepSeek Pro approvato.
 
-    Le unità dispari sono le operazioni a mezzo credito (una sezione, un
-    blocco modificato o uno screening copyright); la parte residua viene
+    Ogni unità è un terzo di credito: una sezione, un controllo leggero o un
+    blocco modificato equivalgono a un terzo del costo GPT. La parte residua viene
     custodita nel profilo dell'utente e non si perde al logout.
     """
     amount = max(1, int(amount or 1))
     tariffe = {
-        "ricerca_preliminare_indice": 2,          # 1 credito
-        "genera_indice_controllato": 2,           # 1 credito
-        "verifica_fatti": 2,                      # 1 credito
-        "audit_fatti": 2,                         # 1 credito
-        "audit_editoriale": 2,                    # 1 credito
-        "controllo_coerenza": 6 if amount >= 10 else amount,
-        "report_sintattico": 2,                   # 1 credito
-        "metadati_kdp": 2,                        # 1 credito
-        "verifica_originalita_copyright_web": 2,  # 1 credito
-        "verifica_copyright_web_completa": 1,     # 1 credito ogni 2 lotti
-        "verifica_copyright_web_revisione_gpt54": 2,
-        "generazione_immagine": amount * DEEPSEEK_UNITI_PER_CREDITO,
+        "ricerca_preliminare_indice": 2,          # 2/3 di credito
+        "genera_indice_controllato": 3,           # 1 credito; ricerca + indice = 5 unità
+        "voto_indice": 1,
+        "verifica_fatti": 1,                      # controllo editoriale locale
+        "audit_fatti": 1,
+        "audit_editoriale": 1,
+        "controllo_coerenza": amount,
+        "report_sintattico": 1,
+        "metadati_kdp": 1,
+        "verifica_originalita_copyright_web": 1,  # non usata con DeepSeek
+        "verifica_copyright_web_completa": 1,
+        "verifica_copyright_web_revisione_gpt54": 1,
+        "generazione_immagine": amount,           # non usata con DeepSeek
     }
     if reason == "generazione_testo":
-        # Sezioni, quiz ed esempi: 1 credito ogni 2 richieste. Le dieci
-        # ricette hanno una tariffa dedicata di 4 crediti.
-        return 8 if amount >= CREDIT_COSTS["ricette_dieci"] else 1
-    return int(tariffe.get(reason, amount * DEEPSEEK_UNITI_PER_CREDITO))
+        # Sezioni, quiz ed esempi: una unità ciascuno. Le dieci ricette
+        # richiedono dieci unità, cioè circa 4 crediti DeepSeek.
+        return 10 if amount >= CREDIT_COSTS["ricette_dieci"] else max(1, amount)
+    return int(tariffe.get(reason, amount))
 # Elenco configurato esclusivamente nei Secrets di Streamlit, per esempio:
 # ADMIN_EMAILS = "nome@dominio.it, secondo@dominio.it"
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
@@ -174,6 +175,30 @@ PACKAGE_HOME_GUIDE = {
         "ideal": "Ideale per: professionisti, scuole e cataloghi di più libri.",
         "estimate": "Stima prudente: fino a 15 libri standard oppure fino a 20 Test Prep completi.",
     },
+}
+
+# Preventivi prudenti per un libro standard da circa 80 sezioni, con indice,
+# voto, controllo coerenza e metadati. GPT richiede circa 97 crediti; DeepSeek
+# applica il rapporto 1:3 e richiede circa 33 crediti. Immagini, copyright web,
+# rigenerazioni e funzioni extra restano esclusi dalla stima.
+PACKAGE_ENGINE_BOOKS = {
+    "prova_15": (0, 0),
+    "base_150": (1, 4),
+    "creator_375": (3, 11),
+    "studio_750": (7, 22),
+    "professionale_1500": (15, 45),
+}
+
+HOME_ENGINE_ESTIMATE_COPY = {
+    "Italiano": ("libri standard", "GPT-5.4 / DeepSeek: prova indice e prime sezioni.", "Stima prudente: libro standard di circa 80 sezioni con indice, voto, controllo coerenza e metadati. Rigenerazioni, immagini, verifica copyright web e strumenti aggiuntivi possono aumentare il consumo."),
+    "English": ("standard books", "GPT-5.4 / DeepSeek: try the outline and first sections.", "Conservative estimate: a standard book of about 80 sections with outline, score, coherence check and metadata. Regenerations, images, web copyright checks and extra tools may increase consumption."),
+    "Español": ("libros estándar", "GPT-5.4 / DeepSeek: prueba el índice y las primeras secciones.", "Estimación prudente: libro estándar de unas 80 secciones con índice, evaluación, control de coherencia y metadatos. Las regeneraciones, imágenes y herramientas adicionales pueden aumentar el consumo."),
+    "Français": ("livres standard", "GPT-5.4 / DeepSeek : essayez le plan et les premières sections.", "Estimation prudente : livre standard d'environ 80 sections avec plan, évaluation, contrôle de cohérence et métadonnées. Les régénérations, images et outils supplémentaires peuvent augmenter la consommation."),
+    "Deutsch": ("Standardbücher", "GPT-5.4 / DeepSeek: Gliederung und erste Abschnitte ausprobieren.", "Vorsichtige Schätzung: Standardbuch mit etwa 80 Abschnitten inklusive Gliederung, Bewertung, Kohärenzprüfung und Metadaten. Regenerierungen, Bilder und Zusatzwerkzeuge können den Verbrauch erhöhen."),
+    "Română": ("cărți standard", "GPT-5.4 / DeepSeek: testează cuprinsul și primele secțiuni.", "Estimare prudentă: carte standard de circa 80 de secțiuni cu cuprins, evaluare, control de coerență și metadate. Regenerările, imaginile și instrumentele suplimentare pot crește consumul."),
+    "Русский": ("стандартных книг", "GPT-5.4 / DeepSeek: попробуйте оглавление и первые разделы.", "Осторожная оценка: стандартная книга примерно из 80 разделов с оглавлением, оценкой, проверкой связности и метаданными. Повторные генерации, изображения и дополнительные инструменты могут увеличить расход."),
+    "العربية": ("كتب قياسية", "GPT-5.4 / DeepSeek: جرّب الفهرس والأقسام الأولى.", "تقدير متحفظ: كتاب قياسي من نحو 80 قسماً مع الفهرس والتقييم وفحص الاتساق والبيانات الوصفية. قد تزيد إعادة التوليد والصور والأدوات الإضافية من الاستهلاك."),
+    "中文": ("标准图书", "GPT-5.4 / DeepSeek：可试用目录和前几节。", "保守估算：约 80 节的标准图书，含目录、评估、一致性检查和元数据。重新生成、图片和附加工具可能增加消耗。"),
 }
 
 CONTACT_LABELS = {
@@ -739,15 +764,15 @@ def _render_password_recovery() -> bool:
 
 
 HOME_AI_ENGINES_COPY = {
-    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "GPT-5.4 · OpenAI", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web, immagini e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 5 crediti · Coerenza completa: 10 crediti.", "DeepSeek V4 Pro", "Cervello autonomo per indice, fonti caricate, scrittura e controlli editoriali, con consumo più leggero.", "Scrittura: 1 credito ogni 2 operazioni · Indice completo: 2 crediti · Coerenza completa: 3 crediti.", "Ricerca web, verifica copyright web e immagini sono disponibili con GPT, per mantenere i due cervelli separati."),
-    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "GPT-5.4 · OpenAI", "The complete brain: writing, web research, sources, web copyright checks, images and review tools.", "Writing: 1 credit per operation · Full outline: 5 credits · Full coherence check: 10 credits.", "DeepSeek V4 Pro", "An independent brain for outlines, uploaded sources, writing and editorial checks, with lower consumption.", "Writing: 1 credit every 2 operations · Full outline: 2 credits · Full coherence check: 3 credits.", "Web research, web copyright checks and images are available with GPT, keeping the two brains separate."),
-    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "GPT-5.4 · OpenAI", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web, imágenes y revisión.", "Redacción: 1 crédito por operación · Índice completo: 5 créditos · Coherencia completa: 10 créditos.", "DeepSeek V4 Pro", "Cerebro independiente para índices, fuentes cargadas, redacción y controles editoriales, con menor consumo.", "Redacción: 1 crédito cada 2 operaciones · Índice completo: 2 créditos · Coherencia completa: 3 créditos.", "La búsqueda web, el control de copyright web y las imágenes están disponibles con GPT."),
-    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "GPT-5.4 · OpenAI", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web, images et révision.", "Rédaction : 1 crédit par opération · Plan complet : 5 crédits · Cohérence complète : 10 crédits.", "DeepSeek V4 Pro", "Cerveau indépendant pour plans, sources importées, rédaction et contrôles éditoriaux, avec une consommation réduite.", "Rédaction : 1 crédit toutes les 2 opérations · Plan complet : 2 crédits · Cohérence complète : 3 crédits.", "La recherche web, le contrôle de copyright web et les images sont disponibles avec GPT."),
-    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "GPT-5.4 · OpenAI", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung, Bilder und Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 5 Credits · Kohärenzprüfung: 10 Credits.", "DeepSeek V4 Pro", "Eigenständiges Gehirn für Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen mit geringerem Verbrauch.", "Schreiben: 1 Credit je 2 Vorgänge · Vollständige Gliederung: 2 Credits · Kohärenzprüfung: 3 Credits.", "Webrecherche, Web-Urheberrechtsprüfung und Bilder stehen mit GPT zur Verfügung."),
-    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "GPT-5.4 · OpenAI", "Creierul complet: scriere, cercetare web, surse, control copyright web, imagini și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 5 credite · Coerență completă: 10 credite.", "DeepSeek V4 Pro", "Creier independent pentru cuprins, surse încărcate, scriere și controale editoriale, cu consum mai mic.", "Scriere: 1 credit la 2 operațiuni · Cuprins complet: 2 credite · Coerență: 3 credite.", "Cercetarea web, controlul copyright web și imaginile sunt disponibile cu GPT."),
-    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "GPT-5.4 · OpenAI", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав, изображения и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 5 кредитов · Полная проверка: 10 кредитов.", "DeepSeek V4 Pro", "Отдельный движок для оглавления, загруженных источников, текста и редакторских проверок с меньшим расходом.", "Текст: 1 кредит за 2 операции · Полное оглавление: 2 кредита · Проверка: 3 кредита.", "Веб-поиск, веб-проверка авторских прав и изображения доступны с GPT."),
-    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "GPT-5.4 · OpenAI", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب وصور ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 5 أرصدة · فحص الاتساق: 10 أرصدة.", "DeepSeek V4 Pro", "عقل مستقل للفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية باستهلاك أقل.", "الكتابة: رصيد واحد لكل عمليتين · الفهرس: رصيدان · فحص الاتساق: 3 أرصدة.", "البحث على الويب وفحص حقوق الويب والصور متاحة مع GPT."),
-    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查、图片和编辑检查。", "写作：每次操作 1 积分 · 完整目录：5 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，用于目录、上传资料、写作和编辑检查，消耗更低。", "写作：每 2 次操作 1 积分 · 完整目录：2 积分 · 一致性检查：3 积分。", "网页研究、网页版权检查和图片功能由 GPT 提供。"),
+    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "GPT-5.4 · OpenAI", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web, immagini e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 5 crediti · Coerenza completa: 10 crediti.", "DeepSeek V4 Pro", "Cervello autonomo per ricerca web con fonti visibili, indice, fonti caricate, scrittura e controlli editoriali.", "Rapporto 1:3 con GPT · Scrittura: 1 credito ogni 3 operazioni · Ricerca e indice: circa 2 crediti.", "La verifica copyright sul web e le immagini restano disponibili con GPT, per mantenere i due cervelli separati."),
+    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "GPT-5.4 · OpenAI", "The complete brain: writing, web research, sources, web copyright checks, images and review tools.", "Writing: 1 credit per operation · Full outline: 5 credits · Full coherence check: 10 credits.", "DeepSeek V4 Pro", "An independent brain for web research with visible sources, outlines, uploaded sources, writing and editorial checks.", "1:3 ratio with GPT · Writing: 1 credit every 3 operations · Research and outline: about 2 credits.", "Web copyright checks and images remain available with GPT, keeping the two brains separate."),
+    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "GPT-5.4 · OpenAI", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web, imágenes y revisión.", "Redacción: 1 crédito por operación · Índice completo: 5 créditos · Coherencia completa: 10 créditos.", "DeepSeek V4 Pro", "Cerebro independiente para búsqueda web con fuentes visibles, índices, fuentes cargadas, redacción y controles editoriales.", "Relación 1:3 con GPT · Redacción: 1 crédito cada 3 operaciones · Búsqueda e índice: unos 2 créditos.", "El control de copyright web y las imágenes siguen disponibles con GPT."),
+    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "GPT-5.4 · OpenAI", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web, images et révision.", "Rédaction : 1 crédit par opération · Plan complet : 5 crédits · Cohérence complète : 10 crédits.", "DeepSeek V4 Pro", "Cerveau indépendant pour recherche web avec sources visibles, plans, sources importées, rédaction et contrôles éditoriaux.", "Rapport 1:3 avec GPT · Rédaction : 1 crédit toutes les 3 opérations · Recherche et plan : environ 2 crédits.", "Le contrôle de copyright web et les images restent disponibles avec GPT."),
+    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "GPT-5.4 · OpenAI", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung, Bilder und Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 5 Credits · Kohärenzprüfung: 10 Credits.", "DeepSeek V4 Pro", "Eigenständiges Gehirn für Webrecherche mit sichtbaren Quellen, Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen.", "Verhältnis 1:3 zu GPT · Schreiben: 1 Credit je 3 Vorgänge · Recherche und Gliederung: etwa 2 Credits.", "Web-Urheberrechtsprüfung und Bilder bleiben mit GPT verfügbar."),
+    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "GPT-5.4 · OpenAI", "Creierul complet: scriere, cercetare web, surse, control copyright web, imagini și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 5 credite · Coerență completă: 10 credite.", "DeepSeek V4 Pro", "Creier independent pentru cercetare web cu surse vizibile, cuprins, surse încărcate, scriere și controale editoriale.", "Raport 1:3 cu GPT · Scriere: 1 credit la 3 operațiuni · Cercetare și cuprins: circa 2 credite.", "Controlul copyright web și imaginile rămân disponibile cu GPT."),
+    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "GPT-5.4 · OpenAI", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав, изображения и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 5 кредитов · Полная проверка: 10 кредитов.", "DeepSeek V4 Pro", "Отдельный движок для веб-поиска с видимыми источниками, оглавления, загруженных источников, текста и редакторских проверок.", "Соотношение 1:3 с GPT · Текст: 1 кредит за 3 операции · Поиск и оглавление: около 2 кредитов.", "Веб-проверка авторских прав и изображения остаются доступны с GPT."),
+    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "GPT-5.4 · OpenAI", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب وصور ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 5 أرصدة · فحص الاتساق: 10 أرصدة.", "DeepSeek V4 Pro", "عقل مستقل للبحث على الويب مع مصادر ظاهرة، والفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية.", "نسبة 1:3 مع GPT · الكتابة: رصيد واحد لكل 3 عمليات · البحث والفهرس: نحو رصيدين.", "فحص حقوق الويب والصور متاحان مع GPT."),
+    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查、图片和编辑检查。", "写作：每次操作 1 积分 · 完整目录：5 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 研究和目录：约 2 积分。", "网页版权检查和图片功能仍由 GPT 提供。"),
 }
 
 
@@ -961,15 +986,27 @@ def _landing_page() -> None:
     )
     price_columns = st.columns(len(PACKAGES))
     nomi_pacchetti = HOME_PACKAGE_NAMES[home_language]
-    for posizione, (column, (_, package)) in enumerate(zip(price_columns, PACKAGES.items())):
+    stima_etichetta, stima_prova, nota_stima = HOME_ENGINE_ESTIMATE_COPY[home_language]
+    for posizione, (column, (package_key, package)) in enumerate(zip(price_columns, PACKAGES.items())):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
+        stima_gpt, stima_deepseek = PACKAGE_ENGINE_BOOKS[package_key]
+        stima_cervelli = (
+            stima_prova if not stima_gpt else
+            f"🧠 GPT-5.4: circa {stima_gpt} {stima_etichetta}<br>⚡ DeepSeek: circa {stima_deepseek} {stima_etichetta}"
+        )
         with column:
             st.markdown(
                 f"<div class='ss-card'><h3>{nomi_pacchetti[posizione]}</h3>"
                 f"<div class='ss-price'>{price}</div><p>{package['credits']} {C['credit_word']}</p>"
-                f"<p>{C['package_hints'][posizione]}</p></div>",
+                f"<p>{C['package_hints'][posizione]}</p><p><strong>{stima_cervelli}</strong></p></div>",
                 unsafe_allow_html=True,
             )
+
+    st.markdown(
+        f"<p class='ss-muted' dir='{direzione_home}'>"
+        f"{nota_stima}</p>",
+        unsafe_allow_html=True,
+    )
 
     faq_title, faq_subtitle, faq_items = HOME_FAQ_COPY[home_language]
     faq_items = [*faq_items, *HOME_FAQ_EXTRA[home_language]]
