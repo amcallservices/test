@@ -3162,6 +3162,37 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
                 del st.session_state[key]
         st.rerun()
 
+    etichette_aggiorna = {
+        "Italiano": ("🔄 AGGIORNA PAGINA", "Pagina aggiornata: cache e messaggi temporanei ripuliti. Il progetto resta invariato."),
+        "English": ("🔄 REFRESH PAGE", "Page refreshed: cache and temporary messages cleared. Your project is unchanged."),
+        "Español": ("🔄 ACTUALIZAR PÁGINA", "Página actualizada: caché y mensajes temporales eliminados. El proyecto no cambia."),
+        "Français": ("🔄 ACTUALISER LA PAGE", "Page actualisée : cache et messages temporaires effacés. Le projet reste inchangé."),
+        "Deutsch": ("🔄 SEITE AKTUALISIEREN", "Seite aktualisiert: Cache und temporäre Meldungen wurden gelöscht. Das Projekt bleibt unverändert."),
+        "Română": ("🔄 REÎNCARCĂ PAGINA", "Pagina a fost reîncărcată: cache-ul și mesajele temporare au fost șterse. Proiectul rămâne neschimbat."),
+    }
+    etichetta_aggiorna, messaggio_aggiorna = etichette_aggiorna.get(
+        lingua_sel, etichette_aggiorna["Italiano"]
+    )
+    if st.button(etichetta_aggiorna, use_container_width=True, key="aggiorna_pagina_sicura"):
+        # Pulizia sicura: non tocca sidebar, indice, memoria delle sezioni,
+        # crediti, fonti o coda del libro. Rimuove soltanto cache e messaggi
+        # transitori, così un errore già visualizzato non resta nella pagina.
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
+        for chiave_temporanea in (
+            "job_scrittura_errore", "messaggio_stesura_sezione",
+            "messaggio_stesura_sottocapitoli", "dettaglio_errori_sottocapitoli",
+            "preventivo_crediti_attesa", "azione_crediti_confermata",
+        ):
+            st.session_state.pop(chiave_temporanea, None)
+        st.session_state["messaggio_aggiornamento_pagina"] = messaggio_aggiorna
+        st.rerun()
+
+    if st.session_state.pop("messaggio_aggiornamento_pagina", ""):
+        st.success(messaggio_aggiorna)
+
     if st.button("💾 SALVA SESSIONE", type="primary", use_container_width=True, key="salva_sessione_manuale"):
         # Il cloud viene aggiornato esclusivamente con questo comando: durante
         # la stesura normale i testi restano nella memoria della pagina.
