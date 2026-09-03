@@ -4786,6 +4786,29 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
+    # Una correzione preparata dal controllo finale deve arrivare davvero
+    # all'editor. Streamlit non espone un'API Python per attivare una tab: il
+    # piccolo script prova il click visivo e, se il browser lo limita, il
+    # messaggio nell'editor indica comunque la sezione già predisposta.
+    if st.session_state.pop("apri_tab_scrittura_da_correzione", False):
+        components.html(
+            """
+            <script>
+            setTimeout(function () {
+              try {
+                const schede = Array.from(window.parent.document.querySelectorAll('[role="tab"]'));
+                const scrittura = schede.find(function (scheda) {
+                  const testo = (scheda.innerText || '').toLowerCase();
+                  return testo.includes('scrittura') || testo.includes('write');
+                });
+                if (scrittura) scrittura.click();
+              } catch (errore) { /* il messaggio di conferma resta il fallback */ }
+            }, 250);
+            </script>
+            """,
+            height=0,
+        )
+
     with tabs[0]:
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
@@ -5632,15 +5655,21 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # Il selettore ha una chiave esplicita e una callback: così il
             # testo della sezione scelta viene caricato dal progetto prima che
             # l'Editor di Testo Professionale sia disegnato.
-            correzione_preparata = st.session_state.pop("correzione_finale_da_preparare", None)
-            if correzione_preparata and correzione_preparata.get("sezione") in opzioni_editor:
-                sezione_da_correggere = correzione_preparata["sezione"]
-                st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_da_correggere
-                st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
-                st.session_state[f"mod_{chiave_sezione(sezione_da_correggere)}"] = correzione_preparata.get("istruzione", "")
-                st.session_state["messaggio_correzione_finale"] = (
-                    f"Sezione pronta nell'editor: {sezione_da_correggere}. Controlla l'istruzione e premi RIELABORA CON IA quando vuoi."
-                )
+            correzione_preparata = st.session_state.get("correzione_finale_da_preparare")
+            if correzione_preparata:
+                sezione_da_correggere = str(correzione_preparata.get("sezione", "")).strip()
+                if sezione_da_correggere in opzioni_editor:
+                    st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_da_correggere
+                    st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                    st.session_state[f"mod_{chiave_sezione(sezione_da_correggere)}"] = correzione_preparata.get("istruzione", "")
+                    st.session_state["messaggio_correzione_finale"] = (
+                        f"Sezione pronta nell'editor: {sezione_da_correggere}. Controlla l'istruzione e premi RIELABORA CON IA quando vuoi."
+                    )
+                    st.session_state.pop("correzione_finale_da_preparare", None)
+                else:
+                    st.session_state["messaggio_correzione_finale"] = (
+                        "La sezione segnalata non è presente nell'indice attuale: sincronizza l'indice e riprova."
+                    )
             if st.session_state.get(CHIAVE_SELETTORE_EDITOR) not in opzioni_editor:
                 st.session_state[CHIAVE_SELETTORE_EDITOR] = opzioni_editor[0]
             sez_scelta = st.selectbox(
@@ -6420,13 +6449,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             chiave_bottone = hashlib.sha256(sezione_problematiche.encode("utf-8")).hexdigest()[:12]
                             if st.button("✍️ PREPARA RIELABORAZIONE", key=f"prepara_correzione_{chiave_bottone}", use_container_width=True):
                                 st.session_state["correzione_finale_da_preparare"] = {
-                                    "sezione": sezione_problematiche,
+                                    "sezione": sezione_problematiche.strip(),
                                     "istruzione": (
                                         f"Correggi solo questa sezione perché il controllo finale segnala: {dettaglio_problema}. "
                                         "Mantieni titolo, stile, POV e coerenza con le altre sezioni. Aggiungi esclusivamente il contenuto concreto necessario; "
                                         "non ripetere né modificare il resto del libro."
                                     ),
                                 }
+                                st.session_state["apri_tab_scrittura_da_correzione"] = True
                                 st.rerun()
                 if esito_finale_export["prompt_correzione"]:
                     st.text_area(
