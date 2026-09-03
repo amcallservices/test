@@ -4309,11 +4309,60 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يحتفظ **GPT-5.4** بكل الوظائف وتسعيرة GPT. أما **DeepSeek V4 Pro** فينفذ وحده الفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل عمليتين، والفهرس الكامل رصيدين، وفحص الاتساق الأول 3، وعشر وصفات 4. البحث على الويب وفحص حقوق النشر على الويب والصور تتطلب GPT لتجنب الخلط بين المحركين.",
         "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 保留所有功能及 GPT 计费。**DeepSeek V4 Pro** 独立完成目录、已上传来源、写作和编辑检查：写作/测验/示例每 2 次操作消耗 1 积分，完整目录 2 积分，首次一致性检查 3 积分，10 道食谱 4 积分。网页搜索、网页版权检查和图片需要 GPT，以避免混用引擎。",
     }
+    percorso_rapido = {
+        "Italiano": """### ⚡ Percorso rapido in 4 passaggi
+**1. Configura** — compila la sidebar e scegli il Cervello AI.  
+**2. Progetta** — cerca le fonti se servono e genera l'indice; controllalo prima di scrivere.  
+**3. Scrivi e salva** — genera una sezione o l'intero libro; le sezioni AI sono protette, mentre le modifiche manuali richiedono **SALVA SESSIONE**.  
+**4. Controlla ed esporta** — usa Anteprima, completezza, controllo finale e poi Word, PDF o CSV.""",
+        "English": """### ⚡ Quick 4-step path
+**1. Configure** — complete the sidebar and choose the AI engine.  
+**2. Plan** — search sources when needed and generate the index; review it before writing.  
+**3. Write and save** — generate one section or the full book; AI sections are protected, while manual edits require **SAVE SESSION**.  
+**4. Review and export** — use Preview, completeness check, final review, then Word, PDF or CSV.""",
+        "Español": """### ⚡ Ruta rápida en 4 pasos
+**1. Configura** — completa la barra lateral y elige el motor de IA.  
+**2. Planifica** — busca fuentes si hace falta y genera el índice; revísalo antes de escribir.  
+**3. Escribe y guarda** — genera una sección o todo el libro; las secciones IA están protegidas y los cambios manuales requieren **GUARDAR SESIÓN**.  
+**4. Revisa y exporta** — usa Vista previa, control de completitud, control final y luego Word, PDF o CSV.""",
+        "Français": """### ⚡ Parcours rapide en 4 étapes
+**1. Configurez** — remplissez la barre latérale et choisissez le moteur IA.  
+**2. Planifiez** — recherchez des sources si nécessaire et générez l’index; vérifiez-le avant la rédaction.  
+**3. Rédigez et enregistrez** — générez une section ou le livre entier; les sections IA sont protégées, les modifications manuelles demandent **ENREGISTRER LA SESSION**.  
+**4. Vérifiez et exportez** — utilisez l’aperçu, le contrôle de complétude, le contrôle final puis Word, PDF ou CSV.""",
+        "Deutsch": """### ⚡ Schneller Ablauf in 4 Schritten
+**1. Konfigurieren** — Seitenleiste ausfüllen und KI-Engine wählen.  
+**2. Planen** — bei Bedarf Quellen suchen und Inhaltsverzeichnis erzeugen; vor dem Schreiben prüfen.  
+**3. Schreiben und speichern** — einen Abschnitt oder das ganze Buch erzeugen; KI-Abschnitte sind geschützt, manuelle Änderungen brauchen **SITZUNG SPEICHERN**.  
+**4. Prüfen und exportieren** — Vorschau, Vollständigkeitsprüfung und Endkontrolle nutzen, dann Word, PDF oder CSV.""",
+        "Română": """### ⚡ Parcurs rapid în 4 pași
+**1. Configurează** — completează bara laterală și alege motorul IA.  
+**2. Planifică** — caută surse când este nevoie și generează cuprinsul; verifică-l înainte de scriere.  
+**3. Scrie și salvează** — generează o secțiune sau cartea completă; secțiunile IA sunt protejate, iar modificările manuale cer **SALVEAZĂ SESIUNEA**.  
+**4. Verifică și exportă** — folosește previzualizarea, controlul de completitudine și controlul final, apoi Word, PDF sau CSV.""",
+        "Русский": """### ⚡ Быстрый путь из 4 шагов
+**1. Настройте** — заполните боковую панель и выберите ИИ-движок.  
+**2. Спланируйте** — при необходимости найдите источники и создайте оглавление; проверьте его перед написанием.  
+**3. Пишите и сохраняйте** — создайте раздел или всю книгу; ИИ-разделы защищены, ручные правки требуют **СОХРАНИТЬ СЕССИЮ**.  
+**4. Проверьте и экспортируйте** — используйте предпросмотр, проверку полноты, финальный контроль, затем Word, PDF или CSV.""",
+        "العربية": """### ⚡ مسار سريع من 4 خطوات
+**1. الإعداد** — أكمل الشريط الجانبي واختر محرك الذكاء الاصطناعي.  
+**2. التخطيط** — ابحث عن المصادر عند الحاجة وأنشئ الفهرس ثم راجعه قبل الكتابة.  
+**3. الكتابة والحفظ** — أنشئ قسماً أو الكتاب كاملاً؛ أقسام الذكاء الاصطناعي محمية بينما تتطلب التعديلات اليدوية **حفظ الجلسة**.  
+**4. المراجعة والتصدير** — استخدم المعاينة وفحص الاكتمال والتحكم النهائي ثم Word أو PDF أو CSV.""",
+        "中文": """### ⚡ 四步快速流程
+**1. 配置** — 填写侧边栏并选择 AI 引擎。  
+**2. 规划** — 需要时搜索来源并生成目录；写作前先检查目录。  
+**3. 写作并保存** — 生成单个部分或整本书；AI 生成内容受保护，手动修改需要点击 **保存会话**。  
+**4. 检查并导出** — 使用预览、完整性检查和最终检查，然后导出 Word、PDF 或 CSV。""",
+    }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
     with tabs[0]:
         st.subheader(titolo_guida)
+        st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
+        st.divider()
         st.markdown(testo_guida)
         st.divider()
         st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
@@ -5113,6 +5162,15 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # Il selettore ha una chiave esplicita e una callback: così il
             # testo della sezione scelta viene caricato dal progetto prima che
             # l'Editor di Testo Professionale sia disegnato.
+            correzione_preparata = st.session_state.pop("correzione_finale_da_preparare", None)
+            if correzione_preparata and correzione_preparata.get("sezione") in opzioni_editor:
+                sezione_da_correggere = correzione_preparata["sezione"]
+                st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_da_correggere
+                st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                st.session_state[f"mod_{chiave_sezione(sezione_da_correggere)}"] = correzione_preparata.get("istruzione", "")
+                st.session_state["messaggio_correzione_finale"] = (
+                    f"Sezione pronta nell'editor: {sezione_da_correggere}. Controlla l'istruzione e premi RIELABORA CON IA quando vuoi."
+                )
             if st.session_state.get(CHIAVE_SELETTORE_EDITOR) not in opzioni_editor:
                 st.session_state[CHIAVE_SELETTORE_EDITOR] = opzioni_editor[0]
             sez_scelta = st.selectbox(
@@ -5249,6 +5307,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             messaggio_stesura = st.session_state.pop("messaggio_stesura_sezione", "")
             if messaggio_stesura:
                 st.success(messaggio_stesura)
+            messaggio_correzione_finale = st.session_state.pop("messaggio_correzione_finale", "")
+            if messaggio_correzione_finale:
+                st.info(messaggio_correzione_finale)
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
@@ -5434,6 +5495,40 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.subheader(L["preview_tit"])
         sezioni_anteprima = elenco_sezioni_progetto(opzioni_editor)
         contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
+        parole_anteprima = sum(len(pulisci_testo_editoriale(testo).split()) for testo in contenuti_libro.values())
+        sezioni_con_testo = [s for s, testo in contenuti_libro.items() if pulisci_testo_editoriale(testo).strip()]
+        stima_pagine_6x9 = max(1, math.ceil(parole_anteprima / 275)) if parole_anteprima else 0
+        metrica_a, metrica_b, metrica_c = st.columns(3)
+        metrica_a.metric("Sezioni leggibili", len(sezioni_con_testo))
+        metrica_b.metric("Parole manoscritto", f"{parole_anteprima:,}".replace(",", "."))
+        metrica_c.metric("Pagine 6×9 stimate", stima_pagine_6x9)
+        st.caption("Stima orientativa basata su circa 275 parole per pagina 6×9; impaginazione, immagini e font possono modificarla.")
+
+        if sezioni_con_testo:
+            with st.expander("🧭 Indice cliccabile dell'anteprima", expanded=False):
+                collegamenti = []
+                for sezione in sezioni_con_testo:
+                    ancora = "preview_section_" + hashlib.sha256(sezione.encode("utf-8")).hexdigest()[:16]
+                    collegamenti.append(f"[{sezione}](#{ancora})")
+                st.markdown(" · ".join(collegamenti))
+            cerca_anteprima = st.text_input("🔎 Cerca nel manoscritto", key="cerca_nell_anteprima")
+            if cerca_anteprima.strip():
+                termine = cerca_anteprima.strip()
+                risultati_ricerca = []
+                for sezione in sezioni_con_testo:
+                    testo_sezione = pulisci_testo_editoriale(contenuti_libro.get(sezione, ""))
+                    posizione = testo_sezione.casefold().find(termine.casefold())
+                    if posizione >= 0:
+                        inizio = max(0, posizione - 75)
+                        fine = min(len(testo_sezione), posizione + len(termine) + 145)
+                        estratto = ("…" if inizio else "") + testo_sezione[inizio:fine].replace("\n", " ") + ("…" if fine < len(testo_sezione) else "")
+                        risultati_ricerca.append((sezione, estratto))
+                if risultati_ricerca:
+                    st.success(f"Trovati {len(risultati_ricerca)} risultati in {len({s for s, _ in risultati_ricerca})} sezioni.")
+                    for sezione, estratto in risultati_ricerca[:20]:
+                        st.markdown(f"**{sezione}** — {estratto}")
+                else:
+                    st.info("Nessun risultato nel manoscritto attualmente generato.")
 
         blocchi_lettore = [val_titolo]
         if val_autore:
@@ -5465,7 +5560,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         for s in sezioni_anteprima:
             testo_preview = pulisci_testo_editoriale(contenuti_libro.get(s, ""))
             if testo_preview:
-                html_p += f"<h2>{html.escape(s.upper())}</h2>"
+                ancora_anteprima = "preview_section_" + hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+                html_p += f"<h2 id='{ancora_anteprima}'>{html.escape(s.upper())}</h2>"
                 img = st.session_state.get("immagini_capitoli", {}).get(s)
                 if img:
                     img_b64 = base64.b64encode(img["bytes"]).decode("ascii")
@@ -5811,6 +5907,31 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.write("Problemi rilevati:")
                 for problema in esito_finale_export["problemi"][:15]:
                     st.write("- " + problema)
+                sezioni_da_correggere = [
+                    voce for voce in esito_finale_export["stati"]
+                    if voce.get("Stato") != "COMPLETA"
+                ]
+                if sezioni_da_correggere:
+                    st.markdown("#### Correggi una sezione dall'esito")
+                    st.caption("Prepara soltanto la sezione scelta nell'Editor professionale. Nessun testo viene modificato finché non premi RIELABORA CON IA.")
+                    for voce in sezioni_da_correggere:
+                        sezione_problematiche = voce.get("Sezione", "")
+                        dettaglio_problema = voce.get("Dettaglio", "problema da correggere")
+                        col_descrizione, col_azione = st.columns([3, 2])
+                        with col_descrizione:
+                            st.write(f"**{sezione_problematiche}** — {dettaglio_problema}")
+                        with col_azione:
+                            chiave_bottone = hashlib.sha256(sezione_problematiche.encode("utf-8")).hexdigest()[:12]
+                            if st.button("✍️ PREPARA RIELABORAZIONE", key=f"prepara_correzione_{chiave_bottone}", use_container_width=True):
+                                st.session_state["correzione_finale_da_preparare"] = {
+                                    "sezione": sezione_problematiche,
+                                    "istruzione": (
+                                        f"Correggi solo questa sezione perché il controllo finale segnala: {dettaglio_problema}. "
+                                        "Mantieni titolo, stile, POV e coerenza con le altre sezioni. Aggiungi esclusivamente il contenuto concreto necessario; "
+                                        "non ripetere né modificare il resto del libro."
+                                    ),
+                                }
+                                st.rerun()
                 if esito_finale_export["prompt_correzione"]:
                     st.text_area(
                         "Prompt pronti per Rigenera con AI (il software non modifica nulla automaticamente)",
