@@ -2755,10 +2755,20 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         tipo_sezione == "capitolo" and not capitolo_cornice
     )
     if genere in {"Manuale Tecnico", "Manuale Pratico"} and sezione_pratica:
-        ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+)", pulito))
-        ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore"))
-        if len(parole) < 260 or not ha_passaggi or not ha_verifica:
-            return "manuale troppo descrittivo: inserisci una procedura numerata, un controllo verificabile e un errore o limite concreto"
+        titolo_sezione = sezione.casefold()
+        # Non tutte le sezioni di un manuale sono procedure. Definizioni,
+        # norme, principi, ruoli e confini richiedono spiegazioni chiare e
+        # conseguenze pratiche, non una lista artificiale di passaggi.
+        sezione_concettuale = any(parola in titolo_sezione for parola in (
+            "definiz", "normativ", "norme", "legge", "giurid", "quadro", "princip", "fondament",
+            "contest", "ambito", "finalit", "obiettiv", "ruol", "responsabil", "terminolog",
+            "requisit", "criter", "limit", "confini", "introduzione",
+        ))
+        if not sezione_concettuale:
+            ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+)", pulito))
+            ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore"))
+            if len(parole) < 260 or not ha_passaggi or not ha_verifica:
+                return "manuale operativo troppo descrittivo: inserisci una procedura numerata, un controllo verificabile e un errore o limite concreto"
 
     formule_generiche = (
         "è fondamentale", "e fondamentale", "è cruciale", "e cruciale", "in modo efficace",
