@@ -775,6 +775,20 @@ HOME_AI_ENGINES_COPY = {
     "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查、图片和编辑检查。", "写作：每次操作 1 积分 · 完整目录：5 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 研究和目录：约 2 积分。", "网页版权检查和图片功能仍由 GPT 提供。"),
 }
 
+# Menu di orientamento della home: porta alle sezioni già presenti senza
+# introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
+HOME_NAVIGATION = {
+    "Italiano": ("Percorso", "Funzioni", "Due cervelli", "Crediti", "FAQ"),
+    "English": ("How it works", "Features", "Two engines", "Credits", "FAQ"),
+    "Español": ("Cómo funciona", "Funciones", "Dos motores", "Créditos", "FAQ"),
+    "Français": ("Parcours", "Fonctions", "Deux moteurs", "Crédits", "FAQ"),
+    "Deutsch": ("Ablauf", "Funktionen", "Zwei Engines", "Credits", "FAQ"),
+    "Română": ("Parcurs", "Funcții", "Două motoare", "Credite", "FAQ"),
+    "Русский": ("Как это работает", "Функции", "Два движка", "Кредиты", "FAQ"),
+    "العربية": ("المسار", "الوظائف", "محركان", "الأرصدة", "الأسئلة"),
+    "中文": ("使用流程", "功能", "双引擎", "积分", "常见问题"),
+}
+
 
 def _landing_page() -> None:
     """Pagina di ingresso pubblica: compare prima dell'accesso."""
@@ -783,7 +797,7 @@ def _landing_page() -> None:
         <style>
           .stApp, [data-testid="stAppViewContainer"] {background:radial-gradient(circle at 8% 13%,rgba(147,197,253,.47),transparent 28%),radial-gradient(circle at 90% 8%,rgba(186,230,253,.62),transparent 30%),radial-gradient(circle at 76% 78%,rgba(219,234,254,.8),transparent 36%),linear-gradient(135deg,#edf7ff 0%,#f8fcff 47%,#e2f2ff 100%) !important; color:#102a43}
           section.main > div.block-container {max-width:1500px !important; padding:1.05rem 2.4rem 3.5rem !important}
-          .ss-hero-copy {padding:4.15rem .7rem 1.5rem 1.3rem; color:#102a43}
+          .ss-hero-copy {padding:2.45rem .7rem .65rem 1.3rem; color:#102a43}
           .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
@@ -794,10 +808,15 @@ def _landing_page() -> None:
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
           .ss-community-button {display:flex; align-items:center; justify-content:center; min-height:3.35rem; width:100%;
-            margin-top:.75rem; padding:.7rem 1rem; box-sizing:border-box; border-radius:11px; background:#cf3345;
+            margin-top:.75rem; padding:.7rem 1rem; box-sizing:border-box; border-radius:11px; background:#174a73;
             color:#fff !important; font-size:1.08rem; font-weight:800; text-decoration:none !important;
-            box-shadow:0 6px 14px rgba(207,51,69,.22); transition:background .18s ease, transform .18s ease}
-          .ss-community-button:hover {background:#ad2435; color:#fff !important; transform:translateY(-1px)}
+            box-shadow:0 6px 14px rgba(23,74,115,.16); transition:background .18s ease, transform .18s ease}
+          .ss-community-button:hover {background:#102f4c; color:#fff !important; transform:translateY(-1px)}
+          .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
+            max-width:880px; margin:.35rem auto 1rem; padding:.42rem; border:1px solid rgba(191,219,240,.9); border-radius:999px;
+            background:rgba(255,255,255,.86); box-shadow:0 7px 18px rgba(20,77,120,.10); backdrop-filter:blur(10px)}
+          .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
+            font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
@@ -805,6 +824,8 @@ def _landing_page() -> None:
           .ss-card {text-align:center}
           .ss-card h3 {margin:0 0 .34rem; color:#1269ae; font-size:1rem}
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
+          .ss-package-card {min-height:225px; padding:1.2rem .8rem}.ss-package-card p {margin:.32rem 0; line-height:1.42}
+          .ss-package-engine {display:block; margin-top:.58rem; padding-top:.52rem; border-top:1px solid #d9e5f0; color:#174a73; font-size:.78rem; line-height:1.45}
           .ss-price {font-size:1.35rem; font-weight:800; color:#1269ae; margin:.15rem 0}
           .ss-muted {color:#486581; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
           .ss-step {background:#fff; border:1px solid #d9e5f0; border-radius:13px; padding:1.15rem 1.05rem;
@@ -866,7 +887,7 @@ def _landing_page() -> None:
           .ss-ai-card h3 {margin:0 0 .5rem; color:#102a43; font-size:1.22rem}.ss-ai-card p {margin:.45rem 0; color:#486581; line-height:1.43}
           .ss-ai-card .ss-ai-cost {padding:.75rem; border-radius:10px; background:#eaf4fc; color:#1269ae; font-weight:800; font-size:.9rem}.ss-ai-note {max-width:890px; margin:-.8rem auto 1.65rem; color:#486581; font-size:.88rem; text-align:center}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -897,7 +918,16 @@ def _landing_page() -> None:
     H = HOME_COPY[home_language]
     C = HOME_BODY_COPY[home_language]
     A = HOME_AI_ENGINES_COPY[home_language]
+    N = HOME_NAVIGATION[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
+
+    st.markdown(
+        f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
+        <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
+        <a href='#ss-cervelli'>{N[2]}</a><a href='#ss-crediti'>{N[3]}</a><a href='#ss-faq'>{N[4]}</a>
+        </nav>""",
+        unsafe_allow_html=True,
+    )
 
     hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
     with hero_copy:
@@ -967,9 +997,9 @@ def _landing_page() -> None:
     # né il libro né i dati dell'account.
     # La FAQ viene mostrata una sola volta, in fondo alla home.
     corpo_home_senza_faq = C["body"].rsplit("<div class='ss-section'><h2>", 1)[0]
-    st.markdown(f"<div dir='{direzione_home}'>{corpo_home_senza_faq}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div id='ss-percorso' dir='{direzione_home}'>{corpo_home_senza_faq}</div>", unsafe_allow_html=True)
     st.markdown(
-        f"""<div class='ss-section' dir='{direzione_home}'><h2>{A[0]}</h2><p class='ss-muted'>{A[1]}</p></div>
+        f"""<div id='ss-cervelli' class='ss-section' dir='{direzione_home}'><h2>{A[0]}</h2><p class='ss-muted'>{A[1]}</p></div>
         <div class='ss-ai-grid' dir='{direzione_home}'>
           <div class='ss-ai-card'><h3>🧠 {A[2]}</h3><p>{A[3]}</p><p class='ss-ai-cost'>{A[4]}</p></div>
           <div class='ss-ai-card'><h3>⚡ {A[5]}</h3><p>{A[6]}</p><p class='ss-ai-cost'>{A[7]}</p></div>
@@ -977,11 +1007,11 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
     st.markdown(
-        f"<div dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
+        f"<div id='ss-funzioni' dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        f"<div class='ss-section'><h2>{C['packages']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
+        f"<div id='ss-crediti' class='ss-section'><h2>{C['packages']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
         unsafe_allow_html=True,
     )
     price_columns = st.columns(len(PACKAGES))
@@ -990,15 +1020,17 @@ def _landing_page() -> None:
     for posizione, (column, (package_key, package)) in enumerate(zip(price_columns, PACKAGES.items())):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
         stima_gpt, stima_deepseek = PACKAGE_ENGINE_BOOKS[package_key]
+        etichetta_gpt = "libro standard" if home_language == "Italiano" and stima_gpt == 1 else stima_etichetta
+        etichetta_deepseek = "libro standard" if home_language == "Italiano" and stima_deepseek == 1 else stima_etichetta
         stima_cervelli = (
             stima_prova if not stima_gpt else
-            f"🧠 GPT-5.4: circa {stima_gpt} {stima_etichetta}<br>⚡ DeepSeek: circa {stima_deepseek} {stima_etichetta}"
+            f"🧠 GPT-5.4: circa {stima_gpt} {etichetta_gpt}<br>⚡ DeepSeek: circa {stima_deepseek} {etichetta_deepseek}"
         )
         with column:
             st.markdown(
-                f"<div class='ss-card'><h3>{nomi_pacchetti[posizione]}</h3>"
+                f"<div class='ss-card ss-package-card'><h3>{nomi_pacchetti[posizione]}</h3>"
                 f"<div class='ss-price'>{price}</div><p>{package['credits']} {C['credit_word']}</p>"
-                f"<p>{C['package_hints'][posizione]}</p><p><strong>{stima_cervelli}</strong></p></div>",
+                f"<p>{C['package_hints'][posizione]}</p><span class='ss-package-engine'><strong>{stima_cervelli}</strong></span></div>",
                 unsafe_allow_html=True,
             )
 
@@ -1011,7 +1043,7 @@ def _landing_page() -> None:
     faq_title, faq_subtitle, faq_items = HOME_FAQ_COPY[home_language]
     faq_items = [*faq_items, *HOME_FAQ_EXTRA[home_language]]
     st.markdown(
-        f"<div class='ss-section' dir='{direzione_home}'><h2>{faq_title}</h2>"
+        f"<div id='ss-faq' class='ss-section' dir='{direzione_home}'><h2>{faq_title}</h2>"
         f"<p class='ss-muted'>{faq_subtitle}</p></div>",
         unsafe_allow_html=True,
     )
@@ -1515,7 +1547,7 @@ def _commerce_sidebar() -> None:
             "🔄 AGGIORNA SALDO CREDITI",
             key="commercial_refresh_credits",
             use_container_width=True,
-            type="primary",
+            type="secondary",
             help="Usalo dopo un acquisto completato in un'altra scheda.",
         )
         if is_admin:
