@@ -5465,21 +5465,63 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if pulsante_con_preventivo("scrivi_tutto_libro", "📚 SCRIVI TUTTO IL LIBRO", f"fino a {stima_libro}",
                                        f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati.",
                                        use_container_width=True):
-                da_generare = da_generare_libro
+                da_generare = list(da_generare_libro)
                 if not da_generare:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
-                    st.session_state["job_scrittura_coda"] = da_generare
-                    st.session_state["job_scrittura_totale"] = len(da_generare)
+                    # La Prefazione non passa più dalla normale coda: viene
+                    # generata, verificata e memorizzata qui, prima di ogni
+                    # possibile pausa. Così non può essere né saltata né
+                    # dichiarata "salvata" se il modello non ha prodotto testo.
                     st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(sezioni_intero_libro)
-                    # Fotografia dell'architettura usata dal job: anche se la
-                    # pagina si aggiorna o si mette in pausa, editor e
-                    # anteprima continueranno a conoscere tutte le sezioni.
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
-                    st.session_state["job_scrittura_attivo"] = True
-                    st.session_state["job_scrittura_pausa"] = False
                     st.session_state.pop("job_scrittura_errore", None)
-                    notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
+                    try:
+                        if L["preface"] in da_generare:
+                            with st.spinner("Preparazione e salvataggio della Prefazione..."):
+                                prompt_prefazione = crea_prompt_stesura_sezione(
+                                    L["preface"], st.session_state['indice_raw'], val_trama, val_genere,
+                                    val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                                    val_approfondimenti, val_lunghezza,
+                                )
+                                contenuto_prefazione = genera_contenuto_editoriale(
+                                    prompt_prefazione, S_PROMPT, L["preface"], st.session_state['indice_raw'],
+                                    val_trama, val_genere, val_goal, lingua_sel, val_lunghezza,
+                                )
+                            if (
+                                not str(contenuto_prefazione or "").strip()
+                                or str(contenuto_prefazione).lstrip().upper().startswith("ERRORE:")
+                            ):
+                                raise RuntimeError("La Prefazione non ha restituito un testo valido.")
+                            scrivi_sezione_memorizzata(L["preface"], contenuto_prefazione)
+                            sezioni_da_proteggere = elenco_sezioni_progetto(
+                                st.session_state["job_scrittura_sezioni"]
+                            )
+                            salva_stesura_generata_in_cloud(
+                                sezioni_da_proteggere, "prefazione generata"
+                            )
+                            reidrata_sezioni_memorizzate(sezioni_da_proteggere)
+                            if not leggi_sezione_memorizzata(L["preface"]).strip():
+                                raise RuntimeError("La Prefazione è stata generata ma non è risultata leggibile nella memoria del progetto.")
+                            da_generare = [
+                                sezione for sezione in da_generare if sezione != L["preface"]
+                            ]
+
+                        st.session_state["job_scrittura_coda"] = da_generare
+                        st.session_state["job_scrittura_totale"] = len(da_generare_libro)
+                        st.session_state["job_scrittura_attivo"] = bool(da_generare)
+                        st.session_state["job_scrittura_pausa"] = False
+                        notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
+                        # Rende subito disponibile la Prefazione nelle altre
+                        # schede prima di iniziare il primo capitolo.
+                        st.rerun()
+                    except Exception as exc:
+                        st.session_state["job_scrittura_coda"] = da_generare
+                        st.session_state["job_scrittura_totale"] = len(da_generare_libro)
+                        st.session_state["job_scrittura_attivo"] = False
+                        st.session_state["job_scrittura_pausa"] = True
+                        st.session_state["job_scrittura_errore"] = f"Prefazione: {exc}"
+                        st.error(f"La stesura non è partita: la Prefazione non è stata salvata. {exc}")
 
             coda_scrittura = st.session_state.get("job_scrittura_coda", [])
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
