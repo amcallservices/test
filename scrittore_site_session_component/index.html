@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scrittore Site sessione</title>
+    <style>html, body { margin: 0; padding: 0; overflow: hidden; }</style>
+  </head>
+  <body>
+    <script>
+      (() => {
+        "use strict";
+        const STORAGE_KEY = "scrittore_site_supabase_refresh_v1";
+        let lastSent = null;
+
+        function sendToStreamlit(type, data) {
+          window.parent.postMessage(
+            Object.assign({ isStreamlitMessage: true, type: type }, data || {}),
+            "*"
+          );
+        }
+
+        function readToken() {
+          try { return window.localStorage.getItem(STORAGE_KEY) || ""; }
+          catch (error) { return ""; }
+        }
+
+        function writeToken(value) {
+          try { window.localStorage.setItem(STORAGE_KEY, value); }
+          catch (error) {}
+        }
+
+        function clearToken() {
+          try { window.localStorage.removeItem(STORAGE_KEY); }
+          catch (error) {}
+        }
+
+        function sendValue(value) {
+          const safeValue = String(value || "");
+          if (safeValue === lastSent) return;
+          lastSent = safeValue;
+          sendToStreamlit("streamlit:setComponentValue", { value: safeValue });
+        }
+
+        window.addEventListener("message", (event) => {
+          const message = event.data || {};
+          if (message.type !== "streamlit:render") return;
+          const args = message.args || {};
+          const action = String(args.action || "read");
+          const refreshToken = String(args.refresh_token || "");
+
+          if (action === "save" && refreshToken) writeToken(refreshToken);
+          if (action === "clear") clearToken();
+          sendValue(readToken());
+          sendToStreamlit("streamlit:setFrameHeight", { height: 0 });
+        });
+
+        sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+      })();
+    </script>
+  </body>
+</html>
