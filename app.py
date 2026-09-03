@@ -184,10 +184,26 @@ def firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfon
 def separa_mappa_e_registro_fonti_web(testo):
     """Separa la mappa usata dall'AI dal registro leggibile delle fonti web."""
     testo = (testo or "").strip()
-    marcatore = re.search(r"(?im)^REGISTRO FONTI WEB\s*:?[ \t]*$", testo)
-    if not marcatore:
-        return testo, ""
-    return testo[:marcatore.start()].strip(), testo[marcatore.end():].strip()
+    # I due cervelli possono rendere il titolo con Markdown o con una
+    # formulazione leggermente diversa. Il parser resta quindi tollerante,
+    # altrimenti il registro veniva confuso con il dossier interno e non era
+    # visibile né salvabile come elenco delle fonti web.
+    marcatore = re.search(
+        r"(?im)^\s*(?:#{1,6}\s*)?REGISTRO\s+(?:DELLE\s+)?FONTI(?:\s+WEB)?\s*:?[ \t]*$",
+        testo,
+    )
+    if marcatore:
+        return testo[:marcatore.start()].strip(), testo[marcatore.end():].strip()
+
+    # Estrema tutela: se il modello ha dimenticato il titolo del registro ma
+    # ha comunque restituito URL, li conserviamo in una sezione interna invece
+    # di perderli. La mappa rimane separata dai collegamenti.
+    righe = testo.splitlines()
+    righe_fonti = [riga for riga in righe if re.search(r"https?://\S+", riga)]
+    if righe_fonti:
+        mappa = "\n".join(riga for riga in righe if riga not in righe_fonti).strip()
+        return mappa or testo, "\n".join(righe_fonti).strip()
+    return testo, ""
 
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
@@ -238,6 +254,19 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         st.session_state["firma_ricerca_preliminare"] = firma
         st.session_state["dossier_ricerca_preliminare"] = mappa
         st.session_state["registro_fonti_web"] = registro
+        # La ricerca è un'operazione a consumo: proteggiamo subito dossier e
+        # registro nel cloud, anche se l'utente aggiorna la pagina prima di
+        # generare l'indice. I contenuti manuali restano invece soggetti al
+        # pulsante SALVA SESSIONE.
+        try:
+            sezioni_correnti = list(dict.fromkeys([
+                *st.session_state.get("lista_capitoli", []),
+                *st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}).keys(),
+            ]))
+            if salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_correnti):
+                st.session_state["fonti_web_salvate"] = True
+        except Exception:
+            st.session_state["fonti_web_salvate"] = False
         return mappa
     except Exception:
         refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=CREDIT_COSTS["indice_ricerca_web"])
@@ -2126,7 +2155,7 @@ def esporta_progetto_editoriale_csv():
 
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
-        "dossier_ricerca_preliminare", "registro_fonti_web",
+        "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
         valore = st.session_state.get(chiave, "")
         if valore:
@@ -2208,7 +2237,7 @@ def importa_progetto_editoriale_csv(file_caricato):
             snapshot["contenuti"][chiave] = valore
         elif tipo == "fonte" and chiave in {
             "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
-            "dossier_ricerca_preliminare", "registro_fonti_web",
+            "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
         }:
             snapshot["fonti"][chiave] = valore
         elif tipo == "immagine" and chiave:
@@ -2225,7 +2254,7 @@ def importa_progetto_editoriale_csv(file_caricato):
                 continue
     if not formato_valido:
         raise ValueError("Questo CSV non è stato esportato da Scrittore Site o usa un formato non supportato.")
-    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["contenuti"]):
+    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["contenuti"] or snapshot["fonti"]):
         raise ValueError("Il CSV è valido ma non contiene ancora dati editoriali da ripristinare.")
     return snapshot
 
@@ -2243,10 +2272,15 @@ def mostra_memoria_visiva_progetto():
 
     campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
     st.markdown("### 🧠 Memoria del progetto")
-    st.caption("Qui vedi ciò che il software conserva: campi della sidebar, indice e testi, inclusi quelli modificati a mano.")
-    col_a, col_b = st.columns(2)
+    registro_fonti = str(st.session_state.get("registro_fonti_web", "") or "").strip()
+    numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
+    if registro_fonti and not numero_fonti:
+        numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
+    st.caption("Qui vedi ciò che il software conserva: campi della sidebar, indice, testi e fonti di ricerca, inclusi quelli modificati a mano.")
+    col_a, col_b, col_c = st.columns(3)
     col_a.metric("Sidebar", f"{campi_compilati}/{len(CAMPI_SALVATAGGIO_PROGETTO)}")
     col_b.metric("Sezioni salvate", len(contenuti))
+    col_c.metric("Fonti web", numero_fonti)
     st.caption("Indice: ✓ salvato" if st.session_state.get("indice_raw", "").strip() else "Indice: non ancora creato")
 
     with st.expander("Visualizza dati salvati", expanded=False):
@@ -2255,6 +2289,8 @@ def mostra_memoria_visiva_progetto():
             st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
         if st.session_state.get("indice_raw", "").strip():
             st.text_area("Indice conservato", value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
+        if registro_fonti:
+            st.text_area("Fonti web conservate", value=registro_fonti, height=150, disabled=True, key="memoria_fonti_web")
         if contenuti:
             sezioni = list(contenuti)
             scelta = st.selectbox("Sezione conservata", sezioni, key="memoria_sezione_scelta")
@@ -2303,17 +2339,18 @@ def applica_snapshot_progetto(snapshot):
     fonti = snapshot.get("fonti", {}) or {}
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
-        "dossier_ricerca_preliminare", "registro_fonti_web",
+        "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
-        if fonti.get(chiave):
-            st.session_state[chiave] = fonti[chiave]
+        # Ripristina anche valori vuoti: così una vecchia fonte non rimane
+        # nella sessione quando la fotografia cloud ne contiene un'altra.
+        st.session_state[chiave] = fonti.get(chiave, "")
     aggiornato = snapshot.get("_autosave_updated_at", "")
     if snapshot.get("_origine_importazione_csv"):
         st.session_state["autosave_stato"] = "✓ Progetto CSV importato: sidebar, indice, sezioni, fonti e immagini sono nella sessione. Premi SALVA SESSIONE se vuoi conservarlo nel tuo account."
     else:
         st.session_state["autosave_stato"] = (
-            f"✓ Ultima stesura ripristinata: sidebar, indice e sezioni ({aggiornato[:16].replace('T', ' ')})."
-            if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice e sezioni."
+            f"✓ Ultima stesura ripristinata: sidebar, indice, sezioni e fonti ({aggiornato[:16].replace('T', ' ')})."
+            if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice, sezioni e fonti."
         )
     return True
 
@@ -2379,6 +2416,7 @@ def salva_progetto_corrente(sidebar, sezioni):
             "brief_fonti_originale": st.session_state.get("brief_fonti_originale", ""),
             "dossier_ricerca_preliminare": st.session_state.get("dossier_ricerca_preliminare", ""),
             "registro_fonti_web": st.session_state.get("registro_fonti_web", ""),
+            "firma_ricerca_preliminare": st.session_state.get("firma_ricerca_preliminare", ""),
         },
     }
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
@@ -3208,7 +3246,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             | set((st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys())
         )
         if salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_da_salvare):
-            st.success("Sessione salvata: sidebar, indice e sezioni sono stati memorizzati nel tuo account.")
+            st.success("Sessione salvata: sidebar, indice, sezioni e fonti web sono stati memorizzati nel tuo account.")
         else:
             st.error("Non è stato possibile salvare la sessione nel tuo account. Il lavoro resta aperto in questa pagina.")
 
