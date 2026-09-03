@@ -1541,6 +1541,44 @@ def _commerce_sidebar() -> None:
         )
 
         if is_admin:
+            with st.expander("🧪 Collaudo software", expanded=False):
+                st.caption(
+                    "Disponibile solo all'amministratore. Carica un progetto breve in un ambiente di prova: "
+                    "non consuma crediti utente e non sovrascrive la bozza salvata nel tuo account. "
+                    "Le chiamate AI restano reali e possono quindi consumare API."
+                )
+                profilo_collaudo = st.selectbox(
+                    "Modalità di collaudo",
+                    ["Manuale e controlli", "Test Prep e simulazioni", "Narrativa e stile"],
+                    key="commercial_admin_test_profile",
+                    help="Ogni modalità usa un brief breve e completo, adatto a controllare prompt e comportamento specifico del genere.",
+                )
+                cervello_collaudo = st.selectbox(
+                    "Cervello da collaudare",
+                    ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
+                    key="commercial_admin_test_provider",
+                )
+                if st.button(
+                    "🧪 TESTA SOFTWARE CON PROGETTO BREVE",
+                    type="primary",
+                    use_container_width=True,
+                    key="commercial_admin_launch_short_test",
+                ):
+                    st.session_state["commercial_admin_test_request"] = {
+                        "provider": cervello_collaudo,
+                        "profilo": profilo_collaudo,
+                    }
+                    st.rerun()
+                if st.session_state.get("admin_test_mode"):
+                    st.info(
+                        "Collaudo attivo: usa i normali comandi per indice, stesura, controllo, anteprima, "
+                        "lettore e import/export. Il pulsante di chiusura nel laboratorio ripristina la sessione precedente."
+                    )
+                storico_collaudi = st.session_state.get("commercial_admin_test_history", [])
+                if storico_collaudi:
+                    with st.expander("Storico ultimi collaudi", expanded=False):
+                        st.dataframe(storico_collaudi[-10:], use_container_width=True, hide_index=True)
+
             with st.expander("🛡️ Amministrazione crediti", expanded=False):
                 st.caption("Visibile solo agli account amministratore. Ogni accredito viene registrato nello storico dell'utente.")
                 try:
