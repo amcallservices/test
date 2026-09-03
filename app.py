@@ -5469,61 +5469,33 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if not da_generare:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
-                    # La Prefazione non passa più dalla normale coda: viene
-                    # generata, verificata e memorizzata qui, prima di ogni
-                    # possibile pausa. Così non può essere né saltata né
-                    # dichiarata "salvata" se il modello non ha prodotto testo.
+                    # Usa il percorso di generazione consolidato: tutte le
+                    # sezioni, inclusa Prefazione, passano dalla stessa coda.
+                    # La memoria protetta conserva però ogni esito concluso.
                     st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state.pop("job_scrittura_errore", None)
-                    try:
-                        if L["preface"] in da_generare:
-                            with st.spinner("Preparazione e salvataggio della Prefazione..."):
-                                prompt_prefazione = crea_prompt_stesura_sezione(
-                                    L["preface"], st.session_state['indice_raw'], val_trama, val_genere,
-                                    val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
-                                    val_approfondimenti, val_lunghezza,
-                                )
-                                contenuto_prefazione = genera_contenuto_editoriale(
-                                    prompt_prefazione, S_PROMPT, L["preface"], st.session_state['indice_raw'],
-                                    val_trama, val_genere, val_goal, lingua_sel, val_lunghezza,
-                                )
-                            if (
-                                not str(contenuto_prefazione or "").strip()
-                                or str(contenuto_prefazione).lstrip().upper().startswith("ERRORE:")
-                            ):
-                                raise RuntimeError("La Prefazione non ha restituito un testo valido.")
-                            scrivi_sezione_memorizzata(L["preface"], contenuto_prefazione)
-                            sezioni_da_proteggere = elenco_sezioni_progetto(
-                                st.session_state["job_scrittura_sezioni"]
-                            )
-                            salva_stesura_generata_in_cloud(
-                                sezioni_da_proteggere, "prefazione generata"
-                            )
-                            reidrata_sezioni_memorizzate(sezioni_da_proteggere)
-                            if not leggi_sezione_memorizzata(L["preface"]).strip():
-                                raise RuntimeError("La Prefazione è stata generata ma non è risultata leggibile nella memoria del progetto.")
-                            da_generare = [
-                                sezione for sezione in da_generare if sezione != L["preface"]
-                            ]
+                    st.session_state["job_scrittura_coda"] = da_generare
+                    st.session_state["job_scrittura_totale"] = len(da_generare)
+                    st.session_state["job_scrittura_attivo"] = True
+                    st.session_state["job_scrittura_pausa"] = False
+                    notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
 
-                        st.session_state["job_scrittura_coda"] = da_generare
-                        st.session_state["job_scrittura_totale"] = len(da_generare_libro)
-                        st.session_state["job_scrittura_attivo"] = bool(da_generare)
-                        st.session_state["job_scrittura_pausa"] = False
-                        notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
-                        # Rende subito disponibile la Prefazione nelle altre
-                        # schede prima di iniziare il primo capitolo.
-                        st.rerun()
-                    except Exception as exc:
-                        st.session_state["job_scrittura_coda"] = da_generare
-                        st.session_state["job_scrittura_totale"] = len(da_generare_libro)
-                        st.session_state["job_scrittura_attivo"] = False
-                        st.session_state["job_scrittura_pausa"] = True
-                        st.session_state["job_scrittura_errore"] = f"Prefazione: {exc}"
-                        st.error(f"La stesura non è partita: la Prefazione non è stata salvata. {exc}")
-
-            coda_scrittura = st.session_state.get("job_scrittura_coda", [])
+            coda_scrittura = list(st.session_state.get("job_scrittura_coda", []) or [])
+            # Recupero definitivo delle code create da versioni precedenti:
+            # nessun capitolo può proseguire se la Prefazione prevista dal
+            # progetto non ha ancora un testo leggibile. Questo controllo è
+            # eseguito a ogni rerun, quindi vale anche dopo PAUSA, RIPRENDI,
+            # aggiornamento pagina o modifica della sidebar.
+            prefazione_mancante = not leggi_sezione_memorizzata(L["preface"]).strip()
+            if coda_scrittura and prefazione_mancante and L["preface"] not in coda_scrittura:
+                coda_scrittura.insert(0, L["preface"])
+                st.session_state["job_scrittura_coda"] = list(coda_scrittura)
+                sezioni_job = st.session_state.setdefault("job_scrittura_sezioni", [])
+                if L["preface"] not in sezioni_job:
+                    sezioni_job.insert(0, L["preface"])
+                totale_precedente = int(st.session_state.get("job_scrittura_totale", 0) or 0)
+                st.session_state["job_scrittura_totale"] = max(totale_precedente + 1, len(coda_scrittura))
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
                 totale = st.session_state.get("job_scrittura_totale", len(coda_scrittura))
                 completati = totale - len(coda_scrittura)
@@ -5536,18 +5508,21 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 with col_stato:
                     st.info(f"Elaborazione in corso: {sezione_corrente}. Puoi fermare il lavoro prima della sezione successiva.")
                 with col_pausa:
-                    # Alla prima iterazione la sezione corrente è Prefazione.
-                    # Streamlit riceve il click prima di avviare la richiesta:
-                    # permettere la pausa qui la lascerebbe necessariamente
-                    # vuota. La completiamo e proteggiamo prima di esporre la
-                    # pausa per il resto del manoscritto.
-                    prefazione_iniziale = (
-                        sezione_corrente == L["preface"]
-                        and not leggi_sezione_memorizzata(L["preface"]).strip()
+                    # Apertura e chiusura del libro sono parti protette:
+                    # Streamlit riceve il click prima di avviare la richiesta,
+                    # quindi una pausa in quel preciso punto le lascerebbe
+                    # vuote. Prefazione e Ringraziamenti vengono completati e
+                    # salvati prima di rendere di nuovo disponibile la pausa.
+                    sezione_protetta_iniziale = (
+                        sezione_corrente in {L["preface"], L["ack"]}
+                        and not leggi_sezione_memorizzata(sezione_corrente).strip()
                     )
                     pausa_richiesta = False
-                    if prefazione_iniziale:
-                        st.caption("La Prefazione viene preparata e salvata prima che la pausa sia disponibile.")
+                    if sezione_protetta_iniziale:
+                        etichetta_sezione_protetta = (
+                            "La Prefazione" if sezione_corrente == L["preface"] else "I Ringraziamenti"
+                        )
+                        st.caption(f"{etichetta_sezione_protetta} vengono preparati e salvati prima che la pausa sia disponibile.")
                     else:
                         pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
                 if pausa_richiesta:
@@ -5572,10 +5547,16 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sezione_corrente, st.session_state['indice_raw'], val_trama, val_genere,
                             val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
                         )
-                        scrivi_sezione_memorizzata(sezione_corrente, genera_contenuto_editoriale(
+                        contenuto_generato = genera_contenuto_editoriale(
                             prompt, S_PROMPT, sezione_corrente, st.session_state['indice_raw'], val_trama,
                             val_genere, val_goal, lingua_sel, val_lunghezza
-                        ))
+                        )
+                        if (
+                            not str(contenuto_generato or "").strip()
+                            or str(contenuto_generato).lstrip().upper().startswith("ERRORE:")
+                        ):
+                            raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
+                        scrivi_sezione_memorizzata(sezione_corrente, contenuto_generato)
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
                         # sezione conclusa viene inviata immediatamente al
