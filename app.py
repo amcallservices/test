@@ -4013,7 +4013,15 @@ lista_cap_base = st.session_state.get("lista_capitoli", [])
 # memoria stabile: se una pausa, un refresh o un cambio lingua avviene dopo la
 # Prefazione, essa resta subito selezionabile nell'editor e visibile in
 # anteprima insieme a tutte le altre sezioni già prodotte.
-opzioni_editor = elenco_sezioni_progetto([L["preface"]] + lista_cap_base + [L["ack"]])
+sezioni_struttura_corrente = [L["preface"]] + lista_cap_base + [L["ack"]]
+# Durante “Scrivi tutto il libro” l'elenco viene fissato anche nella sessione.
+# In questo modo una pausa o un rerun non può ridurre l'elenco dell'editor alle
+# sole voci rileggibili dall'indice, lasciando fuori Prefazione e Ringraziamenti.
+sezioni_job_protette = st.session_state.get("job_scrittura_sezioni", []) or []
+opzioni_editor = elenco_sezioni_progetto([
+    *sezioni_struttura_corrente,
+    *sezioni_job_protette,
+])
 # Prima di disegnare l'editor, ripristina ogni testo già protetto nella memoria
 # del progetto. Il cambio della sezione selezionata non può quindi svuotare le
 # altre caselle o nasconderle dall'anteprima/esportazione.
@@ -5381,7 +5389,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         else:
             # La stesura completa deve generare OGNI sezione dell'indice, comprese
             # prefazione, parti, capitoli, sottocapitoli, conclusione e ringraziamenti.
-            sezioni_intero_libro = opzioni_editor
+            sezioni_intero_libro = elenco_sezioni_progetto([
+                *sezioni_struttura_corrente,
+                *st.session_state.get("job_scrittura_sezioni", []),
+            ])
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
                 "I contenuti già scritti verranno conservati senza modifiche."
@@ -5405,6 +5416,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 else:
                     st.session_state["job_scrittura_coda"] = da_generare
                     st.session_state["job_scrittura_totale"] = len(da_generare)
+                    # Fotografia dell'architettura usata dal job: anche se la
+                    # pagina si aggiorna o si mette in pausa, editor e
+                    # anteprima continueranno a conoscere tutte le sezioni.
+                    st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state.pop("job_scrittura_errore", None)
@@ -5423,7 +5438,20 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 with col_stato:
                     st.info(f"Elaborazione in corso: {sezione_corrente}. Puoi fermare il lavoro prima della sezione successiva.")
                 with col_pausa:
-                    pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
+                    # Alla prima iterazione la sezione corrente è Prefazione.
+                    # Streamlit riceve il click prima di avviare la richiesta:
+                    # permettere la pausa qui la lascerebbe necessariamente
+                    # vuota. La completiamo e proteggiamo prima di esporre la
+                    # pausa per il resto del manoscritto.
+                    prefazione_iniziale = (
+                        sezione_corrente == L["preface"]
+                        and not leggi_sezione_memorizzata(L["preface"]).strip()
+                    )
+                    pausa_richiesta = False
+                    if prefazione_iniziale:
+                        st.caption("La Prefazione viene preparata e salvata prima che la pausa sia disponibile.")
+                    else:
+                        pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
                 if pausa_richiesta:
                     st.session_state["job_scrittura_attivo"] = False
                     st.session_state["job_scrittura_pausa"] = True
@@ -5432,7 +5460,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # sola sezione che il ciclo stava per avviare. Così la
                     # Prefazione, già conclusa al passaggio precedente, non
                     # può sparire da editor, anteprima o ripristino cloud.
-                    sezioni_da_proteggere = elenco_sezioni_progetto(opzioni_editor)
+                    sezioni_da_proteggere = elenco_sezioni_progetto(
+                        st.session_state.get("job_scrittura_sezioni", opzioni_editor)
+                    )
                     salva_stesura_generata_in_cloud(
                         sezioni_da_proteggere, "stesura messa in pausa"
                     )
@@ -5460,10 +5490,16 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         # mentre Prefazione, Ringraziamenti e tutte le parti
                         # precedenti restano incluse anche se l'utente mette
                         # in pausa subito dopo questo rerun.
-                        sezioni_da_proteggere = elenco_sezioni_progetto(opzioni_editor)
+                        sezioni_da_proteggere = elenco_sezioni_progetto(
+                            st.session_state.get("job_scrittura_sezioni", opzioni_editor)
+                        )
                         salva_stesura_generata_in_cloud(
                             sezioni_da_proteggere, "sezione del libro generata"
                         )
+                        # Riporta esplicitamente il testo in tutti i widget
+                        # già noti prima del rerun successivo, inclusa la
+                        # Prefazione appena completata.
+                        reidrata_sezioni_memorizzate(sezioni_da_proteggere)
                         st.rerun()
                     except Exception as exc:
                         st.session_state["job_scrittura_attivo"] = False
