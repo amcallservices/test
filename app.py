@@ -944,7 +944,9 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "480-560 parole",
         "min_parole": 480,
         "max_parole": 560,
-        "max_completion_tokens": 900,
+        # Margine tecnico sufficiente perché il modello termini il ragionamento
+        # senza fermarsi appena sotto il minimo di parole.
+        "max_completion_tokens": 1150,
         "descrizione": "testo essenziale ma completo, pensato per almeno 100 pagine",
         "max_sezioni": 50,
         "pagine_minime": 100,
@@ -953,7 +955,7 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "620-700 parole",
         "min_parole": 620,
         "max_parole": 700,
-        "max_completion_tokens": 1100,
+        "max_completion_tokens": 1450,
         "descrizione": "trattazione equilibrata, pensata per almeno 200 pagine",
         "max_sezioni": 80,
         "pagine_minime": 200,
@@ -962,7 +964,7 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "700-800 parole",
         "min_parole": 700,
         "max_parole": 800,
-        "max_completion_tokens": 1250,
+        "max_completion_tokens": 1650,
         "descrizione": "trattazione ampia e approfondita, pensata per almeno 300 pagine",
         "max_sezioni": 110,
         "pagine_minime": 300,
@@ -2822,11 +2824,20 @@ def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, g
     for tentativo_riparazione in range(2):
         if not criticita:
             return pulisci_testo_editoriale(testo)
+        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza)
+        istruzione_lunghezza = (
+            f"Il conteggio automatico della bozza è {len(testo.split())} parole. "
+            f"La nuova sezione deve contenere tra {minimo_richiesto} e {massimo_richiesto} parole, "
+            "senza riempitivi. Non interrompere il testo prima di aver raggiunto il minimo."
+            if "testo troppo breve" in criticita else
+            "Rispetta con precisione la lunghezza indicata nel prompt originario."
+        )
         testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
             prompt + f"""
 
 REVISIONE OBBLIGATORIA DI QUALITÀ
 La prima bozza è stata rifiutata perché presenta: {criticita}.
+{istruzione_lunghezza}
 Riscrivi integralmente la sezione. Ogni paragrafo deve aggiungere un fatto, una scena, una procedura,
 un esempio, un caso, un esercizio, un dato o una conseguenza specifica del genere '{genere}'.
 Elimina frasi motivazionali, definizioni vaghe e ripetizioni. Non descrivere ciò che il lettore potrebbe fare:
