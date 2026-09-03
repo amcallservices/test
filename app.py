@@ -1057,6 +1057,80 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-workspace-header { align-items:flex-start; flex-direction:column; }
     .ss-workspace-meta { justify-content:flex-start; }
 }
+/* Layout mobile: modifiche esclusivamente grafiche e responsive. */
+@media (max-width: 768px) {
+    [data-testid="stMainBlockContainer"] {
+        padding: .8rem .7rem 5.6rem !important;
+        max-width: 100% !important;
+    }
+    /* Su telefono la sidebar torna richiudibile: non sottrae spazio alla
+       scrittura e si apre dal normale comando laterale di Streamlit. */
+    [data-testid="collapsedControl"] {
+        display: block !important; visibility: visible !important; z-index: 1001 !important;
+    }
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 0 !important; max-width: 0 !important; width: 0 !important;
+        display: none !important; visibility: hidden !important;
+    }
+    section[data-testid="stSidebar"][aria-expanded="true"],
+    section[data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        min-width: min(92vw, 360px) !important; max-width: min(92vw, 360px) !important;
+        width: min(92vw, 360px) !important; padding: .7rem .65rem 1.2rem !important;
+    }
+    section[data-testid="stSidebar"] .stElementContainer { margin-bottom: .38rem !important; }
+    section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p { font-size: .78rem !important; }
+    section[data-testid="stSidebar"] .stTextInput input,
+    section[data-testid="stSidebar"] .stTextArea textarea,
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        min-height: 2.35rem !important; font-size: .92rem !important;
+    }
+    section[data-testid="stSidebar"] .stTextArea textarea { min-height: 5.6rem !important; }
+
+    /* Le colonne diventano blocchi verticali: nessun pulsante o campo resta
+       troppo stretto per essere usato con il pollice. */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important; gap: .65rem !important;
+    }
+    [data-testid="column"], [data-testid="stColumn"], [data-testid="stHorizontalBlock"] > div {
+        width: 100% !important; min-width: 0 !important; flex: 1 1 100% !important;
+    }
+    .stButton, .stButton > button { width: 100% !important; }
+    .stButton > button {
+        min-height: 3.45rem !important; height: auto !important;
+        padding: .65rem .85rem !important; font-size: 1rem !important;
+    }
+    /* Salva sessione resta sempre raggiungibile dentro la sidebar quando
+       l'utente scorre un progetto lungo da telefono. */
+    section[data-testid="stSidebar"] [data-testid="stButton"]:has(button[kind="primary"]) {
+        position: sticky !important; bottom: .55rem !important; z-index: 50 !important;
+        padding: .4rem 0 !important; background: #0f1d31 !important;
+    }
+
+    /* Le tab non vanno a capo né vengono tagliate: scorrono orizzontalmente. */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important;
+        gap: .3rem !important; -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+    }
+    [data-testid="stTabs"] button[role="tab"] {
+        flex: 0 0 auto !important; white-space: nowrap !important;
+        padding: .6rem .72rem !important; font-size: .84rem !important;
+    }
+
+    /* Editor, controlli e anteprima mantengono una dimensione leggibile e
+       l'anteprima scorre senza creare una pagina eccessivamente lunga. */
+    .preview-box {
+        padding: 1.15rem .95rem !important; height: auto !important;
+        max-height: 68vh !important; min-height: 50vh !important;
+        overflow-y: auto !important; font-size: 1rem !important; line-height: 1.78 !important;
+    }
+    [data-testid="stTextArea"] textarea { font-size: 1rem !important; line-height: 1.55 !important; }
+    .ss-workspace-header { padding: .85rem .9rem !important; gap: .7rem !important; }
+    .ss-workspace-title { font-size: 1.05rem !important; white-space: normal !important; }
+    .ss-workspace-meta { gap: .35rem !important; }
+    .ss-workspace-chip { font-size: .7rem !important; padding: .36rem .5rem !important; }
+    .ss-section-card { padding: .35rem .7rem .75rem !important; border-radius: 11px !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
