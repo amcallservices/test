@@ -49,9 +49,24 @@
           const refreshToken = String(args.refresh_token || "");
 
           if (action === "save" && refreshToken) writeToken(refreshToken);
-          if (action === "clear") clearToken();
+          if (action === "clear" || action === "logout") clearToken();
           sendValue(readToken());
           sendToStreamlit("streamlit:setFrameHeight", { height: 0 });
+
+          // Con "Esci" non aspettiamo un eventuale rerun del componente:
+          // torniamo alla home con un parametro tecnico che l'app usa per
+          // pulire anche la sessione Streamlit ancora aperta.
+          if (action === "logout") {
+            window.setTimeout(() => {
+              try {
+                const target = new URL(window.parent.location.href);
+                target.searchParams.set("logout", "1");
+                window.parent.location.replace(target.toString());
+              } catch (error) {
+                try { window.parent.location.reload(); } catch (ignored) {}
+              }
+            }, 40);
+          }
         });
 
         sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
