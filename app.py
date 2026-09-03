@@ -5510,14 +5510,17 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     key="indice_tendina_anteprima",
                 )
                 if sezione_da_aprire != "— Seleziona una sezione —":
-                    ancora = "preview_section_" + hashlib.sha256(sezione_da_aprire.encode("utf-8")).hexdigest()[:16]
                     if st.button(
-                        f"↓ APRI “{sezione_da_aprire}” NELL'ANTEPRIMA",
+                        f"📖 MOSTRA SOLO “{sezione_da_aprire}”",
                         key="apri_sezione_anteprima",
                         use_container_width=True,
                     ):
-                        st.session_state["anteprima_scorrimento_destinazione"] = ancora
+                        st.session_state["anteprima_sezione_filtrata"] = sezione_da_aprire
                         st.rerun()
+                else:
+                    # Tornando alla voce iniziale, il filtro viene rimosso e
+                    # l'anteprima completa viene mostrata nello stesso istante.
+                    st.session_state.pop("anteprima_sezione_filtrata", None)
             cerca_anteprima = st.text_input("🔎 Cerca nel manoscritto", key="cerca_nell_anteprima")
             if cerca_anteprima.strip():
                 termine = cerca_anteprima.strip()
@@ -5564,7 +5567,15 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         if val_autore:
             html_p += f"<h3 style='text-align:center;'>di {html.escape(val_autore)}</h3>"
         html_p += "<hr><br>"
-        for s in sezioni_anteprima:
+        sezione_filtrata_anteprima = st.session_state.get("anteprima_sezione_filtrata")
+        sezioni_da_mostrare = (
+            [sezione_filtrata_anteprima]
+            if sezione_filtrata_anteprima in sezioni_anteprima
+            else sezioni_anteprima
+        )
+        if sezione_filtrata_anteprima in sezioni_anteprima:
+            st.info(f"Anteprima focalizzata su: **{sezione_filtrata_anteprima}**. Per tornare al manoscritto completo, seleziona “— Seleziona una sezione —” nella tendina.")
+        for s in sezioni_da_mostrare:
             testo_preview = pulisci_testo_editoriale(contenuti_libro.get(s, ""))
             if testo_preview:
                 ancora_anteprima = "preview_section_" + hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
@@ -5587,28 +5598,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 )
                 html_p += f"<p>{testo_con_ancore}</p>"
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
-        # I normali link #ancora non scorrono in modo affidabile tra i
-        # componenti Streamlit. Il comando della tendina usa invece questo
-        # piccolo ponte nel browser, eseguito dopo che l'anteprima è stata resa.
-        destinazione_anteprima = st.session_state.pop("anteprima_scorrimento_destinazione", "")
-        if destinazione_anteprima:
-            ancora_json = json.dumps(destinazione_anteprima)
-            components.html(
-                f"""<script>
-                (function() {{
-                  const target = {ancora_json};
-                  let tentativi = 0;
-                  function apri() {{
-                    const root = window.parent && window.parent.document;
-                    const node = root && root.getElementById(target);
-                    if (node) {{ node.scrollIntoView({{behavior: 'smooth', block: 'start'}}); return; }}
-                    if (++tentativi < 8) window.setTimeout(apri, 150);
-                  }}
-                  window.setTimeout(apri, 120);
-                }})();
-                </script>""",
-                height=0,
-            )
         st.divider()
         st.subheader("Controllo del manoscritto")
         stima_coerenza = (
