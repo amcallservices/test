@@ -602,19 +602,32 @@ def _sessione_browser(action: str, refresh_token: str = "") -> str:
         return ""
 
 
+def _sincronizza_sessione_browser() -> str:
+    """Esegue l'unico scambio con il componente consentito in questo rerun."""
+    action = str(st.session_state.pop("commercial_session_browser_action", "read"))
+    user = st.session_state.get("commercial_user") or {}
+    token = user.get("refresh_token", "") if action == "save" else ""
+    value = _sessione_browser(action, token)
+    st.session_state["commercial_browser_session_value"] = value
+    st.session_state["commercial_browser_session_action_executed"] = action
+    return action
+
+
 def _leggi_cookie_sessione() -> str:
-    return _sessione_browser("read")
+    return str(st.session_state.get("commercial_browser_session_value", "") or "").strip()
 
 
 def _scrivi_cookie_sessione(refresh_token: str) -> None:
     """Salva nel browser il solo token di rinnovo dell'accesso verificato."""
     if refresh_token:
-        _sessione_browser("save", refresh_token)
+        # Il salvataggio viene eseguito nel rerun successivo: in questo modo
+        # il componente non è mai richiamato due volte nella stessa pagina.
+        st.session_state["commercial_session_browser_action"] = "save"
 
 
 def _cancella_cookie_sessione() -> None:
     """Rimuove il token persistente quando l'utente preme Esci."""
-    _sessione_browser("logout")
+    st.session_state["commercial_session_browser_action"] = "logout"
 
 
 def _ripristina_sessione_browser() -> bool:
@@ -653,7 +666,7 @@ def _ripristina_sessione_browser() -> bool:
     except Exception:
         # Un token revocato o scaduto deve semplicemente richiedere un nuovo
         # accesso: non mostriamo dettagli tecnici e non blocchiamo la home.
-        _cancella_cookie_sessione()
+        st.session_state["commercial_session_browser_action"] = "clear"
         return False
 
 
@@ -1336,10 +1349,9 @@ def _account_gate() -> dict[str, Any]:
                 _apri_progetto_pulito_dopo_accesso()
                 st.session_state["commercial_user"] = utente
                 _scrivi_cookie_sessione(utente.get("refresh_token", ""))
-                # Il componente browser invia il rerun soltanto dopo avere
-                # scritto il token. Così il primo accesso diventa persistente
-                # anche se l'utente aggiorna subito la pagina.
-                st.stop()
+                # Il rerun successivo consegna al componente il solo comando
+                # "save", senza un secondo richiamo nella stessa pagina.
+                st.rerun()
             except Exception as error:
                 st.error(str(error))
         with st.expander("Password dimenticata?"):
@@ -1805,10 +1817,9 @@ def _commerce_sidebar() -> None:
             st.session_state.pop("commercial_user_context", None)
             st.session_state.pop("commercial_show_auth", None)
             st.session_state.pop("commercial_project_reset_requested", None)
-            # Attende il messaggio del componente dopo la rimozione del token:
-            # evitare un rerun immediato impedisce che l'accesso venga
-            # ripristinato dal vecchio token appena dopo "Esci".
-            st.stop()
+            # Nel rerun successivo il componente riceve una sola istruzione:
+            # "logout". Così cancella lo storage browser prima del ritorno home.
+            st.rerun()
 
 
 def bootstrap_commercial_app() -> None:
@@ -1819,6 +1830,11 @@ def bootstrap_commercial_app() -> None:
     except Exception:
         recovery_requested = False
         logout_requested = False
+    browser_action = _sincronizza_sessione_browser()
+    if browser_action == "logout":
+        # Il componente ha ricevuto il comando di cancellazione e riporta il
+        # browser alla home. Non mostriamo per un istante l'area riservata.
+        st.stop()
     if logout_requested:
         # Il browser arriva qui solo dopo aver cancellato la sua sessione
         # persistente. Ripuliamo anche l'eventuale sessione Streamlit residua
@@ -1844,8 +1860,11 @@ def bootstrap_commercial_app() -> None:
         st.stop()
     st.session_state["commercial_user_context"] = _account_gate()
     # Mantiene l'accesso dopo un semplice refresh o il riavvio di Streamlit.
-    # Se la sessione è stata rinnovata da Supabase, aggiorna anche il cookie.
-    _scrivi_cookie_sessione(st.session_state["commercial_user_context"].get("refresh_token", ""))
+    # Se la sessione è stata rinnovata da Supabase, il token nel browser viene
+    # aggiornato nel rerun successivo, solo se è effettivamente cambiato.
+    token_corrente = st.session_state["commercial_user_context"].get("refresh_token", "")
+    if token_corrente and token_corrente != _leggi_cookie_sessione():
+        _scrivi_cookie_sessione(token_corrente)
     _process_checkout_return()
     _commerce_sidebar()
 
