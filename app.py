@@ -2194,6 +2194,7 @@ CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
 # dai widget: mantiene visibili tutte le sezioni effettivamente create anche
 # quando una pausa interrompe la stesura completa.
 CHIAVE_REGISTRO_SEZIONI = "registro_sezioni_manoscritto"
+CHIAVE_SEZIONI_DA_REIDRATARE = "sezioni_editor_da_reidratare"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
 CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 
@@ -2235,7 +2236,12 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     registro = st.session_state.setdefault(CHIAVE_REGISTRO_SEZIONI, [])
     if sezione not in registro:
         registro.append(sezione)
-    st.session_state[chiave_sezione(sezione)] = testo
+    # Non scriviamo direttamente nel widget: se il campo di testo è già stato
+    # disegnato nel rerun corrente, Streamlit può ignorare o respingere la
+    # modifica. Registriamo invece un ripristino certo al rerun successivo.
+    da_reidratare = set(st.session_state.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
+    da_reidratare.add(sezione)
+    st.session_state[CHIAVE_SEZIONI_DA_REIDRATARE] = list(da_reidratare)
     return testo
 
 
@@ -2295,6 +2301,7 @@ def reidrata_sezioni_memorizzate(sezioni):
     """Riporta nell'editor tutte le sezioni già salvate prima di renderizzare i widget."""
     memoria = st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}
     memoria_protetta = st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}
+    da_reidratare = set(st.session_state.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
     for sezione in sezioni:
         contenuto = memoria.get(sezione)
         if not str(contenuto or "").strip():
@@ -2302,10 +2309,17 @@ def reidrata_sezioni_memorizzate(sezioni):
         chiave = chiave_sezione(sezione)
         if not str(contenuto or "").strip():
             contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
-        if str(contenuto or "").strip() and not str(st.session_state.get(chiave, "")).strip():
+        if str(contenuto or "").strip() and (
+            sezione in da_reidratare or not str(st.session_state.get(chiave, "")).strip()
+        ):
             st.session_state[chiave] = contenuto
             memoria[sezione] = contenuto
             memoria_protetta[sezione] = contenuto
+            da_reidratare.discard(sezione)
+    if da_reidratare:
+        st.session_state[CHIAVE_SEZIONI_DA_REIDRATARE] = list(da_reidratare)
+    else:
+        st.session_state.pop(CHIAVE_SEZIONI_DA_REIDRATARE, None)
 
 
 CAMPI_SALVATAGGIO_PROGETTO = {
@@ -3145,10 +3159,17 @@ TESTO GIÀ APPROVATO NELLA FORMA:
             if not criticita:
                 return testo
     if criticita:
-        raise RuntimeError(
-            f"La sezione '{sezione}' non ha superato il controllo di completezza ({criticita}). "
-            "Non è stata salvata: riprova senza perdere le altre sezioni."
-        )
+        # Un testo realmente troncato non è pubblicabile e deve essere
+        # rigenerato. Gli altri rilievi (densità o lunghezza) non possono però
+        # far sparire una sezione già completa: viene conservata, segnalata nel
+        # controllo finale e potrà essere migliorata con RIELABORA CON IA.
+        if criticita.startswith("ragionamento non concluso"):
+            raise RuntimeError(
+                f"La sezione '{sezione}' termina in modo incompleto ({criticita}). "
+                "Non è stata salvata: riprova senza perdere le altre sezioni."
+            )
+        avvisi = st.session_state.setdefault("avvisi_qualita_sezioni", {})
+        avvisi[sezione] = criticita
     # Le ricerche web sono riservate a leggi, prezzi, versioni, requisiti e altri
     # dati soggetti a cambiamento; i contenuti didattici stabili non consumano credito web.
     generi_con_verifica_estesa = {
@@ -5763,23 +5784,34 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             with c1:
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
                                            f"Verrà generata o sostituita la sezione selezionata: {sez_scelta}."):
+                    sezione_salvata = False
                     with st.spinner(L["msg_run"]):
-                        full_prompt = crea_prompt_stesura_sezione(
-                            sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
-                        )
-                        scrivi_sezione_memorizzata(sez_scelta, genera_contenuto_editoriale(
-                            full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
-                            val_genere, val_goal, lingua_sel, val_lunghezza
-                        ))
-                        salvata_nel_cloud = salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
-                        st.session_state["messaggio_stesura_sezione"] = (
-                            f"Sezione salvata nel tuo account: {sez_scelta}."
-                            if salvata_nel_cloud else
-                            f"Sezione creata: {sez_scelta}. Salvataggio nel tuo account da riprovare con SALVA SESSIONE."
-                        )
-                        # Ricrea l'interfaccia dopo il salvataggio: il pulsante
-                        # resta subito disponibile per la sezione selezionata.
+                        try:
+                            full_prompt = crea_prompt_stesura_sezione(
+                                sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
+                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
+                            )
+                            contenuto_generato = genera_contenuto_editoriale(
+                                full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
+                                val_genere, val_goal, lingua_sel, val_lunghezza
+                            )
+                            if not str(contenuto_generato or "").strip() or str(contenuto_generato).lstrip().upper().startswith("ERRORE:"):
+                                raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
+                            scrivi_sezione_memorizzata(sez_scelta, contenuto_generato)
+                            salvata_nel_cloud = salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
+                            st.session_state["messaggio_stesura_sezione"] = (
+                                f"Sezione salvata nel tuo account: {sez_scelta}."
+                                if salvata_nel_cloud else
+                                f"Sezione creata: {sez_scelta}. Salvataggio nel tuo account da riprovare con SALVA SESSIONE."
+                            )
+                            sezione_salvata = True
+                        except Exception as exc:
+                            st.session_state["messaggio_stesura_sezione"] = (
+                                f"La sezione non è stata salvata: {exc}. Le altre sezioni restano invariate."
+                            )
+                    if sezione_salvata:
+                        # Il rerun richiama l'editor prima che il widget venga
+                        # disegnato e applica la copia protetta appena scritta.
                         st.rerun()
             with c2:
                 istr = st.text_input(L["btn_edit"], key=f"mod_{k_sessione}", placeholder="Es: Potenzia l'esposizione...")
