@@ -2801,12 +2801,20 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         # essere definizioni, classificazioni, norme, ruoli, confronti o
         # confini: devono essere chiari e completi, non trasformati in una
         # procedura fittizia.
-        sezione_operativa = any(parola in titolo_sezione for parola in (
-            "procedur", "passagg", "passo", "fase", "istruzion", "come fare", "come si ", "come applic", "come esegu", "come compil", "come verific", "applic", "esegu",
+        # Non basta che un titolo nomini procedure, verifiche o aggiornamenti:
+        # nelle sezioni normative può descriverne obblighi e limiti. Attiviamo
+        # il vincolo soltanto con una formula che insegna esplicitamente come
+        # compiere un'azione, e lo escludiamo per i titoli di conformità.
+        titolo_normativo = any(parola in titolo_sezione for parola in (
+            "obbligh", "requisit", "limit", "esclusion", "diviet", "avverten", "conform",
+            "aggiornamento", "verifiche periodiche", "responsabil", "sanzion", "normativ",
+        ))
+        sezione_operativa = not titolo_normativo and any(parola in titolo_sezione for parola in (
+            "procedura per", "procedura di", "passaggi per", "passo", "fase", "istruzioni per", "come fare", "come si ", "come applic", "come esegu", "come compil", "come verific", "applic", "esegu",
             "compil", "redazion", "implement", "workflow", "verifica operativa", "come verificare", "controllo operativo",
-            "procedure", "steps", "step", "how to", "instruction", "implement", "execute", "workflow", "operational verification",
-            "procedimiento", "pasos", "cómo hacer", "cómo se", "cómo aplicar", "cómo ejecutar", "cómo verificar", "instrucciones", "aplicar", "ejecutar",
-            "procédure", "étapes", "comment faire", "comment appliquer", "comment exécuter", "comment vérifier", "instructions", "appliquer", "exécuter",
+            "procedure for", "procedure to", "steps to", "step", "how to", "instructions for", "implement", "execute", "workflow", "operational verification",
+            "procedimiento para", "pasos para", "cómo hacer", "cómo se", "cómo aplicar", "cómo ejecutar", "cómo verificar", "instrucciones para", "aplicar", "ejecutar",
+            "procédure pour", "étapes pour", "comment faire", "comment appliquer", "comment exécuter", "comment vérifier", "instructions pour", "appliquer", "exécuter",
             "verfahren", "schritte", "anleitung", "anwenden", "ausführen",
             "procedură", "pași", "instrucțiuni", "aplica", "executa",
         ))
