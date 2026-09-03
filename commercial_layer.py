@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import uuid
 import json
-import base64
 from pathlib import Path
 from typing import Any
 
@@ -17,8 +16,11 @@ COMMERCIAL_VERSION = "beta 3d"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
-SESSION_COOKIE_NAME = "scrittore_site_refresh"
-SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 giorni: il token viene comunque verificato da Supabase.
+SESSION_COMPONENT_PATH = Path(__file__).resolve().parent / "scrittore_site_session_component"
+_session_component = components.declare_component(
+    "scrittore_site_session",
+    path=str(SESSION_COMPONENT_PATH),
+)
 # Griglia commerciale: un Test Prep approfondito fino a 60 sezioni usa normalmente
 # 75 crediti (60 sezioni, indice, voto, controllo finale e metadati).
 AI_REQUEST_CREDITS = 1
@@ -581,65 +583,38 @@ def _init_demo_account() -> dict[str, Any]:
     return st.session_state["commercial_demo_user"]
 
 
-def _leggi_cookie_sessione() -> str:
-    """Legge il token di rinnovo dal cookie del browser, se Streamlit lo espone.
+def _sessione_browser(action: str, refresh_token: str = "") -> str:
+    """Scambia il token con il piccolo componente browser dell'app.
 
-    Il cookie non contiene password, id utente o crediti: contiene solo un token
-    temporaneo di Supabase che viene sempre convalidato dal servizio prima del
-    ripristino dell'accesso.
+    Il componente, a differenza di un iframe HTML generico, restituisce il
+    valore a Streamlit anche dopo un refresh. Il valore contiene soltanto il
+    refresh token Supabase e viene validato nuovamente lato server.
     """
     try:
-        cookies = getattr(getattr(st, "context", None), "cookies", None)
-        value = cookies.get(SESSION_COOKIE_NAME, "") if cookies else ""
+        value = _session_component(
+            action=action,
+            refresh_token=str(refresh_token or ""),
+            key="commercial_persistent_session",
+            default="",
+        )
         return str(value or "").strip()
     except Exception:
         return ""
 
 
+def _leggi_cookie_sessione() -> str:
+    return _sessione_browser("read")
+
+
 def _scrivi_cookie_sessione(refresh_token: str) -> None:
-    """Memorizza nel browser il solo refresh token della sessione verificata."""
-    refresh_token = str(refresh_token or "").strip()
-    if not refresh_token:
-        return
-    # Base64 url-safe evita caratteri speciali nei cookie. Il token non viene
-    # mai mostrato a video né inserito nei log dell'app.
-    value = base64.urlsafe_b64encode(refresh_token.encode("utf-8")).decode("ascii").rstrip("=")
-    previous = st.session_state.get("commercial_browser_refresh_saved")
-    if previous == value:
-        return
-    payload = json.dumps(value)
-    components.html(
-        f"""
-        <script>
-        (() => {{
-          const value = {payload};
-          const cookie = "{SESSION_COOKIE_NAME}=" + value
-            + "; Max-Age={SESSION_COOKIE_MAX_AGE}; Path=/; SameSite=Lax; Secure";
-          try {{ document.cookie = cookie; }} catch (e) {{}}
-          try {{ window.parent.document.cookie = cookie; }} catch (e) {{}}
-        }})();
-        </script>
-        """,
-        height=0,
-    )
-    st.session_state["commercial_browser_refresh_saved"] = value
+    """Salva nel browser il solo token di rinnovo dell'accesso verificato."""
+    if refresh_token:
+        _sessione_browser("save", refresh_token)
 
 
 def _cancella_cookie_sessione() -> None:
     """Rimuove il token persistente quando l'utente preme Esci."""
-    components.html(
-        f"""
-        <script>
-        (() => {{
-          const cookie = "{SESSION_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax; Secure";
-          try {{ document.cookie = cookie; }} catch (e) {{}}
-          try {{ window.parent.document.cookie = cookie; }} catch (e) {{}}
-        }})();
-        </script>
-        """,
-        height=0,
-    )
-    st.session_state.pop("commercial_browser_refresh_saved", None)
+    _sessione_browser("clear")
 
 
 def _ripristina_sessione_browser() -> bool:
@@ -651,12 +626,10 @@ def _ripristina_sessione_browser() -> bool:
     """
     if _mode() == "demo" or st.session_state.get("commercial_user") or not _supabase_ready():
         return False
-    encoded = _leggi_cookie_sessione()
-    if not encoded:
+    refresh_token = _leggi_cookie_sessione()
+    if not refresh_token:
         return False
     try:
-        padded = encoded + ("=" * (-len(encoded) % 4))
-        refresh_token = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
         response = requests.post(
             f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/token",
             headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
@@ -1363,7 +1336,10 @@ def _account_gate() -> dict[str, Any]:
                 _apri_progetto_pulito_dopo_accesso()
                 st.session_state["commercial_user"] = utente
                 _scrivi_cookie_sessione(utente.get("refresh_token", ""))
-                st.rerun()
+                # Il componente browser invia il rerun soltanto dopo avere
+                # scritto il token. Così il primo accesso diventa persistente
+                # anche se l'utente aggiorna subito la pagina.
+                st.stop()
             except Exception as error:
                 st.error(str(error))
         with st.expander("Password dimenticata?"):
@@ -1829,7 +1805,10 @@ def _commerce_sidebar() -> None:
             st.session_state.pop("commercial_user_context", None)
             st.session_state.pop("commercial_show_auth", None)
             st.session_state.pop("commercial_project_reset_requested", None)
-            st.rerun()
+            # Attende il messaggio del componente dopo la rimozione del token:
+            # evitare un rerun immediato impedisce che l'accesso venga
+            # ripristinato dal vecchio token appena dopo "Esci".
+            st.stop()
 
 
 def bootstrap_commercial_app() -> None:
