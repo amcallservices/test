@@ -2150,6 +2150,13 @@ INDICE RIFIUTATO DA CORREGGERE
 
 def tipo_sezione_editoriale(sezione):
     pulita = sezione.strip()
+    # Apertura e chiusura non sono capitoli dell'indice, ma fanno parte del
+    # manoscritto: riconoscerle esplicitamente evita che vengano trattate come
+    # un frontespizio vuoto nei controlli e nei salvataggi della stesura.
+    if re.match(r'(?i)^(prefazione|preface|préface|prefácio|vorwort|предисловие|مقدمة|前言)\b', pulita):
+        return "apertura"
+    if re.match(r'(?i)^(ringraziamenti|acknowledg(?:e)?ments|remerciements|agradecimientos|danksagung|mulțumiri|благодарности|شكر|致谢)\b', pulita):
+        return "chiusura"
     if re.match(r'(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\b', pulita):
         return "parte"
     if re.match(r'(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+', pulita):
@@ -2943,9 +2950,11 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         or any(finale.lower().endswith(connettivo) for connettivo in connettivi_finali)
     ):
         return "ragionamento non concluso: chiudi l'ultima idea con una frase completa e utile"
-    # Le Parti sono cornici brevi, ma devono comunque finire con una frase
-    # completa: escludiamo soltanto gli altri controlli di densità.
-    if tipo_sezione == "parte":
+    # Aperture, chiusure e Parti sono cornici editoriali più brevi, ma devono
+    # comunque finire con una frase completa. Una volta superato il controllo
+    # di chiusura qui sopra, non devono essere respinte solo perché non hanno
+    # la densità o la lunghezza di un capitolo tecnico.
+    if tipo_sezione in {"parte", "apertura", "chiusura"}:
         return ""
     # I capitoli che possiedono sottocapitoli restano cornici intenzionalmente brevi:
     # la trattazione completa è affidata alle sezioni figlie e non va duplicata.
@@ -3150,7 +3159,7 @@ with st.sidebar:
         "🧠 Cervello AI",
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
         key="provider_ia",
-        help="GPT conserva tutte le funzioni, compresi ricerca web e immagini. DeepSeek Pro usa un motore separato per indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
+        help="GPT conserva tutte le funzioni, comprese verifica copyright web e immagini. DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
     if usa_deepseek_pro():
         st.info("DeepSeek Pro attivo: scrittura, indice, ricerca fonti web, fonti caricate e controlli editoriali usano esclusivamente DeepSeek. Il registro delle fonti trovate è visibile sotto il caricamento fonti. Verifica copyright web e immagini richiedono GPT e restano disattivate per evitare un uso misto.")
@@ -4000,7 +4009,11 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 # ======================================================================================================================
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
-opzioni_editor = [L["preface"]] + lista_cap_base + [L["ack"]]
+# Apertura e chiusura sono sezioni reali del manoscritto. Uniamo anche la
+# memoria stabile: se una pausa, un refresh o un cambio lingua avviene dopo la
+# Prefazione, essa resta subito selezionabile nell'editor e visibile in
+# anteprima insieme a tutte le altre sezioni già prodotte.
+opzioni_editor = elenco_sezioni_progetto([L["preface"]] + lista_cap_base + [L["ack"]])
 # Prima di disegnare l'editor, ripristina ogni testo già protetto nella memoria
 # del progetto. Il cambio della sezione selezionata non può quindi svuotare le
 # altre caselle o nasconderle dall'anteprima/esportazione.
@@ -4062,6 +4075,7 @@ if st.session_state.get("admin_test_mode"):
         ("Fonti web", bool(fonti_test)),
         ("Indice nei limiti", indice_nei_limiti),
         ("Scrittura sezione", bool(testi_test)),
+        ("Pausa e Prefazione", bool(st.session_state.get("admin_test_prefazione_pausa_verificata"))),
         ("Completezza testi", bool(testi_test) and not frasi_non_concluse),
         ("Anteprima, voce, CSV e PDF", verifica_visiva_test),
     ]
@@ -4072,7 +4086,7 @@ if st.session_state.get("admin_test_mode"):
         percentuale_collaudo,
         text=f"Avanzamento collaudo: {fasi_completate}/{len(fasi_collaudo)} fasi completate — prossima: {prossima_fase}.",
     )
-    st.caption("Avvio automatico: ricerca fonti, indice breve con controllo editoriale e due sezioni reali. Non può verificare da solo funzioni del browser come voce, download CSV e PDF.")
+    st.caption("Avvio automatico: ricerca fonti, indice breve con controllo editoriale, Prefazione e due sezioni reali. Include una simulazione di pausa/ripresa della Prefazione. Non può verificare da solo funzioni del browser come voce, download CSV e PDF.")
     if st.button("🚀 AVVIA COLLAUDO AUTOMATICO", type="primary", key="avvia_collaudo_automatico", use_container_width=True):
         st.session_state["admin_test_run_requested"] = True
     esito_collaudo_automatico = st.session_state.get("admin_test_run_report", "")
@@ -4086,6 +4100,7 @@ if st.session_state.get("admin_test_mode"):
         ("Fonti web", bool(fonti_test), "Genera l'indice per verificare la ricerca e il registro fonti." if not fonti_test else "Registro fonti disponibile."),
         ("Indice e prompt", indice_nei_limiti, "Apri Indice e premi Genera indice professionale." if not indice_test else (f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: {massimo_voci_visualizzato})." if indice_nei_limiti else f"Indice fuori limite: {conta_sezioni_indice(indice_test)} voci su massimo {massimo_voci_visualizzato}.")),
         ("Scrittura sezione", bool(testi_test), "Apri Scrittura e genera almeno una sezione." if not testi_test else f"{len(testi_test)} sezioni create."),
+        ("Pausa e Prefazione", bool(st.session_state.get("admin_test_prefazione_pausa_verificata")), "Avvia il collaudo automatico: genera una Prefazione, simula la pausa e verifica che sia ancora leggibile nella memoria editoriale." if not st.session_state.get("admin_test_prefazione_pausa_verificata") else "Prefazione conservata e riletta correttamente dopo la simulazione della pausa."),
         ("Completezza frasi", bool(testi_test) and not frasi_non_concluse, "Da verificare dopo la prima sezione." if not testi_test else ("Nessuna chiusura tronca rilevata." if not frasi_non_concluse else "Da rielaborare: " + ", ".join(frasi_non_concluse[:3]))),
         ("Anteprima / voce / CSV", verifica_visiva_test, "Verifica manualmente Anteprima, lettore vocale e Importa / Esporta / Copyright: sono funzioni del browser e richiedono un controllo visivo." if not verifica_visiva_test else "Verifica visiva confermata dall'amministratore."),
     ]
@@ -4342,6 +4357,9 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
         """Esegue un campione end-to-end con le funzioni realmente usate dall'editor."""
         barra = st.progress(0, text="Collaudo automatico: preparazione...")
         try:
+            # Il collaudo deve includere l'apertura del libro: è una sezione
+            # fuori indice e quindi è il caso più esposto a pause e rerun.
+            st.session_state["admin_test_prefazione_pausa_verificata"] = False
             barra.progress(10, text="Collaudo automatico: ricerca e mappa delle fonti...")
             ricerca_preliminare_per_indice(
                 val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti, forza=True
@@ -4375,15 +4393,17 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
             st.session_state["indice_raw"] = indice_test
             sync_capitoli()
-            sezioni_test = [
+            sezioni_indice_test = [
                 sezione for sezione in st.session_state.get("lista_capitoli", [])
                 if tipo_sezione_editoriale(sezione) != "parte"
             ]
             if val_genere == "Test Prep (Preparazione Esami)":
-                sezioni_test.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
-            sezioni_test = sezioni_test[:2]
-            if not sezioni_test:
+                sezioni_indice_test.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
+            if not sezioni_indice_test:
                 raise RuntimeError("L'indice non contiene sezioni scrivibili per il collaudo.")
+            # Le due sezioni dell'indice sono affiancate dalla Prefazione,
+            # proprio come avviene con “Scrivi tutto il libro”.
+            sezioni_test = list(dict.fromkeys([L["preface"], *sezioni_indice_test[:2]]))
             for posizione, sezione in enumerate(sezioni_test, start=1):
                 barra.progress(30 + int(posizione / len(sezioni_test) * 55), text=f"Collaudo automatico: stesura {posizione}/{len(sezioni_test)} — {sezione}...")
                 prompt_sezione = crea_prompt_stesura_sezione(
@@ -4397,7 +4417,15 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 if not str(contenuto or "").strip() or str(contenuto).lstrip().upper().startswith("ERRORE:"):
                     raise RuntimeError(f"Risposta non valida per la sezione “{sezione}”.")
                 scrivi_sezione_memorizzata(sezione, contenuto)
-                salva_stesura_immediata([sezione])
+                # Stessa protezione usata dalla scrittura completa: una pausa
+                # deve conservare ogni sezione già prodotta, non solo l'ultima.
+                sezioni_da_proteggere = elenco_sezioni_progetto([L["preface"], *st.session_state.get("lista_capitoli", []), L["ack"]])
+                salva_stesura_generata_in_cloud(sezioni_da_proteggere, "sezione del collaudo generata")
+                if sezione == L["preface"]:
+                    reidrata_sezioni_memorizzate(sezioni_da_proteggere)
+                    if not str(leggi_sezione_memorizzata(L["preface"]) or "").strip():
+                        raise RuntimeError("La Prefazione non è rimasta disponibile dopo la simulazione della pausa.")
+                    st.session_state["admin_test_prefazione_pausa_verificata"] = True
             barra.progress(100, text="Collaudo automatico completato: controlla ora le funzioni del browser.")
             st.session_state["admin_test_run_report"] = (
                 f"Collaudo automatico completato con {st.session_state.get('admin_test_provider', provider_ia)}: "
@@ -4614,15 +4642,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "中文": "🛡️ **已付费内容保护：** 每次 AI 成功生成或改写的内容都会自动保存到你的账户。**保存会话** 仍适用于手动修改、图片和未使用 AI 的其他变更。",
     }
     avviso_cervelli_ia = {
-        "Italiano": "🧠 **Due cervelli separati.** Con **GPT-5.4** restano disponibili tutte le funzioni e il tariffario GPT. Con **DeepSeek V4 Pro** indice, fonti caricate, scrittura e controlli editoriali sono eseguiti solo da DeepSeek: scrittura/quiz/esempi costano 1 credito ogni 2 operazioni, indice completo 2 crediti, coerenza iniziale 3 e dieci ricette 4. Per evitare utilizzi misti, ricerca web, controllo copyright web e immagini si usano soltanto selezionando GPT.",
-        "English": "🧠 **Two separate AI engines.** **GPT-5.4** keeps every feature and the GPT pricing. **DeepSeek V4 Pro** alone handles indexes, uploaded sources, writing and editorial checks: writing/quizzes/examples cost 1 credit every 2 operations, a full index costs 2 credits, the first consistency check costs 3 and ten recipes cost 4. Web research, web copyright checks and images require GPT to avoid mixed usage.",
-        "Español": "🧠 **Dos motores de IA separados.** **GPT-5.4** conserva todas las funciones y tarifas GPT. **DeepSeek V4 Pro** realiza por sí solo índices, fuentes cargadas, escritura y controles editoriales: escritura/cuestionarios/ejemplos cuestan 1 crédito cada 2 operaciones, el índice completo 2, el primer control de coherencia 3 y diez recetas 4. La búsqueda web, el copyright web y las imágenes requieren GPT para evitar un uso mixto.",
-        "Français": "🧠 **Deux moteurs IA séparés.** **GPT-5.4** conserve toutes les fonctions et le tarif GPT. **DeepSeek V4 Pro** traite seul les index, sources importées, rédaction et contrôles éditoriaux : rédaction/quiz/exemples coûtent 1 crédit toutes les 2 opérations, l’index complet 2, le premier contrôle de cohérence 3 et dix recettes 4. Recherche web, copyright web et images nécessitent GPT afin d’éviter un usage mixte.",
-        "Deutsch": "🧠 **Zwei getrennte KI-Engines.** **GPT-5.4** behält alle Funktionen und die GPT-Tarife. **DeepSeek V4 Pro** bearbeitet Index, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen allein: Schreiben/Quiz/Beispiele kosten 1 Kredit je 2 Vorgänge, der vollständige Index 2, die erste Kohärenzprüfung 3 und zehn Rezepte 4. Websuche, Web-Copyrightprüfung und Bilder erfordern GPT, damit kein Mischbetrieb entsteht.",
-        "Română": "🧠 **Două motoare IA separate.** **GPT-5.4** păstrează toate funcțiile și tarifele GPT. **DeepSeek V4 Pro** gestionează singur indexul, sursele încărcate, scrierea și controalele editoriale: scrierea/testele/exemplele costă 1 credit la 2 operațiuni, indexul complet 2, primul control de coerență 3 și zece rețete 4. Căutarea web, copyrightul web și imaginile necesită GPT pentru a evita folosirea mixtă.",
-        "Русский": "🧠 **Два отдельных ИИ-движка.** **GPT-5.4** сохраняет все функции и тариф GPT. **DeepSeek V4 Pro** самостоятельно выполняет индекс, анализ загруженных источников, написание и редакторские проверки: текст/тесты/примеры стоят 1 кредит за 2 операции, полный индекс — 2, первая проверка согласованности — 3, десять рецептов — 4. Веб-поиск, проверка copyright в интернете и изображения требуют GPT, чтобы не смешивать движки.",
-        "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يحتفظ **GPT-5.4** بكل الوظائف وتسعيرة GPT. أما **DeepSeek V4 Pro** فينفذ وحده الفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل عمليتين، والفهرس الكامل رصيدين، وفحص الاتساق الأول 3، وعشر وصفات 4. البحث على الويب وفحص حقوق النشر على الويب والصور تتطلب GPT لتجنب الخلط بين المحركين.",
-        "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 保留所有功能及 GPT 计费。**DeepSeek V4 Pro** 独立完成目录、已上传来源、写作和编辑检查：写作/测验/示例每 2 次操作消耗 1 积分，完整目录 2 积分，首次一致性检查 3 积分，10 道食谱 4 积分。网页搜索、网页版权检查和图片需要 GPT，以避免混用引擎。",
+        "Italiano": "🧠 **Due cervelli separati.** **GPT-5.4** include tutte le funzioni e il tariffario GPT. **DeepSeek V4 Pro** svolge ricerca delle fonti con registro visibile, indice, analisi delle fonti caricate, scrittura e controlli editoriali senza usare GPT: scrittura, quiz ed esempi costano 1 credito ogni 3 operazioni; indice circa 2 crediti; coerenza e dieci ricette circa 4. Il controllo copyright web e le immagini richiedono GPT.",
+        "English": "🧠 **Two separate AI engines.** **GPT-5.4** includes every feature and the GPT pricing. **DeepSeek V4 Pro** performs source research with a visible register, outlines, uploaded-source analysis, writing and editorial checks without using GPT: writing, quizzes and examples cost 1 credit every 3 operations; an outline is about 2 credits; consistency and ten recipes are about 4. Web copyright checks and images require GPT.",
+        "Español": "🧠 **Dos motores de IA separados.** **GPT-5.4** incluye todas las funciones y tarifas GPT. **DeepSeek V4 Pro** realiza investigación de fuentes con registro visible, índice, análisis de fuentes cargadas, escritura y controles editoriales sin usar GPT: escritura, cuestionarios y ejemplos cuestan 1 crédito cada 3 operaciones; el índice cuesta unos 2 créditos; coherencia y diez recetas, unos 4. El control de copyright web y las imágenes requieren GPT.",
+        "Français": "🧠 **Deux moteurs IA séparés.** **GPT-5.4** inclut toutes les fonctions et le tarif GPT. **DeepSeek V4 Pro** effectue la recherche de sources avec registre visible, le plan, l’analyse des sources importées, la rédaction et les contrôles éditoriaux sans GPT : rédaction, quiz et exemples coûtent 1 crédit toutes les 3 opérations ; le plan coûte environ 2 crédits ; cohérence et dix recettes, environ 4. Le contrôle de copyright web et les images nécessitent GPT.",
+        "Deutsch": "🧠 **Zwei getrennte KI-Engines.** **GPT-5.4** umfasst alle Funktionen und GPT-Tarife. **DeepSeek V4 Pro** recherchiert Quellen mit sichtbarem Register, erstellt die Gliederung, analysiert hochgeladene Quellen, schreibt und prüft redaktionell ohne GPT: Schreiben, Quiz und Beispiele kosten 1 Kredit je 3 Vorgänge; die Gliederung etwa 2 Kredite; Kohärenz und zehn Rezepte etwa 4. Web-Copyrightprüfung und Bilder erfordern GPT.",
+        "Română": "🧠 **Două motoare IA separate.** **GPT-5.4** include toate funcțiile și tarifele GPT. **DeepSeek V4 Pro** face cercetare de surse cu registru vizibil, cuprins, analiză a surselor încărcate, scriere și controale editoriale fără GPT: scrierea, testele și exemplele costă 1 credit la 3 operațiuni; cuprinsul aproximativ 2 credite; coerența și zece rețete aproximativ 4. Controlul copyright web și imaginile necesită GPT.",
+        "Русский": "🧠 **Два отдельных ИИ-движка.** **GPT-5.4** включает все функции и тариф GPT. **DeepSeek V4 Pro** ищет источники с видимым реестром, создаёт оглавление, анализирует загруженные источники, пишет и выполняет редакторские проверки без GPT: текст, тесты и примеры стоят 1 кредит за 3 операции; оглавление — около 2 кредитов; согласованность и десять рецептов — около 4. Проверка copyright в интернете и изображения требуют GPT.",
+        "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يشمل **GPT-5.4** كل الوظائف وتسعيرة GPT. ينفذ **DeepSeek V4 Pro** بحث المصادر مع سجل ظاهر والفهرس وتحليل المصادر المرفوعة والكتابة والفحوص التحريرية دون GPT: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل 3 عمليات؛ الفهرس نحو رصيدين؛ الاتساق وعشر وصفات نحو 4. فحص حقوق النشر على الويب والصور يتطلبان GPT.",
+        "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 包含所有功能及 GPT 计费。**DeepSeek V4 Pro** 不使用 GPT 即可进行带可见记录的来源研究、目录、已上传来源分析、写作和编辑检查：写作/测验/示例每 3 次操作消耗 1 积分；目录约 2 积分；一致性检查和 10 道食谱约 4 积分。网页版权检查和图片需要 GPT。",
     }
     percorso_rapido = {
         "Italiano": """### ⚡ Percorso rapido in 4 passaggi
@@ -4681,10 +4709,12 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     with tabs[0]:
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
-        st.divider()
-        st.markdown(testo_guida)
-        st.divider()
-        st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
+        if not sidebar_pronta:
+            st.info("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.")
+        with st.expander("📚 Guida completa e regole di utilizzo", expanded=False):
+            st.markdown(testo_guida)
+        with st.expander("✨ Funzioni, salvataggio e copyright", expanded=False):
+            st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
         st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
         st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
         etichette_prova_notifiche = {
@@ -4986,7 +5016,7 @@ Per CERVELLO AI scegli un solo valore tra:
 - GPT-5.4 (OpenAI)
 - DeepSeek V4 Pro
 
-Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di ricerca web, verifica copyright web o generazione immagini. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
+Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di verifica copyright web o generazione immagini. Con DeepSeek è disponibile la ricerca delle fonti con registro visibile. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
 
 REGOLE DI QUALITÀ
 
@@ -5051,7 +5081,7 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
         }
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
-            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web research, web copyright checks, and image generation are not required."""
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
 {istruzioni_multilingue[lingua_sel]}
@@ -5096,7 +5126,7 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
         descrizione_indice = (
-            "DeepSeek Pro studia il brief e le fonti caricate, poi genera, valuta e corregge l'indice senza usare GPT o ricerca web."
+            "DeepSeek Pro studia il brief, svolge la ricerca delle fonti con registro visibile e analizza le fonti caricate; poi genera, valuta e corregge l'indice senza usare GPT."
             if usa_deepseek_pro() else
             "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice."
         )
@@ -5397,6 +5427,16 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if pausa_richiesta:
                     st.session_state["job_scrittura_attivo"] = False
                     st.session_state["job_scrittura_pausa"] = True
+                    # La pausa è una barriera di sicurezza: prima di lasciare
+                    # il ciclo, salva l'intera fotografia editoriale, non la
+                    # sola sezione che il ciclo stava per avviare. Così la
+                    # Prefazione, già conclusa al passaggio precedente, non
+                    # può sparire da editor, anteprima o ripristino cloud.
+                    sezioni_da_proteggere = elenco_sezioni_progetto(opzioni_editor)
+                    salva_stesura_generata_in_cloud(
+                        sezioni_da_proteggere, "stesura messa in pausa"
+                    )
+                    reidrata_sezioni_memorizzate(sezioni_da_proteggere)
                     st.info(f"Generazione in pausa. Restano {len(coda_scrittura)} sezioni da scrivere; puoi controllare il libro e poi riprendere.")
                 else:
                     try:
@@ -5415,8 +5455,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         # Un'interruzione lascia quindi recuperabili tutte le
                         # sezioni già pagate e concluse; rilanciando il comando
                         # verranno elaborate solo le sezioni ancora vuote.
+                        # Salviamo il progetto completo ad ogni passaggio. La
+                        # singola sezione appena prodotta è già nella memoria,
+                        # mentre Prefazione, Ringraziamenti e tutte le parti
+                        # precedenti restano incluse anche se l'utente mette
+                        # in pausa subito dopo questo rerun.
+                        sezioni_da_proteggere = elenco_sezioni_progetto(opzioni_editor)
                         salva_stesura_generata_in_cloud(
-                            [sezione_corrente], "sezione del libro generata"
+                            sezioni_da_proteggere, "sezione del libro generata"
                         )
                         st.rerun()
                     except Exception as exc:
