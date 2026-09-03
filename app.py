@@ -206,10 +206,10 @@ def separa_mappa_e_registro_fonti_web(testo):
     return testo, ""
 
 
-def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti):
+def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
     """Cerca e sintetizza fonti autorevoli prima dell'indice; il dossier resta interno al progetto."""
     firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
-    if st.session_state.get("firma_ricerca_preliminare") == firma:
+    if not forza and st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
 
     riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=CREDIT_COSTS["indice_ricerca_web"])
@@ -2895,6 +2895,39 @@ basta, elimina l'ultimo dettaglio secondario e termina con una conclusione breve
             addebita=False,
         ))
         criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+    # Se le riscritture hanno prodotto un testo completo ma ancora corto, non
+    # scartiamo una buona base e non blocchiamo il libro: chiediamo soltanto
+    # l'integrazione strettamente necessaria. È un recupero interno gratuito,
+    # usato da GPT e DeepSeek, che mantiene coerente il ragionamento già
+    # scritto e porta davvero la sezione nel margine del 5%.
+    if criticita and "testo troppo breve" in criticita:
+        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza)
+        for _ in range(2):
+            parole_attuali = len(testo.split())
+            parole_da_aggiungere = max(1, minimo_richiesto - parole_attuali)
+            if parole_da_aggiungere <= 0:
+                break
+            integrazione = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+                f"""
+Completa la sezione qui sotto senza riscriverla e senza ripeterne i concetti.
+Scrivi SOLO l'integrazione finale, pronta da aggiungere dopo l'ultimo paragrafo.
+Servono almeno {parole_da_aggiungere} parole nuove e non devi superare {massimo_richiesto} parole totali.
+Approfondisci un solo aspetto concreto e pertinente al titolo, poi chiudi con una frase completa.
+Non introdurre titoli, fonti, note, promesse o elenchi lasciati a metà.
+
+TITOLO DELLA SEZIONE: {sezione}
+TESTO GIÀ APPROVATO NELLA FORMA:
+{testo}
+""",
+                system_prompt, sezione, lingua, max_completion_tokens=limite_output,
+                addebita=False,
+            ))
+            if not integrazione:
+                continue
+            testo = pulisci_testo_editoriale(f"{testo}\n\n{integrazione}")
+            criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+            if not criticita:
+                return testo
     if criticita:
         raise RuntimeError(
             f"La sezione '{sezione}' non ha superato il controllo di completezza ({criticita}). "
@@ -2990,6 +3023,37 @@ with st.sidebar:
             st.caption(f"Analisi fonti: {'DeepSeek V4 Pro' if usa_deepseek_pro() else MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
     elif st.session_state.get("conoscenza_extra"):
         st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
+
+    etichette_fonti_web = {
+        "Italiano": ("🔄 RIGENERA FONTI WEB", "Cerca di nuovo fonti aggiornate e sostituisce soltanto la mappa e il registro delle fonti web. Indice e sezioni già scritti non cambiano."),
+        "English": ("🔄 REFRESH WEB SOURCES", "Searches for updated sources again and replaces only the web-source map and register. Your index and written sections will not change."),
+        "Español": ("🔄 REGENERAR FUENTES WEB", "Busca de nuevo fuentes actualizadas y sustituye solo el mapa y el registro web. El índice y las secciones escritas no cambian."),
+        "Français": ("🔄 ACTUALISER LES SOURCES WEB", "Recherche à nouveau des sources actualisées et remplace uniquement la carte et le registre web. L’index et les sections déjà écrites ne changent pas."),
+        "Deutsch": ("🔄 WEBQUELLEN AKTUALISIEREN", "Sucht erneut aktuelle Quellen und ersetzt nur Karte und Webquellenregister. Inhaltsverzeichnis und geschriebene Abschnitte bleiben unverändert."),
+    }
+    etichetta_fonti, descrizione_fonti = etichette_fonti_web.get(lingua_sel, etichette_fonti_web["Italiano"])
+    dati_fonti_pronti = all(str(st.session_state.get(chiave, "")).strip() for chiave in (
+        "book_title", "book_genre", "book_goal", "book_plot",
+    ))
+    if pulsante_con_preventivo(
+        "rigenera_fonti_web", etichetta_fonti, CREDIT_COSTS["indice_ricerca_web"], descrizione_fonti,
+        use_container_width=True, disabled=not dati_fonti_pronti,
+    ):
+        with st.spinner("Ricerca e aggiornamento delle fonti web in corso..."):
+            dossier_aggiornato = ricerca_preliminare_per_indice(
+                st.session_state.get("book_title", ""),
+                st.session_state.get("book_genre", ""),
+                st.session_state.get("book_plot", ""),
+                st.session_state.get("book_goal", ""),
+                lingua_sel,
+                st.session_state.get("book_further_details", ""),
+                forza=True,
+            )
+        if dossier_aggiornato:
+            st.success("Fonti web aggiornate e salvate nel progetto. Indice e sezioni esistenti sono rimasti invariati.")
+        else:
+            st.error("Non è stato possibile aggiornare le fonti web. Nessun credito viene trattenuto se la ricerca non restituisce un dossier valido.")
+
     registro_fonti_web = st.session_state.get("registro_fonti_web", "").strip()
     if registro_fonti_web:
         with st.expander("🌐 Fonti trovate nella ricerca web", expanded=False):
