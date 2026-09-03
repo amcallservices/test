@@ -2178,6 +2178,11 @@ def chiave_sezione_precedente(sezione):
 
 
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
+# Archivio ridondante delle sezioni create dall'IA. È distinto dalla memoria
+# dei widget Streamlit: se la sidebar si aggiorna durante una pausa, il testo
+# generato resta disponibile e viene reidrato nell'editor e nell'anteprima.
+# Viene cancellato insieme al progetto da RESET PROGETTO.
+CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
 CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 
@@ -2192,13 +2197,19 @@ def leggi_sezione_memorizzata(sezione):
     """
     chiave = chiave_sezione(sezione)
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
+    memoria_protetta = st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})
     valore_widget = st.session_state.get(chiave, "") or st.session_state.get(chiave_sezione_precedente(sezione), "")
     if not str(memoria.get(sezione, "")).strip() and str(valore_widget).strip():
         memoria[sezione] = valore_widget
+        memoria_protetta[sezione] = valore_widget
+    # Una sezione generata non può sparire perché un widget si è ricreato
+    # vuoto durante un rerun: la copia protetta ripristina quella editoriale.
+    if not str(memoria.get(sezione, "")).strip() and str(memoria_protetta.get(sezione, "")).strip():
+        memoria[sezione] = memoria_protetta[sezione]
     valore_memoria = memoria.get(sezione, "")
     if str(valore_memoria).strip():
         return valore_memoria
-    return valore_widget or ""
+    return memoria_protetta.get(sezione, "") or valore_widget or ""
 
 
 def scrivi_sezione_memorizzata(sezione, contenuto):
@@ -2209,6 +2220,7 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     """
     testo = contenuto or ""
     st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo
+    st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo
     st.session_state[chiave_sezione(sezione)] = testo
     return testo
 
@@ -2217,6 +2229,8 @@ def contenuto_memorizzato_puro(sezione):
     """Legge la copia stabile senza lasciarsi influenzare dal widget corrente."""
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     contenuto = memoria.get(sezione, "")
+    if not str(contenuto).strip():
+        contenuto = st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {}).get(sezione, "")
     if not str(contenuto).strip():
         contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
     return contenuto or ""
@@ -2231,7 +2245,11 @@ def elenco_sezioni_progetto(sezioni_base):
     sezioni che Streamlit ha reso visibili nell'ultimo rerun.
     """
     risultato = []
-    for sezione in [*(sezioni_base or []), *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys()]:
+    for sezione in [
+        *(sezioni_base or []),
+        *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys(),
+        *dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}).keys(),
+    ]:
         if sezione and sezione not in risultato:
             risultato.append(sezione)
     return risultato
@@ -2261,14 +2279,18 @@ def prepara_sezione_editor_selezionata():
 def reidrata_sezioni_memorizzate(sezioni):
     """Riporta nell'editor tutte le sezioni già salvate prima di renderizzare i widget."""
     memoria = st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}
+    memoria_protetta = st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}
     for sezione in sezioni:
         contenuto = memoria.get(sezione)
+        if not str(contenuto or "").strip():
+            contenuto = memoria_protetta.get(sezione, "")
         chiave = chiave_sezione(sezione)
         if not str(contenuto or "").strip():
             contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
         if str(contenuto or "").strip() and not str(st.session_state.get(chiave, "")).strip():
             st.session_state[chiave] = contenuto
             memoria[sezione] = contenuto
+            memoria_protetta[sezione] = contenuto
 
 
 CAMPI_SALVATAGGIO_PROGETTO = {
@@ -2320,7 +2342,8 @@ def esporta_progetto_editoriale_csv():
         writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
     writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": st.session_state.get("indice_raw", "")})
 
-    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {})
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in st.session_state.get("lista_capitoli", []):
         testo = leggi_sezione_memorizzata(sezione)
         if str(testo).strip():
@@ -2438,7 +2461,8 @@ def importa_progetto_editoriale_csv(file_caricato):
 def mostra_memoria_visiva_progetto():
     """Pannello leggibile che rende verificabile la memoria reale del progetto."""
     sidebar = sidebar_memorizzata_corrente()
-    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {})
+    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {})
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     # Includiamo anche un testo presente nel widget ma non ancora confluito
     # nella cache, per esempio subito dopo una modifica manuale.
     for chiave, valore in st.session_state.items():
@@ -2577,6 +2601,9 @@ def salva_progetto_corrente(sidebar, sezioni):
     if not st.session_state.get("commercial_project_reset_requested"):
         precedente = carica_progetto_automatico()
         contenuti.update((precedente.get("contenuti", {}) or {}))
+    # La copia protetta ha precedenza sulla fotografia cloud precedente;
+    # quella dell'editor può contenerne una revisione manuale più recente.
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in sezioni:
         testo = leggi_sezione_memorizzata(sezione)
@@ -2584,6 +2611,7 @@ def salva_progetto_corrente(sidebar, sezioni):
             contenuti[sezione] = testo
     contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
     st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
+    st.session_state[CHIAVE_MEMORIA_PROTETTA] = dict(contenuti)
     snapshot = {
         "sidebar": sidebar_completa,
         "indice_raw": st.session_state.get("indice_raw", ""),
