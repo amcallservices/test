@@ -8,6 +8,7 @@ import csv
 import html
 import time
 import datetime
+import copy
 import base64
 import hashlib
 import math
@@ -703,6 +704,146 @@ st.set_page_config(
 
 # AREA COMMERCIALE: accesso, crediti e pagamenti restano separati dalla release personale.
 bootstrap_commercial_test()
+
+# ======================================================================================================================
+# COLLAUDO RISERVATO ALL'AMMINISTRATORE
+# ======================================================================================================================
+# Il comando viene creato esclusivamente dal pannello amministratore di
+# commercial_layer.py. Qui consumiamo la richiesta prima che Streamlit disegni
+# i widget della sidebar, così il progetto di prova può riempirli in sicurezza.
+_PREFISSI_PROGETTO_COLLAUDO = (
+    "book_", "txt_", "mod_", "indice_", "lista_", "memoria_", "conoscenza_",
+    "scheda_", "dossier_", "brief_", "registro_", "firma_", "job_", "immagini_",
+    "audit_", "report_", "cache_", "autosave_", "ultimo_", "analisi_",
+)
+_CHIAVI_PROGETTO_COLLAUDO = {
+    "editor_language", "provider_ia", "profilo_lunghezza_stesura",
+    "sezione_editor_attiva", "sezione_editor_selezionata", "fonti_web_salvate",
+    "commercial_project_reset_requested",
+}
+
+
+def _chiave_progetto_collaudo(chiave):
+    return str(chiave).startswith(_PREFISSI_PROGETTO_COLLAUDO) or str(chiave) in _CHIAVI_PROGETTO_COLLAUDO
+
+
+def _pulisci_progetto_per_collaudo():
+    for chiave in list(st.session_state.keys()):
+        if _chiave_progetto_collaudo(chiave) and not str(chiave).startswith("commercial_"):
+            del st.session_state[chiave]
+
+
+def _profilo_collaudo_breve(nome_profilo):
+    profili = {
+        "Manuale e controlli": {
+            "titolo": "Collaudo interno — Riunione di progetto efficace",
+            "genere": "Manuale Pratico",
+            "tipologia": "Scientifico Divulgativo",
+            "stile": "Diretto e Pratico (Action-oriented)",
+            "pov": "Tu (Diretto, confidenziale e personale)",
+            "obiettivo": "Verificare che il software generi un percorso breve, concreto e privo di ripetizioni per organizzare una riunione di progetto.",
+            "risultato": "Il lettore sa preparare, condurre e chiudere una riunione breve con un ordine del giorno, decisioni verificabili e azioni assegnate.",
+            "argomento": "Guida pratica per pianificare una riunione di progetto: obiettivo, partecipanti, agenda, conduzione, decisioni e follow-up.",
+            "approfondimenti": "Usa esempi brevi, una checklist verificabile e una chiusura completa. Evita consigli generici e frasi interrotte.",
+        },
+        "Test Prep e simulazioni": {
+            "titolo": "Collaudo interno — Quiz base di gestione progetti",
+            "genere": "Test Prep (Preparazione Esami)",
+            "tipologia": "Professionale Accademico",
+            "stile": "Tecnico e Analitico",
+            "pov": "Voi (Plurale, autorevole e rispettoso)",
+            "obiettivo": "Verificare che indice, quiz, esercizi e simulazione siano separati, coerenti e realmente svolgibili.",
+            "risultato": "Il candidato riconosce concetti essenziali di gestione progetti, risponde a quesiti e completa una breve simulazione prima della correzione.",
+            "argomento": "Preparazione introduttiva su obiettivi, ruoli, pianificazione e monitoraggio di un piccolo progetto, con domande e simulazione finale.",
+            "approfondimenti": "Inserisci quiz distinti dalle soluzioni e una simulazione breve con correzione separata. Non promettere certificazioni.",
+        },
+        "Narrativa e stile": {
+            "titolo": "Collaudo interno — Il taccuino ritrovato",
+            "genere": "Narrativo",
+            "tipologia": "Storytelling Immersivo",
+            "stile": "Storytelling Emozionale",
+            "pov": "Tu (Diretto, confidenziale e personale)",
+            "obiettivo": "Verificare coerenza di trama, punto di vista, progressione emotiva e conclusione delle scene in un racconto breve.",
+            "risultato": "Il lettore segue una storia compiuta con scoperta, ostacolo, scelta e risoluzione finale.",
+            "argomento": "Un archivista trova un taccuino che lo conduce a ricostruire una promessa dimenticata, affrontando un ostacolo concreto prima della risoluzione.",
+            "approfondimenti": "Ogni scena deve cambiare la situazione. Mantieni una conclusione vera, senza spiegazioni ridondanti o finali tronchi.",
+        },
+    }
+    return profili.get(nome_profilo, profili["Manuale e controlli"])
+
+
+def _fotografia_locale_progetto_collaudo():
+    """Copia il lavoro locale senza fallire se un widget conserva un oggetto speciale."""
+    fotografia = {}
+    for chiave, valore in st.session_state.items():
+        if _chiave_progetto_collaudo(chiave) and not str(chiave).startswith("commercial_"):
+            try:
+                fotografia[chiave] = copy.deepcopy(valore)
+            except Exception:
+                fotografia[chiave] = valore
+    return fotografia
+
+
+def avvia_collaudo_amministratore_se_richiesto():
+    richiesta = st.session_state.pop("commercial_admin_test_request", None)
+    if not isinstance(richiesta, dict):
+        return
+    if not st.session_state.get("admin_test_mode"):
+        st.session_state["admin_test_backup"] = _fotografia_locale_progetto_collaudo()
+    _pulisci_progetto_per_collaudo()
+    provider = str(richiesta.get("provider") or "GPT-5.4 (OpenAI)")
+    profilo_nome = str(richiesta.get("profilo") or "Manuale e controlli")
+    profilo = _profilo_collaudo_breve(profilo_nome)
+    st.session_state.update({
+        "editor_language": "Italiano",
+        "provider_ia": provider,
+        "book_title": profilo["titolo"],
+        "book_author": "Amministratore — ambiente di collaudo",
+        "book_genre": profilo["genere"],
+        "book_writing_style": profilo["tipologia"],
+        "book_narrative_style": profilo["stile"],
+        "book_point_of_view": profilo["pov"],
+        "book_goal": profilo["obiettivo"],
+        "book_desired_result": profilo["risultato"],
+        "book_plot": profilo["argomento"],
+        "book_further_details": profilo["approfondimenti"],
+        "profilo_lunghezza_stesura": "Compatto",
+        "indice_raw": "",
+        "lista_capitoli": [],
+        "memoria_sezioni_editor": {},
+        "immagini_capitoli": {},
+        "admin_test_mode": True,
+        "admin_test_provider": provider,
+        "admin_test_profile": profilo_nome,
+        "admin_test_started_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "admin_test_max_voci_indice": 8,
+    })
+    storico = st.session_state.setdefault("commercial_admin_test_history", [])
+    storico.append({
+        "avviato": st.session_state["admin_test_started_at"],
+        "cervello": provider,
+        "modalita": profilo_nome,
+        "indice": False,
+        "sezioni": 0,
+    })
+    st.session_state["commercial_admin_test_history"] = storico[-20:]
+
+
+def termina_collaudo_amministratore():
+    """Chiude il laboratorio senza eliminare né sovrascrivere la bozza reale."""
+    storico = st.session_state.get("commercial_admin_test_history", [])
+    if storico:
+        storico[-1]["concluso"] = datetime.datetime.now().isoformat(timespec="seconds")
+        storico[-1]["indice"] = bool(st.session_state.get("indice_raw", "").strip())
+        storico[-1]["sezioni"] = len(st.session_state.get("memoria_sezioni_editor", {}) or {})
+    backup = st.session_state.get("admin_test_backup", {})
+    _pulisci_progetto_per_collaudo()
+    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_max_voci_indice", "admin_test_backup"):
+        st.session_state.pop(chiave, None)
+    st.session_state.update(backup)
+
+
+avvia_collaudo_amministratore_se_richiesto()
 
 # ======================================================================================================================
 # 2. DIZIONARIO MULTILINGUA INTEGRALE (9 LINGUE GLOBALI - ESPANSO)
@@ -2407,6 +2548,11 @@ def prepara_ripristino_ultima_stesura():
 
 def salva_progetto_corrente(sidebar, sezioni):
     """Crea una fotografia leggera di sidebar, indice e testi e la invia al cloud."""
+    if st.session_state.get("admin_test_mode"):
+        # Il collaudo usa le stesse funzioni dell'app, ma è una sandbox: non
+        # deve poter sostituire il progetto reale salvato dall'amministratore.
+        st.session_state["autosave_stato"] = "🧪 Collaudo: dati mantenuti solo nella pagina di prova; il progetto reale non viene modificato."
+        return True
     # La sidebar è parte essenziale del progetto quanto le sezioni. Uniamo la
     # memoria persistente ai valori del rerun corrente e salviamo sempre tutti
     # i campi, anche quando sono vuoti per scelta dell'utente.
@@ -2479,6 +2625,11 @@ def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
     mai il testo già ricevuto e conservato nella memoria della pagina.
     """
     salva_stesura_immediata(sezioni)
+    if st.session_state.get("admin_test_mode"):
+        st.session_state["autosave_stato"] = (
+            f"🧪 {descrizione.capitalize()} conservato nel laboratorio di collaudo: nessuna bozza reale è stata sovrascritta."
+        )
+        return True
     sezioni_progetto = list(dict.fromkeys([
         *sezioni,
         *st.session_state.get("lista_capitoli", []),
@@ -3228,6 +3379,10 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     limite_voci_indice = max(1, limite_sezioni_totali - 2)
     # Un margine operativo evita che l'indice arrivi al tetto e lo superi con una voce imprevista.
     obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
+    if st.session_state.get("admin_test_mode"):
+        limite_sezioni_totali = int(st.session_state.get("admin_test_max_voci_indice", 8)) + 2
+        limite_voci_indice = limite_sezioni_totali - 2
+        obiettivo_voci_indice = max(6, limite_voci_indice - 1)
     budget_struttura_indice = {
         "Compatto": "massimo 3 Parti, massimo 8 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 43 voci)",
         "Standard KDP": "massimo 4 Parti, massimo 13 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 69 voci)",
@@ -3238,6 +3393,15 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "Standard KDP": (4, 10),
         "Approfondito": (5, 12),
     }[val_lunghezza]
+    if st.session_state.get("admin_test_mode"):
+        # Un test deve essere rapido ma completo: due Parti, tre Capitoli e
+        # pochi sottocapitoli consentono di provare indice, testi, quiz e
+        # controlli senza avviare un vero manoscritto da decine di sezioni.
+        budget_struttura_indice = (
+            "massimo 2 Parti, massimo 3 Capitoli e massimo 2 sottocapitoli "
+            "per Capitolo (massimo 8 voci d'indice)"
+        )
+        minimi_struttura_indice = (2, 3)
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -3267,13 +3431,19 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(L["btn_res"]):
-        elimina_progetto_automatico()
-        # Chiave commerciale: non viene rimossa dal ciclo qui sotto e blocca
-        # ogni ripristino automatico di una fotografia precedente.
-        st.session_state["commercial_project_reset_requested"] = True
-        for key in list(st.session_state.keys()):
-            if not key.startswith("commercial_"):
-                del st.session_state[key]
+        if st.session_state.get("admin_test_mode"):
+            # Nel laboratorio RESET non deve mai cancellare la bozza cloud
+            # dell'amministratore: chiude soltanto il progetto di prova.
+            termina_collaudo_amministratore()
+            st.session_state["messaggio_aggiornamento_pagina"] = "Collaudo chiuso: la sessione precedente è stata ripristinata."
+        else:
+            elimina_progetto_automatico()
+            # Chiave commerciale: non viene rimossa dal ciclo qui sotto e blocca
+            # ogni ripristino automatico di una fotografia precedente.
+            st.session_state["commercial_project_reset_requested"] = True
+            for key in list(st.session_state.keys()):
+                if not key.startswith("commercial_"):
+                    del st.session_state[key]
         st.rerun()
 
     etichette_aggiorna = {
@@ -3315,7 +3485,10 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             | set(st.session_state.get("lista_capitoli", []))
             | set((st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys())
         )
-        if salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_da_salvare):
+        if st.session_state.get("admin_test_mode"):
+            salva_stesura_immediata(sezioni_da_salvare)
+            st.info("🧪 Collaudo salvato solo nel laboratorio corrente: il progetto reale resta invariato.")
+        elif salva_progetto_corrente(sidebar_memorizzata_corrente(), sezioni_da_salvare):
             st.success("Sessione salvata: sidebar, indice, sezioni e fonti web sono stati memorizzati nel tuo account.")
         else:
             st.error("Non è stato possibile salvare la sessione nel tuo account. Il lavoro resta aperto in questa pagina.")
@@ -3853,6 +4026,39 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.caption(VERSIONE_DEPLOY)
+
+if st.session_state.get("admin_test_mode"):
+    # Pannello visibile soltanto dopo l'avvio dal comando protetto della
+    # sidebar amministratore. Non avvia chiamate AI da solo: i test usano gli
+    # stessi pulsanti e gli stessi prompt dell'app pubblica.
+    st.warning(
+        f"🧪 **Laboratorio amministratore attivo** — {st.session_state.get('admin_test_profile', 'Collaudo breve')} "
+        f"con **{st.session_state.get('admin_test_provider', provider_ia)}**. "
+        "I crediti utente non vengono addebitati; le chiamate AI sono reali. Il progetto è isolato e non sovrascrive la bozza cloud."
+    )
+    indice_test = str(st.session_state.get("indice_raw", "") or "").strip()
+    fonti_test = str(st.session_state.get("registro_fonti_web", "") or "").strip()
+    testi_test = {nome: str(testo).strip() for nome, testo in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).items() if str(testo).strip()}
+    frasi_non_concluse = [nome for nome, testo in testi_test.items() if testo and testo.rstrip()[-1:] not in ".!?…»”\"'"]
+    risultati_test = [
+        ("Sidebar e profilo", True, "Brief breve completo e cervello selezionato."),
+        ("Fonti web", bool(fonti_test), "Genera l'indice per verificare la ricerca e il registro fonti." if not fonti_test else "Registro fonti disponibile."),
+        ("Indice e prompt", bool(indice_test), "Apri Indice e premi Genera indice professionale." if not indice_test else f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: 8)."),
+        ("Scrittura sezione", bool(testi_test), "Apri Scrittura e genera almeno una sezione." if not testi_test else f"{len(testi_test)} sezioni create."),
+        ("Completezza frasi", bool(testi_test) and not frasi_non_concluse, "Da verificare dopo la prima sezione." if not testi_test else ("Nessuna chiusura tronca rilevata." if not frasi_non_concluse else "Da rielaborare: " + ", ".join(frasi_non_concluse[:3]))),
+        ("Anteprima / voce / CSV", False, "Verifica manualmente Anteprima, lettore vocale e Importa / Esporta / Copyright: sono funzioni del browser e richiedono un controllo visivo."),
+    ]
+    colonne_test = st.columns([2, 2, 2])
+    colonne_test[0].metric("Indice", "✓" if indice_test else "—")
+    colonne_test[1].metric("Sezioni", len(testi_test))
+    colonne_test[2].metric("Fonti web", len(re.findall(r"https?://\\S+", fonti_test)))
+    with st.expander("Checklist del collaudo", expanded=True):
+        for nome, superato, dettaglio in risultati_test:
+            st.write(f"{'✅' if superato else '⬜'} **{nome}** — {dettaglio}")
+        st.caption("Sequenza: 1) genera l'indice; 2) scrivi una sezione; 3) prova rielaborazione e controllo; 4) verifica anteprima, voce, CSV e PDF; 5) ripeti con l'altro cervello e un'altra modalità.")
+    if st.button("↩ TERMINA COLLAUDO E RIPRISTINA IL PROGETTO PRECEDENTE", key="termina_collaudo_amministratore", use_container_width=True):
+        termina_collaudo_amministratore()
+        st.rerun()
 
 # La guida deve essere disponibile anche al primo avvio, prima che l'utente compili il brief.
 interfaccia_editor_disponibile = True
@@ -4809,6 +5015,13 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                 # Prefazione e Ringraziamenti sono aggiunti dall'editor dopo la sincronizzazione.
                 limite_voci_indice = max(1, limite_sezioni_totali - 2)
                 obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
+                if st.session_state.get("admin_test_mode"):
+                    limite_voci_indice = min(
+                        limite_voci_indice,
+                        int(st.session_state.get("admin_test_max_voci_indice", 8)),
+                    )
+                    limite_sezioni_totali = limite_voci_indice + 2
+                    obiettivo_voci_indice = max(6, limite_voci_indice - 1)
                 # --- FINE NUOVE RIGHE ---
 
                 # PROMPT BLINDATO PER L'INDICE: Ora prende in carico TUTTI i parametri della sidebar per coerenza assoluta.
@@ -4905,6 +5118,14 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
 9. COMPLETEZZA SENZA RIEMPITIVI: Rispetta il numero e il formato stabiliti dall'architettura adattiva. Ogni Capitolo deve avere una funzione autonoma. Crea sottocapitoli soltanto quando sviluppano aspetti distinti e non quando ripetono ingredienti, procedimenti, esempi o scene già assegnati. Prima di concludere, conta internamente le voci richieste e verifica che nessuna sia vuota o solo un titolo.
 
 10. ADATTAMENTO AL TIPO DI LIBRO E OUTPUT FINALE: Per manuali tecnici separa fondamenti, strumenti, procedure, verifiche e progetto applicativo. Per manuali pratici inserisci esercizi, checklist e risultati misurabili. Per business, marketing, economia e self-help inserisci framework, casi studio, piani d'azione e criteri di valutazione. Per saggi scientifici o storici separa contesto, tesi, prove, fonti e conclusioni. Per ricettari con un numero dichiarato di ricette, ogni Capitolo deve essere una ricetta e non sono ammessi Capitoli introduttivi su tecniche, ingredienti o sicurezza. Per test prep inserisci teoria, esercizi, simulazioni e soluzioni. Per narrativa costruisci sviluppo di trama, personaggi, conflitto e risoluzione, senza imporre procedure tecniche e con titoli di capitolo specifici del brief. In ogni caso prevedi un output finale coerente con il genere: progetto, piano, esercizio completato, ricetta, simulazione, decisione applicativa, sintesi o conclusione narrativa. Gli esempi devono essere concreti e verificabili secondo il tipo di libro.
+"""
+                if st.session_state.get("admin_test_mode"):
+                    prompt_idx += """
+
+=== MODALITÀ COLLAUDO AMMINISTRATORE ===
+Questo è un progetto tecnico breve per testare il motore. Rispetta con rigore
+il limite di 8 voci dell'indice: genera una struttura piccola ma completa,
+con almeno 2 Parti e 3 Capitoli. Non estendere il libro oltre questo budget.
 """
                 
                 indice_generato = genera_indice_controllato(
