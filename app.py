@@ -3132,7 +3132,20 @@ with st.sidebar:
     lingua_scelta = st.selectbox("🌐 Lingua / Language", [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or "— Seleziona —")
     lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
+    intestazioni_sidebar = {
+        "Italiano": ("Percorso: configura → indice → scrivi → controlla ed esporta", "Configura il progetto", "Fonti e ricerca (opzionale)", "Dettagli editoriali", "Sessione e memoria", "Salva per conservare anche le modifiche manuali; il ripristino è sempre volontario."),
+        "English": ("Path: configure → outline → write → review and export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."),
+        "Español": ("Ruta: configura → índice → escribe → revisa y exporta", "Configura el proyecto", "Fuentes y búsqueda (opcional)", "Detalles editoriales", "Sesión y memoria", "Guarda también los cambios manuales; restaurar siempre es voluntario."),
+        "Français": ("Parcours : configurez → planifiez → rédigez → contrôlez et exportez", "Configurer le projet", "Sources et recherche (facultatif)", "Détails éditoriaux", "Session et mémoire", "Enregistrez aussi les modifications manuelles ; la restauration reste volontaire."),
+        "Deutsch": ("Ablauf: konfigurieren → Gliederung → schreiben → prüfen und exportieren", "Projekt konfigurieren", "Quellen und Recherche (optional)", "Redaktionelle Details", "Sitzung und Speicher", "Speichern Sie auch manuelle Änderungen; eine Wiederherstellung bleibt freiwillig."),
+        "Română": ("Parcurs: configurează → cuprins → scrie → verifică și exportă", "Configurează proiectul", "Surse și cercetare (opțional)", "Detalii editoriale", "Sesiune și memorie", "Salvează și modificările manuale; restaurarea rămâne voluntară."),
+        "Русский": ("Порядок: настройка → оглавление → текст → проверка и экспорт", "Настройка проекта", "Источники и поиск (необязательно)", "Редакционные параметры", "Сессия и память", "Сохраните и ручные правки; восстановление всегда выполняется по вашему выбору."),
+        "العربية": ("المسار: الإعداد ← الفهرس ← الكتابة ← المراجعة والتصدير", "إعداد المشروع", "المصادر والبحث (اختياري)", "التفاصيل التحريرية", "الجلسة والذاكرة", "احفظ أيضاً التعديلات اليدوية؛ والاستعادة اختيارية دائماً."),
+        "中文": ("流程：配置 → 目录 → 写作 → 检查并导出", "配置项目", "资料与研究（可选）", "编辑详情", "会话与记忆", "保存可保留手动修改；恢复始终由你决定。"),
+    }.get(lingua_sel, ("Path: configure → outline → write → review and export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."))
+    st.caption(intestazioni_sidebar[0])
     st.title(L["side_tit"])
+    st.markdown(f"#### 1 · {intestazioni_sidebar[1]}")
     provider_ia = st.selectbox(
         "🧠 Cervello AI",
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
@@ -3161,7 +3174,8 @@ with st.sidebar:
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
     # --- NUOVA SEZIONE CARICAMENTO FONTI ---
-    st.markdown("### 📂 Fonti esterne e ricerca web (opzionale)")
+    st.divider()
+    st.markdown(f"#### 2 · {intestazioni_sidebar[2]}")
     st.markdown("<small>Carica PDF o DOCX: l'IA ne ricava una mappa concettuale interna e scrive un testo autonomo, senza riprendere formulazioni delle fonti.</small>", unsafe_allow_html=True)
     file_caricati = st.file_uploader("Carica Fonti Esterne", type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     if file_caricati:
@@ -3221,7 +3235,8 @@ with st.sidebar:
             st.caption("Registro interno delle fonti consultate per progettare l'indice. Non viene inserito nel libro.")
             st.markdown(registro_fonti_web)
     
-    st.markdown("---")
+    st.divider()
+    st.markdown(f"#### 3 · {intestazioni_sidebar[3]}")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
     val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or "— Seleziona —")
@@ -3419,6 +3434,10 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
 
     if st.session_state.get("autosave_stato"):
         st.caption(st.session_state["autosave_stato"])
+
+    st.divider()
+    st.markdown(f"#### 4 · {intestazioni_sidebar[4]}")
+    st.caption(intestazioni_sidebar[5])
     
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(L["btn_res"]):
@@ -4390,7 +4409,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
             st.session_state.pop("admin_test_run_requested", None)
 
     guide_localizzate = {
-        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per indice, fonti caricate, stesura e controlli editoriali; non usa GPT e per questo non attiva ricerca web, copyright web o immagini. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
+        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
 2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
