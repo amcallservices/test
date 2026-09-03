@@ -842,7 +842,7 @@ def termina_collaudo_amministratore():
         storico[-1]["sezioni"] = len(st.session_state.get("memoria_sezioni_editor", {}) or {})
     backup = st.session_state.get("admin_test_backup", {})
     _pulisci_progetto_per_collaudo()
-    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_backup", "admin_test_verifica_visiva", "admin_test_run_requested", "admin_test_run_report"):
+    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_backup", "admin_test_verifica_visiva", "admin_test_run_requested", "admin_test_run_report", "admin_test_pausa_ripresa_verificata", "admin_test_prefazione_pausa_verificata"):
         st.session_state.pop(chiave, None)
     st.session_state.update(backup)
 
@@ -2150,13 +2150,6 @@ INDICE RIFIUTATO DA CORREGGERE
 
 def tipo_sezione_editoriale(sezione):
     pulita = sezione.strip()
-    # Apertura e chiusura non sono capitoli dell'indice, ma fanno parte del
-    # manoscritto: riconoscerle esplicitamente evita che vengano trattate come
-    # un frontespizio vuoto nei controlli e nei salvataggi della stesura.
-    if re.match(r'(?i)^(prefazione|preface|préface|prefácio|vorwort|предисловие|مقدمة|前言)\b', pulita):
-        return "apertura"
-    if re.match(r'(?i)^(ringraziamenti|acknowledg(?:e)?ments|remerciements|agradecimientos|danksagung|mulțumiri|благодарности|شكر|致谢)\b', pulita):
-        return "chiusura"
     if re.match(r'(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\b', pulita):
         return "parte"
     if re.match(r'(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+', pulita):
@@ -2184,8 +2177,8 @@ CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 # Viene cancellato insieme al progetto da RESET PROGETTO.
 CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
 # Elenco ordinato delle sezioni del manoscritto. Non dipende dall'indice né
-# dai widget: permette a editor e anteprima di mantenere visibili Prefazione e
-# Ringraziamenti anche quando una pausa interrompe la stesura completa.
+# dai widget: mantiene visibili tutte le sezioni effettivamente create anche
+# quando una pausa interrompe la stesura completa.
 CHIAVE_REGISTRO_SEZIONI = "registro_sezioni_manoscritto"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
 CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
@@ -2703,8 +2696,6 @@ def minimo_parole_per_sezione_editoriale(sezione, genere):
     """Soglia unica usata da tutti i controlli prima dell'esportazione."""
     minimi = {
         "parte": 35,
-        "apertura": 40,
-        "chiusura": 25,
         "capitolo": 90 if genere == "Ricettario" else 120,
         "sottocapitolo": 120,
         "frontespizio": 40,
@@ -2997,11 +2988,9 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         or any(finale.lower().endswith(connettivo) for connettivo in connettivi_finali)
     ):
         return "ragionamento non concluso: chiudi l'ultima idea con una frase completa e utile"
-    # Aperture, chiusure e Parti sono cornici editoriali più brevi, ma devono
-    # comunque finire con una frase completa. Una volta superato il controllo
-    # di chiusura qui sopra, non devono essere respinte solo perché non hanno
-    # la densità o la lunghezza di un capitolo tecnico.
-    if tipo_sezione in {"parte", "apertura", "chiusura"}:
+    # Le Parti sono cornici editoriali più brevi, ma devono comunque finire
+    # con una frase completa.
+    if tipo_sezione == "parte":
         return ""
     # I capitoli che possiedono sottocapitoli restano cornici intenzionalmente brevi:
     # la trattazione completa è affidata alle sezioni figlie e non va duplicata.
@@ -3019,10 +3008,6 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     elif len(parole) < 150:
         return "testo troppo breve per sviluppare l'argomento assegnato"
 
-    # Prefazione, ringraziamenti e altre sezioni di apertura/chiusura non sono
-    # procedure: devono essere completi, ma non vanno respinti perché privi di
-    # passaggi numerati o di un controllo tecnico. I requisiti operativi
-    # restano obbligatori soltanto per capitoli e sottocapitoli del manuale.
     # Un capitolo che possiede sottocapitoli introduce e collega il percorso:
     # l'operatività dettagliata appartiene alle sezioni figlie. Un capitolo
     # autonomo e ogni sottocapitolo, invece, devono restare concretamente utili.
@@ -3443,15 +3428,14 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
             f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
-            f"comprese Prefazione e Ringraziamenti. Obiettivo: almeno circa "
+            f"tutte dedicate ai contenuti dell'indice. Obiettivo: almeno circa "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
             "Tolleranza massima sulla lunghezza: 5%."
         )
     else:
         st.caption("Scegli una lunghezza delle sezioni per completare la sidebar.")
     limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
-    # Prefazione e Ringraziamenti vengono gestiti dall'editor, non dall'indice generato.
-    limite_voci_indice = max(1, limite_sezioni_totali - 2)
+    limite_voci_indice = limite_sezioni_totali
     # Un margine operativo evita che l'indice arrivi al tetto e lo superi con una voce imprevista.
     obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
     budget_struttura_indice = {
@@ -3547,8 +3531,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         # Il cloud viene aggiornato esclusivamente con questo comando: durante
         # la stesura normale i testi restano nella memoria della pagina.
         sezioni_da_salvare = list(
-            {L["preface"], L["ack"]}
-            | set(st.session_state.get("lista_capitoli", []))
+            set(st.session_state.get("lista_capitoli", []))
             | set((st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys())
         )
         if st.session_state.get("admin_test_mode"):
@@ -4056,14 +4039,10 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 # ======================================================================================================================
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
-# Apertura e chiusura sono sezioni reali del manoscritto. Uniamo anche la
-# memoria stabile: se una pausa, un refresh o un cambio lingua avviene dopo la
-# Prefazione, essa resta subito selezionabile nell'editor e visibile in
-# anteprima insieme a tutte le altre sezioni già prodotte.
-sezioni_struttura_corrente = [L["preface"]] + lista_cap_base + [L["ack"]]
-# L'indice può essere rigenerato o riletto mentre il libro è in pausa. Il
-# registro editoriale mantiene comunque l'ordine e la visibilità di tutte le
-# parti del manoscritto, comprese quelle fuori indice.
+# Il manoscritto segue esclusivamente le sezioni definite nell'indice.
+sezioni_struttura_corrente = list(lista_cap_base)
+# Il registro editoriale mantiene l'ordine e la visibilità delle sezioni già
+# elaborate anche dopo una pausa o un aggiornamento della pagina.
 if lista_cap_base:
     registro_editoriale = st.session_state.setdefault(CHIAVE_REGISTRO_SEZIONI, [])
     for sezione_editoriale in sezioni_struttura_corrente:
@@ -4071,8 +4050,11 @@ if lista_cap_base:
             registro_editoriale.append(sezione_editoriale)
 # Durante “Scrivi tutto il libro” l'elenco viene fissato anche nella sessione.
 # In questo modo una pausa o un rerun non può ridurre l'elenco dell'editor alle
-# sole voci rileggibili dall'indice, lasciando fuori Prefazione e Ringraziamenti.
-sezioni_job_protette = st.session_state.get("job_scrittura_sezioni", []) or []
+# sole voci rileggibili dall'indice.
+sezioni_job_protette = [
+    sezione for sezione in (st.session_state.get("job_scrittura_sezioni", []) or [])
+    if sezione not in {L["preface"], L["ack"]}
+]
 opzioni_editor = elenco_sezioni_progetto([
     *sezioni_struttura_corrente,
     *sezioni_job_protette,
@@ -4138,7 +4120,7 @@ if st.session_state.get("admin_test_mode"):
         ("Fonti web", bool(fonti_test)),
         ("Indice nei limiti", indice_nei_limiti),
         ("Scrittura sezione", bool(testi_test)),
-        ("Pausa e Prefazione", bool(st.session_state.get("admin_test_prefazione_pausa_verificata"))),
+        ("Pausa e recupero", bool(st.session_state.get("admin_test_pausa_ripresa_verificata"))),
         ("Completezza testi", bool(testi_test) and not frasi_non_concluse),
         ("Anteprima, voce, CSV e PDF", verifica_visiva_test),
     ]
@@ -4149,7 +4131,7 @@ if st.session_state.get("admin_test_mode"):
         percentuale_collaudo,
         text=f"Avanzamento collaudo: {fasi_completate}/{len(fasi_collaudo)} fasi completate — prossima: {prossima_fase}.",
     )
-    st.caption("Avvio automatico: ricerca fonti, indice breve con controllo editoriale, Prefazione e due sezioni reali. Include una simulazione di pausa/ripresa della Prefazione. Non può verificare da solo funzioni del browser come voce, download CSV e PDF.")
+    st.caption("Avvio automatico: ricerca fonti, indice breve con controllo editoriale e due sezioni reali. Include una simulazione di salvataggio e recupero della stesura. Non può verificare da solo funzioni del browser come voce, download CSV e PDF.")
     if st.button("🚀 AVVIA COLLAUDO AUTOMATICO", type="primary", key="avvia_collaudo_automatico", use_container_width=True):
         st.session_state["admin_test_run_requested"] = True
     esito_collaudo_automatico = st.session_state.get("admin_test_run_report", "")
@@ -4163,7 +4145,7 @@ if st.session_state.get("admin_test_mode"):
         ("Fonti web", bool(fonti_test), "Genera l'indice per verificare la ricerca e il registro fonti." if not fonti_test else "Registro fonti disponibile."),
         ("Indice e prompt", indice_nei_limiti, "Apri Indice e premi Genera indice professionale." if not indice_test else (f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: {massimo_voci_visualizzato})." if indice_nei_limiti else f"Indice fuori limite: {conta_sezioni_indice(indice_test)} voci su massimo {massimo_voci_visualizzato}.")),
         ("Scrittura sezione", bool(testi_test), "Apri Scrittura e genera almeno una sezione." if not testi_test else f"{len(testi_test)} sezioni create."),
-        ("Pausa e Prefazione", bool(st.session_state.get("admin_test_prefazione_pausa_verificata")), "Avvia il collaudo automatico: genera una Prefazione, simula la pausa e verifica che sia ancora leggibile nella memoria editoriale." if not st.session_state.get("admin_test_prefazione_pausa_verificata") else "Prefazione conservata e riletta correttamente dopo la simulazione della pausa."),
+        ("Pausa e recupero", bool(st.session_state.get("admin_test_pausa_ripresa_verificata")), "Avvia il collaudo automatico: genera due sezioni dell'indice, simula una pausa e verifica che restino leggibili nella memoria editoriale." if not st.session_state.get("admin_test_pausa_ripresa_verificata") else "Sezioni conservate e rilette correttamente dopo la simulazione della pausa."),
         ("Completezza frasi", bool(testi_test) and not frasi_non_concluse, "Da verificare dopo la prima sezione." if not testi_test else ("Nessuna chiusura tronca rilevata." if not frasi_non_concluse else "Da rielaborare: " + ", ".join(frasi_non_concluse[:3]))),
         ("Anteprima / voce / CSV", verifica_visiva_test, "Verifica manualmente Anteprima, lettore vocale e Importa / Esporta / Copyright: sono funzioni del browser e richiedono un controllo visivo." if not verifica_visiva_test else "Verifica visiva confermata dall'amministratore."),
     ]
@@ -4420,9 +4402,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
         """Esegue un campione end-to-end con le funzioni realmente usate dall'editor."""
         barra = st.progress(0, text="Collaudo automatico: preparazione...")
         try:
-            # Il collaudo deve includere l'apertura del libro: è una sezione
-            # fuori indice e quindi è il caso più esposto a pause e rerun.
-            st.session_state["admin_test_prefazione_pausa_verificata"] = False
+            st.session_state["admin_test_pausa_ripresa_verificata"] = False
             barra.progress(10, text="Collaudo automatico: ricerca e mappa delle fonti...")
             ricerca_preliminare_per_indice(
                 val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti, forza=True
@@ -4464,9 +4444,8 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 sezioni_indice_test.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
             if not sezioni_indice_test:
                 raise RuntimeError("L'indice non contiene sezioni scrivibili per il collaudo.")
-            # Le due sezioni dell'indice sono affiancate dalla Prefazione,
-            # proprio come avviene con “Scrivi tutto il libro”.
-            sezioni_test = list(dict.fromkeys([L["preface"], *sezioni_indice_test[:2]]))
+            # Il collaudo usa due sezioni realmente previste dall'indice.
+            sezioni_test = list(dict.fromkeys(sezioni_indice_test[:2]))
             for posizione, sezione in enumerate(sezioni_test, start=1):
                 barra.progress(30 + int(posizione / len(sezioni_test) * 55), text=f"Collaudo automatico: stesura {posizione}/{len(sezioni_test)} — {sezione}...")
                 prompt_sezione = crea_prompt_stesura_sezione(
@@ -4482,13 +4461,13 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 scrivi_sezione_memorizzata(sezione, contenuto)
                 # Stessa protezione usata dalla scrittura completa: una pausa
                 # deve conservare ogni sezione già prodotta, non solo l'ultima.
-                sezioni_da_proteggere = elenco_sezioni_progetto([L["preface"], *st.session_state.get("lista_capitoli", []), L["ack"]])
+                sezioni_da_proteggere = elenco_sezioni_progetto(st.session_state.get("lista_capitoli", []))
                 salva_stesura_generata_in_cloud(sezioni_da_proteggere, "sezione del collaudo generata")
-                if sezione == L["preface"]:
+                if posizione == 1:
                     reidrata_sezioni_memorizzate(sezioni_da_proteggere)
-                    if not str(leggi_sezione_memorizzata(L["preface"]) or "").strip():
-                        raise RuntimeError("La Prefazione non è rimasta disponibile dopo la simulazione della pausa.")
-                    st.session_state["admin_test_prefazione_pausa_verificata"] = True
+                    if not str(leggi_sezione_memorizzata(sezione) or "").strip():
+                        raise RuntimeError("La prima sezione non è rimasta disponibile dopo la simulazione della pausa.")
+                    st.session_state["admin_test_pausa_ripresa_verificata"] = True
             barra.progress(100, text="Collaudo automatico completato: controlla ora le funzioni del browser.")
             st.session_state["admin_test_run_report"] = (
                 f"Collaudo automatico completato con {st.session_state.get('admin_test_provider', provider_ia)}: "
@@ -4502,7 +4481,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
 
-2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti includono Prefazione e Ringraziamenti. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti si riferiscono a tutte le sezioni dell'indice. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
@@ -5070,7 +5049,7 @@ Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
 - Standard KDP — circa 620-700 parole per sezione, massimo 80 sezioni totali, obiettivo almeno 200 pagine
 - Approfondito — circa 700-800 parole per sezione, massimo 110 sezioni totali, obiettivo almeno 300 pagine
 
-Scegli Standard KDP come impostazione predefinita. I limiti comprendono Prefazione e Ringraziamenti. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
+Scegli Standard KDP come impostazione predefinita. I limiti si riferiscono a tutte le sezioni dell'indice. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
 
 Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearne di nuovi.
 
@@ -5220,8 +5199,7 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                 t_parte = trad_termini.get(lingua_sel, trad_termini["Italiano"])["parte"]
                 t_cap = trad_termini.get(lingua_sel, trad_termini["Italiano"])["cap"]
                 limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
-                # Prefazione e Ringraziamenti sono aggiunti dall'editor dopo la sincronizzazione.
-                limite_voci_indice = max(1, limite_sezioni_totali - 2)
+                limite_voci_indice = limite_sezioni_totali
                 obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
                 # --- FINE NUOVE RIGHE ---
 
@@ -5268,9 +5246,8 @@ e applicazioni. Mantieni coerenza con genere, tipologia, stile, POV, obiettivo e
 L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
 
 === LIMITE ASSOLUTO DI ESTENSIONE ===
-Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni,
-incluse Prefazione e Ringraziamenti aggiunti dall'editor. Quindi genera AL MASSIMO {limite_voci_indice}
-voci nell'indice qui sotto. OBIETTIVO CONSIGLIATO: circa {obiettivo_voci_indice} voci, per lasciare margine.
+Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni.
+Quindi genera AL MASSIMO {limite_voci_indice} voci nell'indice qui sotto. OBIETTIVO CONSIGLIATO: circa {obiettivo_voci_indice} voci, per lasciare margine.
 Non superare mai {limite_voci_indice} voci. Preferisci una struttura più compatta e completa invece di aggiungere voci
 simili o riempitive: accorpa argomenti contigui nello stesso sottocapitolo e rimuovi ogni voce che non aggiunge
 un risultato distinto. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
@@ -5393,8 +5370,7 @@ Risultato finale desiderato: {val_risultato}
 Approfondimenti: {val_approfondimenti or "Nessuno"}
 
 LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice e punta a circa
-{obiettivo_voci_indice}. Prefazione e Ringraziamenti sono aggiunti separatamente dall'editor, quindi il libro
-completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
+{obiettivo_voci_indice}. Il libro completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
 BUDGET STRUTTURALE: {budget_struttura_indice}. Questo budget prevale su ogni schema numerico dell'indice attuale.
 
 INDICE ATTUALE
@@ -5442,12 +5418,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # La stesura completa deve generare OGNI sezione dell'indice, comprese
-            # prefazione, parti, capitoli, sottocapitoli, conclusione e ringraziamenti.
-            sezioni_intero_libro = elenco_sezioni_progetto([
+            # La stesura completa genera tutte e sole le sezioni dell'indice.
+            sezioni_intero_libro = list(dict.fromkeys([
                 *sezioni_struttura_corrente,
-                *st.session_state.get("job_scrittura_sezioni", []),
-            ])
+                *sezioni_job_protette,
+            ]))
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
                 "I contenuti già scritti verranno conservati senza modifiche."
@@ -5469,9 +5444,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if not da_generare:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
-                    # Usa il percorso di generazione consolidato: tutte le
-                    # sezioni, inclusa Prefazione, passano dalla stessa coda.
-                    # La memoria protetta conserva però ogni esito concluso.
+                    # La memoria protetta conserva ogni esito concluso.
                     st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state.pop("job_scrittura_errore", None)
@@ -5481,21 +5454,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_pausa"] = False
                     notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
 
-            coda_scrittura = list(st.session_state.get("job_scrittura_coda", []) or [])
-            # Recupero definitivo delle code create da versioni precedenti:
-            # nessun capitolo può proseguire se la Prefazione prevista dal
-            # progetto non ha ancora un testo leggibile. Questo controllo è
-            # eseguito a ogni rerun, quindi vale anche dopo PAUSA, RIPRENDI,
-            # aggiornamento pagina o modifica della sidebar.
-            prefazione_mancante = not leggi_sezione_memorizzata(L["preface"]).strip()
-            if coda_scrittura and prefazione_mancante and L["preface"] not in coda_scrittura:
-                coda_scrittura.insert(0, L["preface"])
+            coda_precedente = list(st.session_state.get("job_scrittura_coda", []) or [])
+            coda_scrittura = [
+                sezione for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
+                if sezione not in {L["preface"], L["ack"]}
+            ]
+            if coda_scrittura != coda_precedente:
                 st.session_state["job_scrittura_coda"] = list(coda_scrittura)
-                sezioni_job = st.session_state.setdefault("job_scrittura_sezioni", [])
-                if L["preface"] not in sezioni_job:
-                    sezioni_job.insert(0, L["preface"])
-                totale_precedente = int(st.session_state.get("job_scrittura_totale", 0) or 0)
-                st.session_state["job_scrittura_totale"] = max(totale_precedente + 1, len(coda_scrittura))
+                # Una coda prodotta da versioni precedenti può ancora contenere
+                # sezioni automatiche dismesse. Le rimuoviamo senza alterare i
+                # testi già conservati e riallineiamo lo stato del lavoro.
+                if not coda_scrittura:
+                    st.session_state["job_scrittura_attivo"] = False
+                    st.session_state["job_scrittura_pausa"] = False
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
                 totale = st.session_state.get("job_scrittura_totale", len(coda_scrittura))
                 completati = totale - len(coda_scrittura)
@@ -5508,31 +5479,15 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 with col_stato:
                     st.info(f"Elaborazione in corso: {sezione_corrente}. Puoi fermare il lavoro prima della sezione successiva.")
                 with col_pausa:
-                    # Apertura e chiusura del libro sono parti protette:
-                    # Streamlit riceve il click prima di avviare la richiesta,
-                    # quindi una pausa in quel preciso punto le lascerebbe
-                    # vuote. Prefazione e Ringraziamenti vengono completati e
-                    # salvati prima di rendere di nuovo disponibile la pausa.
-                    sezione_protetta_iniziale = (
-                        sezione_corrente in {L["preface"], L["ack"]}
-                        and not leggi_sezione_memorizzata(sezione_corrente).strip()
-                    )
-                    pausa_richiesta = False
-                    if sezione_protetta_iniziale:
-                        etichetta_sezione_protetta = (
-                            "La Prefazione" if sezione_corrente == L["preface"] else "I Ringraziamenti"
-                        )
-                        st.caption(f"{etichetta_sezione_protetta} vengono preparati e salvati prima che la pausa sia disponibile.")
-                    else:
-                        pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
+                    pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
                 if pausa_richiesta:
                     st.session_state["job_scrittura_attivo"] = False
                     st.session_state["job_scrittura_pausa"] = True
                     # La pausa è una barriera di sicurezza: prima di lasciare
                     # il ciclo, salva l'intera fotografia editoriale, non la
                     # sola sezione che il ciclo stava per avviare. Così la
-                    # Prefazione, già conclusa al passaggio precedente, non
-                    # può sparire da editor, anteprima o ripristino cloud.
+                    # nessuna sezione già conclusa può sparire da editor,
+                    # anteprima o ripristino cloud.
                     sezioni_da_proteggere = elenco_sezioni_progetto(
                         st.session_state.get("job_scrittura_sezioni", opzioni_editor)
                     )
@@ -5566,9 +5521,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         # verranno elaborate solo le sezioni ancora vuote.
                         # Salviamo il progetto completo ad ogni passaggio. La
                         # singola sezione appena prodotta è già nella memoria,
-                        # mentre Prefazione, Ringraziamenti e tutte le parti
-                        # precedenti restano incluse anche se l'utente mette
-                        # in pausa subito dopo questo rerun.
+                        # mentre tutte le parti precedenti restano incluse
+                        # anche se l'utente mette in pausa subito dopo questo rerun.
                         sezioni_da_proteggere = elenco_sezioni_progetto(
                             st.session_state.get("job_scrittura_sezioni", opzioni_editor)
                         )
@@ -5576,8 +5530,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sezioni_da_proteggere, "sezione del libro generata"
                         )
                         # Riporta esplicitamente il testo in tutti i widget
-                        # già noti prima del rerun successivo, inclusa la
-                        # Prefazione appena completata.
+                        # già noti prima del rerun successivo.
                         reidrata_sezioni_memorizzate(sezioni_da_proteggere)
                         st.rerun()
                     except Exception as exc:
@@ -5593,19 +5546,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if st.session_state.get("job_scrittura_errore"):
                     st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
                 if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
-                    # Recupera anche le pause create da versioni precedenti:
-                    # se la Prefazione non era stata ancora fissata nella
-                    # memoria, la reinseriamo davanti alla coda prima di
-                    # riprendere il resto del manoscritto.
-                    if not leggi_sezione_memorizzata(L["preface"]).strip():
-                        coda_esistente = list(st.session_state.get("job_scrittura_coda", []))
-                        st.session_state["job_scrittura_coda"] = [
-                            L["preface"],
-                            *[sezione for sezione in coda_esistente if sezione != L["preface"]],
-                        ]
-                        sezioni_job = st.session_state.setdefault("job_scrittura_sezioni", [])
-                        if L["preface"] not in sezioni_job:
-                            sezioni_job.insert(0, L["preface"])
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state.pop("job_scrittura_errore", None)
@@ -6359,11 +6299,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo completo.")
         st.divider()
         sezioni_controllo_finale = elenco_sezioni_progetto(lista_cap_base)
-        # Prefazione e ringraziamenti entrano nel controllo solo se sono già
-        # stati creati: non rendono "incompleto" un progetto che non li usa.
-        for sezione_apertura in (L["preface"], L["ack"]):
-            if leggi_sezione_memorizzata(sezione_apertura).strip() and sezione_apertura not in sezioni_controllo_finale:
-                sezioni_controllo_finale.append(sezione_apertura)
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(sezioni_controllo_finale, val_genere)
         # Il controllo finale deve leggere la stessa memoria stabile usata da
         # scrittura, CSV, salvataggio e ripristino; altrimenti le sezioni non
