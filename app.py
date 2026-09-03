@@ -951,6 +951,20 @@ TRADUZIONI = {
     }
 }
 
+# Voci automatiche dismesse: restano eventualmente nella memoria di vecchi
+# progetti per non cancellare dati in modo irreversibile, ma non fanno più
+# parte del manoscritto, dell'editor, dell'anteprima o degli export.
+SEZIONI_DISMESSE = frozenset(
+    valore
+    for traduzione in TRADUZIONI.values()
+    for chiave in ("preface", "ack")
+    if (valore := str(traduzione.get(chiave, "")).strip())
+)
+
+
+def sezione_dismessa(sezione):
+    return str(sezione or "").strip() in SEZIONI_DISMESSE
+
 # ======================================================================================================================
 # 3. BLOCCO CSS: SIDEBAR SCURA E PULSANTI SCURI (FORZATURA !IMPORTANT)
 # ======================================================================================================================
@@ -2251,7 +2265,7 @@ def elenco_sezioni_progetto(sezioni_base):
         *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys(),
         *dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}).keys(),
     ]:
-        if sezione and sezione not in risultato:
+        if sezione and not sezione_dismessa(sezione) and sezione not in risultato:
             risultato.append(sezione)
     return risultato
 
@@ -4040,7 +4054,10 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
 # Il manoscritto segue esclusivamente le sezioni definite nell'indice.
-sezioni_struttura_corrente = list(lista_cap_base)
+sezioni_struttura_corrente = [
+    sezione for sezione in lista_cap_base
+    if not sezione_dismessa(sezione)
+]
 # Il registro editoriale mantiene l'ordine e la visibilità delle sezioni già
 # elaborate anche dopo una pausa o un aggiornamento della pagina.
 if lista_cap_base:
@@ -4053,7 +4070,7 @@ if lista_cap_base:
 # sole voci rileggibili dall'indice.
 sezioni_job_protette = [
     sezione for sezione in (st.session_state.get("job_scrittura_sezioni", []) or [])
-    if sezione not in {L["preface"], L["ack"]}
+    if not sezione_dismessa(sezione)
 ]
 opzioni_editor = elenco_sezioni_progetto([
     *sezioni_struttura_corrente,
@@ -5457,7 +5474,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             coda_precedente = list(st.session_state.get("job_scrittura_coda", []) or [])
             coda_scrittura = [
                 sezione for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
-                if sezione not in {L["preface"], L["ack"]}
+                if not sezione_dismessa(sezione)
             ]
             if coda_scrittura != coda_precedente:
                 st.session_state["job_scrittura_coda"] = list(coda_scrittura)
