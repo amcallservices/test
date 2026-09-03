@@ -2758,17 +2758,23 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     )
     if genere in {"Manuale Tecnico", "Manuale Pratico"} and sezione_pratica:
         titolo_sezione = sezione.casefold()
-        # Non tutte le sezioni di un manuale sono procedure. Definizioni,
-        # norme, principi, ruoli e confini richiedono spiegazioni chiare e
-        # conseguenze pratiche, non una lista artificiale di passaggi.
-        sezione_concettuale = any(parola in titolo_sezione for parola in (
-            "definiz", "normativ", "norme", "legge", "giurid", "quadro", "princip", "fondament",
-            "contest", "ambito", "finalit", "obiettiv", "ruol", "responsabil", "terminolog",
-            "requisit", "criter", "limit", "confini", "introduzione",
+        # Il requisito dei passaggi vale solo se il TITOLO chiede davvero di
+        # insegnare un'azione. Tutti gli altri sottocapitoli tecnici possono
+        # essere definizioni, classificazioni, norme, ruoli, confronti o
+        # confini: devono essere chiari e completi, non trasformati in una
+        # procedura fittizia.
+        sezione_operativa = any(parola in titolo_sezione for parola in (
+            "procedur", "passagg", "passo", "fase", "istruzion", "come ", "applic", "esegu",
+            "compil", "redazion", "implement", "workflow", "verifica", "controllo operativo",
+            "procedure", "steps", "step", "how to", "instruction", "implement", "execute", "workflow",
+            "procedimiento", "pasos", "cómo", "instrucciones", "aplicar", "ejecutar",
+            "procédure", "étapes", "comment", "instructions", "appliquer", "exécuter",
+            "verfahren", "schritte", "anleitung", "anwenden", "ausführen",
+            "procedură", "pași", "instrucțiuni", "aplica", "executa",
         ))
-        if not sezione_concettuale:
-            ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+)", pulito))
-            ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore"))
+        if sezione_operativa:
+            ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+|step\s+\d+)", pulito))
+            ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore", "check", "result"))
             if len(parole) < 260 or not ha_passaggi or not ha_verifica:
                 return "manuale operativo troppo descrittivo: inserisci una procedura numerata, un controllo verificabile e un errore o limite concreto"
 
