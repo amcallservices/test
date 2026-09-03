@@ -4,17 +4,21 @@ from __future__ import annotations
 import os
 import uuid
 import json
+import base64
 from pathlib import Path
 from typing import Any
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 COMMERCIAL_VERSION = "beta 3d"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
+SESSION_COOKIE_NAME = "scrittore_site_refresh"
+SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 giorni: il token viene comunque verificato da Supabase.
 # Griglia commerciale: un Test Prep approfondito fino a 60 sezioni usa normalmente
 # 75 crediti (60 sezioni, indice, voto, controllo finale e metadati).
 AI_REQUEST_CREDITS = 1
@@ -577,6 +581,109 @@ def _init_demo_account() -> dict[str, Any]:
     return st.session_state["commercial_demo_user"]
 
 
+def _leggi_cookie_sessione() -> str:
+    """Legge il token di rinnovo dal cookie del browser, se Streamlit lo espone.
+
+    Il cookie non contiene password, id utente o crediti: contiene solo un token
+    temporaneo di Supabase che viene sempre convalidato dal servizio prima del
+    ripristino dell'accesso.
+    """
+    try:
+        cookies = getattr(getattr(st, "context", None), "cookies", None)
+        value = cookies.get(SESSION_COOKIE_NAME, "") if cookies else ""
+        return str(value or "").strip()
+    except Exception:
+        return ""
+
+
+def _scrivi_cookie_sessione(refresh_token: str) -> None:
+    """Memorizza nel browser il solo refresh token della sessione verificata."""
+    refresh_token = str(refresh_token or "").strip()
+    if not refresh_token:
+        return
+    # Base64 url-safe evita caratteri speciali nei cookie. Il token non viene
+    # mai mostrato a video né inserito nei log dell'app.
+    value = base64.urlsafe_b64encode(refresh_token.encode("utf-8")).decode("ascii").rstrip("=")
+    previous = st.session_state.get("commercial_browser_refresh_saved")
+    if previous == value:
+        return
+    payload = json.dumps(value)
+    components.html(
+        f"""
+        <script>
+        (() => {{
+          const value = {payload};
+          const cookie = "{SESSION_COOKIE_NAME}=" + value
+            + "; Max-Age={SESSION_COOKIE_MAX_AGE}; Path=/; SameSite=Lax; Secure";
+          try {{ document.cookie = cookie; }} catch (e) {{}}
+          try {{ window.parent.document.cookie = cookie; }} catch (e) {{}}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+    st.session_state["commercial_browser_refresh_saved"] = value
+
+
+def _cancella_cookie_sessione() -> None:
+    """Rimuove il token persistente quando l'utente preme Esci."""
+    components.html(
+        f"""
+        <script>
+        (() => {{
+          const cookie = "{SESSION_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax; Secure";
+          try {{ document.cookie = cookie; }} catch (e) {{}}
+          try {{ window.parent.document.cookie = cookie; }} catch (e) {{}}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+    st.session_state.pop("commercial_browser_refresh_saved", None)
+
+
+def _ripristina_sessione_browser() -> bool:
+    """Ricrea la sessione Streamlit dopo refresh, sospensione o aggiornamento.
+
+    Non ci fidiamo mai dei dati del browser: il refresh token viene scambiato
+    con Supabase e l'id utente usato dall'app proviene solo dalla risposta
+    verificata di Supabase.
+    """
+    if _mode() == "demo" or st.session_state.get("commercial_user") or not _supabase_ready():
+        return False
+    encoded = _leggi_cookie_sessione()
+    if not encoded:
+        return False
+    try:
+        padded = encoded + ("=" * (-len(encoded) % 4))
+        refresh_token = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+        response = requests.post(
+            f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/token",
+            headers={"apikey": _secret("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
+            params={"grant_type": "refresh_token"},
+            json={"refresh_token": refresh_token},
+            timeout=20,
+        )
+        data = response.json() if response.content else {}
+        user = data.get("user") or {}
+        if not response.ok or not data.get("access_token") or not user.get("id"):
+            raise RuntimeError("sessione non valida")
+        _apri_progetto_pulito_dopo_accesso()
+        st.session_state["commercial_user"] = {
+            "access_token": data["access_token"],
+            "refresh_token": data.get("refresh_token") or refresh_token,
+            "id": user["id"],
+            "email": user.get("email", ""),
+        }
+        st.session_state["commercial_session_restored"] = True
+        return True
+    except Exception:
+        # Un token revocato o scaduto deve semplicemente richiedere un nuovo
+        # accesso: non mostriamo dettagli tecnici e non blocchiamo la home.
+        _cancella_cookie_sessione()
+        return False
+
+
 def _supabase_login(email: str, password: str) -> dict[str, Any]:
     url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/token"
     response = requests.post(
@@ -589,7 +696,12 @@ def _supabase_login(email: str, password: str) -> dict[str, Any]:
     if not response.ok:
         raise RuntimeError("Accesso non riuscito. Controlla email e password.")
     data = response.json()
-    return {"access_token": data["access_token"], "id": data["user"]["id"], "email": data["user"].get("email", email)}
+    return {
+        "access_token": data["access_token"],
+        "refresh_token": data.get("refresh_token", ""),
+        "id": data["user"]["id"],
+        "email": data["user"].get("email", email),
+    }
 
 
 def _apri_progetto_pulito_dopo_accesso() -> None:
@@ -1250,6 +1362,7 @@ def _account_gate() -> dict[str, Any]:
                 utente = _supabase_login(email, password)
                 _apri_progetto_pulito_dopo_accesso()
                 st.session_state["commercial_user"] = utente
+                _scrivi_cookie_sessione(utente.get("refresh_token", ""))
                 st.rerun()
             except Exception as error:
                 st.error(str(error))
@@ -1708,6 +1821,7 @@ def _commerce_sidebar() -> None:
             # Chiudendo l'account svuotiamo anche la memoria locale del libro.
             # Il salvataggio cloud non viene toccato e potrà essere richiamato
             # volontariamente dal pulsante di ripristino al prossimo accesso.
+            _cancella_cookie_sessione()
             for chiave in list(st.session_state.keys()):
                 if not chiave.startswith("commercial_"):
                     del st.session_state[chiave]
@@ -1726,6 +1840,8 @@ def bootstrap_commercial_app() -> None:
         recovery_requested = False
     if recovery_requested:
         st.session_state["commercial_show_auth"] = True
+    elif _mode() != "demo" and not st.session_state.get("commercial_user"):
+        _ripristina_sessione_browser()
     if (
         _mode() != "demo"
         and not st.session_state.get("commercial_user")
@@ -1734,6 +1850,9 @@ def bootstrap_commercial_app() -> None:
         _landing_page()
         st.stop()
     st.session_state["commercial_user_context"] = _account_gate()
+    # Mantiene l'accesso dopo un semplice refresh o il riavvio di Streamlit.
+    # Se la sessione è stata rinnovata da Supabase, aggiorna anche il cookie.
+    _scrivi_cookie_sessione(st.session_state["commercial_user_context"].get("refresh_token", ""))
     _process_checkout_return()
     _commerce_sidebar()
 
