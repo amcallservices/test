@@ -2803,8 +2803,8 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         # procedura fittizia.
         sezione_operativa = any(parola in titolo_sezione for parola in (
             "procedur", "passagg", "passo", "fase", "istruzion", "come ", "applic", "esegu",
-            "compil", "redazion", "implement", "workflow", "verifica", "controllo operativo",
-            "procedure", "steps", "step", "how to", "instruction", "implement", "execute", "workflow",
+            "compil", "redazion", "implement", "workflow", "verifica operativa", "come verificare", "controllo operativo",
+            "procedure", "steps", "step", "how to", "instruction", "implement", "execute", "workflow", "operational verification",
             "procedimiento", "pasos", "cómo", "instrucciones", "aplicar", "ejecutar",
             "procédure", "étapes", "comment", "instructions", "appliquer", "exécuter",
             "verfahren", "schritte", "anleitung", "anwenden", "ausführen",
