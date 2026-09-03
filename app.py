@@ -2744,7 +2744,17 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     elif len(parole) < 150:
         return "testo troppo breve per sviluppare l'argomento assegnato"
 
-    if genere in {"Manuale Tecnico", "Manuale Pratico"}:
+    # Prefazione, ringraziamenti e altre sezioni di apertura/chiusura non sono
+    # procedure: devono essere completi, ma non vanno respinti perché privi di
+    # passaggi numerati o di un controllo tecnico. I requisiti operativi
+    # restano obbligatori soltanto per capitoli e sottocapitoli del manuale.
+    # Un capitolo che possiede sottocapitoli introduce e collega il percorso:
+    # l'operatività dettagliata appartiene alle sezioni figlie. Un capitolo
+    # autonomo e ogni sottocapitolo, invece, devono restare concretamente utili.
+    sezione_pratica = tipo_sezione == "sottocapitolo" or (
+        tipo_sezione == "capitolo" and not capitolo_cornice
+    )
+    if genere in {"Manuale Tecnico", "Manuale Pratico"} and sezione_pratica:
         ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+)", pulito))
         ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore"))
         if len(parole) < 260 or not ha_passaggi or not ha_verifica:
