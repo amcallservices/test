@@ -2183,6 +2183,10 @@ CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 # generato resta disponibile e viene reidrato nell'editor e nell'anteprima.
 # Viene cancellato insieme al progetto da RESET PROGETTO.
 CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
+# Elenco ordinato delle sezioni del manoscritto. Non dipende dall'indice né
+# dai widget: permette a editor e anteprima di mantenere visibili Prefazione e
+# Ringraziamenti anche quando una pausa interrompe la stesura completa.
+CHIAVE_REGISTRO_SEZIONI = "registro_sezioni_manoscritto"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
 CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 
@@ -2221,6 +2225,9 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     testo = contenuto or ""
     st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo
     st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo
+    registro = st.session_state.setdefault(CHIAVE_REGISTRO_SEZIONI, [])
+    if sezione not in registro:
+        registro.append(sezione)
     st.session_state[chiave_sezione(sezione)] = testo
     return testo
 
@@ -2247,6 +2254,7 @@ def elenco_sezioni_progetto(sezioni_base):
     risultato = []
     for sezione in [
         *(sezioni_base or []),
+        *st.session_state.get(CHIAVE_REGISTRO_SEZIONI, []),
         *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys(),
         *dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}).keys(),
     ]:
@@ -2691,9 +2699,8 @@ def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
     return salvato
 
 
-def sezioni_mancanti_per_esportazione(sezioni, genere):
-    """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
-    mancanti = []
+def minimo_parole_per_sezione_editoriale(sezione, genere):
+    """Soglia unica usata da tutti i controlli prima dell'esportazione."""
     minimi = {
         "parte": 35,
         "apertura": 40,
@@ -2702,11 +2709,17 @@ def sezioni_mancanti_per_esportazione(sezioni, genere):
         "sottocapitolo": 120,
         "frontespizio": 40,
     }
+    return minimi.get(tipo_sezione_editoriale(sezione), 40)
+
+
+def sezioni_mancanti_per_esportazione(sezioni, genere):
+    """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
+    mancanti = []
     for sezione in sezioni:
         # La sezione può non essere il widget attualmente visibile, ma essere
         # già presente nella memoria stabile del progetto o dopo un ripristino.
         testo = pulisci_testo_editoriale(leggi_sezione_memorizzata(sezione)).strip()
-        if len(testo.split()) < minimi[tipo_sezione_editoriale(sezione)]:
+        if len(testo.split()) < minimo_parole_per_sezione_editoriale(sezione, genere):
             mancanti.append(sezione)
     return mancanti
 
@@ -2718,7 +2731,6 @@ def stati_sezioni_editoriali(sezioni, genere, contenuti=None):
     senza dipendere dal solo widget della sezione che l'utente ha aperto per
     ultima nell'editor.
     """
-    minimi = {"parte": 35, "capitolo": 90 if genere == "Ricettario" else 120, "sottocapitolo": 120, "frontespizio": 40}
     contenuti = dict(contenuti or {})
     stati = []
     for sezione in sezioni:
@@ -2726,7 +2738,7 @@ def stati_sezioni_editoriali(sezioni, genere, contenuti=None):
         if not str(testo or "").strip():
             testo = leggi_sezione_memorizzata(sezione)
         testo = pulisci_testo_editoriale(testo).strip()
-        minimo = minimi[tipo_sezione_editoriale(sezione)]
+        minimo = minimo_parole_per_sezione_editoriale(sezione, genere)
         parole = len(testo.split())
         if not testo:
             stato, motivo = "MANCANTE", "nessun contenuto generato"
@@ -4049,6 +4061,14 @@ lista_cap_base = st.session_state.get("lista_capitoli", [])
 # Prefazione, essa resta subito selezionabile nell'editor e visibile in
 # anteprima insieme a tutte le altre sezioni già prodotte.
 sezioni_struttura_corrente = [L["preface"]] + lista_cap_base + [L["ack"]]
+# L'indice può essere rigenerato o riletto mentre il libro è in pausa. Il
+# registro editoriale mantiene comunque l'ordine e la visibilità di tutte le
+# parti del manoscritto, comprese quelle fuori indice.
+if lista_cap_base:
+    registro_editoriale = st.session_state.setdefault(CHIAVE_REGISTRO_SEZIONI, [])
+    for sezione_editoriale in sezioni_struttura_corrente:
+        if sezione_editoriale not in registro_editoriale:
+            registro_editoriale.append(sezione_editoriale)
 # Durante “Scrivi tutto il libro” l'elenco viene fissato anche nella sessione.
 # In questo modo una pausa o un rerun non può ridurre l'elenco dell'editor alle
 # sole voci rileggibili dall'indice, lasciando fuori Prefazione e Ringraziamenti.
@@ -5451,6 +5471,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 else:
                     st.session_state["job_scrittura_coda"] = da_generare
                     st.session_state["job_scrittura_totale"] = len(da_generare)
+                    st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(sezioni_intero_libro)
                     # Fotografia dell'architettura usata dal job: anche se la
                     # pagina si aggiorna o si mette in pausa, editor e
                     # anteprima continueranno a conoscere tutte le sezioni.
@@ -5549,6 +5570,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if st.session_state.get("job_scrittura_errore"):
                     st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
                 if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
+                    # Recupera anche le pause create da versioni precedenti:
+                    # se la Prefazione non era stata ancora fissata nella
+                    # memoria, la reinseriamo davanti alla coda prima di
+                    # riprendere il resto del manoscritto.
+                    if not leggi_sezione_memorizzata(L["preface"]).strip():
+                        coda_esistente = list(st.session_state.get("job_scrittura_coda", []))
+                        st.session_state["job_scrittura_coda"] = [
+                            L["preface"],
+                            *[sezione for sezione in coda_esistente if sezione != L["preface"]],
+                        ]
+                        sezioni_job = st.session_state.setdefault("job_scrittura_sezioni", [])
+                        if L["preface"] not in sezioni_job:
+                            sezioni_job.insert(0, L["preface"])
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state.pop("job_scrittura_errore", None)
