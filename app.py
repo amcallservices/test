@@ -901,6 +901,30 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
 </style>
 """, unsafe_allow_html=True)
 
+# Tema chiaro opzionale: il tema scuro predefinito resta esattamente quello
+# storico. Questa sovrascrittura è soltanto estetica e non modifica widget,
+# crediti, dati della sidebar o funzioni dell'editor.
+if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
+    st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 55% -15%, #eef6ff 0%, #f8fafc 42%, #edf2f7 100%) !important; color:#17253a !important; }
+    section[data-testid="stSidebar"] { background: linear-gradient(180deg, #ffffff 0%, #edf4fb 100%) !important; border-right-color:#c7d7e8 !important; }
+    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 { color:#17253a !important; }
+    section[data-testid="stSidebar"] .stTextInput input, section[data-testid="stSidebar"] .stTextArea textarea, section[data-testid="stSidebar"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div { background:#ffffff !important; color:#17253a !important; border-color:#a9bfd6 !important; }
+    .stButton>button { background:#ffffff !important; color:#17253a !important; border-color:#a9bfd6 !important; }
+    .stButton>button:hover { background:#e8f3ff !important; color:#102a43 !important; border-color:#1976e9 !important; }
+    .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#1976e9,#2997ef) !important; color:#ffffff !important; border-color:#1976e9 !important; }
+    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom-color:#bfd0e2 !important; }
+    [data-testid="stTabs"] button[role="tab"] { color:#355273 !important; }
+    [data-testid="stTabs"] button[aria-selected="true"] { color:#102a43 !important; background:#e6f1fb !important; }
+    .ss-workspace-header { border-color:#b9cce0 !important; background:linear-gradient(135deg,#ffffff,#edf5fc) !important; box-shadow:0 12px 30px rgba(41,76,112,.13) !important; }
+    .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#17253a !important; }
+    .ss-workspace-subtitle { color:#4f6680 !important; }
+    .ss-workspace-chip { color:#284866 !important; background:#f4f9fd !important; border-color:#b7cde1 !important; }
+    .ss-section-card { background:rgba(255,255,255,.8) !important; border-color:#c9d9e8 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # ======================================================================================================================
 # 4. GESTIONE EXPORT PDF (CHIRURGIA: FIX TITOLI LUNGHI E MARGINI)
 # ======================================================================================================================
@@ -2791,38 +2815,12 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     # Un capitolo che possiede sottocapitoli introduce e collega il percorso:
     # l'operatività dettagliata appartiene alle sezioni figlie. Un capitolo
     # autonomo e ogni sottocapitolo, invece, devono restare concretamente utili.
-    sezione_pratica = tipo_sezione == "sottocapitolo" or (
-        tipo_sezione == "capitolo" and not capitolo_cornice
-    )
-    if genere in {"Manuale Tecnico", "Manuale Pratico"} and sezione_pratica:
-        titolo_sezione = sezione.casefold()
-        # Il requisito dei passaggi vale solo se il TITOLO chiede davvero di
-        # insegnare un'azione. Tutti gli altri sottocapitoli tecnici possono
-        # essere definizioni, classificazioni, norme, ruoli, confronti o
-        # confini: devono essere chiari e completi, non trasformati in una
-        # procedura fittizia.
-        # Non basta che un titolo nomini procedure, verifiche o aggiornamenti:
-        # nelle sezioni normative può descriverne obblighi e limiti. Attiviamo
-        # il vincolo soltanto con una formula che insegna esplicitamente come
-        # compiere un'azione, e lo escludiamo per i titoli di conformità.
-        titolo_normativo = any(parola in titolo_sezione for parola in (
-            "obbligh", "requisit", "limit", "esclusion", "diviet", "avverten", "conform",
-            "aggiornamento", "verifiche periodiche", "responsabil", "sanzion", "normativ",
-        ))
-        sezione_operativa = not titolo_normativo and any(parola in titolo_sezione for parola in (
-            "procedura per", "procedura di", "passaggi per", "passo", "fase", "istruzioni per", "come fare", "come si ", "come applic", "come esegu", "come compil", "come verific", "applic", "esegu",
-            "compil", "redazion", "implement", "workflow", "verifica operativa", "come verificare", "controllo operativo",
-            "procedure for", "procedure to", "steps to", "step", "how to", "instructions for", "implement", "execute", "workflow", "operational verification",
-            "procedimiento para", "pasos para", "cómo hacer", "cómo se", "cómo aplicar", "cómo ejecutar", "cómo verificar", "instrucciones para", "aplicar", "ejecutar",
-            "procédure pour", "étapes pour", "comment faire", "comment appliquer", "comment exécuter", "comment vérifier", "instructions pour", "appliquer", "exécuter",
-            "verfahren", "schritte", "anleitung", "anwenden", "ausführen",
-            "procedură", "pași", "instrucțiuni", "aplica", "executa",
-        ))
-        if sezione_operativa:
-            ha_passaggi = bool(re.search(r"(?m)^\s*(?:\d+[.)]|passo\s+\d+|fase\s+\d+|step\s+\d+)", pulito))
-            ha_verifica = any(parola in basso for parola in ("verifica", "controlla", "risultato", "errore", "check", "result"))
-            if len(parole) < 260 or not ha_passaggi or not ha_verifica:
-                return "manuale operativo troppo descrittivo: inserisci una procedura numerata, un controllo verificabile e un errore o limite concreto"
+    # Le istruzioni per i Manuali chiedono già esempi, passaggi e verifiche
+    # quando pertinenti. Non imponiamo però più un criterio meccanico di
+    # procedura numerata come blocco finale: espressioni come “applicazione
+    # pratica” possono richiedere casi, checklist o spiegazioni, non sempre
+    # una sequenza artificiale. Restano obbligatori completezza, lunghezza,
+    # coerenza e assenza di frasi spezzate per ogni sezione.
 
     formule_generiche = (
         "è fondamentale", "e fondamentale", "è cruciale", "e cruciale", "in modo efficace",
@@ -5506,11 +5504,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
         if sezioni_con_testo:
             with st.expander("🧭 Indice cliccabile dell'anteprima", expanded=False):
-                collegamenti = []
-                for sezione in sezioni_con_testo:
-                    ancora = "preview_section_" + hashlib.sha256(sezione.encode("utf-8")).hexdigest()[:16]
-                    collegamenti.append(f"[{sezione}](#{ancora})")
-                st.markdown(" · ".join(collegamenti))
+                sezione_da_aprire = st.selectbox(
+                    "Vai a una sezione dell'anteprima",
+                    ["— Seleziona una sezione —"] + sezioni_con_testo,
+                    key="indice_tendina_anteprima",
+                )
+                if sezione_da_aprire != "— Seleziona una sezione —":
+                    ancora = "preview_section_" + hashlib.sha256(sezione_da_aprire.encode("utf-8")).hexdigest()[:16]
+                    st.markdown(f"[↓ Apri “{sezione_da_aprire}” nell'anteprima](#{ancora})")
             cerca_anteprima = st.text_input("🔎 Cerca nel manoscritto", key="cerca_nell_anteprima")
             if cerca_anteprima.strip():
                 termine = cerca_anteprima.strip()
