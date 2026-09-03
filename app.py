@@ -791,6 +791,9 @@ def avvia_collaudo_amministratore_se_richiesto():
     if not st.session_state.get("admin_test_mode"):
         st.session_state["admin_test_backup"] = _fotografia_locale_progetto_collaudo()
     _pulisci_progetto_per_collaudo()
+    st.session_state.pop("admin_test_verifica_visiva", None)
+    st.session_state.pop("admin_test_run_requested", None)
+    st.session_state.pop("admin_test_run_report", None)
     provider = str(richiesta.get("provider") or "GPT-5.4 (OpenAI)")
     profilo_nome = str(richiesta.get("profilo") or "Manuale e controlli")
     profilo = _profilo_collaudo_breve(profilo_nome)
@@ -838,7 +841,7 @@ def termina_collaudo_amministratore():
         storico[-1]["sezioni"] = len(st.session_state.get("memoria_sezioni_editor", {}) or {})
     backup = st.session_state.get("admin_test_backup", {})
     _pulisci_progetto_per_collaudo()
-    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_max_voci_indice", "admin_test_backup"):
+    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_max_voci_indice", "admin_test_backup", "admin_test_verifica_visiva", "admin_test_run_requested", "admin_test_run_report"):
         st.session_state.pop(chiave, None)
     st.session_state.update(backup)
 
@@ -4040,13 +4043,43 @@ if st.session_state.get("admin_test_mode"):
     fonti_test = str(st.session_state.get("registro_fonti_web", "") or "").strip()
     testi_test = {nome: str(testo).strip() for nome, testo in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).items() if str(testo).strip()}
     frasi_non_concluse = [nome for nome, testo in testi_test.items() if testo and testo.rstrip()[-1:] not in ".!?…»”\"'"]
+    indice_nei_limiti = bool(indice_test) and conta_sezioni_indice(indice_test) <= int(st.session_state.get("admin_test_max_voci_indice", 8))
+    verifica_visiva_test = st.checkbox(
+        "Ho verificato anteprima, lettore vocale, CSV e PDF",
+        key="admin_test_verifica_visiva",
+        help="Spunta soltanto dopo avere provato davvero le funzioni nel browser.",
+    )
+    fasi_collaudo = [
+        ("Sidebar e profilo", True),
+        ("Fonti web", bool(fonti_test)),
+        ("Indice nei limiti", indice_nei_limiti),
+        ("Scrittura sezione", bool(testi_test)),
+        ("Completezza testi", bool(testi_test) and not frasi_non_concluse),
+        ("Anteprima, voce, CSV e PDF", verifica_visiva_test),
+    ]
+    fasi_completate = sum(1 for _nome, completata in fasi_collaudo if completata)
+    percentuale_collaudo = int(fasi_completate / len(fasi_collaudo) * 100)
+    prossima_fase = next((nome for nome, completata in fasi_collaudo if not completata), "Collaudo completato")
+    st.progress(
+        percentuale_collaudo,
+        text=f"Avanzamento collaudo: {fasi_completate}/{len(fasi_collaudo)} fasi completate — prossima: {prossima_fase}.",
+    )
+    st.caption("Avvio automatico: ricerca fonti, indice breve con controllo editoriale e due sezioni reali. Non può verificare da solo funzioni del browser come voce, download CSV e PDF.")
+    if st.button("🚀 AVVIA COLLAUDO AUTOMATICO", type="primary", key="avvia_collaudo_automatico", use_container_width=True):
+        st.session_state["admin_test_run_requested"] = True
+    esito_collaudo_automatico = st.session_state.get("admin_test_run_report", "")
+    if esito_collaudo_automatico:
+        if esito_collaudo_automatico.startswith("ERRORE:"):
+            st.error(esito_collaudo_automatico)
+        else:
+            st.success(esito_collaudo_automatico)
     risultati_test = [
         ("Sidebar e profilo", True, "Brief breve completo e cervello selezionato."),
         ("Fonti web", bool(fonti_test), "Genera l'indice per verificare la ricerca e il registro fonti." if not fonti_test else "Registro fonti disponibile."),
-        ("Indice e prompt", bool(indice_test), "Apri Indice e premi Genera indice professionale." if not indice_test else f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: 8)."),
+        ("Indice e prompt", indice_nei_limiti, "Apri Indice e premi Genera indice professionale." if not indice_test else (f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: 8)." if indice_nei_limiti else f"Indice fuori limite: {conta_sezioni_indice(indice_test)} voci su massimo 8.")),
         ("Scrittura sezione", bool(testi_test), "Apri Scrittura e genera almeno una sezione." if not testi_test else f"{len(testi_test)} sezioni create."),
         ("Completezza frasi", bool(testi_test) and not frasi_non_concluse, "Da verificare dopo la prima sezione." if not testi_test else ("Nessuna chiusura tronca rilevata." if not frasi_non_concluse else "Da rielaborare: " + ", ".join(frasi_non_concluse[:3]))),
-        ("Anteprima / voce / CSV", False, "Verifica manualmente Anteprima, lettore vocale e Importa / Esporta / Copyright: sono funzioni del browser e richiedono un controllo visivo."),
+        ("Anteprima / voce / CSV", verifica_visiva_test, "Verifica manualmente Anteprima, lettore vocale e Importa / Esporta / Copyright: sono funzioni del browser e richiedono un controllo visivo." if not verifica_visiva_test else "Verifica visiva confermata dall'amministratore."),
     ]
     colonne_test = st.columns([2, 2, 2])
     colonne_test[0].metric("Indice", "✓" if indice_test else "—")
@@ -4296,6 +4329,77 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 - COMPETENZA VERTICALE (ESPERTO DEL SETTORE): Comportati come un professionista con 30 anni di esperienza reale in questo esatto argomento. Sii chirurgico nei termini tecnici e fornisci dettagli, aneddoti o concetti avanzati che solo un vero "addetto ai lavori" conoscerebbe.
 - NO SUPERFICIALITÀ: Non dare risposte generiche o banali. Ogni paragrafo deve trasudare competenza profonda, spiegando i meccanismi interni, le ragioni nascoste e i dettagli tecnici dell'argomento.
 """
+
+    def esegui_collaudo_automatico():
+        """Esegue un campione end-to-end con le funzioni realmente usate dall'editor."""
+        barra = st.progress(0, text="Collaudo automatico: preparazione...")
+        try:
+            barra.progress(10, text="Collaudo automatico: ricerca e mappa delle fonti...")
+            ricerca_preliminare_per_indice(
+                val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti, forza=True
+            )
+            barra.progress(30, text="Collaudo automatico: generazione e controllo dell'indice breve...")
+            massimo_voci_test = int(st.session_state.get("admin_test_max_voci_indice", 8))
+            prompt_indice_test = f"""Crea esclusivamente l'indice gerarchico in {lingua_sel} per questo progetto di collaudo.
+
+Titolo: {val_titolo}
+Genere: {val_genere}
+Tipologia: {val_stile}
+Stile: {val_narrativa}
+Punto di vista: {val_pov}
+Obiettivo: {val_goal}
+Risultato: {val_risultato}
+Argomento: {val_trama}
+Approfondimenti: {val_approfondimenti}
+
+VINCOLI INDEROGABILI: massimo {massimo_voci_test} voci totali fra Parti, Capitoli e sottocapitoli; almeno 2 Parti e 3 Capitoli; ogni voce deve essere specifica, nuova e utile. Usa solo questo formato: Parte I:, Capitolo 1:, 1.1 Titolo. Non aggiungere spiegazioni, link, fonti, saluti o testo esterno all'indice.
+
+Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narrativa crea una progressione con situazione, ostacolo, scelta e risoluzione. Per manuali includi una sequenza concreta, esempio e controllo finale."""
+            indice_test = genera_indice_controllato(
+                prompt_indice_test,
+                "Senior Book Architect: crea indici brevi, coerenti e verificabili.",
+                val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
+                massimo_sezioni=massimo_voci_test,
+                minimo_parti=2,
+                minimo_capitoli=3,
+                budget_strutturale="massimo 2 Parti, 3 Capitoli e 8 voci complessive",
+            )
+            if not indice_test:
+                raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
+            st.session_state["indice_raw"] = indice_test
+            sync_capitoli()
+            sezioni_test = [
+                sezione for sezione in st.session_state.get("lista_capitoli", [])
+                if tipo_sezione_editoriale(sezione) != "parte"
+            ]
+            if val_genere == "Test Prep (Preparazione Esami)":
+                sezioni_test.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
+            sezioni_test = sezioni_test[:2]
+            if not sezioni_test:
+                raise RuntimeError("L'indice non contiene sezioni scrivibili per il collaudo.")
+            for posizione, sezione in enumerate(sezioni_test, start=1):
+                barra.progress(30 + int(posizione / len(sezioni_test) * 55), text=f"Collaudo automatico: stesura {posizione}/{len(sezioni_test)} — {sezione}...")
+                prompt_sezione = crea_prompt_stesura_sezione(
+                    sezione, indice_test, val_trama, val_genere, val_stile, val_narrativa,
+                    val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza,
+                )
+                contenuto = genera_contenuto_editoriale(
+                    prompt_sezione, S_PROMPT, sezione, indice_test, val_trama, val_genere,
+                    val_goal, lingua_sel, val_lunghezza,
+                )
+                if not str(contenuto or "").strip() or str(contenuto).lstrip().upper().startswith("ERRORE:"):
+                    raise RuntimeError(f"Risposta non valida per la sezione “{sezione}”.")
+                scrivi_sezione_memorizzata(sezione, contenuto)
+                salva_stesura_immediata([sezione])
+            barra.progress(100, text="Collaudo automatico completato: controlla ora le funzioni del browser.")
+            st.session_state["admin_test_run_report"] = (
+                f"Collaudo automatico completato con {st.session_state.get('admin_test_provider', provider_ia)}: "
+                f"fonti, indice e {len(sezioni_test)} sezioni sono stati prodotti con il motore reale."
+            )
+        except Exception as errore:
+            st.session_state["admin_test_run_report"] = f"ERRORE: collaudo automatico interrotto — {errore}"
+        finally:
+            st.session_state.pop("admin_test_run_requested", None)
 
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per indice, fonti caricate, stesura e controlli editoriali; non usa GPT e per questo non attiva ricerca web, copyright web o immagini. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
@@ -4561,6 +4665,10 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 **4. 检查并导出** — 使用预览、完整性检查和最终检查，然后导出 Word、PDF 或 CSV。""",
     }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
+    if st.session_state.get("admin_test_run_requested") and st.session_state.get("admin_test_mode"):
+        esegui_collaudo_automatico()
+        st.rerun()
+
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
     with tabs[0]:
