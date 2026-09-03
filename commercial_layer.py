@@ -614,7 +614,7 @@ def _scrivi_cookie_sessione(refresh_token: str) -> None:
 
 def _cancella_cookie_sessione() -> None:
     """Rimuove il token persistente quando l'utente preme Esci."""
-    _sessione_browser("clear")
+    _sessione_browser("logout")
 
 
 def _ripristina_sessione_browser() -> bool:
@@ -1815,8 +1815,22 @@ def bootstrap_commercial_app() -> None:
     """Mostra la home pubblica, quindi accesso e area editor riservata."""
     try:
         recovery_requested = st.query_params.get("auth") == "recovery"
+        logout_requested = st.query_params.get("logout") == "1"
     except Exception:
         recovery_requested = False
+        logout_requested = False
+    if logout_requested:
+        # Il browser arriva qui solo dopo aver cancellato la sua sessione
+        # persistente. Ripuliamo anche l'eventuale sessione Streamlit residua
+        # e togliamo subito il parametro tecnico dall'indirizzo.
+        for chiave in list(st.session_state.keys()):
+            if not chiave.startswith("commercial_"):
+                del st.session_state[chiave]
+        st.session_state.pop("commercial_user", None)
+        st.session_state.pop("commercial_user_context", None)
+        st.session_state.pop("commercial_show_auth", None)
+        st.query_params.clear()
+        st.rerun()
     if recovery_requested:
         st.session_state["commercial_show_auth"] = True
     elif _mode() != "demo" and not st.session_state.get("commercial_user"):
