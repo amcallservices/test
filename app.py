@@ -1060,13 +1060,21 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
 /* Layout mobile: modifiche esclusivamente grafiche e responsive. */
 @media (max-width: 768px) {
     [data-testid="stMainBlockContainer"] {
-        padding: .8rem .7rem 5.6rem !important;
+        padding: 3.55rem .7rem 5.6rem !important;
         max-width: 100% !important;
     }
     /* Su telefono la sidebar torna richiudibile: non sottrae spazio alla
        scrittura e si apre dal normale comando laterale di Streamlit. */
+    header[data-testid="stHeader"], [data-testid="stHeader"] {
+        visibility: visible !important; background: transparent !important;
+        pointer-events: none !important;
+    }
     [data-testid="collapsedControl"] {
-        display: block !important; visibility: visible !important; z-index: 1001 !important;
+        display: flex !important; visibility: visible !important; pointer-events: auto !important;
+        position: fixed !important; top: .55rem !important; left: .55rem !important;
+        z-index: 1001 !important; border-radius: 10px !important;
+        background: #142b48 !important; border: 1px solid #4aa8ff !important;
+        box-shadow: 0 5px 18px rgba(0,0,0,.28) !important;
     }
     section[data-testid="stSidebar"][aria-expanded="false"] {
         min-width: 0 !important; max-width: 0 !important; width: 0 !important;
