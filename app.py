@@ -1158,7 +1158,7 @@ PROFILI_LUNGHEZZA_STESURA = {
         "max_parole": 560,
         # Margine tecnico sufficiente perché il modello termini il ragionamento
         # senza fermarsi appena sotto il minimo di parole.
-        "max_completion_tokens": 1150,
+        "max_completion_tokens": 1325,
         "descrizione": "testo essenziale ma completo, pensato per almeno 100 pagine",
         "max_sezioni": 50,
         "pagine_minime": 100,
@@ -1167,7 +1167,7 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "620-700 parole",
         "min_parole": 620,
         "max_parole": 700,
-        "max_completion_tokens": 1450,
+        "max_completion_tokens": 1675,
         "descrizione": "trattazione equilibrata, pensata per almeno 200 pagine",
         "max_sezioni": 80,
         "pagine_minime": 200,
@@ -1176,7 +1176,7 @@ PROFILI_LUNGHEZZA_STESURA = {
         "parole": "700-800 parole",
         "min_parole": 700,
         "max_parole": 800,
-        "max_completion_tokens": 1650,
+        "max_completion_tokens": 1900,
         "descrizione": "trattazione ampia e approfondita, pensata per almeno 300 pagine",
         "max_sezioni": 110,
         "pagine_minime": 300,
@@ -3122,6 +3122,35 @@ una virgola, due punti, un trattino, un elenco incompleto o un ragionamento lasc
 basta, elimina l'ultimo dettaglio secondario e termina con una conclusione breve ma pienamente compiuta.
 """,
             system_prompt, sezione, lingua, max_completion_tokens=limite_output,
+            addebita=False,
+        ))
+        criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+    # Una frase tronca rende inaffidabile l'intera bozza: la scartiamo e
+    # rigeneriamo integralmente la sezione con un margine tecnico aggiuntivo.
+    # Non aggiungiamo mai una semplice coda a un testo incompleto.
+    if criticita and criticita.startswith("ragionamento non concluso"):
+        limite_riscrittura = int(limite_output * 1.20)
+        profilo_riscrittura = PROFILI_LUNGHEZZA_STESURA.get(
+            profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+        )
+        massimo_ordinario = vincolo_parole_con_tolleranza(profilo_lunghezza)[1]
+        massimo_eccezionale = math.ceil(profilo_riscrittura["max_parole"] * 1.10)
+        testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+            prompt + f"""
+
+RISCRITTURA INTEGRALE OBBLIGATORIA DI QUALITÀ
+La bozza precedente viene scartata perché termina con un ragionamento incompleto.
+Riscrivi da zero l'intera sezione '{sezione}', senza recuperare né proseguire la bozza precedente.
+Mantieni tutti i vincoli editoriali, sviluppa il contenuto in modo originale e concludi l'ultima idea
+con una frase piena, definitiva e pertinente. Dedica l'ultimo paragrafo alla conclusione; non iniziare
+un nuovo esempio o elenco negli ultimi 80-100 vocaboli. Prima di inviare, verifica che il carattere
+finale sia una chiusura di frase e che non rimangano elenchi, passaggi o ragionamenti sospesi.
+Mantieni di norma il limite di {massimo_ordinario} parole. Solo se indispensabile per concludere bene
+un ragionamento complesso, questa specifica sezione può arrivare eccezionalmente a {massimo_eccezionale}
+parole: usa tale margine solo per contenuto utile, mai per ripetizioni o riempitivi.
+""",
+            system_prompt, sezione, lingua,
+            max_completion_tokens=limite_riscrittura,
             addebita=False,
         ))
         criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
