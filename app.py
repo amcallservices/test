@@ -2694,7 +2694,14 @@ def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
 def sezioni_mancanti_per_esportazione(sezioni, genere):
     """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
     mancanti = []
-    minimi = {"parte": 35, "capitolo": 90 if genere == "Ricettario" else 120, "sottocapitolo": 120, "frontespizio": 40}
+    minimi = {
+        "parte": 35,
+        "apertura": 40,
+        "chiusura": 25,
+        "capitolo": 90 if genere == "Ricettario" else 120,
+        "sottocapitolo": 120,
+        "frontespizio": 40,
+    }
     for sezione in sezioni:
         # La sezione può non essere il widget attualmente visibile, ma essere
         # già presente nella memoria stabile del progetto o dopo un ripristino.
