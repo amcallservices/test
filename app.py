@@ -5511,7 +5511,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 )
                 if sezione_da_aprire != "— Seleziona una sezione —":
                     ancora = "preview_section_" + hashlib.sha256(sezione_da_aprire.encode("utf-8")).hexdigest()[:16]
-                    st.markdown(f"[↓ Apri “{sezione_da_aprire}” nell'anteprima](#{ancora})")
+                    if st.button(
+                        f"↓ APRI “{sezione_da_aprire}” NELL'ANTEPRIMA",
+                        key="apri_sezione_anteprima",
+                        use_container_width=True,
+                    ):
+                        st.session_state["anteprima_scorrimento_destinazione"] = ancora
+                        st.rerun()
             cerca_anteprima = st.text_input("🔎 Cerca nel manoscritto", key="cerca_nell_anteprima")
             if cerca_anteprima.strip():
                 termine = cerca_anteprima.strip()
@@ -5581,6 +5587,28 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 )
                 html_p += f"<p>{testo_con_ancore}</p>"
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
+        # I normali link #ancora non scorrono in modo affidabile tra i
+        # componenti Streamlit. Il comando della tendina usa invece questo
+        # piccolo ponte nel browser, eseguito dopo che l'anteprima è stata resa.
+        destinazione_anteprima = st.session_state.pop("anteprima_scorrimento_destinazione", "")
+        if destinazione_anteprima:
+            ancora_json = json.dumps(destinazione_anteprima)
+            components.html(
+                f"""<script>
+                (function() {{
+                  const target = {ancora_json};
+                  let tentativi = 0;
+                  function apri() {{
+                    const root = window.parent && window.parent.document;
+                    const node = root && root.getElementById(target);
+                    if (node) {{ node.scrollIntoView({{behavior: 'smooth', block: 'start'}}); return; }}
+                    if (++tentativi < 8) window.setTimeout(apri, 150);
+                  }}
+                  window.setTimeout(apri, 120);
+                }})();
+                </script>""",
+                height=0,
+            )
         st.divider()
         st.subheader("Controllo del manoscritto")
         stima_coerenza = (
