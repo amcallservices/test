@@ -2386,11 +2386,21 @@ INDICE DA CORREGGERE
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
-                              budget_strutturale=""):
-    """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
+                              budget_strutturale="", aggiorna_stato=None):
+    """Genera, verifica e corregge l'indice con avanzamento leggibile."""
+    def avanza(percentuale, testo):
+        if callable(aggiorna_stato):
+            try:
+                aggiorna_stato(percentuale, testo)
+            except Exception:
+                # La barra e' solo informativa: non deve mai interrompere la
+                # generazione se il browser viene aggiornato nel frattempo.
+                pass
+
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=CREDIT_COSTS["indice_generazione_editoriale"])
     # L'indice resta affidato al modello editoriale completo, ma un timeout o
     # una risposta non utilizzabile non deve lasciare lo spinner senza esito.
+    avanza(42, "Generazione della struttura editoriale in corso...")
     risposta_iniziale = chiedi_gpt(
         prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
         timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="genera_indice",
@@ -2404,9 +2414,15 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         st.session_state["ultimo_errore_indice"] = str(risposta_iniziale or "risposta vuota")
         return ""
     corrente = normalizza_indice_generato(risposta_iniziale)
+    avanza(58, "Struttura ricevuta: controllo gerarchia, limiti e coerenza...")
     indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
     for tentativo in range(massimo_tentativi):
+        avanza(
+            64 + tentativo * 17,
+            "Valutazione editoriale dell'indice..." if not tentativo
+            else "Verifica della struttura corretta...",
+        )
         problemi = criticita_indice_generato(
             corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
         )
@@ -2441,6 +2457,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             if tentativo:
                 esito = f"Indice corretto automaticamente al controllo {tentativo} e approvato {voto_editoriale}/10."
             st.session_state["ultimo_controllo_indice"] = esito
+            avanza(100, "Indice approvato e pronto per il salvataggio.")
             return corrente
         if voto_editoriale < 8:
             problemi.append(f"audit editoriale {voto_editoriale}/10: {difetti_editoriali}")
@@ -2486,6 +2503,7 @@ INDICE RIFIUTATO DA CORREGGERE
             revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
             timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="correzione_indice",
         )
+        avanza(92, "Correzione completata: validazione finale in corso...")
         if not str(risposta_revisione or "").strip() or str(risposta_revisione).startswith("ERRORE:"):
             st.session_state["ultimo_controllo_indice"] = (
                 "La bozza dell'indice è stata creata, ma la correzione automatica non ha concluso "
@@ -4063,31 +4081,82 @@ TESTO GIÀ APPROVATO NELLA FORMA:
 
 def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
                                  obiettivo, lingua, approfondimenti, profilo_lunghezza):
-    """Esegue la stessa stesura usata dal pulsante della singola sezione.
+    """Scrive e salva una sezione con un recupero indipendente dai controlli.
 
-    La stesura completa richiama questa funzione una sezione alla volta: non
-    usa un prompt abbreviato o un percorso diverso. In questo modo ogni voce
-    dell'indice riceve le medesime istruzioni, controlli di completezza e
-    protezioni della scrittura manuale "Scrivi contenuto dettagliato".
+    Prefazione, Parte e prima sezione concreta sono le voci piu' esposte a
+    conflitti fra vincoli di lunghezza e controlli automatici. Se il motore
+    editoriale non riesce a convalidarle, facciamo un ultimo tentativo diretto
+    usando lo stesso brief: non saltiamo la voce, non passiamo alla successiva
+    e non perdiamo il resto del libro.
     """
     prompt = crea_prompt_stesura_sezione(
         sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
         obiettivo, lingua, approfondimenti, profilo_lunghezza,
     )
-    contenuto_generato = genera_contenuto_editoriale(
-        prompt, S_PROMPT, sezione, indice, trama, genere, obiettivo,
-        lingua, profilo_lunghezza,
+    limite_output = PROFILI_LUNGHEZZA_STESURA.get(
+        profilo_lunghezza,
+        PROFILI_LUNGHEZZA_STESURA["Standard KDP"],
+    )["max_completion_tokens"]
+    errore_principale = None
+    try:
+        contenuto_generato = genera_contenuto_editoriale(
+            prompt, S_PROMPT, sezione, indice, trama, genere, obiettivo,
+            lingua, profilo_lunghezza,
+        )
+    except Exception as exc:
+        errore_principale = exc
+        contenuto_generato = ""
+
+    testo_pulito = pulisci_testo_editoriale(contenuto_generato).strip()
+    testo_valido = (
+        len(testo_pulito.split()) >= 30
+        and not testo_pulito.upper().startswith("ERRORE:")
+        and not motivo_chiusura_tecnica(testo_pulito)
     )
-    if (
-        not str(contenuto_generato or "").strip()
-        or str(contenuto_generato).lstrip().upper().startswith("ERRORE:")
-    ):
-        raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
+
+    if not testo_valido:
+        # Recupero neutro: non chiede il marcatore interno e non reintroduce
+        # la soglia dei capitoli per le aperture del libro. E' gratuito per
+        # l'utente, poiche' sostituisce una risposta che non era salvabile.
+        prompt_recupero = prompt + f"""
+
+RECUPERO DIRETTO DELLA SEZIONE
+Scrivi ora esclusivamente il testo completo e leggibile della sezione
+'{sezione}'. Non usare marcatori, titoli interni, commenti sul processo,
+Markdown, URL o fonti. Mantieni tutti i parametri gia' presenti nel brief.
+Completa ogni frase e chiudi l'ultima idea con un punto, punto interrogativo
+o punto esclamativo. Non passare alla sezione successiva e non riassumere
+l'indice. Restituisci un testo autonomo di almeno 80 parole.
+"""
+        try:
+            recupero = genera_sezione_con_ripetizione(
+                prompt_recupero,
+                S_PROMPT,
+                sezione,
+                lingua,
+                tentativi=2,
+                max_completion_tokens=max(420, limite_output),
+                addebita=False,
+            )
+            testo_recupero = pulisci_testo_editoriale(recupero).strip()
+            if (
+                len(testo_recupero.split()) >= 30
+                and not testo_recupero.upper().startswith("ERRORE:")
+                and not motivo_chiusura_tecnica(testo_recupero)
+            ):
+                testo_pulito = testo_recupero
+                testo_valido = True
+        except Exception as exc:
+            if errore_principale is None:
+                errore_principale = exc
+
+    if not testo_valido:
+        dettaglio = str(errore_principale or "risposta non valida")
+        raise RuntimeError(f"nessun testo completo restituito per '{sezione}': {dettaglio}")
+
     # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
-    # stabile della stesura completa. Il job automatico la salva di nuovo nel
-    # cloud dopo questo ritorno, ma una pausa, un rerun o il cambio di tab non
-    # possono piu' farla sparire dall'editor o dall'anteprima nel frattempo.
-    return scrivi_sezione_stesura_completa(sezione, contenuto_generato)
+    # stabile della stesura completa prima del rerun della coda automatica.
+    return scrivi_sezione_stesura_completa(sezione, testo_pulito)
 
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
 def valuta_approccio_neurologico(genere, stile, narrativa):
@@ -6298,9 +6367,23 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                                    descrizione_indice,
                                    disabled=not sidebar_pronta):
             with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
+                barra_indice = st.progress(
+                    5,
+                    text="Preparazione del brief editoriale e delle fonti...",
+                )
+
+                def aggiorna_avanzamento_indice(percentuale, messaggio):
+                    barra_indice.progress(
+                        max(0, min(100, int(percentuale))), text=str(messaggio)
+                    )
+
                 dossier_ricerca_web = ricerca_preliminare_per_indice(
                 val_titolo, val_genere, val_trama, val_goal, lingua_sel,
                 f"{val_approfondimenti}\n\n{brief_personalizzazione_progetto()}"
+                )
+                aggiorna_avanzamento_indice(
+                    30,
+                    "Fonti studiate: costruzione dell'architettura dell'indice...",
                 )
                 if dossier_ricerca_web:
                     st.session_state["ultimo_esito_ricerca_preliminare"] = (
@@ -6422,6 +6505,10 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
 
 10. ADATTAMENTO AL TIPO DI LIBRO E OUTPUT FINALE: Per manuali tecnici separa fondamenti, strumenti, procedure, verifiche e progetto applicativo. Per manuali pratici inserisci esercizi, checklist e risultati misurabili. Per business, marketing, economia e self-help inserisci framework, casi studio, piani d'azione e criteri di valutazione. Per saggi scientifici o storici separa contesto, tesi, prove, fonti e conclusioni. Per ricettari con un numero dichiarato di ricette, ogni Capitolo deve essere una ricetta e non sono ammessi Capitoli introduttivi su tecniche, ingredienti o sicurezza. Per test prep inserisci teoria, esercizi, simulazioni e soluzioni. Per narrativa costruisci sviluppo di trama, personaggi, conflitto e risoluzione, senza imporre procedure tecniche e con titoli di capitolo specifici del brief. In ogni caso prevedi un output finale coerente con il genere: progetto, piano, esercizio completato, ricetta, simulazione, decisione applicativa, sintesi o conclusione narrativa. Gli esempi devono essere concreti e verificabili secondo il tipo di libro.
 """
+                aggiorna_avanzamento_indice(
+                    40,
+                    "Brief pronto: generazione dell'indice professionale...",
+                )
                 indice_generato = genera_indice_controllato(
                     prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.",
                     val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
@@ -6429,12 +6516,15 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     minimo_parti=minimi_struttura_indice[0],
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
+                    aggiorna_stato=aggiorna_avanzamento_indice,
                 )
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
                     imposta_indice_progetto(indice_generato)
+                    aggiorna_avanzamento_indice(100, "Indice salvato e capitoli sincronizzati.")
                     salva_stesura_generata_in_cloud(opzioni_editor, "indice generato"); st.rerun()
                 else:
+                    aggiorna_avanzamento_indice(100, "Generazione conclusa: controlla l'esito editoriale sotto.")
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
                     st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
                 
@@ -6597,6 +6687,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # recuperi: un errore di un progetto precedente non puo'
                     # mai condizionare la prima sezione del nuovo libro.
                     st.session_state["job_scrittura_tentativi"] = {}
+                    # Prefazione, eventuale Parte iniziale e prima sezione
+                    # concreta vengono eseguite nel flusso principale. Il
+                    # timer automatico parte solo dopo che queste prime voci
+                    # sono state effettivamente scritte e memorizzate.
+                    st.session_state["job_scrittura_avvio_protetto_rimanenti"] = min(
+                        3, len(da_generare_libro)
+                    )
                     st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                     st.session_state.pop("job_scrittura_errore", None)
                     st.session_state.pop("job_scrittura_ultima_completata", None)
@@ -6611,6 +6708,65 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.session_state["job_scrittura_coda"] = list(coda_scrittura)
             totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura) or 1)))
             completati = max(0, totale - len(coda_scrittura))
+
+            # Avvio protetto: le prime voci sono salvate dal normale ciclo
+            # dell'app, non dal fragment. Questo elimina il caso in cui il
+            # timer ricaricava la prima sezione prima che editor, anteprima e
+            # memoria unica potessero registrarla.
+            avvio_protetto = int(
+                st.session_state.get("job_scrittura_avvio_protetto_rimanenti", 0) or 0
+            )
+            if st.session_state.get("job_scrittura_attivo") and coda_scrittura and avvio_protetto > 0:
+                sezione_iniziale = coda_scrittura[0]
+                # L'avvio protetto salva le prime sezioni fuori dal timer, ma
+                # non puo' ignorare una scelta esplicita dell'utente. Se e'
+                # stata selezionata una modalita checkpoint, la pausa avviene
+                # anche davanti alla prima Parte o alla conclusione iniziale.
+                if richiede_checkpoint_personale(sezione_iniziale):
+                    st.session_state["job_scrittura_attivo"] = False
+                    st.session_state["job_scrittura_pausa"] = True
+                    st.session_state["job_scrittura_in_attesa"] = True
+                    st.session_state["job_scrittura_checkpoint_richiesto"] = sezione_iniziale
+                    salva_stesura_generata_in_cloud(
+                        sezioni_intero_libro, "pausa guidata per personalizzazione"
+                    )
+                    st.rerun()
+                st.info(
+                    f"Avvio protetto: scrittura e salvataggio di {sezione_iniziale} "
+                    "prima di procedere automaticamente."
+                )
+                try:
+                    contenuto_iniziale = scrivi_contenuto_dettagliato(
+                        sezione_iniziale, st.session_state["indice_raw"], val_trama, val_genere,
+                        val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                        val_approfondimenti, val_lunghezza,
+                    )
+                    if not str(contenuto_iniziale or "").strip():
+                        raise RuntimeError("il cervello selezionato non ha restituito testo")
+                    scrivi_sezione_stesura_completa(sezione_iniziale, contenuto_iniziale)
+                    st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_iniziale
+                    st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                    st.session_state["job_scrittura_ultima_completata"] = sezione_iniziale
+                    st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                    st.session_state["job_scrittura_avvio_protetto_rimanenti"] = avvio_protetto - 1
+                    st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 1.0
+                    st.session_state.setdefault("job_scrittura_tentativi", {}).pop(sezione_iniziale, None)
+                    salva_stesura_generata_in_cloud(
+                        sezioni_intero_libro, "sezione iniziale del libro generata"
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    st.session_state["job_scrittura_attivo"] = False
+                    st.session_state["job_scrittura_pausa"] = True
+                    st.session_state["job_scrittura_in_attesa"] = True
+                    st.session_state["job_scrittura_errore"] = (
+                        f"{sezione_iniziale}: {exc}. La sezione non e' stata saltata; "
+                        "puoi riprendere la generazione senza perdere le altre."
+                    )
+                    salva_stesura_generata_in_cloud(
+                        sezioni_intero_libro, "errore nella sezione iniziale"
+                    )
+                    st.rerun()
 
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
                 # ``st.fragment`` è il timer nativo di Streamlit: aggiorna il
