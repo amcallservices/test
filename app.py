@@ -6085,6 +6085,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state["job_scrittura_in_attesa"] = True
+                    st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
                     st.session_state["job_scrittura_fermato"] = False
                     st.session_state.pop("job_scrittura_errore", None)
                     st.session_state.pop("job_scrittura_ultima_completata", None)
@@ -6101,129 +6102,87 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             completati = max(0, totale - len(coda_scrittura))
 
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
-                sezione_corrente = coda_scrittura[0]
-                st.progress(
-                    int(completati / totale * 100),
-                    text=f"Stesura guidata: completate {completati} di {totale} sezioni.",
-                )
-                ultima_completata = st.session_state.get("job_scrittura_ultima_completata", "")
-                if st.session_state.get("job_scrittura_in_attesa"):
-                    if ultima_completata:
-                        testo_ultima = pulisci_testo_editoriale(
-                            contenuto_memorizzato_puro(ultima_completata)
+                # ``st.fragment`` è il timer nativo di Streamlit: aggiorna il
+                # server senza clic simulati dal browser. La compatibilità con
+                # versioni meno recenti usa il vecchio nome ufficiale.
+                decoratore_fragment = getattr(st, "fragment", None) or getattr(st, "experimental_fragment", None)
+                if not decoratore_fragment:
+                    st.error("Questa versione di Streamlit non supporta l'avanzamento automatico. Aggiorna Streamlit e riprova.")
+                else:
+                    @decoratore_fragment(run_every=1.0)
+                    def gestisci_stesura_automatica():
+                        sezione_corrente = coda_scrittura[0]
+                        st.progress(
+                            int(completati / totale * 100),
+                            text=f"Stesura automatica: completate {completati} di {totale} sezioni.",
                         )
-                        st.success(
-                            f"Sezione salvata e pronta: {ultima_completata}. "
-                            "È già selezionata nell'Editor di Testo Professionale ed è presente nell'Anteprima."
-                        )
-                        with st.expander("📄 Visualizza l'ultima sezione generata", expanded=True):
-                            st.markdown(f"#### {ultima_completata}")
-                            st.write(testo_ultima)
-                    else:
-                        st.info(
-                            f"Pronto a iniziare dalla sezione: {sezione_corrente}. "
-                            "La sezione verrà scritta, salvata e mostrata prima della successiva."
-                        )
+                        ultima_completata = st.session_state.get("job_scrittura_ultima_completata", "")
+                        prossima_esecuzione = float(st.session_state.get("job_scrittura_prossimo_avvio", 0) or 0)
+                        if time.time() < prossima_esecuzione:
+                            if ultima_completata:
+                                testo_ultima = pulisci_testo_editoriale(contenuto_memorizzato_puro(ultima_completata))
+                                st.success(
+                                    f"Sezione salvata e pronta: {ultima_completata}. "
+                                    "È già selezionata nell'Editor di Testo Professionale ed è presente nell'Anteprima."
+                                )
+                                with st.expander("📄 Visualizza l'ultima sezione generata", expanded=True):
+                                    st.markdown(f"#### {ultima_completata}")
+                                    st.write(testo_ultima)
+                            else:
+                                st.info(f"Pronto a iniziare dalla sezione: {sezione_corrente}.")
+                            st.caption(
+                                f"La prossima sezione partirà automaticamente: {sezione_corrente}. "
+                                "Puoi fermare la coda prima dell'avvio."
+                            )
+                            pausa, stop = st.columns(2)
+                            with pausa:
+                                if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
+                                    st.session_state["job_scrittura_attivo"] = False
+                                    st.session_state["job_scrittura_pausa"] = True
+                                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
+                                    st.rerun()
+                            with stop:
+                                if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_libro"):
+                                    st.session_state["job_scrittura_attivo"] = False
+                                    st.session_state["job_scrittura_pausa"] = False
+                                    st.session_state["job_scrittura_in_attesa"] = False
+                                    st.session_state["job_scrittura_fermato"] = True
+                                    st.session_state["job_scrittura_interrotte"] = list(coda_scrittura)
+                                    st.session_state["job_scrittura_coda"] = []
+                                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
+                                    st.rerun()
+                            return
 
-                    # La pagina riceve una risposta completa fra due sezioni:
-                    # il lettore vede l'ultimo testo e può agire davvero. Dopo
-                    # 2,6 secondi un comando interno, invisibile, avvia la
-                    # sezione successiva senza aggiornare la pagina né perdere
-                    # la sessione Streamlit.
-                    st.caption(
-                        f"Proseguimento automatico verso: {sezione_corrente}. "
-                        "Usa PAUSA o STOP DEFINITIVO entro pochi secondi se vuoi intervenire."
-                    )
-                    # Questo pulsante non è un controllo destinato all'utente:
-                    # esiste soltanto per chiedere a Streamlit un nuovo rerun
-                    # senza ricaricare la pagina. Lo script sotto lo nasconde
-                    # prima che la pagina venga resa visibile.
-                    if st.button("AVANZAMENTO INTERNO", key="avanza_automaticamente_stesura"):
-                        st.session_state["job_scrittura_in_attesa"] = False
-                        st.rerun()
-                    pausa, stop = st.columns(2)
-                    with pausa:
-                        if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
+                        st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
+                        try:
+                            contenuto_generato = scrivi_contenuto_dettagliato(
+                                sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
+                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                                val_approfondimenti, val_lunghezza,
+                            )
+                            if not str(contenuto_generato or "").strip():
+                                raise RuntimeError("il cervello selezionato non ha restituito testo")
+                            # Salvataggio atomico prima del rerun completo: il
+                            # testo sarà visibile in editor e anteprima quando
+                            # Streamlit ridisegna la pagina.
+                            scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
+                            st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
+                            st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                            st.session_state["job_scrittura_ultima_completata"] = sezione_corrente
+                            st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                            st.session_state["job_scrittura_in_attesa"] = True
+                            st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
+                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
+                            st.rerun()
+                        except Exception as exc:
                             st.session_state["job_scrittura_attivo"] = False
                             st.session_state["job_scrittura_pausa"] = True
-                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
+                            st.session_state["job_scrittura_in_attesa"] = True
+                            st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
+                            notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
                             st.rerun()
-                    with stop:
-                        if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_libro"):
-                            st.session_state["job_scrittura_attivo"] = False
-                            st.session_state["job_scrittura_pausa"] = False
-                            st.session_state["job_scrittura_in_attesa"] = False
-                            st.session_state["job_scrittura_fermato"] = True
-                            st.session_state["job_scrittura_interrotte"] = list(coda_scrittura)
-                            st.session_state["job_scrittura_coda"] = []
-                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
-                            st.rerun()
-                    components.html(
-                        """
-                        <script>
-                        (function () {
-                          let tentativi = 0;
-                          const massimoTentativi = 40;
 
-                          function trovaEAvanza() {
-                            try {
-                              const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
-                              const avanzamento = pulsanti.find(function (pulsante) {
-                                return (pulsante.innerText || '').includes('AVANZAMENTO INTERNO');
-                              });
-                              if (!avanzamento) {
-                                if (tentativi++ < massimoTentativi) setTimeout(trovaEAvanza, 100);
-                                return;
-                              }
-
-                              // Il comando è soltanto un ponte tecnico verso
-                              // Streamlit: non deve mai comparire all'utente.
-                              const contenitore = avanzamento.closest('[data-testid="stElementContainer"]') || avanzamento.parentElement;
-                              if (contenitore) contenitore.style.display = 'none';
-
-                              // Lascia il testo appena generato sullo schermo,
-                              // poi avanza con un clic Streamlit normale: la
-                              // sessione, la coda e i salvataggi restano vivi.
-                              setTimeout(function () {
-                                if (!avanzamento.disabled && avanzamento.isConnected) avanzamento.click();
-                              }, 2600);
-                            } catch (errore) {
-                              if (tentativi++ < massimoTentativi) setTimeout(trovaEAvanza, 100);
-                            }
-                          }
-                          trovaEAvanza();
-                        })();
-                        </script>
-                        """,
-                        height=0,
-                    )
-                else:
-                    st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
-                    try:
-                        contenuto_generato = scrivi_contenuto_dettagliato(
-                            sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
-                            val_approfondimenti, val_lunghezza,
-                        )
-                        if not str(contenuto_generato or "").strip():
-                            raise RuntimeError("il cervello selezionato non ha restituito testo")
-                        # Registrazione atomica: il contenuto è disponibile in
-                        # memoria, editor, anteprima ed export prima che la
-                        # coda possa essere ripresa.
-                        scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
-                        st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
-                        st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
-                        st.session_state["job_scrittura_ultima_completata"] = sezione_corrente
-                        st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
-                        st.session_state["job_scrittura_in_attesa"] = True
-                        salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
-                        st.rerun()
-                    except Exception as exc:
-                        st.session_state["job_scrittura_attivo"] = False
-                        st.session_state["job_scrittura_pausa"] = True
-                        st.session_state["job_scrittura_in_attesa"] = True
-                        st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
-                        notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
+                    gestisci_stesura_automatica()
 
             if st.session_state.get("job_scrittura_pausa") and st.session_state.get("job_scrittura_coda"):
                 rimanenti = len(st.session_state["job_scrittura_coda"])
@@ -6236,6 +6195,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state["job_scrittura_attivo"] = True
                         st.session_state["job_scrittura_pausa"] = False
                         st.session_state["job_scrittura_in_attesa"] = True
+                        st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
                         st.session_state.pop("job_scrittura_errore", None)
                         st.rerun()
                 with stop_pausa:
