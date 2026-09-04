@@ -2304,6 +2304,18 @@ CHIAVE_REGISTRO_SEZIONI = "registro_sezioni_manoscritto"
 CHIAVE_SEZIONI_DA_REIDRATARE = "sezioni_editor_da_reidratare"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
 CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
+# Ogni sezione ha una versione del relativo campo visuale. Quando l'AI crea
+# o recupera un testo, la versione cambia: Streamlit non può quindi riusare
+# una textarea vuota conservata dal browser prima della generazione.
+CHIAVE_VERSIONI_WIDGET_SEZIONI = "versioni_widget_sezioni"
+
+
+def chiave_widget_sezione(sezione):
+    """Chiave esclusiva del campo visibile, distinta dalla memoria del testo."""
+    versione = int(
+        st.session_state.setdefault(CHIAVE_VERSIONI_WIDGET_SEZIONI, {}).get(sezione, 0)
+    )
+    return f"{chiave_sezione(sezione)}_v{versione}"
 
 
 def leggi_sezione_memorizzata(sezione):
@@ -2339,8 +2351,16 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     possa lasciare visibile solo l'ultimo testo generato.
     """
     testo = contenuto or ""
-    st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo
+    memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
+    precedente = str(memoria.get(sezione, "") or "")
+    memoria[sezione] = testo
     st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo
+    # Questa chiave non è più usata da una textarea: può quindi essere
+    # aggiornata in sicurezza anche mentre l'app effettua un rerun.
+    st.session_state[chiave_sezione(sezione)] = testo
+    if str(testo) != precedente:
+        versioni = st.session_state.setdefault(CHIAVE_VERSIONI_WIDGET_SEZIONI, {})
+        versioni[sezione] = int(versioni.get(sezione, 0)) + 1
     registro = st.session_state.setdefault(CHIAVE_REGISTRO_SEZIONI, [])
     if sezione not in registro:
         registro.append(sezione)
@@ -2394,14 +2414,20 @@ def elenco_sezioni_progetto(sezioni_base):
     return risultato
 
 
-def sincronizza_modifica_manuale(sezione):
+def sincronizza_modifica_manuale(sezione, chiave_widget=None):
     """Callback dell'editor: conserva subito anche le modifiche digitate a mano."""
-    contenuto = st.session_state.get(chiave_sezione(sezione), "")
+    chiave_da_leggere = chiave_widget or chiave_widget_sezione(sezione)
+    contenuto = st.session_state.get(chiave_da_leggere, "")
     scrivi_sezione_memorizzata(sezione, contenuto)
-    # Una cancellazione manuale esplicita deve restare possibile anche per una
-    # sezione inizialmente prodotta dalla stesura completa.
-    if not str(contenuto or "").strip():
-        st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}).pop(sezione, None)
+    # L'archivio della stesura completa deve restare allineato anche dopo una
+    # modifica manuale; altrimenti editor e anteprima potrebbero rileggere una
+    # versione precedente del testo. La cancellazione esplicita resta possibile.
+    archivio = st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
+    if sezione in archivio:
+        if str(contenuto or "").strip():
+            archivio[sezione] = contenuto
+        else:
+            archivio.pop(sezione, None)
 
 
 def prepara_sezione_editor_selezionata():
@@ -6247,26 +6273,30 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # si leggeva solo quel widget, le altre sezioni già generate
             # apparivano vuote pur essendo presenti nella memoria del progetto.
             testo_editor = pulisci_testo_editoriale(leggi_sezione_memorizzata(sez_scelta))
+            chiave_widget_editor = chiave_widget_sezione(sez_scelta)
             sezione_caricata = st.session_state.get("editor_testo_caricato_per")
             if sezione_caricata != sez_scelta:
                 # Il cambio sezione avviene prima della creazione della textarea:
                 # è quindi sicuro sostituire il valore visualizzato senza
                 # sovrascrivere una modifica manuale della sezione precedente.
                 st.session_state[k_sessione] = testo_editor
+                st.session_state[chiave_widget_editor] = testo_editor
                 st.session_state["editor_testo_caricato_per"] = sez_scelta
-            elif testo_editor and not str(st.session_state.get(k_sessione, "")).strip():
+            elif testo_editor and not str(st.session_state.get(chiave_widget_editor, "")).strip():
                 # Ripristino da CSV/cloud o rerun con widget temporaneamente
                 # vuoto: la memoria ha priorità e il testo torna leggibile.
                 st.session_state[k_sessione] = testo_editor
-            elif k_sessione not in st.session_state:
+                st.session_state[chiave_widget_editor] = testo_editor
+            elif chiave_widget_editor not in st.session_state:
                 st.session_state[k_sessione] = ""
+                st.session_state[chiave_widget_editor] = ""
             st.text_area(
                 L["label_editor"],
                 height=500,
-                key=k_sessione,
+                key=chiave_widget_editor,
                 help="Le modifiche restano nella sessione corrente. Usa “SALVA SESSIONE” nella sidebar per conservarle nel tuo account.",
                 on_change=sincronizza_modifica_manuale,
-                args=(sez_scelta,),
+                args=(sez_scelta, chiave_widget_editor),
             )
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
