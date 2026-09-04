@@ -1180,7 +1180,7 @@ def _landing_page() -> None:
         <p class='ss-muted'>Dall'idea alla bozza esportabile: ogni fase è guidata, modificabile e sotto il tuo controllo.</p></div>
         <div class='ss-priority-grid'>
           <div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scrivi il libro completo</b>
-          <p>Genera prefazione, capitoli, sottocapitoli e ringraziamenti, oppure lavora su una singola sezione quando preferisci.</p><span class='ss-priority-tag'>IL CUORE DEL SOFTWARE</span></div>
+          <p>Genera in sequenza ogni capitolo e sottocapitolo dell'indice, oppure lavora su una singola sezione quando preferisci.</p><span class='ss-priority-tag'>IL CUORE DEL SOFTWARE</span></div>
           <div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Indice studiato e verificato</b>
           <p>Ricerca preliminare delle fonti, indice professionale, voto editoriale e rigenerazione guidata dai miglioramenti suggeriti.</p><span class='ss-priority-tag'>STRUTTURA PIÙ SOLIDA</span></div>
           <div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualità sotto controllo</b>
@@ -1257,7 +1257,7 @@ def _landing_page() -> None:
     st.markdown("<div class='ss-section'><h2>Importa / Esporta: il progetto è sempre nelle tue mani</h2><p class='ss-muted'>Oltre ai file Word e PDF, puoi creare una copia completa e portabile del lavoro editoriale.</p></div>", unsafe_allow_html=True)
     archivio_a, archivio_b, archivio_c = st.columns(3)
     for colonna, titolo, testo in (
-        (archivio_a, "📥 Esporta progetto completo in CSV", "Con un solo download salvi sidebar, lingua, titolo, obiettivo, indice, prefazione, capitoli, sottocapitoli, ringraziamenti, fonti e immagini associate. È una fotografia del lavoro aperto in quel momento."),
+        (archivio_a, "📥 Esporta progetto completo in CSV", "Con un solo download salvi sidebar, lingua, titolo, obiettivo, indice, capitoli, sottocapitoli, fonti e immagini associate. È una fotografia del lavoro aperto in quel momento."),
         (archivio_b, "📤 Importa e riprendi", "Carica un CSV precedentemente esportato da Scrittore Site: il software ricostruisce nella pagina tutti i campi della sidebar, l’indice e le sezioni scritte. Puoi controllare il risultato prima di fare altro."),
         (archivio_c, "💾 Decidi tu quando salvare", "Dopo un’importazione, il progetto resta nella sessione finché non scegli “SALVA SESSIONE”. Solo allora viene aggiornato il tuo archivio personale; “RIAGGIORNA ALL’ULTIMA STESURA” resta sempre una scelta volontaria."),
     ):
