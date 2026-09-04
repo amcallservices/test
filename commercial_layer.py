@@ -873,6 +873,20 @@ HOME_AI_ENGINES_COPY = {
     "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查、图片和编辑检查。", "写作：每次操作 1 积分 · 完整目录：5 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 研究和目录：约 2 积分。", "网页版权检查和图片功能仍由 GPT 提供。"),
 }
 
+# Funzione editoriale opzionale, presentata nella home senza promettere che
+# l'AI inventi esperienze dell'autore o renda obbligatorio un passaggio in più.
+HOME_PERSONALIZATION_COPY = {
+    "Italiano": ("Un libro che conserva la tua impronta", "Personalizza il tuo libro", "Aggiungi, solo se vuoi, voce autoriale, esempi, priorità e confini. Scrittore Site li conserva nel progetto e li usa per ricerca, indice e stesura senza trasformarli in testo copiato.", "Pause guidate opzionali", "Prima delle Parti o della conclusione puoi fermare la stesura, aggiungere un dettaglio e riprendere. Nessun credito viene usato per queste risposte."),
+    "English": ("A book that keeps your voice", "Personalize your book", "Optionally add author voice, examples, priorities and boundaries. Scrittore Site saves them with the project and uses them for research, outline and writing without copying them into the manuscript.", "Optional guided pauses", "Before Parts or the conclusion, you can pause writing, add a detail and resume. These answers use no credits."),
+    "Español": ("Un libro que conserva tu voz", "Personaliza tu libro", "Añade, solo si quieres, voz de autor, ejemplos, prioridades y límites. Scrittore Site los guarda en el proyecto y los usa para investigación, índice y redacción sin copiarlos en el manuscrito.", "Pausas guiadas opcionales", "Antes de las Partes o de la conclusión puedes pausar, añadir un detalle y continuar. Estas respuestas no consumen créditos."),
+    "Français": ("Un livre qui conserve votre voix", "Personnalisez votre livre", "Ajoutez, si vous le souhaitez, voix d'auteur, exemples, priorités et limites. Scrittore Site les conserve dans le projet et les utilise pour la recherche, le plan et la rédaction sans les copier dans le manuscrit.", "Pauses guidées facultatives", "Avant les parties ou la conclusion, vous pouvez interrompre, ajouter un détail et reprendre. Ces réponses ne consomment aucun crédit."),
+    "Deutsch": ("Ein Buch mit Ihrer eigenen Stimme", "Personalisiere dein Buch", "Füge bei Bedarf Autorenstimme, Beispiele, Prioritäten und Grenzen hinzu. Scrittore Site speichert sie im Projekt und nutzt sie für Recherche, Inhaltsverzeichnis und Text ohne sie in das Manuskript zu kopieren.", "Optionale geführte Pausen", "Vor Teilen oder dem Schluss kannst du die Erstellung anhalten, einen Hinweis ergänzen und fortsetzen. Dafür werden keine Credits verwendet."),
+    "Română": ("O carte care îți păstrează vocea", "Personalizează cartea", "Adaugă, doar dacă vrei, vocea autorului, exemple, priorități și limite. Scrittore Site le salvează în proiect și le folosește pentru cercetare, cuprins și redactare fără să le copieze în manuscris.", "Pauze ghidate opționale", "Înainte de părți sau concluzie poți opri redactarea, adăuga un detaliu și relua. Aceste răspunsuri nu consumă credite."),
+    "Русский": ("Книга, сохраняющая ваш голос", "Персонализируйте книгу", "При желании добавьте авторский голос, примеры, приоритеты и границы. Scrittore Site сохраняет их в проекте и использует для исследования, оглавления и текста без копирования в рукопись.", "Необязательные управляемые паузы", "Перед частями или заключением можно приостановить работу, добавить деталь и продолжить. Ответы не расходуют кредиты."),
+    "العربية": ("كتاب يحتفظ بصوتك", "خصص كتابك", "أضف، إذا رغبت، صوت المؤلف والأمثلة والأولويات والحدود. يحفظها Scrittore Site داخل المشروع ويستخدمها للبحث والفهرس والكتابة من دون نسخها في المخطوط.", "توقفات موجّهة اختيارية", "قبل الأجزاء أو الخاتمة يمكنك إيقاف الكتابة وإضافة تفصيل ثم المتابعة. هذه الإجابات لا تستهلك أرصدة."),
+    "中文": ("保留你个人声音的图书", "个性化你的图书", "可按需添加作者声音、案例、重点和边界。Scrittore Site 会将其保存在项目中，用于研究、目录和写作，但不会照搬到手稿中。", "可选引导暂停", "在各部分或结论前可暂停写作、补充细节并继续。这些回答不消耗积分。"),
+}
+
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
@@ -1016,6 +1030,7 @@ def _landing_page() -> None:
     H = HOME_COPY[home_language]
     C = HOME_BODY_COPY[home_language]
     A = HOME_AI_ENGINES_COPY[home_language]
+    P = HOME_PERSONALIZATION_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
 
@@ -1106,6 +1121,14 @@ def _landing_page() -> None:
     )
     st.markdown(
         f"<div id='ss-funzioni' dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""<div class='ss-section' dir='{direzione_home}'><h2>{P[0]}</h2></div>
+        <div class='ss-priority-grid' dir='{direzione_home}'>
+          <div class='ss-feature-group'><h3>✍️ {P[1]}</h3><p>{P[2]}</p></div>
+          <div class='ss-feature-group'><h3>⏸ {P[3]}</h3><p>{P[4]}</p></div>
+        </div>""",
         unsafe_allow_html=True,
     )
     st.markdown(
