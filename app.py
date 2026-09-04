@@ -2949,8 +2949,35 @@ def esporta_progetto_editoriale_csv():
     return buffer.getvalue().encode("utf-8-sig")
 
 
+LIMITE_CAMPO_CSV_PROGETTO = 50 * 1024 * 1024
+
+
+def imposta_limite_lettura_csv_progetto():
+    """Abilita CSV completi con fotografie di libri, fonti e immagini.
+
+    Il modulo CSV di Python parte da 131.072 caratteri per singolo campo,
+    mentre una fotografia base64 di un manoscritto intero può essere molto
+    più grande. Il limite è ridotto soltanto se la piattaforma non supporta
+    quello massimo richiesto.
+    """
+    limite = LIMITE_CAMPO_CSV_PROGETTO
+    while limite >= 131_072:
+        try:
+            csv.field_size_limit(limite)
+            return limite
+        except OverflowError:
+            limite //= 2
+    return csv.field_size_limit()
+
+
 def importa_progetto_editoriale_csv(file_caricato):
-    """Importa un CSV Scrittore Site privilegiando la fotografia integra v2."""
+    """Importa integralmente un CSV Scrittore Site, anche per libri lunghi.
+
+    La fotografia v2 conserva in un unico campo CSV sidebar, indice, sezioni,
+    fonti e immagini. Prima della lettura alziamo quindi il limite del parser,
+    senza modificare il formato di esportazione o perdere compatibilità con i
+    CSV già scaricati.
+    """
     try:
         dati_grezzi = file_caricato.getvalue()
         if not dati_grezzi:
@@ -2982,6 +3009,7 @@ def importa_progetto_editoriale_csv(file_caricato):
         # spezzare l'indice in centinaia di righe. Il separatore è dedotto
         # soltanto dalla riga d'intestazione, quindi i ritorni a capo restano
         # dentro lo stesso campo CSV come previsto.
+        imposta_limite_lettura_csv_progetto()
         righe = list(csv.DictReader(StringIO(testo_csv, newline=""), delimiter=separatore, quotechar='"'))
         righe = [{str(k or "").strip().lower().lstrip("\ufeff"): v for k, v in r.items()} for r in righe]
     except Exception as exc:
