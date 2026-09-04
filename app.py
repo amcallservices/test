@@ -6124,13 +6124,23 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             f"Pronto a iniziare dalla sezione: {sezione_corrente}. "
                             "La sezione verrà scritta, salvata e mostrata prima della successiva."
                         )
-                    avanti, pausa, stop = st.columns([2, 1, 1])
-                    with avanti:
+
+                    # La pagina riceve una risposta completa fra due sezioni:
+                    # il lettore vede l'ultimo testo e può agire davvero. Dopo
+                    # 2,6 secondi un pulsante interno avvia automaticamente la
+                    # sezione successiva, senza aggiornare la pagina o perdere
+                    # la sessione Streamlit.
+                    st.caption(
+                        f"Proseguimento automatico verso: {sezione_corrente}. "
+                        "Usa PAUSA o STOP DEFINITIVO entro pochi secondi se vuoi intervenire."
+                    )
+                    auto, pausa, stop = st.columns([2, 1, 1])
+                    with auto:
                         if st.button(
-                            f"▶ SCRIVI LA PROSSIMA SEZIONE: {sezione_corrente}",
+                            "⟳ PROSEGUI AUTOMATICAMENTE",
                             type="primary",
                             use_container_width=True,
-                            key="continua_stesura_guidata",
+                            key="avanza_automaticamente_stesura",
                         ):
                             st.session_state["job_scrittura_in_attesa"] = False
                             st.rerun()
@@ -6150,6 +6160,22 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             st.session_state["job_scrittura_coda"] = []
                             salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
                             st.rerun()
+                    components.html(
+                        """
+                        <script>
+                        setTimeout(function () {
+                          try {
+                            const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
+                            const avanzamento = pulsanti.find(function (pulsante) {
+                              return (pulsante.innerText || '').trim() === '⟳ PROSEGUI AUTOMATICAMENTE';
+                            });
+                            if (avanzamento && !avanzamento.disabled) avanzamento.click();
+                          } catch (errore) { console.log('Avanzamento automatico non disponibile', errore); }
+                        }, 2600);
+                        </script>
+                        """,
+                        height=0,
+                    )
                 else:
                     st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
                     try:
