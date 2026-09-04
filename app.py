@@ -2285,6 +2285,10 @@ CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 # generato resta disponibile e viene reidrato nell'editor e nell'anteprima.
 # Viene cancellato insieme al progetto da RESET PROGETTO.
 CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
+# Archivio esclusivo della stesura completa. Non viene mai aggiornato da un
+# widget vuoto o da un cambio della sezione selezionata: protegge soprattutto
+# la prima sezione quando l'utente mette in pausa subito dopo il primo ciclo.
+CHIAVE_ARCHIVIO_STESURA_COMPLETA = "archivio_stesura_completa"
 # Elenco ordinato delle sezioni del manoscritto. Non dipende dall'indice né
 # dai widget: mantiene visibili tutte le sezioni effettivamente create anche
 # quando una pausa interrompe la stesura completa.
@@ -2316,7 +2320,8 @@ def leggi_sezione_memorizzata(sezione):
     valore_memoria = memoria.get(sezione, "")
     if str(valore_memoria).strip():
         return valore_memoria
-    return memoria_protetta.get(sezione, "") or valore_widget or ""
+    archivio_stesura = st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
+    return memoria_protetta.get(sezione, "") or archivio_stesura.get(sezione, "") or valore_widget or ""
 
 
 def scrivi_sezione_memorizzata(sezione, contenuto):
@@ -2340,12 +2345,21 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     return testo
 
 
+def scrivi_sezione_stesura_completa(sezione, contenuto):
+    """Registra una sezione del job in un archivio ulteriore non modificabile dai widget."""
+    testo = scrivi_sezione_memorizzata(sezione, contenuto)
+    st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})[sezione] = testo
+    return testo
+
+
 def contenuto_memorizzato_puro(sezione):
     """Legge la copia stabile senza lasciarsi influenzare dal widget corrente."""
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     contenuto = memoria.get(sezione, "")
     if not str(contenuto).strip():
         contenuto = st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {}).get(sezione, "")
+    if not str(contenuto).strip():
+        contenuto = st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}).get(sezione, "")
     if not str(contenuto).strip():
         contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
     return contenuto or ""
@@ -2365,6 +2379,7 @@ def elenco_sezioni_progetto(sezioni_base):
         *st.session_state.get(CHIAVE_REGISTRO_SEZIONI, []),
         *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys(),
         *dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}).keys(),
+        *dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}).keys(),
     ]:
         if sezione and not sezione_dismessa(sezione) and sezione not in risultato:
             risultato.append(sezione)
@@ -2373,7 +2388,12 @@ def elenco_sezioni_progetto(sezioni_base):
 
 def sincronizza_modifica_manuale(sezione):
     """Callback dell'editor: conserva subito anche le modifiche digitate a mano."""
-    scrivi_sezione_memorizzata(sezione, st.session_state.get(chiave_sezione(sezione), ""))
+    contenuto = st.session_state.get(chiave_sezione(sezione), "")
+    scrivi_sezione_memorizzata(sezione, contenuto)
+    # Una cancellazione manuale esplicita deve restare possibile anche per una
+    # sezione inizialmente prodotta dalla stesura completa.
+    if not str(contenuto or "").strip():
+        st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}).pop(sezione, None)
 
 
 def prepara_sezione_editor_selezionata():
@@ -2396,11 +2416,14 @@ def reidrata_sezioni_memorizzate(sezioni):
     """Riporta nell'editor tutte le sezioni già salvate prima di renderizzare i widget."""
     memoria = st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}
     memoria_protetta = st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}
+    archivio_stesura = st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}
     da_reidratare = set(st.session_state.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
     for sezione in sezioni:
         contenuto = memoria.get(sezione)
         if not str(contenuto or "").strip():
             contenuto = memoria_protetta.get(sezione, "")
+        if not str(contenuto or "").strip():
+            contenuto = archivio_stesura.get(sezione, "")
         chiave = chiave_sezione(sezione)
         if not str(contenuto or "").strip():
             contenuto = st.session_state.get(chiave_sezione_precedente(sezione), "")
@@ -2472,7 +2495,8 @@ def esporta_progetto_editoriale_csv():
     writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": indice_da_esportare})
     writer.writerow({"tipo": "progetto", "chiave": "indice_backup", "valore": indice_da_esportare})
 
-    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {})
+    contenuti = dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {})
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in st.session_state.get("lista_capitoli", []):
         testo = leggi_sezione_memorizzata(sezione)
@@ -2593,7 +2617,8 @@ def importa_progetto_editoriale_csv(file_caricato):
 def mostra_memoria_visiva_progetto():
     """Pannello leggibile che rende verificabile la memoria reale del progetto."""
     sidebar = sidebar_memorizzata_corrente()
-    contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {})
+    contenuti = dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {})
+    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     # Includiamo anche un testo presente nel widget ma non ancora confluito
     # nella cache, per esempio subito dopo una modifica manuale.
@@ -2740,6 +2765,7 @@ def salva_progetto_corrente(sidebar, sezioni):
         contenuti.update((precedente.get("contenuti", {}) or {}))
     # La copia protetta ha precedenza sulla fotografia cloud precedente;
     # quella dell'editor può contenerne una revisione manuale più recente.
+    contenuti.update(dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in sezioni:
@@ -5811,6 +5837,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
                             val_approfondimenti, val_lunghezza,
                         )
+                        # Terza copia dedicata alla stesura completa: la prima
+                        # sezione resta leggibile anche se la pausa avviene nel
+                        # rerun immediatamente successivo alla sua generazione.
+                        scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
                         # sezione conclusa viene inviata immediatamente al
