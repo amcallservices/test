@@ -6127,23 +6127,21 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
                     # La pagina riceve una risposta completa fra due sezioni:
                     # il lettore vede l'ultimo testo e può agire davvero. Dopo
-                    # 2,6 secondi un pulsante interno avvia automaticamente la
-                    # sezione successiva, senza aggiornare la pagina o perdere
+                    # 2,6 secondi un comando interno, invisibile, avvia la
+                    # sezione successiva senza aggiornare la pagina né perdere
                     # la sessione Streamlit.
                     st.caption(
                         f"Proseguimento automatico verso: {sezione_corrente}. "
                         "Usa PAUSA o STOP DEFINITIVO entro pochi secondi se vuoi intervenire."
                     )
-                    auto, pausa, stop = st.columns([2, 1, 1])
-                    with auto:
-                        if st.button(
-                            "⟳ PROSEGUI AUTOMATICAMENTE",
-                            type="primary",
-                            use_container_width=True,
-                            key="avanza_automaticamente_stesura",
-                        ):
-                            st.session_state["job_scrittura_in_attesa"] = False
-                            st.rerun()
+                    # Questo pulsante non è un controllo destinato all'utente:
+                    # esiste soltanto per chiedere a Streamlit un nuovo rerun
+                    # senza ricaricare la pagina. Lo script sotto lo nasconde
+                    # prima che la pagina venga resa visibile.
+                    if st.button("AVANZAMENTO INTERNO", key="avanza_automaticamente_stesura"):
+                        st.session_state["job_scrittura_in_attesa"] = False
+                        st.rerun()
+                    pausa, stop = st.columns(2)
                     with pausa:
                         if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
                             st.session_state["job_scrittura_attivo"] = False
@@ -6163,11 +6161,23 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     components.html(
                         """
                         <script>
+                        (function () {
+                          try {
+                            const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
+                            const avanzamento = pulsanti.find(function (pulsante) {
+                              return (pulsante.innerText || '').trim() === 'AVANZAMENTO INTERNO';
+                            });
+                            if (avanzamento) {
+                              const contenitore = avanzamento.closest('[data-testid="stElementContainer"]') || avanzamento.parentElement;
+                              if (contenitore) contenitore.style.display = 'none';
+                            }
+                          } catch (errore) { console.log('Nascondi avanzamento interno non disponibile', errore); }
+                        })();
                         setTimeout(function () {
                           try {
                             const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
                             const avanzamento = pulsanti.find(function (pulsante) {
-                              return (pulsante.innerText || '').trim() === '⟳ PROSEGUI AUTOMATICAMENTE';
+                              return (pulsante.innerText || '').trim() === 'AVANZAMENTO INTERNO';
                             });
                             if (avanzamento && !avanzamento.disabled) avanzamento.click();
                           } catch (errore) { console.log('Avanzamento automatico non disponibile', errore); }
