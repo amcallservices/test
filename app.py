@@ -3118,7 +3118,13 @@ def mostra_memoria_visiva_progetto():
 
 
 def applica_snapshot_progetto(snapshot):
-    """Ripristina una sola fotografia completa in memoria e nell'interfaccia."""
+    """Ripristina una fotografia completa, anche se il progetto e' ancora iniziale.
+
+    Un utente puo' salvare correttamente la sidebar o le fonti prima di avere
+    creato l'indice. Quel salvataggio e' comunque un progetto valido e il
+    comando ``RIAGGIORNA ALL'ULTIMA STESURA`` deve poterlo recuperare, anziche'
+    apparire inefficace per la sola assenza dell'indice.
+    """
     if not isinstance(snapshot, dict):
         return False
 
@@ -3131,11 +3137,18 @@ def applica_snapshot_progetto(snapshot):
     indice = str(snapshot.get("indice_raw", "") or snapshot.get("indice_backup", "") or "")
     if not indice.strip() and contenuti:
         indice = "\n".join(contenuti.keys())
-    if not indice.strip():
-        return False
-
     fonti = dict(snapshot.get("fonti", {}) or {})
     immagini = dict(snapshot.get("immagini_capitoli", {}) or {})
+    ha_dati_ripristinabili = bool(
+        indice.strip()
+        or contenuti
+        or any(str(valore or "").strip() for valore in sidebar.values())
+        or any(str(valore or "").strip() for valore in fonti.values())
+        or immagini
+    )
+    if not ha_dati_ripristinabili:
+        return False
+
     progetto = memoria_progetto_unica()
     progetto.clear()
     progetto.update({
@@ -3169,10 +3182,18 @@ def applica_snapshot_progetto(snapshot):
     if contenuti:
         st.session_state[CHIAVE_SELETTORE_EDITOR] = next(iter(contenuti))
 
-    # Scrittura unica dell'indice e incremento della versione del suo campo:
-    # la tab Indice riceve sempre il testo completo importato, non la vecchia
-    # textarea ancora presente nel browser.
-    imposta_indice_progetto(indice)
+    # La tab Indice riceve sempre il testo completo importato. Se il progetto
+    # e' stato salvato prima dell'indice, svuotiamo in modo esplicito soltanto
+    # l'indice e la lista capitoli, senza annullare sidebar, fonti o sezioni.
+    if indice.strip():
+        imposta_indice_progetto(indice)
+    else:
+        st.session_state["indice_raw"] = ""
+        st.session_state["indice_editoriale"] = ""
+        st.session_state["indice_widget_version"] = int(
+            st.session_state.get("indice_widget_version", 0)
+        ) + 1
+        sync_capitoli()
     st.session_state["immagini_capitoli"] = immagini
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
