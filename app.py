@@ -4991,10 +4991,11 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 """
 
     def esegui_collaudo_automatico():
-        """Esegue un campione end-to-end con le funzioni realmente usate dall'editor."""
+        """Collauda il flusso reale: Prefazione, salvataggio, pausa e visibilità."""
         barra = st.progress(0, text="Collaudo automatico: preparazione...")
         try:
             st.session_state["admin_test_pausa_ripresa_verificata"] = False
+            st.session_state["admin_test_prefazione_pausa_verificata"] = False
             barra.progress(10, text="Collaudo automatico: ricerca e mappa delle fonti...")
             ricerca_preliminare_per_indice(
                 val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti, forza=True
@@ -5027,16 +5028,20 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
             if not indice_test:
                 raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
             imposta_indice_progetto(indice_test)
-            sezioni_indice_test = [
-                sezione for sezione in st.session_state.get("lista_capitoli", [])
-                if tipo_sezione_editoriale(sezione) != "parte"
+            sezioni_indice_test = list(st.session_state.get("lista_capitoli", []))
+            prefazione_test = next((s for s in sezioni_indice_test if sezione_prefazione(s)), "")
+            altre_sezioni = [
+                sezione for sezione in sezioni_indice_test
+                if not sezione_prefazione(sezione) and tipo_sezione_editoriale(sezione) != "parte"
             ]
             if val_genere == "Test Prep (Preparazione Esami)":
-                sezioni_indice_test.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
-            if not sezioni_indice_test:
-                raise RuntimeError("L'indice non contiene sezioni scrivibili per il collaudo.")
-            # Il collaudo usa due sezioni realmente previste dall'indice.
-            sezioni_test = list(dict.fromkeys(sezioni_indice_test[:2]))
+                altre_sezioni.sort(key=lambda sezione: 0 if re.search(r"quiz|domand|simulaz|soluz", sezione, re.I) else 1)
+            if not prefazione_test or not altre_sezioni:
+                raise RuntimeError("Il collaudo non ha ottenuto Prefazione e una sezione ordinaria dall'indice.")
+            # Le prime due voci sono volutamente Prefazione + sezione normale:
+            # testano il punto più fragile della coda senza alterare i parametri
+            # reali dei due cervelli.
+            sezioni_test = [prefazione_test, altre_sezioni[0]]
             for posizione, sezione in enumerate(sezioni_test, start=1):
                 barra.progress(30 + int(posizione / len(sezioni_test) * 55), text=f"Collaudo automatico: stesura {posizione}/{len(sezioni_test)} — {sezione}...")
                 prompt_sezione = crea_prompt_stesura_sezione(
@@ -5049,20 +5054,22 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 )
                 if not str(contenuto or "").strip() or str(contenuto).lstrip().upper().startswith("ERRORE:"):
                     raise RuntimeError(f"Risposta non valida per la sezione “{sezione}”.")
-                scrivi_sezione_memorizzata(sezione, contenuto)
-                # Stessa protezione usata dalla scrittura completa: una pausa
-                # deve conservare ogni sezione già prodotta, non solo l'ultima.
+                # Stesso salvataggio atomico di SCRIVI TUTTO IL LIBRO.
+                scrivi_sezione_stesura_completa(sezione, contenuto)
+                st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione
+                st.session_state["job_scrittura_ultima_completata"] = sezione
                 sezioni_da_proteggere = elenco_sezioni_progetto(st.session_state.get("lista_capitoli", []))
                 salva_stesura_generata_in_cloud(sezioni_da_proteggere, "sezione del collaudo generata")
                 if posizione == 1:
                     reidrata_sezioni_memorizzate(sezioni_da_proteggere)
                     if not str(leggi_sezione_memorizzata(sezione) or "").strip():
-                        raise RuntimeError("La prima sezione non è rimasta disponibile dopo la simulazione della pausa.")
+                        raise RuntimeError("La Prefazione non è rimasta disponibile dopo la simulazione della pausa.")
                     st.session_state["admin_test_pausa_ripresa_verificata"] = True
+                    st.session_state["admin_test_prefazione_pausa_verificata"] = True
             barra.progress(100, text="Collaudo automatico completato: controlla ora le funzioni del browser.")
             st.session_state["admin_test_run_report"] = (
                 f"Collaudo automatico completato con {st.session_state.get('admin_test_provider', provider_ia)}: "
-                f"fonti, indice e {len(sezioni_test)} sezioni sono stati prodotti con il motore reale."
+                "fonti, indice, Prefazione e una sezione ordinaria sono stati prodotti e riletti con il motore reale."
             )
         except Exception as errore:
             st.session_state["admin_test_run_report"] = f"ERRORE: collaudo automatico interrotto — {errore}"
@@ -6046,9 +6053,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # La coda deriva dall'indice corrente e dal manoscritto unico: non
-            # usa copie transitorie dell'editor. Ogni sezione è affrontata con
-            # lo stesso flusso del pulsante “Scrivi contenuto dettagliato”.
+            # La stesura completa è una coda controllata: una sezione viene
+            # generata, salvata e mostrata all'utente prima di autorizzare la
+            # successiva. Così pausa e stop operano davvero tra due richieste
+            # AI, e nessun testo concluso resta invisibile nel browser.
             sezioni_intero_libro = elenco_sezioni_progetto(lista_cap_base)
             manoscritto = memoria_progetto_unica().get("contenuti", {})
             da_generare_libro = [
@@ -6057,7 +6065,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             ]
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
-                "Ogni sezione conclusa viene resa leggibile e salvata prima della successiva."
+                "Il libro viene elaborato con un passaggio visibile e salvato per ogni sezione."
             )
             stima_libro = sum(
                 stima_massima_crediti_stesura(sezione, st.session_state["indice_raw"], val_trama, val_goal, val_genere)
@@ -6076,11 +6084,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_totale"] = len(da_generare_libro)
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
+                    st.session_state["job_scrittura_in_attesa"] = True
+                    st.session_state["job_scrittura_fermato"] = False
                     st.session_state.pop("job_scrittura_errore", None)
+                    st.session_state.pop("job_scrittura_ultima_completata", None)
                     notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
-                    # Il primo rerun avvia il lavoro da una sessione già
-                    # stabilizzata: elimina il difetto per cui la sezione uno
-                    # veniva prodotta ma non diventava visibile.
                     st.rerun()
 
             coda_scrittura = [
@@ -6089,58 +6097,120 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 and not str(memoria_progetto_unica().get("contenuti", {}).get(sezione, "") or "").strip()
             ]
             st.session_state["job_scrittura_coda"] = list(coda_scrittura)
+            totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura) or 1)))
+            completati = max(0, totale - len(coda_scrittura))
 
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
-                totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura))))
-                completati = max(0, totale - len(coda_scrittura))
-                st.progress(int(completati / totale * 100), text=f"Stesura in corso: completate {completati} di {totale} sezioni.")
                 sezione_corrente = coda_scrittura[0]
-                stato, comando_pausa = st.columns([3, 1])
-                with stato:
-                    st.info(f"Elaborazione in corso: {sezione_corrente}. Puoi fermare il lavoro prima della sezione successiva.")
-                with comando_pausa:
-                    pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
-                if pausa_richiesta:
-                    st.session_state["job_scrittura_attivo"] = False
-                    st.session_state["job_scrittura_pausa"] = True
-                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
-                    st.rerun()
-                try:
-                    contenuto_generato = scrivi_contenuto_dettagliato(
-                        sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
-                        val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
-                        val_approfondimenti, val_lunghezza,
-                    )
-                    if not str(contenuto_generato or "").strip():
-                        raise RuntimeError("il cervello selezionato non ha restituito testo")
-                    # Registrazione atomica: prima aggiorna il manoscritto
-                    # unico, poi la coda. Da questo punto la sezione è già
-                    # leggibile in editor, anteprima, memoria ed export.
-                    scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
-                    st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
-                    st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
-                    st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
-                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
-                    st.rerun()
-                except Exception as exc:
-                    st.session_state["job_scrittura_attivo"] = False
-                    st.session_state["job_scrittura_pausa"] = True
-                    st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
-                    notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
+                st.progress(
+                    int(completati / totale * 100),
+                    text=f"Stesura guidata: completate {completati} di {totale} sezioni.",
+                )
+                ultima_completata = st.session_state.get("job_scrittura_ultima_completata", "")
+                if st.session_state.get("job_scrittura_in_attesa"):
+                    if ultima_completata:
+                        testo_ultima = pulisci_testo_editoriale(
+                            contenuto_memorizzato_puro(ultima_completata)
+                        )
+                        st.success(
+                            f"Sezione salvata e pronta: {ultima_completata}. "
+                            "È già selezionata nell'Editor di Testo Professionale ed è presente nell'Anteprima."
+                        )
+                        with st.expander("📄 Visualizza l'ultima sezione generata", expanded=True):
+                            st.markdown(f"#### {ultima_completata}")
+                            st.write(testo_ultima)
+                    else:
+                        st.info(
+                            f"Pronto a iniziare dalla sezione: {sezione_corrente}. "
+                            "La sezione verrà scritta, salvata e mostrata prima della successiva."
+                        )
+                    avanti, pausa, stop = st.columns([2, 1, 1])
+                    with avanti:
+                        if st.button(
+                            f"▶ SCRIVI LA PROSSIMA SEZIONE: {sezione_corrente}",
+                            type="primary",
+                            use_container_width=True,
+                            key="continua_stesura_guidata",
+                        ):
+                            st.session_state["job_scrittura_in_attesa"] = False
+                            st.rerun()
+                    with pausa:
+                        if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
+                            st.session_state["job_scrittura_attivo"] = False
+                            st.session_state["job_scrittura_pausa"] = True
+                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
+                            st.rerun()
+                    with stop:
+                        if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_libro"):
+                            st.session_state["job_scrittura_attivo"] = False
+                            st.session_state["job_scrittura_pausa"] = False
+                            st.session_state["job_scrittura_in_attesa"] = False
+                            st.session_state["job_scrittura_fermato"] = True
+                            st.session_state["job_scrittura_interrotte"] = list(coda_scrittura)
+                            st.session_state["job_scrittura_coda"] = []
+                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
+                            st.rerun()
+                else:
+                    st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
+                    try:
+                        contenuto_generato = scrivi_contenuto_dettagliato(
+                            sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
+                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                            val_approfondimenti, val_lunghezza,
+                        )
+                        if not str(contenuto_generato or "").strip():
+                            raise RuntimeError("il cervello selezionato non ha restituito testo")
+                        # Registrazione atomica: il contenuto è disponibile in
+                        # memoria, editor, anteprima ed export prima che la
+                        # coda possa essere ripresa.
+                        scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
+                        st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
+                        st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                        st.session_state["job_scrittura_ultima_completata"] = sezione_corrente
+                        st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                        st.session_state["job_scrittura_in_attesa"] = True
+                        salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
+                        st.rerun()
+                    except Exception as exc:
+                        st.session_state["job_scrittura_attivo"] = False
+                        st.session_state["job_scrittura_pausa"] = True
+                        st.session_state["job_scrittura_in_attesa"] = True
+                        st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
+                        notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
 
             if st.session_state.get("job_scrittura_pausa") and st.session_state.get("job_scrittura_coda"):
                 rimanenti = len(st.session_state["job_scrittura_coda"])
                 st.warning(f"Generazione in pausa: restano {rimanenti} sezioni. Le sezioni concluse sono già leggibili e salvate.")
                 if st.session_state.get("job_scrittura_errore"):
                     st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
-                if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
-                    st.session_state["job_scrittura_attivo"] = True
-                    st.session_state["job_scrittura_pausa"] = False
-                    st.session_state.pop("job_scrittura_errore", None)
-                    st.rerun()
+                riprendi, stop_pausa = st.columns(2)
+                with riprendi:
+                    if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
+                        st.session_state["job_scrittura_attivo"] = True
+                        st.session_state["job_scrittura_pausa"] = False
+                        st.session_state["job_scrittura_in_attesa"] = True
+                        st.session_state.pop("job_scrittura_errore", None)
+                        st.rerun()
+                with stop_pausa:
+                    if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_in_pausa"):
+                        st.session_state["job_scrittura_attivo"] = False
+                        st.session_state["job_scrittura_pausa"] = False
+                        st.session_state["job_scrittura_in_attesa"] = False
+                        st.session_state["job_scrittura_fermato"] = True
+                        st.session_state["job_scrittura_interrotte"] = list(st.session_state["job_scrittura_coda"])
+                        st.session_state["job_scrittura_coda"] = []
+                        salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
+                        st.rerun()
+            elif st.session_state.get("job_scrittura_fermato"):
+                fermate = len(st.session_state.get("job_scrittura_interrotte", []) or [])
+                st.warning(
+                    f"Stesura interrotta definitivamente. Le sezioni già generate restano intatte; "
+                    f"ne risultano non avviate {fermate}. Puoi ripartire in futuro con SCRIVI TUTTO IL LIBRO."
+                )
             elif not st.session_state.get("job_scrittura_coda") and st.session_state.get("job_scrittura_totale"):
                 st.session_state["job_scrittura_attivo"] = False
                 st.session_state["job_scrittura_pausa"] = False
+                st.session_state["job_scrittura_in_attesa"] = False
                 st.success("Libro completato: tutte le sezioni previste sono state generate e salvate.")
 
             with st.expander("🔎 Ricerca e sostituzione nel libro", expanded=False):
