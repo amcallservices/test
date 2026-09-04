@@ -5877,6 +5877,16 @@ Per CERVELLO AI scegli un solo valore tra:
 
 Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di verifica copyright web o generazione immagini. Con DeepSeek è disponibile la ricerca delle fonti con registro visibile. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
 
+PERSONALIZZAZIONE DEL LIBRO (FACOLTATIVA)
+
+La sidebar dispone anche di questi campi facoltativi: voce o prospettiva dell'autore; episodi, casi, esempi o materiali personali; priorità personali per il lettore; confini da rispettare; eventuali note aggiunte durante una pausa guidata.
+
+- Non chiedere questi dati per default e non fare una domanda aggiuntiva soltanto per ottenerli.
+- Se l'utente li offre spontaneamente, oppure chiede esplicitamente un libro più personale, aiutalo a formularli in modo concreto e coerente con il progetto.
+- Non inventare mai esperienze, testimonianze, risultati o dettagli personali non dichiarati dall'utente.
+- Se i dati non sono disponibili, non aggiungere il blocco facoltativo nella scheda finale e non sostituirli con formule generiche.
+- Se sono disponibili, restituisci il blocco facoltativo dopo APPROFONDIMENTI: deve essere pronto da copiare nei campi di Personalizza il tuo libro. La modalità di pausa può essere soltanto: Continua automaticamente; Fermati prima di ogni Parte; Fermati prima della conclusione; Fermati prima delle Parti e della conclusione.
+
 REGOLE DI QUALITÀ
 
 - Proponi un titolo unico, senza sottotitolo, se l'utente non ne ha già fornito uno.
@@ -5924,6 +5934,18 @@ TRAMA O ARGOMENTO:
 
 APPROFONDIMENTI (FACOLTATIVO):
 
+Se l'utente ha fornito dati di personalizzazione, aggiungi soltanto allora anche:
+
+VOCE O PROSPETTIVA PERSONALE (FACOLTATIVO):
+
+MATERIALI PERSONALI (FACOLTATIVO):
+
+PRIORITÀ PERSONALI PER IL LETTORE (FACOLTATIVO):
+
+CONFINI PERSONALI DA RISPETTARE (FACOLTATIVO):
+
+PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):
+
 Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site e genera l'indice."""
         # Per le lingue diverse dall'italiano sostituiamo l'intero testo operativo,
         # non solo l'intestazione della guida. Le opzioni restano in italiano perché
@@ -5941,11 +5963,14 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
             opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
+            personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION FIELDS — The sidebar also contains optional fields for author voice or perspective, personal episodes/cases/materials, reader priorities, boundaries to respect, and a guided-pause mode during full-book writing. Do not ask for these by default and never ask an extra question solely to obtain them. If the user voluntarily provides them or explicitly wants a more personal book, help formulate them concretely. Never invent personal experiences, testimonials or facts. Only when the user has provided relevant information, append the optional personalization fields after APPROFONDIMENTI in the final form; otherwise omit them entirely. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
 {istruzioni_multilingue[lingua_sel]}
 
 {opzioni_esatte}
+
+{personalizzazione_prompt_multilingue}
 
 When sufficient information is available, ask no more questions. Return only the following form. Keep its labels and the selected option values exactly unchanged; write all descriptive values in {lingua_sel}.
 
@@ -5973,7 +5998,19 @@ RISULTATO FINALE DESIDERATO:
 
 TRAMA O ARGOMENTO:
 
-APPROFONDIMENTI (FACOLTATIVO):"""
+APPROFONDIMENTI (FACOLTATIVO):
+
+If the user has provided relevant personalization details, append only then:
+
+VOCE O PROSPETTIVA PERSONALE (FACOLTATIVO):
+
+MATERIALI PERSONALI (FACOLTATIVO):
+
+PRIORITÀ PERSONALI PER IL LETTORE (FACOLTATIVO):
+
+CONFINI PERSONALI DA RISPETTARE (FACOLTATIVO):
+
+PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
         st.caption(guida_chat["etichetta"])
         st.code(prompt_chat_sidebar, language=None)
 
