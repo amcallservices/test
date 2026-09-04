@@ -5874,132 +5874,91 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # La stesura completa usa esattamente le stesse voci rese
-            # disponibili nell'editor. Non esiste un secondo elenco ridotto
-            # riservato alla stesura completa.
-            sezioni_intero_libro = list(opzioni_editor)
+            # La coda deriva dall'indice corrente e dal manoscritto unico: non
+            # usa copie transitorie dell'editor. Ogni sezione è affrontata con
+            # lo stesso flusso del pulsante “Scrivi contenuto dettagliato”.
+            sezioni_intero_libro = elenco_sezioni_progetto(lista_cap_base)
+            manoscritto = memoria_progetto_unica().get("contenuti", {})
+            da_generare_libro = [
+                sezione for sezione in sezioni_intero_libro
+                if not str(manoscritto.get(sezione, "") or "").strip()
+            ]
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
-                "I contenuti già scritti verranno conservati senza modifiche."
+                "Ogni sezione conclusa viene resa leggibile e salvata prima della successiva."
             )
-            # Job persistente: genera una sezione alla volta e conserva sempre quanto già scritto.
-            # Questo rende la pausa effettiva tra una richiesta AI e la successiva.
-            da_generare_libro = [
-                    sezione for sezione in sezioni_intero_libro
-                    if not leggi_sezione_memorizzata(sezione).strip()
-            ]
             stima_libro = sum(
-                stima_massima_crediti_stesura(sezione, st.session_state['indice_raw'], val_trama, val_goal, val_genere)
+                stima_massima_crediti_stesura(sezione, st.session_state["indice_raw"], val_trama, val_goal, val_genere)
                 for sezione in da_generare_libro
             )
-            if pulsante_con_preventivo("scrivi_tutto_libro", "📚 SCRIVI TUTTO IL LIBRO", f"fino a {stima_libro}",
-                                       f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati.",
-                                       use_container_width=True):
-                da_generare = list(da_generare_libro)
-                if not da_generare:
+            if pulsante_con_preventivo(
+                "scrivi_tutto_libro", "📚 SCRIVI TUTTO IL LIBRO", f"fino a {stima_libro}",
+                f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati.",
+                use_container_width=True,
+            ):
+                if not da_generare_libro:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
-                    # La memoria protetta conserva ogni esito concluso.
-                    st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
-                    st.session_state.pop("job_scrittura_errore", None)
-                    st.session_state["job_scrittura_coda"] = da_generare
-                    st.session_state["job_scrittura_totale"] = len(da_generare)
+                    st.session_state["job_scrittura_coda"] = list(da_generare_libro)
+                    st.session_state["job_scrittura_totale"] = len(da_generare_libro)
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
+                    st.session_state.pop("job_scrittura_errore", None)
                     notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
+                    # Il primo rerun avvia il lavoro da una sessione già
+                    # stabilizzata: elimina il difetto per cui la sezione uno
+                    # veniva prodotta ma non diventava visibile.
+                    st.rerun()
 
-            coda_precedente = list(st.session_state.get("job_scrittura_coda", []) or [])
             coda_scrittura = [
                 sezione for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
-                if not sezione_dismessa(sezione)
-                and not contenuto_memorizzato_puro(sezione).strip()
+                if sezione in sezioni_intero_libro
+                and not str(memoria_progetto_unica().get("contenuti", {}).get(sezione, "") or "").strip()
             ]
-            if coda_scrittura != coda_precedente:
-                st.session_state["job_scrittura_coda"] = list(coda_scrittura)
-                # Una coda prodotta da versioni precedenti può ancora contenere
-                # sezioni automatiche dismesse. Le rimuoviamo senza alterare i
-                # testi già conservati e riallineiamo lo stato del lavoro.
-                if not coda_scrittura:
-                    st.session_state["job_scrittura_attivo"] = False
-                    st.session_state["job_scrittura_pausa"] = False
+            st.session_state["job_scrittura_coda"] = list(coda_scrittura)
+
             if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
-                totale = st.session_state.get("job_scrittura_totale", len(coda_scrittura))
-                completati = totale - len(coda_scrittura)
-                st.progress(
-                    int(completati / totale * 100),
-                    text=f"Stesura in corso: completate {completati} di {totale} sezioni."
-                )
+                totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura))))
+                completati = max(0, totale - len(coda_scrittura))
+                st.progress(int(completati / totale * 100), text=f"Stesura in corso: completate {completati} di {totale} sezioni.")
                 sezione_corrente = coda_scrittura[0]
-                col_stato, col_pausa = st.columns([3, 1])
-                with col_stato:
+                stato, comando_pausa = st.columns([3, 1])
+                with stato:
                     st.info(f"Elaborazione in corso: {sezione_corrente}. Puoi fermare il lavoro prima della sezione successiva.")
-                with col_pausa:
+                with comando_pausa:
                     pausa_richiesta = st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro")
                 if pausa_richiesta:
                     st.session_state["job_scrittura_attivo"] = False
                     st.session_state["job_scrittura_pausa"] = True
-                    # La pausa è una barriera di sicurezza: prima di lasciare
-                    # il ciclo, salva l'intera fotografia editoriale, non la
-                    # sola sezione che il ciclo stava per avviare. Così la
-                    # nessuna sezione già conclusa può sparire da editor,
-                    # anteprima o ripristino cloud.
-                    sezioni_da_proteggere = elenco_sezioni_progetto(
-                        st.session_state.get("job_scrittura_sezioni", opzioni_editor)
+                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
+                    st.rerun()
+                try:
+                    contenuto_generato = scrivi_contenuto_dettagliato(
+                        sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
+                        val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                        val_approfondimenti, val_lunghezza,
                     )
-                    salva_stesura_generata_in_cloud(
-                        sezioni_da_proteggere, "stesura messa in pausa"
-                    )
-                    reidrata_sezioni_memorizzate(sezioni_da_proteggere)
-                    st.info(f"Generazione in pausa. Restano {len(coda_scrittura)} sezioni da scrivere; puoi controllare il libro e poi riprendere.")
-                else:
-                    try:
-                        contenuto_generato = scrivi_contenuto_dettagliato(
-                            sezione_corrente, st.session_state['indice_raw'], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
-                            val_approfondimenti, val_lunghezza,
-                        )
-                        # Terza copia dedicata alla stesura completa: la prima
-                        # sezione resta leggibile anche se la pausa avviene nel
-                        # rerun immediatamente successivo alla sua generazione.
-                        scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
-                        # Porta l'editor esattamente alla sezione appena
-                        # conclusa. Al rerun la sua textarea avrà una chiave
-                        # nuova e mostrerà il testo già presente nel manoscritto
-                        # unico, non il vecchio campo vuoto del browser.
-                        st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
-                        st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
-                        st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
-                        # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
-                        # sezione conclusa viene inviata immediatamente al
-                        # cloud, prima del rerun che avvia quella successiva.
-                        # Un'interruzione lascia quindi recuperabili tutte le
-                        # sezioni già pagate e concluse; rilanciando il comando
-                        # verranno elaborate solo le sezioni ancora vuote.
-                        # Salviamo il progetto completo ad ogni passaggio. La
-                        # singola sezione appena prodotta è già nella memoria,
-                        # mentre tutte le parti precedenti restano incluse
-                        # anche se l'utente mette in pausa subito dopo questo rerun.
-                        sezioni_da_proteggere = elenco_sezioni_progetto(
-                            st.session_state.get("job_scrittura_sezioni", opzioni_editor)
-                        )
-                        salva_stesura_generata_in_cloud(
-                            sezioni_da_proteggere, "sezione del libro generata"
-                        )
-                        # Riporta esplicitamente il testo in tutti i widget
-                        # già noti prima del rerun successivo.
-                        reidrata_sezioni_memorizzate(sezioni_da_proteggere)
-                        st.rerun()
-                    except Exception as exc:
-                        st.session_state["job_scrittura_attivo"] = False
-                        st.session_state["job_scrittura_pausa"] = True
-                        st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
-                        notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
-                        st.error("Generazione sospesa per un errore. I contenuti precedenti sono salvi: controllali e poi riprendi.")
+                    if not str(contenuto_generato or "").strip():
+                        raise RuntimeError("il cervello selezionato non ha restituito testo")
+                    # Registrazione atomica: prima aggiorna il manoscritto
+                    # unico, poi la coda. Da questo punto la sezione è già
+                    # leggibile in editor, anteprima, memoria ed export.
+                    scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
+                    st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
+                    st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+                    st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
+                    st.rerun()
+                except Exception as exc:
+                    st.session_state["job_scrittura_attivo"] = False
+                    st.session_state["job_scrittura_pausa"] = True
+                    st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
+                    notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
 
             if st.session_state.get("job_scrittura_pausa") and st.session_state.get("job_scrittura_coda"):
                 rimanenti = len(st.session_state["job_scrittura_coda"])
-                st.warning(f"Generazione in pausa: restano {rimanenti} sezioni. Puoi esaminare l'anteprima e riprendere quando vuoi.")
+                st.warning(f"Generazione in pausa: restano {rimanenti} sezioni. Le sezioni concluse sono già leggibili e salvate.")
                 if st.session_state.get("job_scrittura_errore"):
                     st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
                 if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
@@ -6007,8 +5966,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state.pop("job_scrittura_errore", None)
                     st.rerun()
-            elif st.session_state.get("job_scrittura_attivo") is False and not st.session_state.get("job_scrittura_coda") and st.session_state.get("job_scrittura_totale"):
-                notifica_sonora("libro_completato", lingua_sel)
+            elif not st.session_state.get("job_scrittura_coda") and st.session_state.get("job_scrittura_totale"):
+                st.session_state["job_scrittura_attivo"] = False
+                st.session_state["job_scrittura_pausa"] = False
                 st.success("Libro completato: tutte le sezioni previste sono state generate e salvate.")
 
             with st.expander("🔎 Ricerca e sostituzione nel libro", expanded=False):
