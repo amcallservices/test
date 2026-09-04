@@ -951,15 +951,29 @@ TRADUZIONI = {
     }
 }
 
-# Voci automatiche dismesse: restano eventualmente nella memoria di vecchi
-# progetti per non cancellare dati in modo irreversibile, ma non fanno più
-# parte del manoscritto, dell'editor, dell'anteprima o degli export.
+# La Prefazione fa parte del libro e viene generata prima della Parte I.
+# I Ringraziamenti restano invece dismessi: non vengono più aggiunti né
+# richiesti alla stesura completa, ma non cancelliamo eventuali vecchi testi.
 SEZIONI_DISMESSE = frozenset(
-    valore
+    str(traduzione.get("ack", "")).strip()
     for traduzione in TRADUZIONI.values()
-    for chiave in ("preface", "ack")
-    if (valore := str(traduzione.get(chiave, "")).strip())
+    if str(traduzione.get("ack", "")).strip()
 )
+
+
+def titolo_prefazione(lingua=None):
+    """Restituisce il titolo localizzato della Prefazione."""
+    lingua_effettiva = lingua or st.session_state.get("editor_language", "Italiano")
+    return str(TRADUZIONI.get(lingua_effettiva, TRADUZIONI["Italiano"]).get("preface", "Prefazione")).strip()
+
+
+def sezione_prefazione(sezione):
+    valore = re.sub(r"\s+", " ", str(sezione or "").strip()).casefold()
+    titoli = {
+        re.sub(r"\s+", " ", str(traduzione.get("preface", "")).strip()).casefold()
+        for traduzione in TRADUZIONI.values()
+    }
+    return bool(valore and valore in titoli)
 
 
 def sezione_dismessa(sezione):
@@ -1947,45 +1961,35 @@ def analizza_qualita_prosa(testo):
     return "\n\n".join(risultati)
 
 def sync_capitoli():
-    testo_indice = st.session_state.get("indice_raw", "")
-    if not testo_indice: st.session_state['lista_capitoli'] = []; return
+    """Costruisce la lista scrivibile dall'indice, inclusa la Prefazione."""
+    testo_indice = str(st.session_state.get("indice_raw", "") or "")
+    if not testo_indice.strip():
+        st.session_state["lista_capitoli"] = []
+        return []
+    regex = r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+\.)"
     lista = []
-    
-    # --- INIZIO RIGHE MODIFICATE PER SUPPORTARE TUTTE LE LINGUE NELL'ESTRAZIONE DELLA SIDEBAR ---
-    # Inclusi tutti i termini stranieri di "Capitolo" o "Parte" per il Parsing
-    regex = r'(?i)(Capitolo|Chapter|Kapitel|Capítulo|Chapitre|Capitolul|Глава|الفصل|Раздел|章节|Secţiune|Parte|Part|Partie|Teil|Partea|Часть|الجزء|部分|\d+\.)'
-    # --- FINE RIGHE MODIFICATE ---
-    
-    for riga in testo_indice.split('\n'):
-        if re.search(regex, riga.strip()): lista.append(riga.strip())
-    st.session_state['lista_capitoli'] = lista
+    for riga in testo_indice.splitlines():
+        voce = riga.strip()
+        if voce and (sezione_prefazione(voce) or re.search(regex, voce)) and voce not in lista:
+            lista.append(voce)
+    st.session_state["lista_capitoli"] = lista
+    return lista
 
 
 def imposta_indice_progetto(testo_indice):
-    """Aggiorna insieme il dato persistente e il widget visibile dell'indice.
-
-    Senza questa doppia scrittura Streamlit può mantenere nel browser una
-    casella vuota, pur avendo l'indice nel salvataggio cloud o nel CSV.
-
-    Ad ogni importazione, ripristino o nuova generazione viene inoltre
-    rinnovata la chiave del widget: in questo modo il browser non può
-    riutilizzare una vecchia textarea vuota e nascondere l'indice appena
-    recuperato dal progetto.
-    """
-    indice = str(testo_indice or "")
-    # L'indice è un dato del progetto, non del singolo widget della tab.
-    # La memoria unica viene aggiornata prima delle copie visuali.
+    """Salva un indice completo, con Prefazione sempre come prima voce."""
+    righe = [riga.strip() for riga in str(testo_indice or "").splitlines() if riga.strip()]
+    # Rimuove eventuali Prefazioni duplicate o in posizione errata e ne mette
+    # una sola all'inizio, nella lingua attiva del progetto.
+    righe = [riga for riga in righe if not sezione_prefazione(riga)]
+    indice = "\n".join([titolo_prefazione(), *righe]).strip() if righe else ""
     try:
         memoria_progetto_unica()["indice"] = indice
     except NameError:
-        # La funzione viene definita più avanti nel file; questa compatibilità
-        # protegge esclusivamente l'eventuale inizializzazione molto precoce.
         pass
     st.session_state["indice_raw"] = indice
     st.session_state["indice_editoriale"] = indice
-    st.session_state["indice_widget_version"] = int(
-        st.session_state.get("indice_widget_version", 0)
-    ) + 1
+    st.session_state["indice_widget_version"] = int(st.session_state.get("indice_widget_version", 0)) + 1
     sync_capitoli()
     return indice
 
@@ -2274,7 +2278,10 @@ INDICE RIFIUTATO DA CORREGGERE
 
 
 def tipo_sezione_editoriale(sezione):
-    pulita = sezione.strip()
+    """Classifica tutte le voci scrivibili, compresa la Prefazione."""
+    pulita = str(sezione or "").strip()
+    if sezione_prefazione(pulita):
+        return "prefazione"
     if re.match(r'(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\b', pulita):
         return "parte"
     if re.match(r'(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+', pulita):
@@ -2985,6 +2992,7 @@ def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
 def minimo_parole_per_sezione_editoriale(sezione, genere):
     """Soglia unica usata da tutti i controlli prima dell'esportazione."""
     minimi = {
+        "prefazione": 100,
         "parte": 35,
         "capitolo": 90 if genere == "Ricettario" else 120,
         "sottocapitolo": 120,
@@ -3397,11 +3405,104 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     return ""
 
 
+def genera_apertura_di_parte(prompt, system_prompt, sezione, genere, lingua, limite_output):
+    """Genera e valida integralmente le aperture di Parte.
+
+    Una Parte è una cornice editoriale breve, non un capitolo normale. Perciò
+    ha una consegna dedicata: il testo deve essere leggibile, concluso e
+    sufficiente a orientare il lettore, ma non viene scartato soltanto perché
+    il modello omette il marcatore tecnico di fine risposta.
+    """
+    istruzione = prompt + f"""
+
+APERTURA EDITORIALE DELLA PARTE
+Questa è la Parte '{sezione}'. Scrivi un'apertura autonoma di 70-120 parole.
+Spiega quale passaggio del percorso affronta questa Parte, come il lettore può
+usarla e quale cambiamento concreto prepara. Non elencare né anticipare i
+capitoli successivi. Chiudi con una frase piena e definitiva.
+"""
+    ultimo_testo = ""
+    for tentativo in range(3):
+        correzione = "" if tentativo == 0 else f"""
+
+RISCRITTURA OBBLIGATORIA
+La bozza precedente non era una vera apertura conclusa. Riscrivi integralmente
+la Parte '{sezione}' in 70-120 parole. Non usare elenchi, titoli interni,
+puntini di sospensione o frasi sospese. L'ultima frase deve chiudere davvero
+l'idea, senza rimandare la conclusione a una sezione successiva.
+"""
+        testo, marcatore = genera_bozza_sezione_con_chiusura(
+            istruzione + correzione,
+            system_prompt,
+            sezione,
+            lingua,
+            max_completion_tokens=min(max(320, limite_output), 700),
+            addebita=(tentativo == 0),
+        )
+        ultimo_testo = pulisci_testo_editoriale(testo)
+        testo_concluso = not criticita_specificita(
+            ultimo_testo, genere, sezione, "Compatto", ""
+        )
+        if len(ultimo_testo.split()) >= 40 and testo_concluso:
+            # Per le Parti il controllo reale è il finale completo; il
+            # marcatore tecnico resta preferibile ma non può bloccare il libro.
+            return ultimo_testo
+    raise RuntimeError(
+        f"L'apertura '{sezione}' non ha prodotto un testo concluso dopo tre tentativi. "
+        "Le altre sezioni non sono state modificate."
+    )
+
+
+def genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output):
+    """Genera una Prefazione completa prima delle Parti e dei capitoli."""
+    istruzione = prompt + f"""
+
+PREFAZIONE DEL LIBRO
+Scrivi la Prefazione iniziale del libro in 160-240 parole. Accogli il lettore,
+presenta il problema o il bisogno da cui parte il libro, chiarisci il percorso
+che troverà e il modo più utile per affrontarlo. Mantieni un tono coerente con
+il genere e il punto di vista richiesti; non ripetere l'indice, non anticipare
+le spiegazioni dei capitoli e non fare promesse garantite. Concludi con una
+frase completa che inviti a iniziare il percorso.
+"""
+    ultimo_testo = ""
+    for tentativo in range(3):
+        correzione = "" if tentativo == 0 else """
+
+RISCRITTURA DELLA PREFAZIONE
+La bozza precedente era troppo breve o non conclusa. Riscrivi integralmente
+una Prefazione di 160-240 parole, concreta e coerente con il libro. Non usare
+elenchi, titoli interni, ellissi o frasi sospese; chiudi l'ultima idea con una
+frase piena e definitiva.
+"""
+        testo, _marcatore = genera_bozza_sezione_con_chiusura(
+            istruzione + correzione,
+            system_prompt,
+            sezione,
+            lingua,
+            max_completion_tokens=min(max(500, limite_output), 900),
+            addebita=(tentativo == 0),
+        )
+        ultimo_testo = pulisci_testo_editoriale(testo)
+        if len(ultimo_testo.split()) >= 100 and not motivo_chiusura_tecnica(ultimo_testo):
+            return ultimo_testo
+    raise RuntimeError(
+        "La Prefazione non ha prodotto un testo completo dopo tre tentativi. "
+        "Le altre sezioni non sono state modificate."
+    )
+
+
 def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, genere, obiettivo, lingua, profilo_lunghezza="Standard KDP"):
     """Mantiene il flusso comune per tutti i generi e applica la logica speciale solo quando serve."""
     if sezione_simulazione_test_prep(sezione, indice, genere):
         return genera_simulazione_test_prep(prompt, system_prompt, sezione, indice, trama, obiettivo, lingua)
     limite_output = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])["max_completion_tokens"]
+    if tipo_sezione_editoriale(sezione) == "prefazione":
+        return genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output)
+    if tipo_sezione_editoriale(sezione) == "parte":
+        return genera_apertura_di_parte(
+            prompt, system_prompt, sezione, genere, lingua, limite_output
+        )
     testo, consegna_confermata = genera_bozza_sezione_con_chiusura(
         prompt, system_prompt, sezione, lingua, max_completion_tokens=limite_output
     )
@@ -5759,8 +5860,12 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
                     st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
                 
-        # FIX ANTI-RESET PER L'INDICE: Salvataggio sicuro per prevenire sovrascritture da parte di Streamlit
-        testo_corrente = st.session_state.get("indice_raw", "")
+        # Ogni indice esistente viene normalizzato una sola volta con la
+        # Prefazione iniziale, anche quando è stato importato o scritto a mano.
+        testo_corrente = str(st.session_state.get("indice_raw", "") or "")
+        righe_indice_corrente = [riga.strip() for riga in testo_corrente.splitlines() if riga.strip()]
+        if righe_indice_corrente and not sezione_prefazione(righe_indice_corrente[0]):
+            testo_corrente = imposta_indice_progetto(testo_corrente)
         if st.session_state.get("ultimo_controllo_indice"):
             esito_indice = st.session_state["ultimo_controllo_indice"]
             if re.search(r"\b(?:8|9|10)/10\b", esito_indice):
@@ -5789,7 +5894,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.session_state.pop("analisi_voto_indice", None)
                 
         if st.button(L["btn_sync"]):
-            sync_capitoli()
+            imposta_indice_progetto(st.session_state.get("indice_raw", ""))
             salva_stesura_immediata(opzioni_editor)
             st.rerun()
 
