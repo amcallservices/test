@@ -2557,150 +2557,155 @@ def sidebar_memorizzata_corrente():
 
 
 def esporta_progetto_editoriale_csv():
-    """Crea un CSV portabile con l'intero progetto editoriale corrente.
+    """Esporta una fotografia completa e verificabile dell'intero progetto.
 
-    Il formato a righe evita limiti pratici delle celle: conserva campi della
-    sidebar, indice, sezioni, fonti e immagini associate senza dipendere da
-    Supabase o dalla sessione del browser.
+    Il CSV mantiene le righe leggibili in Excel, ma contiene anche una
+    fotografia codificata completa. L'indice non dipende più da una sola riga
+    lunga o dallo stato del widget: al reimport viene sempre recuperato dalla
+    fotografia integra.
     """
-    buffer = StringIO(newline="")
-    # Virgola e UTF-8 con BOM permettono sia un'importazione fedele
-    # nell'app sia l'apertura leggibile in Excel. L'import supporta anche
-    # file risalvati da Excel con punto e virgola.
-    writer = csv.DictWriter(
-        buffer, fieldnames=["tipo", "chiave", "valore"], lineterminator="\n"
-    )
-    writer.writeheader()
-    writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "1"})
-
     progetto = memoria_progetto_unica()
-    for nome, valore in sidebar_memorizzata_corrente().items():
-        writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
-    # L'indice viene registrato due volte: la seconda copia protegge i CSV
-    # aperti e risalvati da programmi che possono alterare una riga molto lunga.
-    indice_da_esportare = str(
-        progetto.get("indice", "") or st.session_state.get("indice_raw", "") or ""
-    )
-    writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": indice_da_esportare})
-    writer.writerow({"tipo": "progetto", "chiave": "indice_backup", "valore": indice_da_esportare})
-
+    sidebar = sidebar_memorizzata_corrente()
+    indice = str(progetto.get("indice", "") or st.session_state.get("indice_raw", "") or "")
     contenuti = dict(progetto.get("contenuti", {}) or {})
-    contenuti.update(dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}))
-    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
-    contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
-    for sezione in st.session_state.get("lista_capitoli", []):
+    for sezione in elenco_sezioni_progetto(st.session_state.get("lista_capitoli", [])):
         testo = leggi_sezione_memorizzata(sezione)
         if str(testo).strip():
-            contenuti[sezione] = testo
-    for sezione, testo in contenuti.items():
-        if str(testo).strip():
-            writer.writerow({"tipo": "sezione", "chiave": sezione, "valore": testo})
-
+            contenuti[sezione] = str(testo)
+    fonti = dict(progetto.get("fonti", {}) or {})
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
-        valore = st.session_state.get(chiave, "")
-        if valore:
-            writer.writerow({"tipo": "fonte", "chiave": chiave, "valore": str(valore)})
+        if chiave in st.session_state:
+            fonti[chiave] = st.session_state.get(chiave, "")
 
+    immagini = {}
     for sezione, immagine in (st.session_state.get("immagini_capitoli", {}) or {}).items():
         dati = dict(immagine or {})
         raw = dati.pop("bytes", None)
         if raw:
             dati["bytes_b64"] = base64.b64encode(raw).decode("ascii")
         if dati:
-            writer.writerow({"tipo": "immagine", "chiave": sezione, "valore": json.dumps(dati, ensure_ascii=False)})
+            immagini[sezione] = dati
+
+    fotografia = {
+        "versione": 2,
+        "sidebar": sidebar,
+        "indice": indice,
+        "contenuti": contenuti,
+        "fonti": fonti,
+        "immagini": immagini,
+    }
+    fotografia_b64 = base64.b64encode(
+        json.dumps(fotografia, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    ).decode("ascii")
+
+    buffer = StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=["tipo", "chiave", "valore"], lineterminator="\n")
+    writer.writeheader()
+    writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "2"})
+    writer.writerow({"tipo": "progetto", "chiave": "fotografia_completa_v2", "valore": fotografia_b64})
+    # Copie leggibili: utili per consultare il file e per compatibilità con
+    # vecchie versioni dell'applicazione.
+    for nome, valore in sidebar.items():
+        writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
+    writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": indice})
+    writer.writerow({"tipo": "progetto", "chiave": "indice_backup", "valore": indice})
+    for sezione, testo in contenuti.items():
+        if str(testo).strip():
+            writer.writerow({"tipo": "sezione", "chiave": sezione, "valore": str(testo)})
     return buffer.getvalue().encode("utf-8-sig")
 
 
 def importa_progetto_editoriale_csv(file_caricato):
-    """Legge un CSV di Scrittore Site, anche se è stato riaperto in Excel.
-
-    Il file originale usa UTF-8 con virgole. Sono supportati anche separatore
-    ``;`` / tabulazione, il prefisso ``sep=;`` e le codifiche che Excel usa
-    più spesso: così un salvataggio manuale non rende il backup inutilizzabile.
-    """
+    """Importa un CSV Scrittore Site privilegiando la fotografia integra v2."""
     try:
         dati_grezzi = file_caricato.getvalue()
         if not dati_grezzi:
             raise ValueError("il file è vuoto")
-
-        contenuto = None
-        ultimo_errore = None
+        testo_csv = None
         for codifica in ("utf-8-sig", "utf-16", "cp1252"):
             try:
-                contenuto = dati_grezzi.decode(codifica)
+                testo_csv = dati_grezzi.decode(codifica)
                 break
-            except UnicodeDecodeError as exc:
-                ultimo_errore = exc
-        if contenuto is None:
-            raise ultimo_errore or ValueError("codifica non supportata")
-
-        contenuto = contenuto.lstrip("\ufeff").replace("\x00", "")
-        # Alcune versioni di Excel aggiungono questa prima riga per dichiarare
-        # il separatore. Non è un dato del progetto e va ignorata.
-        righe_testo = contenuto.splitlines()
-        separatore_dichiarato = ""
-        if righe_testo and righe_testo[0].strip().lower().startswith("sep="):
-            separatore_dichiarato = righe_testo.pop(0).strip()[4:5]
-            contenuto = "\n".join(righe_testo)
-        try:
-            dialect = csv.Sniffer().sniff(
-                contenuto[:8192], delimiters=separatore_dichiarato or ",;\t|"
-            )
-        except csv.Error:
-            dialect = csv.excel
-            if separatore_dichiarato:
-                dialect.delimiter = separatore_dichiarato
-        righe_originali = list(csv.DictReader(StringIO(contenuto, newline=""), dialect=dialect))
-        righe = [
-            {
-                str(nome or "").strip().lower().lstrip("\ufeff"): valore
-                for nome, valore in riga.items()
-            }
-            for riga in righe_originali
-        ]
+            except UnicodeDecodeError:
+                continue
+        if testo_csv is None:
+            raise ValueError("codifica non supportata")
+        testo_csv = testo_csv.lstrip("\ufeff").replace("\x00", "")
+        prima_riga, _, resto = testo_csv.partition("\n")
+        separatore = ","
+        if prima_riga.strip().lower().startswith("sep="):
+            separatore = prima_riga.strip()[4:5] or ","
+            testo_csv = resto
+            prima_riga = testo_csv.partition("\n")[0]
+        elif "\t" in prima_riga:
+            separatore = "\t"
+        elif ";" in prima_riga and "," not in prima_riga:
+            separatore = ";"
+        elif "|" in prima_riga and "," not in prima_riga:
+            separatore = "|"
+        # Non usiamo csv.Sniffer: sul testo multilinea dell'indice può
+        # riconoscere erroneamente le virgolette come parte del formato e
+        # spezzare l'indice in centinaia di righe. Il separatore è dedotto
+        # soltanto dalla riga d'intestazione, quindi i ritorni a capo restano
+        # dentro lo stesso campo CSV come previsto.
+        righe = list(csv.DictReader(StringIO(testo_csv, newline=""), delimiter=separatore, quotechar='"'))
+        righe = [{str(k or "").strip().lower().lstrip("\ufeff"): v for k, v in r.items()} for r in righe]
     except Exception as exc:
         raise ValueError(f"Il file CSV non è leggibile: {exc}") from exc
-    if not righe or not {"tipo", "chiave", "valore"}.issubset(set(righe[0].keys())):
+    if not righe or not {"tipo", "chiave", "valore"}.issubset(righe[0]):
         raise ValueError("Questo file non è un archivio CSV di Scrittore Site.")
 
+    # Nuovo formato: una singola fotografia integra evita troncamenti o
+    # interpretazioni errate delle righe multilinea da parte di Excel.
+    for riga in righe:
+        if riga.get("tipo") == "progetto" and riga.get("chiave") == "fotografia_completa_v2":
+            try:
+                fotografia = json.loads(base64.b64decode(str(riga.get("valore") or "")).decode("utf-8"))
+                indice = str(fotografia.get("indice", "") or "")
+                if not indice.strip():
+                    raise ValueError("la fotografia non contiene l'indice")
+                immagini = {}
+                for sezione, dati in (fotografia.get("immagini", {}) or {}).items():
+                    elemento = dict(dati or {})
+                    if elemento.get("bytes_b64"):
+                        elemento["bytes"] = base64.b64decode(elemento.pop("bytes_b64"))
+                    immagini[sezione] = elemento
+                return {
+                    "sidebar": dict(fotografia.get("sidebar", {}) or {}),
+                    "indice_raw": indice,
+                    "indice_backup": indice,
+                    "contenuti": dict(fotografia.get("contenuti", {}) or {}),
+                    "fonti": dict(fotografia.get("fonti", {}) or {}),
+                    "immagini_capitoli": immagini,
+                }
+            except Exception as exc:
+                raise ValueError(f"La fotografia completa del CSV è danneggiata: {exc}") from exc
+
+    # Compatibilità con i CSV generati prima del nuovo formato.
     snapshot = {"sidebar": {}, "indice_raw": "", "indice_backup": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}}
     formato_valido = False
     for riga in righe:
         tipo, chiave, valore = riga.get("tipo", ""), riga.get("chiave", ""), riga.get("valore", "")
-        if tipo == "formato" and chiave == "scrittore_site" and valore == "1":
+        if tipo == "formato" and chiave == "scrittore_site" and valore in {"1", "2"}:
             formato_valido = True
         elif tipo == "sidebar" and chiave in CAMPI_SALVATAGGIO_PROGETTO:
             snapshot["sidebar"][chiave] = valore
-        elif tipo == "progetto" and chiave == "indice_raw":
-            snapshot["indice_raw"] = valore
-        elif tipo == "progetto" and chiave == "indice_backup":
-            snapshot["indice_backup"] = valore
+        elif tipo == "progetto" and chiave in {"indice_raw", "indice_backup"}:
+            snapshot[chiave] = valore
         elif tipo == "sezione" and chiave:
             snapshot["contenuti"][chiave] = valore
-        elif tipo == "fonte" and chiave in {
-            "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
-            "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
-        }:
-            snapshot["fonti"][chiave] = valore
-        elif tipo == "immagine" and chiave:
-            try:
-                dati = json.loads(valore)
-                raw_b64 = dati.pop("bytes_b64", "")
-                if raw_b64:
-                    dati["bytes"] = base64.b64decode(raw_b64)
-                if dati.get("bytes"):
-                    snapshot["immagini_capitoli"][chiave] = dati
-            except Exception:
-                # Una singola immagine danneggiata non impedisce il recupero
-                # di sidebar, indice e manoscritto.
-                continue
     if not formato_valido:
         raise ValueError("Questo CSV non è stato esportato da Scrittore Site o usa un formato non supportato.")
-    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["indice_backup"] or snapshot["contenuti"] or snapshot["fonti"]):
-        raise ValueError("Il CSV è valido ma non contiene ancora dati editoriali da ripristinare.")
+    indice = str(snapshot["indice_raw"] or snapshot["indice_backup"] or "")
+    if not indice.strip() and snapshot["contenuti"]:
+        indice = "\n".join(snapshot["contenuti"].keys())
+        snapshot["indice_raw"] = indice
+        snapshot["indice_backup"] = indice
+    if not indice.strip():
+        raise ValueError("Il CSV è valido, ma non contiene un indice ripristinabile.")
     return snapshot
 
 
@@ -2754,70 +2759,72 @@ def mostra_memoria_visiva_progetto():
 
 
 def applica_snapshot_progetto(snapshot):
-    """Applica una bozza già letta dal cloud prima che i widget dell'editor vengano creati."""
-    if not snapshot:
+    """Ripristina una sola fotografia completa in memoria e nell'interfaccia."""
+    if not isinstance(snapshot, dict):
         return False
-    sidebar = snapshot.get("sidebar", {})
-    # L'importazione sostituisce una sola fotografia completa, non una serie
-    # di cache separate. Da qui in avanti sidebar, indice e testi hanno la
-    # medesima origine e non possono risultare disallineati.
-    progetto = memoria_progetto_unica()
-    progetto["sidebar"] = dict(sidebar or {})
-    progetto["contenuti"] = {
-        str(sezione): str(contenuto)
-        for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items()
-        if str(sezione).strip() and str(contenuto or "").strip()
+
+    sidebar = dict(snapshot.get("sidebar", {}) or {})
+    contenuti = {
+        str(nome): str(testo)
+        for nome, testo in (snapshot.get("contenuti", {}) or {}).items()
+        if str(nome).strip() and str(testo or "").strip()
     }
-    progetto["fonti"] = dict(snapshot.get("fonti", {}) or {})
-    progetto["immagini"] = dict(snapshot.get("immagini_capitoli", {}) or {})
-    campi_ripristinati = []
-    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
-        # Il controllo deve essere sulla presenza della chiave, non sul suo
-        # contenuto: una casella lasciata volutamente vuota deve poter
-        # sostituire il valore eventualmente rimasto nella sessione corrente.
-        if nome in sidebar:
-            valore = sidebar.get(nome)
-            if valore is None:
-                valore = ""
-            st.session_state[chiave] = valore
-            campi_ripristinati.append(nome)
-    # Mantiene una seconda fotografia locale dei valori ripristinati: così un
-    # widget della sidebar non può riportare il proprio valore precedente sul
-    # salvataggio cloud subito dopo il ripristino.
+    indice = str(snapshot.get("indice_raw", "") or snapshot.get("indice_backup", "") or "")
+    if not indice.strip() and contenuti:
+        indice = "\n".join(contenuti.keys())
+    if not indice.strip():
+        return False
+
+    fonti = dict(snapshot.get("fonti", {}) or {})
+    immagini = dict(snapshot.get("immagini_capitoli", {}) or {})
+    progetto = memoria_progetto_unica()
+    progetto.clear()
+    progetto.update({
+        "sidebar": dict(sidebar),
+        "indice": indice,
+        "contenuti": dict(contenuti),
+        "fonti": dict(fonti),
+        "immagini": dict(immagini),
+    })
+
+    # La sidebar viene ricostruita integralmente, anche per i campi non
+    # presenti nel CSV: nessun valore della bozza precedente resta in pagina.
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
         nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO
     }
-    indice = str(snapshot.get("indice_raw", "") or snapshot.get("indice_backup", "") or "")
-    # Recupero di emergenza per fotografie create dalle vecchie versioni: se
-    # l'indice era stato perso ma le sezioni sono ancora presenti, ricostruisce
-    # almeno la struttura leggibile dai titoli realmente salvati.
-    if not indice.strip() and (snapshot.get("contenuti", {}) or {}):
-        indice = "\n".join(str(sezione) for sezione in snapshot["contenuti"].keys() if str(sezione).strip())
-    # Anche un indice vuoto viene scritto nella memoria unica: impedisce che
-    # una vecchia bozza della pagina si mescoli al CSV appena importato.
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        st.session_state[chiave] = sidebar.get(nome, "")
+
+    # Elimina soltanto le vecchie textarea, non i dati: l'indice e ogni
+    # sezione verranno ridisegnati con valori nuovi dalla memoria unica.
+    for chiave in list(st.session_state.keys()):
+        if re.match(r"^txt_[0-9a-f]{20}_v\d+$", str(chiave)):
+            del st.session_state[chiave]
+    st.session_state[CHIAVE_VERSIONI_WIDGET_SEZIONI] = {}
+    st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
+    st.session_state[CHIAVE_MEMORIA_PROTETTA] = dict(contenuti)
+    st.session_state[CHIAVE_ARCHIVIO_STESURA_COMPLETA] = dict(contenuti)
+    st.session_state[CHIAVE_REGISTRO_SEZIONI] = list(contenuti.keys())
+    st.session_state[CHIAVE_SEZIONI_DA_REIDRATARE] = list(contenuti.keys())
+    st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+    if contenuti:
+        st.session_state[CHIAVE_SELETTORE_EDITOR] = next(iter(contenuti))
+
+    # Scrittura unica dell'indice e incremento della versione del suo campo:
+    # la tab Indice riceve sempre il testo completo importato, non la vecchia
+    # textarea ancora presente nel browser.
     imposta_indice_progetto(indice)
-    for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
-        if contenuto:
-            scrivi_sezione_memorizzata(sezione, contenuto)
-    immagini = progetto["immagini"]
-    if immagini:
-        st.session_state["immagini_capitoli"] = immagini
-    fonti = progetto["fonti"]
+    st.session_state["immagini_capitoli"] = immagini
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
-        # Ripristina anche valori vuoti: così una vecchia fonte non rimane
-        # nella sessione quando la fotografia cloud ne contiene un'altra.
         st.session_state[chiave] = fonti.get(chiave, "")
-    aggiornato = snapshot.get("_autosave_updated_at", "")
+
     if snapshot.get("_origine_importazione_csv"):
-        st.session_state["autosave_stato"] = "✓ Progetto CSV importato: sidebar, indice, sezioni, fonti e immagini sono nella sessione. Premi SALVA SESSIONE se vuoi conservarlo nel tuo account."
+        st.session_state["autosave_stato"] = "✓ CSV importato integralmente: sidebar, indice, sezioni, fonti e immagini sono stati ripristinati."
     else:
-        st.session_state["autosave_stato"] = (
-            f"✓ Ultima stesura ripristinata: sidebar, indice, sezioni e fonti ({aggiornato[:16].replace('T', ' ')})."
-            if aggiornato else "✓ Ultima stesura ripristinata: sidebar, indice, sezioni e fonti."
-        )
+        st.session_state["autosave_stato"] = "✓ Ultima stesura ripristinata integralmente: sidebar, indice, sezioni, fonti e immagini."
     return True
 
 
