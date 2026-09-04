@@ -3311,10 +3311,27 @@ parte del libro.
 
 
 def criticita_consegna_sezione(testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice):
-    """Unisce il controllo di qualità del testo alla prova di consegna completa."""
+    """Convalida una sezione senza confondere un dettaglio tecnico con la qualità.
+
+    Il marcatore ``[[FINE_SEZIONE]]`` è utile per sapere che il modello ha
+    seguito la consegna fino alla fine, ma GPT e DeepSeek possono ometterlo
+    pur restituendo un testo integro. In quel caso non dobbiamo scartare la
+    sezione, fermare la coda o far credere all'utente che il cervello non
+    abbia scritto nulla. La decisione editoriale resta quindi basata su
+    chiusura reale, lunghezza e specificità del testo; il marcatore è soltanto
+    un segnale diagnostico non bloccante.
+    """
+    testo_pulito = pulisci_testo_editoriale(testo or "").strip()
     if not consegna_confermata:
-        return "ragionamento non concluso: la risposta non ha confermato la chiusura completa"
-    return criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+        motivo_finale = motivo_chiusura_tecnica(testo_pulito)
+        if motivo_finale:
+            return f"ragionamento non concluso: {motivo_finale}"
+        avvisi_tecnici = st.session_state.setdefault("avvisi_tecnici_stesura", {})
+        avvisi_tecnici[sezione] = (
+            "Il testo è stato accettato perché completo, ma il cervello non ha "
+            "restituito il marcatore tecnico di fine sezione."
+        )
+    return criticita_specificita(testo_pulito, genere, sezione, profilo_lunghezza, indice)
 
 
 def capitolo_padre(indice, sezione):
