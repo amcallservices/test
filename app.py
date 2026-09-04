@@ -6622,16 +6622,51 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 else:
                     @decoratore_fragment(run_every=1.0)
                     def gestisci_stesura_automatica():
-                        sezione_corrente = coda_scrittura[0]
+                        """Esegue una sola sezione e ricostruisce la coda ad ogni ciclo.
+
+                        Un fragment Streamlit conserva le variabili del suo
+                        primo disegno. Per questo non usa mai ``coda_scrittura``
+                        catturata fuori dalla funzione: dopo ogni salvataggio
+                        legge di nuovo la memoria stabile e passa davvero alla
+                        voce successiva, incluse Prefazione e Parte iniziale.
+                        """
+                        coda_attuale = [
+                            sezione
+                            for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
+                            if sezione in sezioni_intero_libro
+                            and not str(
+                                memoria_progetto_unica().get("contenuti", {}).get(sezione, "") or ""
+                            ).strip()
+                        ]
+                        st.session_state["job_scrittura_coda"] = list(coda_attuale)
+                        if not coda_attuale:
+                            st.session_state["job_scrittura_attivo"] = False
+                            st.session_state["job_scrittura_pausa"] = False
+                            st.session_state["job_scrittura_in_attesa"] = False
+                            st.rerun(scope="app")
+
+                        totale_attuale = max(
+                            1,
+                            int(st.session_state.get("job_scrittura_totale", len(coda_attuale) or 1)),
+                        )
+                        completati_attuali = max(0, totale_attuale - len(coda_attuale))
+                        sezione_corrente = coda_attuale[0]
                         st.progress(
-                            int(completati / totale * 100),
-                            text=f"Stesura automatica: completate {completati} di {totale} sezioni.",
+                            int(completati_attuali / totale_attuale * 100),
+                            text=(
+                                f"Stesura automatica: completate {completati_attuali} di "
+                                f"{totale_attuale} sezioni."
+                            ),
                         )
                         ultima_completata = st.session_state.get("job_scrittura_ultima_completata", "")
-                        prossima_esecuzione = float(st.session_state.get("job_scrittura_prossimo_avvio", 0) or 0)
+                        prossima_esecuzione = float(
+                            st.session_state.get("job_scrittura_prossimo_avvio", 0) or 0
+                        )
                         if time.time() < prossima_esecuzione:
                             if ultima_completata:
-                                testo_ultima = pulisci_testo_editoriale(contenuto_memorizzato_puro(ultima_completata))
+                                testo_ultima = pulisci_testo_editoriale(
+                                    contenuto_memorizzato_puro(ultima_completata)
+                                )
                                 st.success(
                                     f"Sezione salvata e pronta: {ultima_completata}. "
                                     "È già selezionata nell'Editor di Testo Professionale ed è presente nell'Anteprima."
@@ -6650,23 +6685,24 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
                                     st.session_state["job_scrittura_attivo"] = False
                                     st.session_state["job_scrittura_pausa"] = True
-                                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura messa in pausa")
-                                    st.rerun()
+                                    salva_stesura_generata_in_cloud(
+                                        sezioni_intero_libro, "stesura messa in pausa"
+                                    )
+                                    st.rerun(scope="app")
                             with stop:
                                 if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_libro"):
                                     st.session_state["job_scrittura_attivo"] = False
                                     st.session_state["job_scrittura_pausa"] = False
                                     st.session_state["job_scrittura_in_attesa"] = False
                                     st.session_state["job_scrittura_fermato"] = True
-                                    st.session_state["job_scrittura_interrotte"] = list(coda_scrittura)
+                                    st.session_state["job_scrittura_interrotte"] = list(coda_attuale)
                                     st.session_state["job_scrittura_coda"] = []
-                                    salva_stesura_generata_in_cloud(sezioni_intero_libro, "stesura interrotta dall'utente")
-                                    st.rerun()
+                                    salva_stesura_generata_in_cloud(
+                                        sezioni_intero_libro, "stesura interrotta dall'utente"
+                                    )
+                                    st.rerun(scope="app")
                             return
 
-                        # La pausa guidata è facoltativa e avviene prima della
-                        # chiamata AI: non consuma crediti e non può perdere la
-                        # sezione successiva dalla coda.
                         if richiede_checkpoint_personale(sezione_corrente):
                             st.session_state["job_scrittura_attivo"] = False
                             st.session_state["job_scrittura_pausa"] = True
@@ -6675,9 +6711,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             salva_stesura_generata_in_cloud(
                                 sezioni_intero_libro, "pausa guidata per personalizzazione"
                             )
-                            st.rerun()
+                            st.rerun(scope="app")
 
-                        st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
+                        st.info(
+                            f"Elaborazione in corso: {sezione_corrente}. "
+                            "Attendi il salvataggio della sezione corrente."
+                        )
                         try:
                             contenuto_generato = scrivi_contenuto_dettagliato(
                                 sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
@@ -6687,27 +6726,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             if not str(contenuto_generato or "").strip():
                                 raise RuntimeError("il cervello selezionato non ha restituito testo")
 
-                            # ``scrivi_contenuto_dettagliato`` registra gia' la
-                            # copia protetta; questa seconda scrittura mantiene
-                            # l'archivio della coda esplicitamente allineato.
-                            # L'editor e l'anteprima potranno quindi rileggerla
-                            # anche se l'utente mette in pausa nel rerun dopo.
                             scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
                             st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
                             st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
                             st.session_state["job_scrittura_ultima_completata"] = sezione_corrente
-                            st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
+                            st.session_state["job_scrittura_coda"] = coda_attuale[1:]
                             st.session_state["job_scrittura_in_attesa"] = True
                             st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
                             st.session_state.setdefault("job_scrittura_tentativi", {}).pop(sezione_corrente, None)
-                            salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
-                            st.rerun()
+                            salva_stesura_generata_in_cloud(
+                                sezioni_intero_libro, "sezione del libro generata"
+                            )
+                            st.rerun(scope="app")
                         except Exception as exc:
-                            # Un errore transitorio della rete o del provider
-                            # non deve fermare il libro alla prima sezione. La
-                            # stessa voce resta in cima alla coda e riceve un
-                            # nuovo tentativo automatico; non viene mai saltata
-                            # né sostituita da una sezione successiva.
                             tentativi = st.session_state.setdefault("job_scrittura_tentativi", {})
                             numero_tentativi = int(tentativi.get(sezione_corrente, 0))
                             if numero_tentativi < 1:
@@ -6720,14 +6751,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                     "Il software riprova automaticamente senza saltare la sezione."
                                 )
                                 st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 2.0
-                                st.rerun()
+                                st.rerun(scope="app")
 
                             st.session_state["job_scrittura_attivo"] = False
                             st.session_state["job_scrittura_pausa"] = True
                             st.session_state["job_scrittura_in_attesa"] = True
                             st.session_state["job_scrittura_errore"] = f"{sezione_corrente}: {exc}"
                             notifica_sonora("errore_scrittura", lingua_sel, ripeti=True)
-                            st.rerun()
+                            st.rerun(scope="app")
 
                     gestisci_stesura_automatica()
 
