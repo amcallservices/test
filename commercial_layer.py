@@ -517,6 +517,10 @@ def carica_progetto_automatico() -> dict[str, Any]:
             params={
                 "select": "snapshot,updated_at",
                 "user_id": f"eq.{user['id']}",
+                # Anche se una vecchia configurazione di Supabase contenesse
+                # accidentalmente piu' righe per lo stesso utente, il
+                # ripristino deve leggere davvero l'ultima fotografia.
+                "order": "updated_at.desc",
                 "limit": "1",
             },
         )
