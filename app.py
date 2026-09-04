@@ -6162,26 +6162,37 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         """
                         <script>
                         (function () {
-                          try {
-                            const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
-                            const avanzamento = pulsanti.find(function (pulsante) {
-                              return (pulsante.innerText || '').trim() === 'AVANZAMENTO INTERNO';
-                            });
-                            if (avanzamento) {
+                          let tentativi = 0;
+                          const massimoTentativi = 40;
+
+                          function trovaEAvanza() {
+                            try {
+                              const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
+                              const avanzamento = pulsanti.find(function (pulsante) {
+                                return (pulsante.innerText || '').includes('AVANZAMENTO INTERNO');
+                              });
+                              if (!avanzamento) {
+                                if (tentativi++ < massimoTentativi) setTimeout(trovaEAvanza, 100);
+                                return;
+                              }
+
+                              // Il comando è soltanto un ponte tecnico verso
+                              // Streamlit: non deve mai comparire all'utente.
                               const contenitore = avanzamento.closest('[data-testid="stElementContainer"]') || avanzamento.parentElement;
                               if (contenitore) contenitore.style.display = 'none';
+
+                              // Lascia il testo appena generato sullo schermo,
+                              // poi avanza con un clic Streamlit normale: la
+                              // sessione, la coda e i salvataggi restano vivi.
+                              setTimeout(function () {
+                                if (!avanzamento.disabled && avanzamento.isConnected) avanzamento.click();
+                              }, 2600);
+                            } catch (errore) {
+                              if (tentativi++ < massimoTentativi) setTimeout(trovaEAvanza, 100);
                             }
-                          } catch (errore) { console.log('Nascondi avanzamento interno non disponibile', errore); }
+                          }
+                          trovaEAvanza();
                         })();
-                        setTimeout(function () {
-                          try {
-                            const pulsanti = Array.from(window.parent.document.querySelectorAll('button'));
-                            const avanzamento = pulsanti.find(function (pulsante) {
-                              return (pulsante.innerText || '').trim() === 'AVANZAMENTO INTERNO';
-                            });
-                            if (avanzamento && !avanzamento.disabled) avanzamento.click();
-                          } catch (errore) { console.log('Avanzamento automatico non disponibile', errore); }
-                        }, 2600);
                         </script>
                         """,
                         height=0,
