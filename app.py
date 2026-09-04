@@ -3454,40 +3454,68 @@ l'idea, senza rimandare la conclusione a una sezione successiva.
 
 
 def genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output):
-    """Genera una Prefazione completa prima delle Parti e dei capitoli."""
+    """Genera sempre la Prefazione con una consegna autonoma e tollerante.
+
+    La Prefazione è deliberatamente più breve di una sezione standard. Non
+    eredita quindi il minimo di parole, la struttura procedurale o i vincoli
+    dei capitoli: erano istruzioni incompatibili che potevano bloccare la
+    prima voce della coda pur avendo una risposta valida dal modello.
+    """
     istruzione = prompt + f"""
 
-PREFAZIONE DEL LIBRO
-Scrivi la Prefazione iniziale del libro in 160-240 parole. Accogli il lettore,
-presenta il problema o il bisogno da cui parte il libro, chiarisci il percorso
-che troverà e il modo più utile per affrontarlo. Mantieni un tono coerente con
-il genere e il punto di vista richiesti; non ripetere l'indice, non anticipare
-le spiegazioni dei capitoli e non fare promesse garantite. Concludi con una
-frase completa che inviti a iniziare il percorso.
+PREFAZIONE DEL LIBRO — CONSEGNA AUTONOMA
+Scrivi esclusivamente la Prefazione iniziale, in lingua {lingua}, in 140-220
+parole. Accogli il lettore, presenta il bisogno o la domanda da cui nasce il
+libro, spiega quale percorso troverà e con quale atteggiamento potrà usarlo.
+Mantieni tono, genere e punto di vista del progetto; non ripetere l'indice,
+non anticipare lo svolgimento dei capitoli, non aggiungere titoli interni,
+elenchi, URL, fonti o promesse garantite. Costruisci testo originale e chiudi
+con una frase piena e definitiva che accompagni l'inizio della lettura.
 """
     ultimo_testo = ""
     for tentativo in range(3):
         correzione = "" if tentativo == 0 else """
 
 RISCRITTURA DELLA PREFAZIONE
-La bozza precedente era troppo breve o non conclusa. Riscrivi integralmente
-una Prefazione di 160-240 parole, concreta e coerente con il libro. Non usare
-elenchi, titoli interni, ellissi o frasi sospese; chiudi l'ultima idea con una
-frase piena e definitiva.
+La bozza precedente non soddisfaceva tutti i requisiti. Riscrivi integralmente
+una Prefazione autonoma di 140-220 parole: nessuna frase sospesa, nessuna
+ellissi, nessun elenco. L'ultima frase deve chiudere davvero l'idea.
 """
         testo, _marcatore = genera_bozza_sezione_con_chiusura(
             istruzione + correzione,
             system_prompt,
             sezione,
             lingua,
-            max_completion_tokens=min(max(500, limite_output), 900),
+            max_completion_tokens=min(max(420, limite_output), 760),
             addebita=(tentativo == 0),
         )
         ultimo_testo = pulisci_testo_editoriale(testo)
-        if len(ultimo_testo.split()) >= 100 and not motivo_chiusura_tecnica(ultimo_testo):
+        # Il marcatore tecnico resta preferibile, ma non deve cancellare una
+        # prefazione realmente completa se un cervello lo omette.
+        if len(ultimo_testo.split()) >= 80 and not motivo_chiusura_tecnica(ultimo_testo):
             return ultimo_testo
+
+    # Ultimo recupero senza marcatore: GPT e DeepSeek talvolta restituiscono
+    # una prefazione perfettamente chiusa ma ignorano l'istruzione tecnica.
+    recupero = genera_sezione_con_ripetizione(
+        istruzione + """
+
+RECUPERO FINALE
+Restituisci ora solo il corpo della Prefazione, senza marcatore tecnico.
+Usa 140-220 parole e termina con un punto, punto interrogativo o esclamativo.
+""",
+        system_prompt,
+        sezione,
+        lingua,
+        tentativi=2,
+        max_completion_tokens=min(max(420, limite_output), 760),
+        addebita=False,
+    )
+    recupero = pulisci_testo_editoriale(recupero)
+    if len(recupero.split()) >= 80 and not motivo_chiusura_tecnica(recupero):
+        return recupero
     raise RuntimeError(
-        "La Prefazione non ha prodotto un testo completo dopo tre tentativi. "
+        "La Prefazione non ha prodotto un testo completo dopo i tentativi di recupero. "
         "Le altre sezioni non sono state modificate."
     )
 
@@ -3498,7 +3526,18 @@ def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, g
         return genera_simulazione_test_prep(prompt, system_prompt, sezione, indice, trama, obiettivo, lingua)
     limite_output = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])["max_completion_tokens"]
     if tipo_sezione_editoriale(sezione) == "prefazione":
-        return genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output)
+        # Il system prompt globale contiene il profilo di lunghezza del
+        # manoscritto. Per la Prefazione, più breve per definizione, questa
+        # direttiva locale ha priorità assoluta in entrambi i cervelli.
+        system_prefazione = system_prompt + """
+
+ECCEZIONE VINCOLANTE — PREFAZIONE
+Stai scrivendo la Prefazione, non un capitolo né un sottocapitolo. Ignora
+qualsiasi istruzione generale che chieda la lunghezza delle sezioni standard:
+per questa sola risposta il limite corretto è 140-220 parole. Restituisci
+soltanto una Prefazione completa, con ultima frase conclusa.
+"""
+        return genera_prefazione_del_libro(prompt, system_prefazione, sezione, lingua, limite_output)
     if tipo_sezione_editoriale(sezione) == "parte":
         return genera_apertura_di_parte(
             prompt, system_prompt, sezione, genere, lingua, limite_output
@@ -4125,6 +4164,34 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(profilo_lunghezza)
     riserva_chiusura = max(55, round(profilo_lunghezza_dati["max_parole"] * 0.12))
     soglia_sviluppo = profilo_lunghezza_dati["max_parole"] - riserva_chiusura
+    # La Prefazione non è un capitolo breve: è una soglia editoriale. Questo
+    # blocco sostituisce integralmente per lei le istruzioni generiche sotto,
+    # evitando il conflitto fra 140-220 parole e il profilo standard del libro.
+    if tipo_sezione == "prefazione":
+        return f"""
+CONTESTO DEL LIBRO (usa solo concetti, mai frasi o struttura delle fonti):
+{memoria}
+
+DATI EDITORIALI DELLA PREFAZIONE
+- Titolo del libro: {val_titolo}
+- Argomento centrale: {trama}
+- Genere: {genere}
+- Tipologia di scrittura: {stile}
+- Stile di racconto: {narrativa}
+- Punto di vista: {pov}
+- Obiettivo del libro: {obiettivo}
+- Risultato finale desiderato: {val_risultato or "Non dichiarato"}
+- Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}
+
+AZIONE
+Redigi la sezione iniziale '{sezione}', rigorosamente in {lingua}. Questa
+Prefazione deve avere 140-220 parole; non applicare il profilo di lunghezza
+delle sezioni ordinarie. Accogli il lettore, chiarisci il bisogno a cui il
+libro risponde e descrivi il percorso senza elencare, riassumere o anticipare
+i capitoli. Mantieni il POV richiesto, crea un testo originale, non ripetere
+il titolo come intestazione e non usare Markdown, URL, citazioni, fonti,
+elenchi o promesse garantite. Concludi con una frase completa e definitiva.
+"""
     ha_sottocapitoli = bool(individua_sottocapitoli_del_capitolo(sezione, indice.splitlines()))
     if tipo_sezione == "capitolo" and ha_sottocapitoli:
         istruzione_lunghezza = (
