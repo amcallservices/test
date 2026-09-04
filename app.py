@@ -745,6 +745,12 @@ def _profilo_collaudo_breve(nome_profilo):
             "risultato": "Al termine il lettore saprà valutare se una riunione è necessaria, definire uno scopo misurabile, selezionare i partecipanti, preparare un ordine del giorno con tempi, condurre un confronto, registrare una decisione e controllare il follow-up.",
             "argomento": "Guida pratica alle riunioni di progetto da 30 a 60 minuti in piccole aziende e gruppi di lavoro. Il libro affronta diagnosi delle riunioni inconcludenti, preparazione, agenda, ruoli, facilitazione, gestione delle deviazioni, decisioni, verbale essenziale, responsabilità e controllo delle azioni concordate. Non è un manuale di leadership generico e non si rivolge a dirigenti di grandi multinazionali.",
             "approfondimenti": "Il pubblico ha esperienza operativa ma poca formazione manageriale. Usa esempi realistici di un progetto digitale, di un piccolo cantiere e di un'attività commerciale; includi un modello di agenda, una checklist di chiusura, un esempio di verbale breve e criteri concreti per distinguere una decisione da una semplice discussione. Se menzioni strumenti o metodi aggiornabili, segnala che vanno verificati prima della pubblicazione. Evita promesse garantite, frasi riempitive e contenuti ripetuti.",
+            "personalizzazione": {
+                "voce": "Tono pratico di chi coordina progetti reali, con attenzione alle persone coinvolte.",
+                "materiale": "Un caso verosimile di riunione con tempi limitati, decisioni poco chiare e responsabilità distribuite.",
+                "priorita": "Il lettore deve uscire con una procedura applicabile già alla riunione successiva.",
+                "confini": "Evita promesse assolute, gergo superfluo e soluzioni valide solo per grandi aziende.",
+            },
         },
         "Test Prep e simulazioni": {
             "titolo": "HACCP: preparazione al test per addetti alimentari",
@@ -756,6 +762,12 @@ def _profilo_collaudo_breve(nome_profilo):
             "risultato": "Il candidato saprà distinguere pericoli biologici, chimici e fisici, riconoscere comportamenti igienici corretti, ragionare su contaminazione crociata, pulizia, conservazione e controllo operativo, quindi completare una simulazione prima di leggere soluzioni commentate.",
             "argomento": "Test Prep introduttivo per addetti alla manipolazione degli alimenti: principi HACCP, igiene personale, allergeni, contaminazione crociata, ricevimento e conservazione, pulizia, sanificazione e controlli quotidiani. Il testo deve separare teoria, esercizi, quiz, simulazione e soluzioni, senza sostituire corsi obbligatori o procedure aziendali.",
             "approfondimenti": "Usa un linguaggio tecnico comprensibile a chi lavora in cucina o al banco. Inserisci quiz a risposta multipla separati dalle soluzioni, casi realistici su frigo, utensili, allergeni e pulizia, una simulazione finale realmente svolgibile e correzioni commentate. Ogni informazione normativa, temperatura, requisito locale o indicazione sanitaria deve essere verificata e aggiornata prima della pubblicazione. Non promettere certificazione, conformità legale assoluta o superamento garantito dell'esame.",
+            "personalizzazione": {
+                "voce": "Tono tecnico chiaro di un formatore che spiega le ragioni delle regole senza allarmismo.",
+                "materiale": "Situazioni verosimili di banco gastronomia, piccola cucina e ricevimento merci.",
+                "priorita": "Il candidato deve saper ragionare sui casi, non soltanto ricordare definizioni.",
+                "confini": "Non sostituire procedure aziendali o formazione obbligatoria; evita prescrizioni normative non verificate.",
+            },
         },
         "Narrativa e stile": {
             "titolo": "Il taccuino della casa sul porto",
@@ -767,6 +779,12 @@ def _profilo_collaudo_breve(nome_profilo):
             "risultato": "Il lettore segue una vicenda completa: ritorno alla città d'origine, scoperta di un taccuino nascosto, conflitto con una persona del passato, scelta rischiosa e risoluzione che cambia il protagonista senza cancellare le conseguenze delle sue decisioni.",
             "argomento": "Dopo la morte della nonna, Mara, restauratrice trentacinquenne, torna nella casa sul porto di una piccola città adriatica per venderla. Dietro una parete trova un taccuino che documenta una promessa non mantenuta tra due famiglie e mette in dubbio la storia che le è stata raccontata. Per ricostruire la verità deve affrontare Elia, figlio dell'uomo che ritiene responsabile, e scegliere se rendere pubblico il contenuto, rischiando di ferire persone ancora vive. Atmosfera mediterranea contemporanea, conflitto umano credibile, nessun elemento soprannaturale.",
             "approfondimenti": "Rivolgiti a lettori adulti che apprezzano narrativa introspettiva ma scorrevole. Ogni scena deve cambiare informazioni, relazione o posta in gioco; alterna azioni osservabili, dialoghi essenziali e brevi momenti interiori. Evita riassunti degli eventi, coincidenze risolutive e melodramma. La struttura deve accompagnare situazione iniziale, ostacoli, scelta e conseguenza finale, chiudendo davvero ogni sezione.",
+            "personalizzazione": {
+                "voce": "Voce intima e concreta, attenta ai dettagli quotidiani della costa adriatica senza lirismo eccessivo.",
+                "materiale": "Un ricordo sensoriale della casa sul porto: sale sulle persiane, carta ingiallita e rumore delle barche.",
+                "priorita": "Il lettore deve comprendere la posta emotiva di Mara prima della scelta conclusiva.",
+                "confini": "Evita cliché romantici, spiegazioni onniscienti e svolte risolte da coincidenze.",
+            },
         },
     }
     return profili.get(nome_profilo, profili["Manuale e controlli"])
@@ -810,6 +828,14 @@ def avvia_collaudo_amministratore_se_richiesto():
         "book_desired_result": profilo["risultato"],
         "book_plot": profilo["argomento"],
         "book_further_details": profilo["approfondimenti"],
+        # Valori realistici e coerenti con la modalità scelta: il collaudo
+        # esercita la personalizzazione senza cambiare parametri o regole del test.
+        "book_personal_voice": profilo.get("personalizzazione", {}).get("voce", ""),
+        "book_personal_material": profilo.get("personalizzazione", {}).get("materiale", ""),
+        "book_personal_priorities": profilo.get("personalizzazione", {}).get("priorita", ""),
+        "book_personal_boundaries": profilo.get("personalizzazione", {}).get("confini", ""),
+        "book_personal_checkpoint_mode": "",
+        "book_personal_checkpoint_notes": "",
         # Il laboratorio usa un brief nuovo e isolato, ma le stesse opzioni
         # produttive disponibili agli utenti: nessun limite editoriale speciale.
         "profilo_lunghezza_stesura": "Standard KDP",
@@ -842,7 +868,7 @@ def termina_collaudo_amministratore():
         storico[-1]["sezioni"] = len(st.session_state.get("memoria_sezioni_editor", {}) or {})
     backup = st.session_state.get("admin_test_backup", {})
     _pulisci_progetto_per_collaudo()
-    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_backup", "admin_test_verifica_visiva", "admin_test_run_requested", "admin_test_run_report", "admin_test_pausa_ripresa_verificata", "admin_test_prefazione_pausa_verificata"):
+    for chiave in ("admin_test_mode", "admin_test_provider", "admin_test_profile", "admin_test_started_at", "admin_test_backup", "admin_test_verifica_visiva", "admin_test_run_requested", "admin_test_run_report", "admin_test_pausa_ripresa_verificata", "admin_test_prefazione_pausa_verificata", "admin_test_personalizzazione_verificata"):
         st.session_state.pop(chiave, None)
     st.session_state.update(backup)
 
@@ -2526,6 +2552,14 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "risultato_finale": "book_desired_result",
     "argomento": "book_plot",
     "approfondimenti": "book_further_details",
+    # Personalizzazione facoltativa: sono dati editoriali veri e propri,
+    # perciò vivono nella stessa memoria unica della sidebar e del manoscritto.
+    "voce_personale": "book_personal_voice",
+    "materiale_personale": "book_personal_material",
+    "priorita_personali": "book_personal_priorities",
+    "confini_personali": "book_personal_boundaries",
+    "modalita_checkpoint": "book_personal_checkpoint_mode",
+    "note_checkpoint": "book_personal_checkpoint_notes",
     "lunghezza": "profilo_lunghezza_stesura",
     "provider_ia": "provider_ia",
 }
@@ -2535,6 +2569,103 @@ CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 # manoscritto, fonti e immagini. Le vecchie chiavi rimangono soltanto come
 # copie di compatibilità con sessioni e CSV esportati in precedenza.
 CHIAVE_PROGETTO_UNICO = "progetto_editoriale_unico"
+
+
+MODALITA_CHECKPOINT_PERSONALE = ("", "parti", "conclusione", "parti_e_conclusione")
+
+
+def etichette_personalizzazione(lingua):
+    """Restituisce testi brevi per la personalizzazione, senza alterare il brief obbligatorio."""
+    testi = {
+        "Italiano": {
+            "titolo": "✍️ Personalizza il tuo libro (facoltativo)",
+            "intro": "Aggiungi ciò che rende il libro davvero tuo. Queste risposte non consumano crediti e vengono salvate con progetto, CSV e ripristino.",
+            "voce": "Quale voce, esperienza o prospettiva deve distinguere questo libro?",
+            "materiale": "Quali episodi, casi, esempi o materiali personali vuoi valorizzare?",
+            "priorita": "Quali domande o risultati vuoi che il lettore trovi con particolare chiarezza?",
+            "confini": "Cosa deve evitare il libro: tono, promesse, temi o esempi non adatti?",
+            "check": "Durante Scrivi tutto il libro",
+            "automatico": "Continua automaticamente (consigliato)",
+            "parti": "Fermati prima di ogni Parte", "conclusione": "Fermati prima della conclusione",
+            "parti_e_conclusione": "Fermati prima delle Parti e della conclusione",
+            "nota": "Prima di proseguire, vuoi aggiungere un dettaglio personale per questa sezione?",
+        },
+        "English": {
+            "titolo": "✍️ Personalize your book (optional)", "intro": "Add what makes the book truly yours. These answers use no credits and are saved with the project, CSV and restore.",
+            "voce": "Which voice, experience or perspective should distinguish this book?", "materiale": "Which episodes, cases, examples or personal material should be used?",
+            "priorita": "Which questions or outcomes must be especially clear to the reader?", "confini": "What should the book avoid: tone, claims, topics or unsuitable examples?",
+            "check": "During Write the whole book", "automatico": "Continue automatically (recommended)", "parti": "Pause before each Part",
+            "conclusione": "Pause before the conclusion", "parti_e_conclusione": "Pause before Parts and conclusion",
+            "nota": "Before continuing, would you like to add a personal detail for this section?",
+        },
+    }
+    # Le altre lingue mantengono una UI comprensibile e non alterano la lingua
+    # scelta per il libro: l'AI riceve sempre il brief nella lingua del progetto.
+    return testi.get(lingua, testi["English"])
+
+
+def brief_personalizzazione_progetto(sezione=""):
+    """Trasforma i dati facoltativi in istruzioni editoriali, mai in testo da copiare.
+
+    Il blocco è usato da ricerca, indice e stesura. Limiti di lunghezza evitano
+    che una nota personale renda il prompt sproporzionato o ripetitivo.
+    """
+    sidebar = sidebar_memorizzata_corrente()
+    elementi = (
+        ("Voce o prospettiva dell'autore", sidebar.get("voce_personale", "")),
+        ("Esperienze, casi o materiali dell'autore", sidebar.get("materiale_personale", "")),
+        ("Priorità per il lettore", sidebar.get("priorita_personali", "")),
+        ("Confini da rispettare", sidebar.get("confini_personali", "")),
+        ("Indicazioni aggiunte durante la stesura", sidebar.get("note_checkpoint", "")),
+    )
+    righe = [f"- {titolo}: {str(valore).strip()[:1200]}" for titolo, valore in elementi if str(valore).strip()]
+    if not righe:
+        return "Nessuna personalizzazione aggiuntiva: applica il brief editoriale ordinario."
+    riferimento = f" per la sezione '{sezione}'" if str(sezione).strip() else ""
+    return (
+        f"PERSONALIZZAZIONE FACOLTATIVA{riferimento}\n" + "\n".join(righe) + "\n"
+        "Usa queste indicazioni soltanto quando sono pertinenti. Rielabora tutto in modo originale: "
+        "non presentare esempi personali come fatti non forniti e non ripetere la stessa nota in ogni sezione."
+    )
+
+
+def modalita_checkpoint_personale():
+    valore = str(st.session_state.get("book_personal_checkpoint_mode", "") or "").strip()
+    return valore if valore in MODALITA_CHECKPOINT_PERSONALE else ""
+
+
+def sezione_conclusiva_personale(sezione):
+    return bool(re.search(
+        r"(?i)\b(conclusione|conclusion|conclusión|schluss|epilogo|epilogue|conclusie|заключ|итог|خاتمة|结论|总结)\b",
+        str(sezione or ""),
+    ))
+
+
+def richiede_checkpoint_personale(sezione):
+    """Decide se fermare una coda automatica prima della sezione corrente."""
+    modalita = modalita_checkpoint_personale()
+    if not modalita:
+        return False
+    gia_superati = set(st.session_state.get("job_scrittura_checkpoint_superati", []) or [])
+    if sezione in gia_superati:
+        return False
+    if modalita in {"parti", "parti_e_conclusione"} and tipo_sezione_editoriale(sezione) == "parte":
+        return True
+    return modalita in {"conclusione", "parti_e_conclusione"} and sezione_conclusiva_personale(sezione)
+
+
+def registra_nota_checkpoint(sezione, nota):
+    """Conserva l'eventuale risposta senza sovrascrivere le indicazioni precedenti."""
+    nota = str(nota or "").strip()
+    if not nota:
+        return
+    precedente = str(st.session_state.get("book_personal_checkpoint_notes", "") or "").strip()
+    nuova_nota = f"[{sezione}] {nota}"
+    if nuova_nota not in precedente:
+        st.session_state["book_personal_checkpoint_notes"] = (
+            f"{precedente}\n{nuova_nota}".strip() if precedente else nuova_nota
+        )
+    sidebar_memorizzata_corrente()
 
 
 def memoria_progetto_unica():
@@ -3816,7 +3947,7 @@ with st.sidebar:
                 st.session_state.get("book_plot", ""),
                 st.session_state.get("book_goal", ""),
                 lingua_sel,
-                st.session_state.get("book_further_details", ""),
+                f"{st.session_state.get('book_further_details', '')}\n\n{brief_personalizzazione_progetto()}",
                 forza=True,
             )
         if dossier_aggiornato:
@@ -3948,6 +4079,37 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
         key="book_further_details"
     )
+    # Blocco autonomo: non rende obbligatoria la personalizzazione e non
+    # modifica i campi editoriali già richiesti per generare indice e testo.
+    testi_personalizzazione = etichette_personalizzazione(lingua_sel)
+    with st.expander(testi_personalizzazione["titolo"], expanded=False):
+        st.caption(testi_personalizzazione["intro"])
+        val_voce_personale = st.text_area(
+            testi_personalizzazione["voce"], height=92,
+            key="book_personal_voice",
+        )
+        val_materiale_personale = st.text_area(
+            testi_personalizzazione["materiale"], height=92,
+            key="book_personal_material",
+        )
+        val_priorita_personali = st.text_area(
+            testi_personalizzazione["priorita"], height=92,
+            key="book_personal_priorities",
+        )
+        val_confini_personali = st.text_area(
+            testi_personalizzazione["confini"], height=92,
+            key="book_personal_boundaries",
+        )
+        val_modalita_checkpoint = st.selectbox(
+            testi_personalizzazione["check"],
+            list(MODALITA_CHECKPOINT_PERSONALE),
+            key="book_personal_checkpoint_mode",
+            format_func=lambda valore: testi_personalizzazione.get(valore or "automatico", testi_personalizzazione["automatico"]),
+            help="Le pause guidate non generano testo e non consumano crediti. Se non scegli nulla, la stesura prosegue automaticamente.",
+        )
+    # Le variabili sono lette qui per rendere esplicita la loro appartenenza
+    # alla stessa fotografia della sidebar, salvata anche prima di un rerun.
+    val_note_checkpoint = st.session_state.get("book_personal_checkpoint_notes", "")
     val_lunghezza_scelta = st.selectbox(
         "Lunghezza delle sezioni",
         [""] + list(PROFILI_LUNGHEZZA_STESURA.keys()),
@@ -3974,6 +4136,12 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "risultato_finale": val_risultato,
         "argomento": val_trama,
         "approfondimenti": val_approfondimenti,
+        "voce_personale": val_voce_personale,
+        "materiale_personale": val_materiale_personale,
+        "priorita_personali": val_priorita_personali,
+        "confini_personali": val_confini_personali,
+        "modalita_checkpoint": val_modalita_checkpoint,
+        "note_checkpoint": val_note_checkpoint,
         "lunghezza": val_lunghezza_scelta,
         "provider_ia": provider_ia,
     }
@@ -4155,6 +4323,7 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     """Costruisce il prompt comune usato dalla stesura singola e dalla stesura di un capitolo intero."""
     memoria = genera_contesto_avanzato(sezione, trama)
     tipo_sezione = tipo_sezione_editoriale(sezione)
+    brief_personale = brief_personalizzazione_progetto(sezione)
     profilo_genere = profilo_genere_stesura(genere)
     profilo_tipologia = profilo_tipologia_stesura(stile)
     regola_struttura = profilo_struttura_indice(genere, "", trama, obiettivo)
@@ -4182,6 +4351,8 @@ DATI EDITORIALI DELLA PREFAZIONE
 - Obiettivo del libro: {obiettivo}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}
 - Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}
+
+{brief_personale}
 
 AZIONE
 Redigi la sezione iniziale '{sezione}', rigorosamente in {lingua}. Questa
@@ -4229,6 +4400,8 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 - Obiettivo Emozionale/Pratico: {obiettivo}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}
 - Approfondimenti prioritari: {approfondimenti.strip() or "Nessun approfondimento aggiuntivo fornito."}
+
+{brief_personale}
 
 === PROFILO EDITORIALE DA RISPETTARE ===
 - Regole del genere: {profilo_genere}
@@ -4281,6 +4454,7 @@ Punto di vista: {pov}
 Obiettivo del libro: {obiettivo}
 Risultato finale desiderato: {val_risultato or "Non dichiarato"}
 Approfondimenti prioritari: {approfondimenti.strip() or "Nessun approfondimento aggiuntivo fornito."}
+{brief_personalizzazione_progetto()}
 
 INDICE DA VALUTARE
 {indice}
@@ -4305,7 +4479,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
     """Identifica con certezza la versione del manoscritto su cui è stato prodotto il report."""
-    parti = [indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti]
+    parti = [indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti, brief_personalizzazione_progetto()]
     parti.extend(f"{sezione}\n{contenuto}" for sezione, contenuto in contenuti.items())
     return hashlib.sha256("\n\u241e\n".join(str(p or "") for p in parti).encode("utf-8")).hexdigest()
 
@@ -4385,7 +4559,8 @@ Stile di racconto: {narrativa}
 Punto di vista: {pov}
 Obiettivo: {obiettivo}
 Risultato finale desiderato: {val_risultato or "Non dichiarato"}
-Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}"""
+Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}
+{brief_personalizzazione_progetto()}"""
     blocchi = blocchi_per_audit_manoscritto(contenuti)
     totale_blocchi = len(blocchi)
     mappa_indice = mappa_capitoli_e_sottocapitoli(indice)
@@ -4709,6 +4884,7 @@ if st.session_state.get("admin_test_mode"):
     )
     fasi_collaudo = [
         ("Sidebar e profilo", True),
+        ("Personalizzazione", bool(st.session_state.get("admin_test_personalizzazione_verificata"))),
         ("Fonti web", bool(fonti_test)),
         ("Indice nei limiti", indice_nei_limiti),
         ("Scrittura sezione", bool(testi_test)),
@@ -4734,6 +4910,7 @@ if st.session_state.get("admin_test_mode"):
             st.success(esito_collaudo_automatico)
     risultati_test = [
         ("Sidebar e profilo", True, "Brief breve completo e cervello selezionato."),
+        ("Personalizzazione", bool(st.session_state.get("admin_test_personalizzazione_verificata")), "Il collaudo verifica che le indicazioni personali entrino realmente nel brief di indice e stesura." if not st.session_state.get("admin_test_personalizzazione_verificata") else "Indicazioni personali presenti nel brief reale, senza modificare i parametri ordinari del collaudo."),
         ("Fonti web", bool(fonti_test), "Genera l'indice per verificare la ricerca e il registro fonti." if not fonti_test else "Registro fonti disponibile."),
         ("Indice e prompt", indice_nei_limiti, "Apri Indice e premi Genera indice professionale." if not indice_test else (f"{conta_sezioni_indice(indice_test)} voci rilevate (massimo test: {massimo_voci_visualizzato})." if indice_nei_limiti else f"Indice fuori limite: {conta_sezioni_indice(indice_test)} voci su massimo {massimo_voci_visualizzato}.")),
         ("Scrittura sezione", bool(testi_test), "Apri Scrittura e genera almeno una sezione." if not testi_test else f"{len(testi_test)} sezioni create."),
@@ -4996,9 +5173,15 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
         try:
             st.session_state["admin_test_pausa_ripresa_verificata"] = False
             st.session_state["admin_test_prefazione_pausa_verificata"] = False
+            st.session_state["admin_test_personalizzazione_verificata"] = False
+            brief_test_personale = brief_personalizzazione_progetto()
+            if "Voce o prospettiva dell'autore" not in brief_test_personale or "Priorità per il lettore" not in brief_test_personale:
+                raise RuntimeError("La personalizzazione del progetto non è stata trasferita nel brief di collaudo.")
+            st.session_state["admin_test_personalizzazione_verificata"] = True
             barra.progress(10, text="Collaudo automatico: ricerca e mappa delle fonti...")
             ricerca_preliminare_per_indice(
-                val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti, forza=True
+                val_titolo, val_genere, val_trama, val_goal, lingua_sel,
+                f"{val_approfondimenti}\n\n{brief_personalizzazione_progetto()}", forza=True
             )
             barra.progress(30, text="Collaudo automatico: generazione e controllo dell'indice...")
             prompt_indice_test = f"""Crea esclusivamente l'indice gerarchico in {lingua_sel} per questo progetto di collaudo.
@@ -5012,6 +5195,7 @@ Obiettivo: {val_goal}
 Risultato: {val_risultato}
 Argomento: {val_trama}
 Approfondimenti: {val_approfondimenti}
+{brief_personalizzazione_progetto()}
 
 VINCOLI INDEROGABILI: applica l'architettura editoriale effettiva del profilo {val_lunghezza}: {budget_struttura_indice}. Non superare {limite_voci_indice} voci d'indice. Ogni voce deve essere specifica, nuova e utile. Usa solo questo formato: Parte I:, Capitolo 1:, 1.1 Titolo. Non aggiungere spiegazioni, link, fonti, saluti o testo esterno all'indice.
 
@@ -5077,13 +5261,13 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
             st.session_state.pop("admin_test_run_requested", None)
 
     guide_localizzate = {
-        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori.
+        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori. In Personalizza il tuo libro puoi aggiungere voce, casi, priorità e confini personali: sono facoltativi, non consumano crediti, vengono salvati nel progetto/CSV e guidano ricerca, indice e testo in modo originale.
 
 2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti si riferiscono a tutte le sezioni dell'indice. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
-4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa tutte le sezioni ancora vuote dell'indice, comprese aperture, capitoli, sottocapitoli e chiusure. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua.
+4. In Scrittura e Quiz scegli una sezione. Scrivi contenuto genera una sezione, Scrivi tutti i sottocapitoli del capitolo genera il blocco scelto e Scrivi tutto il libro completa tutte le sezioni ancora vuote dell'indice, comprese aperture, capitoli, sottocapitoli e chiusure. Pausa interrompe il lavoro prima della sezione successiva e Riprendi generazione lo continua. Se nella personalizzazione scegli una pausa guidata, il software si ferma prima di una Parte o della conclusione e ti permette di aggiungere un dettaglio contestuale; puoi anche proseguire senza scrivere nulla.
 
 5. Rigenera con AI modifica solo la sezione scelta seguendo la tua istruzione. Quiz aggiunge domande, 10 Esempi aggiunge esempi, 10 Ricette è per i ricettari; Controlla i fatti e Report sintattico verificano qualità e leggibilità. Carica un'immagine inserisce la tua immagine in anteprima, Word e PDF.
 
@@ -5372,6 +5556,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     with tabs[0]:
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
+        guida_personalizzazione = {
+            "Italiano": "✍️ **Personalizza il tuo libro** è facoltativo: conserva voce, casi, priorità e confini nel progetto. Puoi anche scegliere una pausa guidata prima delle Parti o della conclusione; la risposta viene aggiunta al brief senza consumare crediti.",
+            "English": "✍️ **Personalize your book** is optional: it keeps your voice, cases, priorities and boundaries with the project. You may also choose a guided pause before Parts or the conclusion; your answer is added to the brief without using credits.",
+            "Español": "✍️ **Personaliza tu libro** es opcional: conserva voz, casos, prioridades y límites con el proyecto. También puedes elegir una pausa guiada antes de las Partes o de la conclusión; la respuesta se añade al brief sin consumir créditos.",
+            "Français": "✍️ **Personnalisez votre livre** est facultatif : voix, cas, priorités et limites sont conservés dans le projet. Vous pouvez aussi choisir une pause guidée avant les parties ou la conclusion, sans crédit consommé.",
+            "Deutsch": "✍️ **Personalisiere dein Buch** ist optional: Stimme, Fälle, Prioritäten und Grenzen werden mit dem Projekt gespeichert. Eine geführte Pause vor Teilen oder Schluss fügt Hinweise ohne Credits zum Brief hinzu.",
+            "Română": "✍️ **Personalizează cartea** este opțional: vocea, cazurile, prioritățile și limitele se păstrează în proiect. Poți alege și o pauză ghidată înainte de părți sau concluzie, fără credite.",
+            "Русский": "✍️ **Персонализируйте книгу** — необязательная функция: голос, примеры, приоритеты и ограничения сохраняются в проекте. Можно выбрать паузу перед частями или заключением без расхода кредитов.",
+            "العربية": "✍️ **خصص كتابك** ميزة اختيارية تحفظ الصوت والأمثلة والأولويات والحدود داخل المشروع. يمكنك أيضاً اختيار توقف موجّه قبل الأجزاء أو الخاتمة من دون استهلاك أرصدة.",
+            "中文": "✍️ **个性化你的图书**是可选功能：写作声音、案例、重点和边界会随项目保存。也可在各部分或结论前选择引导暂停，不消耗积分。",
+        }
+        st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
         if not sidebar_pronta:
             st.info("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.")
         with st.expander("📚 Guida completa e regole di utilizzo", expanded=False):
@@ -5798,7 +5994,8 @@ APPROFONDIMENTI (FACOLTATIVO):"""
                                    disabled=not sidebar_pronta):
             with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
                 dossier_ricerca_web = ricerca_preliminare_per_indice(
-                    val_titolo, val_genere, val_trama, val_goal, lingua_sel, val_approfondimenti
+                val_titolo, val_genere, val_trama, val_goal, lingua_sel,
+                f"{val_approfondimenti}\n\n{brief_personalizzazione_progetto()}"
                 )
                 if dossier_ricerca_web:
                     st.session_state["ultimo_esito_ricerca_preliminare"] = (
@@ -5837,6 +6034,8 @@ PARAMETRI EDITORIALI (L'indice deve essere costruito su misura e strettamente at
 - Obiettivo Emozionale/Pratico: {val_goal}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}
 - Approfondimenti prioritari: {val_approfondimenti.strip() or "Nessun approfondimento aggiuntivo fornito."}
+
+{brief_personalizzazione_progetto()}
 
 {specifica_editoriale}
 
@@ -6004,6 +6203,7 @@ POV: {val_pov}
 Obiettivo: {val_goal}
 Risultato finale desiderato: {val_risultato}
 Approfondimenti: {val_approfondimenti or "Nessuno"}
+{brief_personalizzazione_progetto()}
 
 LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice e punta a circa
 {obiettivo_voci_indice}. Il libro completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
@@ -6087,6 +6287,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_in_attesa"] = True
                     st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
                     st.session_state["job_scrittura_fermato"] = False
+                    st.session_state["job_scrittura_checkpoint_superati"] = []
+                    st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                     st.session_state.pop("job_scrittura_errore", None)
                     st.session_state.pop("job_scrittura_ultima_completata", None)
                     notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
@@ -6153,6 +6355,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                     st.rerun()
                             return
 
+                        # La pausa guidata è facoltativa e avviene prima della
+                        # chiamata AI: non consuma crediti e non può perdere la
+                        # sezione successiva dalla coda.
+                        if richiede_checkpoint_personale(sezione_corrente):
+                            st.session_state["job_scrittura_attivo"] = False
+                            st.session_state["job_scrittura_pausa"] = True
+                            st.session_state["job_scrittura_in_attesa"] = True
+                            st.session_state["job_scrittura_checkpoint_richiesto"] = sezione_corrente
+                            salva_stesura_generata_in_cloud(
+                                sezioni_intero_libro, "pausa guidata per personalizzazione"
+                            )
+                            st.rerun()
+
                         st.info(f"Elaborazione in corso: {sezione_corrente}. Attendi il salvataggio della sezione corrente.")
                         try:
                             contenuto_generato = scrivi_contenuto_dettagliato(
@@ -6187,11 +6402,35 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if st.session_state.get("job_scrittura_pausa") and st.session_state.get("job_scrittura_coda"):
                 rimanenti = len(st.session_state["job_scrittura_coda"])
                 st.warning(f"Generazione in pausa: restano {rimanenti} sezioni. Le sezioni concluse sono già leggibili e salvate.")
+                checkpoint_richiesto = str(st.session_state.get("job_scrittura_checkpoint_richiesto", "") or "").strip()
+                chiave_nota_checkpoint = ""
+                if checkpoint_richiesto:
+                    testi_personalizzazione = etichette_personalizzazione(lingua_sel)
+                    st.info(
+                        f"Pausa guidata prima di: {checkpoint_richiesto}. "
+                        "Puoi aggiungere un'indicazione specifica oppure continuare senza modifiche."
+                    )
+                    chiave_nota_checkpoint = (
+                        "nota_checkpoint_" + hashlib.sha256(checkpoint_richiesto.encode("utf-8")).hexdigest()[:12]
+                    )
+                    st.text_area(
+                        testi_personalizzazione["nota"], height=100, key=chiave_nota_checkpoint,
+                        placeholder="Esempio: usa un caso realistico, chiarisci questo dubbio, evita questo esempio.",
+                    )
                 if st.session_state.get("job_scrittura_errore"):
                     st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
                 riprendi, stop_pausa = st.columns(2)
                 with riprendi:
                     if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
+                        if checkpoint_richiesto:
+                            registra_nota_checkpoint(
+                                checkpoint_richiesto, st.session_state.get(chiave_nota_checkpoint, "")
+                            )
+                            superati = list(st.session_state.get("job_scrittura_checkpoint_superati", []) or [])
+                            if checkpoint_richiesto not in superati:
+                                superati.append(checkpoint_richiesto)
+                            st.session_state["job_scrittura_checkpoint_superati"] = superati
+                            st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                         st.session_state["job_scrittura_attivo"] = True
                         st.session_state["job_scrittura_pausa"] = False
                         st.session_state["job_scrittura_in_attesa"] = True
