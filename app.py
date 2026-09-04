@@ -3354,6 +3354,32 @@ TESTO GIÀ APPROVATO NELLA FORMA:
     # durante la normale scrittura di una sezione.
     return pulisci_testo_editoriale(testo)
 
+
+def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
+                                 obiettivo, lingua, approfondimenti, profilo_lunghezza):
+    """Esegue la stessa stesura usata dal pulsante della singola sezione.
+
+    La stesura completa richiama questa funzione una sezione alla volta: non
+    usa un prompt abbreviato o un percorso diverso. In questo modo ogni voce
+    dell'indice riceve le medesime istruzioni, controlli di completezza e
+    protezioni della scrittura manuale "Scrivi contenuto dettagliato".
+    """
+    prompt = crea_prompt_stesura_sezione(
+        sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
+        obiettivo, lingua, approfondimenti, profilo_lunghezza,
+    )
+    contenuto_generato = genera_contenuto_editoriale(
+        prompt, S_PROMPT, sezione, indice, trama, genere, obiettivo,
+        lingua, profilo_lunghezza,
+    )
+    if (
+        not str(contenuto_generato or "").strip()
+        or str(contenuto_generato).lstrip().upper().startswith("ERRORE:")
+    ):
+        raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
+    scrivi_sezione_memorizzata(sezione, contenuto_generato)
+    return contenuto_generato
+
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
 def valuta_approccio_neurologico(genere, stile, narrativa):
     """
@@ -5659,11 +5685,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[2]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            # La stesura completa genera tutte e sole le sezioni dell'indice.
-            sezioni_intero_libro = list(dict.fromkeys([
-                *sezioni_struttura_corrente,
-                *sezioni_job_protette,
-            ]))
+            # La stesura completa usa esattamente le stesse voci rese
+            # disponibili nell'editor. Non esiste un secondo elenco ridotto
+            # riservato alla stesura completa.
+            sezioni_intero_libro = list(opzioni_editor)
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
                 "I contenuti già scritti verranno conservati senza modifiche."
@@ -5699,6 +5724,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             coda_scrittura = [
                 sezione for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
                 if not sezione_dismessa(sezione)
+                and not contenuto_memorizzato_puro(sezione).strip()
             ]
             if coda_scrittura != coda_precedente:
                 st.session_state["job_scrittura_coda"] = list(coda_scrittura)
@@ -5739,20 +5765,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.info(f"Generazione in pausa. Restano {len(coda_scrittura)} sezioni da scrivere; puoi controllare il libro e poi riprendere.")
                 else:
                     try:
-                        prompt = crea_prompt_stesura_sezione(
+                        contenuto_generato = scrivi_contenuto_dettagliato(
                             sezione_corrente, st.session_state['indice_raw'], val_trama, val_genere,
-                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
+                            val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                            val_approfondimenti, val_lunghezza,
                         )
-                        contenuto_generato = genera_contenuto_editoriale(
-                            prompt, S_PROMPT, sezione_corrente, st.session_state['indice_raw'], val_trama,
-                            val_genere, val_goal, lingua_sel, val_lunghezza
-                        )
-                        if (
-                            not str(contenuto_generato or "").strip()
-                            or str(contenuto_generato).lstrip().upper().startswith("ERRORE:")
-                        ):
-                            raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
-                        scrivi_sezione_memorizzata(sezione_corrente, contenuto_generato)
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
                         # sezione conclusa viene inviata immediatamente al
@@ -5996,17 +6013,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     sezione_salvata = False
                     with st.spinner(L["msg_run"]):
                         try:
-                            full_prompt = crea_prompt_stesura_sezione(
+                            contenuto_generato = scrivi_contenuto_dettagliato(
                                 sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
-                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel, val_approfondimenti, val_lunghezza
+                                val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
+                                val_approfondimenti, val_lunghezza,
                             )
-                            contenuto_generato = genera_contenuto_editoriale(
-                                full_prompt, S_PROMPT, sez_scelta, st.session_state['indice_raw'], val_trama,
-                                val_genere, val_goal, lingua_sel, val_lunghezza
-                            )
-                            if not str(contenuto_generato or "").strip() or str(contenuto_generato).lstrip().upper().startswith("ERRORE:"):
-                                raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
-                            scrivi_sezione_memorizzata(sez_scelta, contenuto_generato)
                             salvata_nel_cloud = salva_stesura_generata_in_cloud(opzioni_editor, "sezione generata")
                             st.session_state["messaggio_stesura_sezione"] = (
                                 f"Sezione salvata nel tuo account: {sez_scelta}."
