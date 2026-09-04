@@ -2813,6 +2813,32 @@ def minimo_parole_per_sezione_editoriale(sezione, genere):
     return minimi.get(tipo_sezione_editoriale(sezione), 40)
 
 
+def motivo_chiusura_tecnica(testo):
+    """Restituisce il motivo di un finale incompleto, oppure una stringa vuota.
+
+    È usato sia dal controllo visibile sia dal blocco dell'export: un testo
+    troncato non può più risultare "completo" soltanto perché è abbastanza
+    lungo.
+    """
+    parole_sospese = {
+        "a", "ad", "al", "alla", "alle", "allo", "che", "con", "da", "dal", "dalla",
+        "delle", "dello", "di", "ed", "e", "fra", "gli", "il", "in", "la", "le", "lo",
+        "nel", "nella", "nelle", "nello", "o", "per", "sul", "sulla", "sulle", "sullo",
+        "tra", "un", "una", "uno", "with", "and", "or", "of", "to", "for", "the",
+    }
+    finale = str(testo or "").rstrip(" \t\r\n\"'»”)]}")
+    ultima_riga = next((r.strip() for r in reversed(str(testo or "").splitlines()) if r.strip()), "")
+    ultima_parola = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", finale.lower())
+    elenco_sintetico = bool(re.match(r"^(?:[-•*]|\d+[.)])\s*", ultima_riga))
+    if finale.endswith((",", ";", ":", "—", "–", "-", "…")):
+        return "il testo termina con una punteggiatura sospesa"
+    if not elenco_sintetico and (not finale or finale[-1] not in ".!?"):
+        return "l'ultima frase non risulta chiusa"
+    if ultima_parola and ultima_parola[-1] in parole_sospese:
+        return "l'ultima frase sembra terminare con una parola di collegamento"
+    return ""
+
+
 def sezioni_mancanti_per_esportazione(sezioni, genere):
     """Non consente di esportare un libro se l'indice contiene sezioni non effettivamente redatte."""
     mancanti = []
@@ -2845,6 +2871,8 @@ def stati_sezioni_editoriali(sezioni, genere, contenuti=None):
             stato, motivo = "MANCANTE", "nessun contenuto generato"
         elif testo.startswith("ERRORE:") or parole < minimo:
             stato, motivo = "DEBOLE", f"{parole} parole: servono almeno {minimo} parole"
+        elif (motivo_chiusura := motivo_chiusura_tecnica(testo)):
+            stato, motivo = "DEBOLE", motivo_chiusura
         else:
             stato, motivo = "COMPLETA", f"{parole} parole"
         stati.append({"Sezione": sezione, "Stato": stato, "Dettaglio": motivo})
@@ -2859,12 +2887,6 @@ def controllo_completezza_testi_gratuito(sezioni, contenuti=None):
     """
     contenuti = dict(contenuti or {})
     risultati = []
-    parole_sospese = {
-        "a", "ad", "al", "alla", "alle", "allo", "che", "con", "da", "dal", "dalla",
-        "delle", "dello", "di", "ed", "e", "fra", "gli", "il", "in", "la", "le", "lo",
-        "nel", "nella", "nelle", "nello", "o", "per", "sul", "sulla", "sulle", "sullo",
-        "tra", "un", "una", "uno", "with", "and", "or", "of", "to", "for", "the",
-    }
     for sezione in sezioni:
         testo = pulisci_testo_editoriale(
             contenuti.get(sezione) or leggi_sezione_memorizzata(sezione)
@@ -2875,22 +2897,10 @@ def controllo_completezza_testi_gratuito(sezioni, contenuti=None):
             stato, dettaglio = "DA RIVEDERE", "la generazione precedente ha restituito un errore"
         elif len(testo.split()) < 12:
             stato, dettaglio = "TROPPO BREVE", "meno di 12 parole: verifica che la sezione sia stata realmente completata"
+        elif (motivo_chiusura := motivo_chiusura_tecnica(testo)):
+            stato, dettaglio = "INTERROTTA", motivo_chiusura
         else:
-            # Tolti virgolette e parentesi di chiusura, l'ultima frase deve
-            # terminare normalmente. Non imponiamo punteggiatura ai punti di un
-            # elenco, perché possono essere volutamente sintetici.
-            finale = testo.rstrip(" \t\r\n\"'»”)]}")
-            ultima_riga = next((r.strip() for r in reversed(testo.splitlines()) if r.strip()), "")
-            ultima_parola = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", finale.lower())
-            elenco_sintetico = bool(re.match(r"^(?:[-•*]|\d+[.)])\s*", ultima_riga))
-            if finale.endswith((",", ";", ":", "—", "–", "-", "…")):
-                stato, dettaglio = "INTERROTTA", "il testo termina con una punteggiatura sospesa"
-            elif not elenco_sintetico and (not finale or finale[-1] not in ".!?"):
-                stato, dettaglio = "INTERROTTA", "l'ultima frase non risulta chiusa"
-            elif ultima_parola and ultima_parola[-1] in parole_sospese:
-                stato, dettaglio = "INTERROTTA", "l'ultima frase sembra terminare con una parola di collegamento"
-            else:
-                stato, dettaglio = "COMPLETA", f"{len(testo.split())} parole — nessuna interruzione tecnica rilevata"
+            stato, dettaglio = "COMPLETA", f"{len(testo.split())} parole — nessuna interruzione tecnica rilevata"
         risultati.append({"Sezione": sezione, "Esito": stato, "Dettaglio": dettaglio})
     return risultati
 
@@ -2943,6 +2953,49 @@ def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tenta
         except Exception as exc:
             ultimo_errore = exc
     raise RuntimeError(f"Impossibile completare la sezione dopo {tentativi} tentativi: {ultimo_errore}")
+
+
+MARCATORE_FINE_SEZIONE = "[[FINE_SEZIONE]]"
+
+
+def genera_bozza_sezione_con_chiusura(prompt, system_prompt, sezione, lingua, *, max_completion_tokens,
+                                      addebita=True):
+    """Genera una sezione solo se il modello conferma una conclusione completa.
+
+    La punteggiatura da sola non basta a distinguere una risposta conclusa da
+    una risposta troncata dal limite di output. Il marcatore è tecnico, viene
+    rimosso prima del salvataggio e non può comparire nel manoscritto.
+    """
+    richiesta = prompt + f"""
+
+CONSEGNA TECNICA OBBLIGATORIA
+Termina davvero il testo con una frase conclusa e pertinente. Solo dopo il punto,
+il punto interrogativo o il punto esclamativo finale, scrivi su una riga separata
+esattamente questo marcatore: {MARCATORE_FINE_SEZIONE}
+Non scrivere altro dopo il marcatore. Il marcatore è interno al software e non fa
+parte del libro.
+"""
+    risposta = genera_sezione_con_ripetizione(
+        richiesta,
+        system_prompt,
+        sezione,
+        lingua,
+        tentativi=1,
+        max_completion_tokens=max_completion_tokens,
+        addebita=addebita,
+    )
+    finale = str(risposta or "").rstrip()
+    consegna_confermata = finale.endswith(MARCATORE_FINE_SEZIONE)
+    if consegna_confermata:
+        finale = finale[:-len(MARCATORE_FINE_SEZIONE)].rstrip()
+    return pulisci_testo_editoriale(finale), consegna_confermata
+
+
+def criticita_consegna_sezione(testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice):
+    """Unisce il controllo di qualità del testo alla prova di consegna completa."""
+    if not consegna_confermata:
+        return "ragionamento non concluso: la risposta non ha confermato la chiusura completa"
+    return criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
 
 
 def capitolo_padre(indice, sezione):
@@ -3169,10 +3222,12 @@ def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, g
     if sezione_simulazione_test_prep(sezione, indice, genere):
         return genera_simulazione_test_prep(prompt, system_prompt, sezione, indice, trama, obiettivo, lingua)
     limite_output = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])["max_completion_tokens"]
-    testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+    testo, consegna_confermata = genera_bozza_sezione_con_chiusura(
         prompt, system_prompt, sezione, lingua, max_completion_tokens=limite_output
-    ))
-    criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+    )
+    criticita = criticita_consegna_sezione(
+        testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice
+    )
     # La completezza non è un controllo da lasciare all'utente dopo l'export:
     # una bozza che termina a metà non viene mai salvata. I tentativi di
     # riparazione sono a carico del servizio, perché correggono un difetto di
@@ -3188,7 +3243,7 @@ def genera_contenuto_editoriale(prompt, system_prompt, sezione, indice, trama, g
             if "testo troppo breve" in criticita else
             "Rispetta con precisione la lunghezza indicata nel prompt originario."
         )
-        testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+        testo, consegna_confermata = genera_bozza_sezione_con_chiusura(
             prompt + f"""
 
 REVISIONE OBBLIGATORIA DI QUALITÀ
@@ -3205,8 +3260,10 @@ basta, elimina l'ultimo dettaglio secondario e termina con una conclusione breve
 """,
             system_prompt, sezione, lingua, max_completion_tokens=limite_output,
             addebita=False,
-        ))
-        criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+        )
+        criticita = criticita_consegna_sezione(
+            testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice
+        )
     # Una frase tronca rende inaffidabile l'intera bozza: la scartiamo e
     # rigeneriamo integralmente la sezione con un margine tecnico aggiuntivo.
     # Non aggiungiamo mai una semplice coda a un testo incompleto.
@@ -3217,7 +3274,7 @@ basta, elimina l'ultimo dettaglio secondario e termina con una conclusione breve
         )
         massimo_ordinario = vincolo_parole_con_tolleranza(profilo_lunghezza)[1]
         massimo_eccezionale = math.ceil(profilo_riscrittura["max_parole"] * 1.10)
-        testo = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+        testo, consegna_confermata = genera_bozza_sezione_con_chiusura(
             prompt + f"""
 
 RISCRITTURA INTEGRALE OBBLIGATORIA DI QUALITÀ
@@ -3234,8 +3291,10 @@ parole: usa tale margine solo per contenuto utile, mai per ripetizioni o riempit
             system_prompt, sezione, lingua,
             max_completion_tokens=limite_riscrittura,
             addebita=False,
-        ))
-        criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+        )
+        criticita = criticita_consegna_sezione(
+            testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice
+        )
     # Se le riscritture hanno prodotto un testo completo ma ancora corto, non
     # scartiamo una buona base e non blocchiamo il libro: chiediamo soltanto
     # l'integrazione strettamente necessaria. È un recupero interno gratuito,
@@ -3248,7 +3307,7 @@ parole: usa tale margine solo per contenuto utile, mai per ripetizioni o riempit
             parole_da_aggiungere = max(1, minimo_richiesto - parole_attuali)
             if parole_da_aggiungere <= 0:
                 break
-            integrazione = pulisci_testo_editoriale(genera_sezione_con_ripetizione(
+            integrazione, integrazione_conclusa = genera_bozza_sezione_con_chiusura(
                 f"""
 Completa la sezione qui sotto senza riscriverla e senza ripeterne i concetti.
 Scrivi SOLO l'integrazione finale, pronta da aggiungere dopo l'ultimo paragrafo.
@@ -3262,11 +3321,14 @@ TESTO GIÀ APPROVATO NELLA FORMA:
 """,
                 system_prompt, sezione, lingua, max_completion_tokens=limite_output,
                 addebita=False,
-            ))
-            if not integrazione:
+            )
+            if not integrazione or not integrazione_conclusa:
                 continue
             testo = pulisci_testo_editoriale(f"{testo}\n\n{integrazione}")
-            criticita = criticita_specificita(testo, genere, sezione, profilo_lunghezza, indice)
+            consegna_confermata = True
+            criticita = criticita_consegna_sezione(
+                testo, consegna_confermata, genere, sezione, profilo_lunghezza, indice
+            )
             if not criticita:
                 return testo
     if criticita:
@@ -3723,13 +3785,20 @@ def individua_sottocapitoli_del_capitolo(capitolo, sezioni):
     return [s for s in sezioni if re.match(rf"^{re.escape(numero)}\.\d+\s", s.strip())]
 
 def individua_sezioni_da_stendere(sezioni):
-    """Restituisce le sole sezioni con contenuto autonomo, evitando il doppione capitolo/sottocapitoli."""
+    """Restituisce tutte le sezioni che devono apparire nel manoscritto.
+
+    Le Parti sono aperture editoriali brevi, ma sono vere voci dell'indice:
+    escluderle dalla coda di “Scrivi tutto il libro” lasciava un falso
+    “MANCANTE” nel controllo di completezza.
+    """
     regex_capitolo = r'(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+'
     regex_sottocapitolo = r'^\d+\.\d+\s+'
     risultato = []
     for sezione in sezioni:
         pulita = sezione.strip()
-        if re.match(regex_sottocapitolo, pulita):
+        if tipo_sezione_editoriale(pulita) == "parte":
+            risultato.append(sezione)
+        elif re.match(regex_sottocapitolo, pulita):
             risultato.append(sezione)
         elif re.match(regex_capitolo, pulita) and not individua_sottocapitoli_del_capitolo(sezione, sezioni):
             # Un capitolo senza figli ha contenuto autonomo e viene scritto normalmente.
