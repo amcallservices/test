@@ -1961,6 +1961,19 @@ def sync_capitoli():
     st.session_state['lista_capitoli'] = lista
 
 
+def imposta_indice_progetto(testo_indice):
+    """Aggiorna insieme il dato persistente e il widget visibile dell'indice.
+
+    Senza questa doppia scrittura Streamlit può mantenere nel browser una
+    casella vuota, pur avendo l'indice nel salvataggio cloud o nel CSV.
+    """
+    indice = str(testo_indice or "")
+    st.session_state["indice_raw"] = indice
+    st.session_state["indice_editoriale"] = indice
+    sync_capitoli()
+    return indice
+
+
 # ======================================================================================================================
 # PROFILI EDITORIALI: REGOLE SPECIFICHE PER GENERE, TIPOLOGIA E STRUTTURA
 # ======================================================================================================================
@@ -2451,7 +2464,13 @@ def esporta_progetto_editoriale_csv():
 
     for nome, valore in sidebar_memorizzata_corrente().items():
         writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
-    writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": st.session_state.get("indice_raw", "")})
+    # L'indice viene registrato due volte: la seconda copia protegge i CSV
+    # aperti e risalvati da programmi che possono alterare una riga molto lunga.
+    indice_da_esportare = str(
+        st.session_state.get("indice_raw", "") or st.session_state.get("indice_editoriale", "")
+    )
+    writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": indice_da_esportare})
+    writer.writerow({"tipo": "progetto", "chiave": "indice_backup", "valore": indice_da_esportare})
 
     contenuti = dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {})
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
@@ -2533,7 +2552,7 @@ def importa_progetto_editoriale_csv(file_caricato):
     if not righe or not {"tipo", "chiave", "valore"}.issubset(set(righe[0].keys())):
         raise ValueError("Questo file non è un archivio CSV di Scrittore Site.")
 
-    snapshot = {"sidebar": {}, "indice_raw": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}}
+    snapshot = {"sidebar": {}, "indice_raw": "", "indice_backup": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}}
     formato_valido = False
     for riga in righe:
         tipo, chiave, valore = riga.get("tipo", ""), riga.get("chiave", ""), riga.get("valore", "")
@@ -2543,6 +2562,8 @@ def importa_progetto_editoriale_csv(file_caricato):
             snapshot["sidebar"][chiave] = valore
         elif tipo == "progetto" and chiave == "indice_raw":
             snapshot["indice_raw"] = valore
+        elif tipo == "progetto" and chiave == "indice_backup":
+            snapshot["indice_backup"] = valore
         elif tipo == "sezione" and chiave:
             snapshot["contenuti"][chiave] = valore
         elif tipo == "fonte" and chiave in {
@@ -2564,7 +2585,7 @@ def importa_progetto_editoriale_csv(file_caricato):
                 continue
     if not formato_valido:
         raise ValueError("Questo CSV non è stato esportato da Scrittore Site o usa un formato non supportato.")
-    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["contenuti"] or snapshot["fonti"]):
+    if not (snapshot["sidebar"] or snapshot["indice_raw"] or snapshot["indice_backup"] or snapshot["contenuti"] or snapshot["fonti"]):
         raise ValueError("Il CSV è valido ma non contiene ancora dati editoriali da ripristinare.")
     return snapshot
 
@@ -2637,10 +2658,14 @@ def applica_snapshot_progetto(snapshot):
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
         nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO
     }
-    indice = snapshot.get("indice_raw", "")
+    indice = str(snapshot.get("indice_raw", "") or snapshot.get("indice_backup", "") or "")
+    # Recupero di emergenza per fotografie create dalle vecchie versioni: se
+    # l'indice era stato perso ma le sezioni sono ancora presenti, ricostruisce
+    # almeno la struttura leggibile dai titoli realmente salvati.
+    if not indice.strip() and (snapshot.get("contenuti", {}) or {}):
+        indice = "\n".join(str(sezione) for sezione in snapshot["contenuti"].keys() if str(sezione).strip())
     if indice:
-        st.session_state["indice_raw"] = indice
-        sync_capitoli()
+        imposta_indice_progetto(indice)
     for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
         if contenuto:
             scrivi_sezione_memorizzata(sezione, contenuto)
@@ -2709,6 +2734,7 @@ def salva_progetto_corrente(sidebar, sezioni):
     # parziale. Prima conserva tutte le sezioni dell'ultima sessione cloud e
     # poi applica i testi più recenti presenti nella pagina.
     contenuti = {}
+    precedente = {}
     if not st.session_state.get("commercial_project_reset_requested"):
         precedente = carica_progetto_automatico()
         contenuti.update((precedente.get("contenuti", {}) or {}))
@@ -2723,9 +2749,22 @@ def salva_progetto_corrente(sidebar, sezioni):
     contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
     st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
     st.session_state[CHIAVE_MEMORIA_PROTETTA] = dict(contenuti)
+    # Un salvataggio da una pagina appena riaperta non deve mai cancellare un
+    # indice già presente nel cloud solo perché il relativo widget non è ancora
+    # stato renderizzato. Il RESET PROGETTO è l'unica eccezione esplicita.
+    indice_corrente = str(
+        st.session_state.get("indice_raw", "") or st.session_state.get("indice_editoriale", "") or ""
+    )
+    indice_precedente = str(
+        precedente.get("indice_raw", "") or precedente.get("indice_backup", "") or ""
+    )
+    if not indice_corrente.strip() and indice_precedente.strip():
+        indice_corrente = indice_precedente
+        imposta_indice_progetto(indice_corrente)
     snapshot = {
         "sidebar": sidebar_completa,
-        "indice_raw": st.session_state.get("indice_raw", ""),
+        "indice_raw": indice_corrente,
+        "indice_backup": indice_corrente,
         "contenuti": contenuti,
         # Conserviamo il dossier già elaborato: dopo logout o refresh l'AI può
         # continuare a usarlo senza richiedere nuovamente i file originali.
@@ -4678,8 +4717,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
             )
             if not indice_test:
                 raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
-            st.session_state["indice_raw"] = indice_test
-            sync_capitoli()
+            imposta_indice_progetto(indice_test)
             sezioni_indice_test = [
                 sezione for sezione in st.session_state.get("lista_capitoli", [])
                 if tipo_sezione_editoriale(sezione) != "parte"
@@ -5574,8 +5612,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 )
                 st.session_state.pop("analisi_voto_indice", None)
                 if indice_generato:
-                    st.session_state["indice_raw"] = indice_generato
-                    sync_capitoli(); salva_stesura_generata_in_cloud(opzioni_editor, "indice generato"); st.rerun()
+                    imposta_indice_progetto(indice_generato)
+                    salva_stesura_generata_in_cloud(opzioni_editor, "indice generato"); st.rerun()
                 else:
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
                     st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
@@ -5588,7 +5626,11 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.success(esito_indice)
             elif "richiede" in esito_indice or "non ha raggiunto" in esito_indice:
                 st.warning(esito_indice)
-        testo_input = st.text_area("Indice Gerarchico:", value=testo_corrente, height=400)
+        # La chiave stabile viene compilata prima del widget dal ripristino
+        # cloud/CSV, quindi l'indice torna anche visivamente nella Tab Indice.
+        if "indice_editoriale" not in st.session_state:
+            st.session_state["indice_editoriale"] = testo_corrente
+        testo_input = st.text_area("Indice Gerarchico:", height=400, key="indice_editoriale")
         
         if testo_input != testo_corrente:
             # Se la UI ricarica e invia stringa vuota per errore, ignoriamo l'aggiornamento, preservando i dati
@@ -5674,10 +5716,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     )
                     if st.button("✅ APPLICA E SINCRONIZZA LA PROPOSTA", use_container_width=True, key="applica_indice_voto"):
                         st.session_state["indice_backup_prima_della_proposta"] = st.session_state.get("indice_raw", "")
-                        st.session_state["indice_raw"] = st.session_state["indice_proposto_dal_voto"]
+                        imposta_indice_progetto(st.session_state["indice_proposto_dal_voto"])
                         st.session_state.pop("indice_proposto_dal_voto", None)
                         st.session_state.pop("analisi_voto_indice", None)
-                        sync_capitoli()
                         salva_stesura_immediata(opzioni_editor)
                         st.rerun()
 
