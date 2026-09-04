@@ -1966,10 +1966,18 @@ def imposta_indice_progetto(testo_indice):
 
     Senza questa doppia scrittura Streamlit può mantenere nel browser una
     casella vuota, pur avendo l'indice nel salvataggio cloud o nel CSV.
+
+    Ad ogni importazione, ripristino o nuova generazione viene inoltre
+    rinnovata la chiave del widget: in questo modo il browser non può
+    riutilizzare una vecchia textarea vuota e nascondere l'indice appena
+    recuperato dal progetto.
     """
     indice = str(testo_indice or "")
     st.session_state["indice_raw"] = indice
     st.session_state["indice_editoriale"] = indice
+    st.session_state["indice_widget_version"] = int(
+        st.session_state.get("indice_widget_version", 0)
+    ) + 1
     sync_capitoli()
     return indice
 
@@ -5652,11 +5660,18 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 st.success(esito_indice)
             elif "richiede" in esito_indice or "non ha raggiunto" in esito_indice:
                 st.warning(esito_indice)
-        # La chiave stabile viene compilata prima del widget dal ripristino
-        # cloud/CSV, quindi l'indice torna anche visivamente nella Tab Indice.
-        if "indice_editoriale" not in st.session_state:
-            st.session_state["indice_editoriale"] = testo_corrente
-        testo_input = st.text_area("Indice Gerarchico:", height=400, key="indice_editoriale")
+        # Una chiave con versione impedisce a Streamlit di riutilizzare la
+        # textarea vuota rimasta nel browser prima di un import CSV o di un
+        # ripristino cloud. Il contenuto mostrato coincide così sempre con
+        # indice_raw, che è la fonte persistente del progetto.
+        versione_indice = int(st.session_state.get("indice_widget_version", 0))
+        chiave_widget_indice = f"indice_editoriale_{versione_indice}"
+        testo_input = st.text_area(
+            "Indice Gerarchico:",
+            value=testo_corrente,
+            height=400,
+            key=chiave_widget_indice,
+        )
         
         if testo_input != testo_corrente:
             # Se la UI ricarica e invia stringa vuota per errore, ignoriamo l'aggiornamento, preservando i dati
