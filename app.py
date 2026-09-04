@@ -2853,12 +2853,28 @@ def sezione_conclusiva_personale(sezione):
 
 
 def richiede_checkpoint_personale(sezione):
-    """Decide se fermare una coda automatica prima della sezione corrente."""
+    """Decide se fermare una coda senza bloccare un checkpoint gia' superato."""
+    normalizza = lambda valore: re.sub(r"\s+", " ", str(valore or "").strip()).casefold()
+    sezione_norm = normalizza(sezione)
+
+    # ``RIPRENDI GENERAZIONE`` registra anche questo lasciapassare esplicito.
+    # E' separato dal registro storico per funzionare pure con vecchie sessioni
+    # dove il titolo della Parte aveva spazi o segni diversi dopo un rerun.
+    prosegui_forzato = normalizza(
+        st.session_state.get("job_scrittura_checkpoint_da_superare", "")
+    )
+    if prosegui_forzato and prosegui_forzato == sezione_norm:
+        st.session_state.pop("job_scrittura_checkpoint_da_superare", None)
+        return False
+
     modalita = modalita_checkpoint_personale()
     if not modalita:
         return False
-    gia_superati = set(st.session_state.get("job_scrittura_checkpoint_superati", []) or [])
-    if sezione in gia_superati:
+    gia_superati = {
+        normalizza(voce)
+        for voce in (st.session_state.get("job_scrittura_checkpoint_superati", []) or [])
+    }
+    if sezione_norm in gia_superati:
         return False
     if modalita in {"parti", "parti_e_conclusione"} and tipo_sezione_editoriale(sezione) == "parte":
         return True
@@ -6941,6 +6957,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 riprendi, stop_pausa = st.columns(2)
                 with riprendi:
                     if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
+                        sezione_da_riavviare = checkpoint_richiesto or (
+                            coda_scrittura[0] if coda_scrittura else ""
+                        )
                         if checkpoint_richiesto:
                             registra_nota_checkpoint(
                                 checkpoint_richiesto, st.session_state.get(chiave_nota_checkpoint, "")
@@ -6949,17 +6968,23 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             if checkpoint_richiesto not in superati:
                                 superati.append(checkpoint_richiesto)
                             st.session_state["job_scrittura_checkpoint_superati"] = superati
+                            # Lasciapassare immediato per evitare che un
+                            # vecchio stato del widget riattivi la stessa pausa
+                            # nel rerun subito successivo al clic su Riprendi.
+                            st.session_state["job_scrittura_checkpoint_da_superare"] = checkpoint_richiesto
                             st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                         st.session_state["job_scrittura_attivo"] = True
                         st.session_state["job_scrittura_pausa"] = False
                         st.session_state["job_scrittura_in_attesa"] = True
-                        st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
-                        # La ripresa e' una scelta esplicita dell'utente:
-                        # consente un nuovo recupero della voce rimasta in
-                        # cima alla coda, senza eliminarla o saltarla.
-                        st.session_state.setdefault("job_scrittura_tentativi", {}).pop(
-                            coda_scrittura[0], None
-                        )
+                        st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 0.2
+                        # La voce sospesa riparte dal flusso principale, che
+                        # la scrive e la salva prima di restituire il controllo
+                        # al timer automatico. Non viene mai saltata.
+                        st.session_state["job_scrittura_avvio_protetto_rimanenti"] = 1
+                        if sezione_da_riavviare:
+                            st.session_state.setdefault("job_scrittura_tentativi", {}).pop(
+                                sezione_da_riavviare, None
+                            )
                         st.session_state.pop("job_scrittura_errore", None)
                         st.rerun()
                 with stop_pausa:
