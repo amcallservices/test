@@ -3823,69 +3823,65 @@ l'idea, senza rimandare la conclusione a una sezione successiva.
 
 
 def genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output):
-    """Genera sempre la Prefazione con una consegna autonoma e tollerante.
+    """Genera la prima sezione senza il protocollo tecnico dei capitoli.
 
-    La Prefazione è deliberatamente più breve di una sezione standard. Non
-    eredita quindi il minimo di parole, la struttura procedurale o i vincoli
-    dei capitoli: erano istruzioni incompatibili che potevano bloccare la
-    prima voce della coda pur avendo una risposta valida dal modello.
+    La Prefazione e' una sezione editoriale autonoma e breve. In passato
+    passava dal generatore con il marcatore ``[[FINE_SEZIONE]]``: se il modello
+    consegnava un testo corretto ma ometteva quel marcatore, l'intera coda si
+    fermava prima ancora di poter salvare la prima voce. Qui chiediamo solo un
+    testo concluso, lo validiamo sul contenuto reale e lasciamo invariati i
+    criteri usati da GPT-5.4 e DeepSeek.
     """
-    istruzione = prompt + f"""
+    istruzione_base = prompt + f"""
 
-PREFAZIONE DEL LIBRO — CONSEGNA AUTONOMA
-Scrivi esclusivamente la Prefazione iniziale, in lingua {lingua}, in 140-220
-parole. Accogli il lettore, presenta il bisogno o la domanda da cui nasce il
-libro, spiega quale percorso troverà e con quale atteggiamento potrà usarlo.
-Mantieni tono, genere e punto di vista del progetto; non ripetere l'indice,
-non anticipare lo svolgimento dei capitoli, non aggiungere titoli interni,
-elenchi, URL, fonti o promesse garantite. Costruisci testo originale e chiudi
-con una frase piena e definitiva che accompagni l'inizio della lettura.
+CONSEGNA FINALE — PREFAZIONE
+Restituisci esclusivamente il corpo della Prefazione iniziale in lingua
+{lingua}, senza titolo, Markdown, elenco, URL, fonti, citazioni o marcatore
+tecnico. Scrivi indicativamente 140-220 parole. Accogli il lettore, chiarisci
+il bisogno da cui nasce il libro e il percorso che trovera', senza riassumere
+o anticipare i capitoli. Mantieni con precisione genere, tono e punto di vista
+gia' indicati nel brief. Termina con una frase piena, definitiva e pertinente.
 """
     ultimo_testo = ""
-    for tentativo in range(3):
-        correzione = "" if tentativo == 0 else """
+    ultimo_errore = ""
+    # Il primo tentativo e' l'unica nuova operazione addebitata. Il secondo e'
+    # una riparazione gratuita della risposta se troppo corta o non conclusa.
+    for tentativo in range(2):
+        recupero = "" if tentativo == 0 else """
 
-RISCRITTURA DELLA PREFAZIONE
-La bozza precedente non soddisfaceva tutti i requisiti. Riscrivi integralmente
-una Prefazione autonoma di 140-220 parole: nessuna frase sospesa, nessuna
-ellissi, nessun elenco. L'ultima frase deve chiudere davvero l'idea.
+RISCRITTURA DI RECUPERO
+La bozza precedente era troppo breve o non risultava conclusa. Riscrivi da
+zero una Prefazione completa di almeno 100 parole, senza aggiungere indice,
+titoli interni o parti del libro. Chiudi con una frase completa.
 """
-        testo, _marcatore = genera_bozza_sezione_con_chiusura(
-            istruzione + correzione,
-            system_prompt,
-            sezione,
-            lingua,
-            max_completion_tokens=min(max(420, limite_output), 760),
-            addebita=(tentativo == 0),
-        )
-        ultimo_testo = pulisci_testo_editoriale(testo)
-        # Il marcatore tecnico resta preferibile, ma non deve cancellare una
-        # prefazione realmente completa se un cervello lo omette.
-        if len(ultimo_testo.split()) >= 80 and not motivo_chiusura_tecnica(ultimo_testo):
+        try:
+            candidato = genera_sezione_con_ripetizione(
+                istruzione_base + recupero,
+                system_prompt,
+                sezione,
+                lingua,
+                tentativi=1,
+                max_completion_tokens=min(max(420, limite_output), 760),
+                addebita=(tentativo == 0),
+            )
+        except Exception as exc:
+            ultimo_errore = str(exc)
+            continue
+
+        ultimo_testo = pulisci_testo_editoriale(candidato).strip()
+        if (
+            len(ultimo_testo.split()) >= 80
+            and not motivo_chiusura_tecnica(ultimo_testo)
+        ):
             return ultimo_testo
+        ultimo_errore = (
+            "testo insufficiente o non concluso"
+            if ultimo_testo else "risposta vuota"
+        )
 
-    # Ultimo recupero senza marcatore: GPT e DeepSeek talvolta restituiscono
-    # una prefazione perfettamente chiusa ma ignorano l'istruzione tecnica.
-    recupero = genera_sezione_con_ripetizione(
-        istruzione + """
-
-RECUPERO FINALE
-Restituisci ora solo il corpo della Prefazione, senza marcatore tecnico.
-Usa 140-220 parole e termina con un punto, punto interrogativo o esclamativo.
-""",
-        system_prompt,
-        sezione,
-        lingua,
-        tentativi=2,
-        max_completion_tokens=min(max(420, limite_output), 760),
-        addebita=False,
-    )
-    recupero = pulisci_testo_editoriale(recupero)
-    if len(recupero.split()) >= 80 and not motivo_chiusura_tecnica(recupero):
-        return recupero
     raise RuntimeError(
-        "La Prefazione non ha prodotto un testo completo dopo i tentativi di recupero. "
-        "Le altre sezioni non sono state modificate."
+        "La Prefazione non ha prodotto un testo completo e salvabile. "
+        f"Dettaglio: {ultimo_errore or 'risposta non disponibile'}."
     )
 
 
@@ -4066,8 +4062,11 @@ def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stil
         or str(contenuto_generato).lstrip().upper().startswith("ERRORE:")
     ):
         raise RuntimeError("nessun testo valido restituito dal cervello selezionato")
-    scrivi_sezione_memorizzata(sezione, contenuto_generato)
-    return contenuto_generato
+    # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
+    # stabile della stesura completa. Il job automatico la salva di nuovo nel
+    # cloud dopo questo ritorno, ma una pausa, un rerun o il cambio di tab non
+    # possono piu' farla sparire dall'editor o dall'anteprima nel frattempo.
+    return scrivi_sezione_stesura_completa(sezione, contenuto_generato)
 
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
 def valuta_approccio_neurologico(genere, stile, narrativa):
@@ -6573,6 +6572,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
                     st.session_state["job_scrittura_fermato"] = False
                     st.session_state["job_scrittura_checkpoint_superati"] = []
+                    # Ogni nuova stesura parte con il proprio conteggio di
+                    # recuperi: un errore di un progetto precedente non puo'
+                    # mai condizionare la prima sezione del nuovo libro.
+                    st.session_state["job_scrittura_tentativi"] = {}
                     st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                     st.session_state.pop("job_scrittura_errore", None)
                     st.session_state.pop("job_scrittura_ultima_completata", None)
@@ -6662,9 +6665,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             )
                             if not str(contenuto_generato or "").strip():
                                 raise RuntimeError("il cervello selezionato non ha restituito testo")
-                            # Salvataggio atomico prima del rerun completo: il
-                            # testo sarà visibile in editor e anteprima quando
-                            # Streamlit ridisegna la pagina.
+
+                            # ``scrivi_contenuto_dettagliato`` registra gia' la
+                            # copia protetta; questa seconda scrittura mantiene
+                            # l'archivio della coda esplicitamente allineato.
+                            # L'editor e l'anteprima potranno quindi rileggerla
+                            # anche se l'utente mette in pausa nel rerun dopo.
                             scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
                             st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
                             st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
@@ -6672,9 +6678,29 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                             st.session_state["job_scrittura_in_attesa"] = True
                             st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
+                            st.session_state.setdefault("job_scrittura_tentativi", {}).pop(sezione_corrente, None)
                             salva_stesura_generata_in_cloud(sezioni_intero_libro, "sezione del libro generata")
                             st.rerun()
                         except Exception as exc:
+                            # Un errore transitorio della rete o del provider
+                            # non deve fermare il libro alla prima sezione. La
+                            # stessa voce resta in cima alla coda e riceve un
+                            # nuovo tentativo automatico; non viene mai saltata
+                            # né sostituita da una sezione successiva.
+                            tentativi = st.session_state.setdefault("job_scrittura_tentativi", {})
+                            numero_tentativi = int(tentativi.get(sezione_corrente, 0))
+                            if numero_tentativi < 1:
+                                tentativi[sezione_corrente] = numero_tentativi + 1
+                                st.session_state["job_scrittura_attivo"] = True
+                                st.session_state["job_scrittura_pausa"] = False
+                                st.session_state["job_scrittura_in_attesa"] = True
+                                st.session_state["job_scrittura_errore"] = (
+                                    f"{sezione_corrente}: primo tentativo non riuscito ({exc}). "
+                                    "Il software riprova automaticamente senza saltare la sezione."
+                                )
+                                st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 2.0
+                                st.rerun()
+
                             st.session_state["job_scrittura_attivo"] = False
                             st.session_state["job_scrittura_pausa"] = True
                             st.session_state["job_scrittura_in_attesa"] = True
@@ -6720,6 +6746,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state["job_scrittura_pausa"] = False
                         st.session_state["job_scrittura_in_attesa"] = True
                         st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 3.0
+                        # La ripresa e' una scelta esplicita dell'utente:
+                        # consente un nuovo recupero della voce rimasta in
+                        # cima alla coda, senza eliminarla o saltarla.
+                        st.session_state.setdefault("job_scrittura_tentativi", {}).pop(
+                            coda_scrittura[0], None
+                        )
                         st.session_state.pop("job_scrittura_errore", None)
                         st.rerun()
                 with stop_pausa:
