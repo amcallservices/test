@@ -1973,6 +1973,14 @@ def imposta_indice_progetto(testo_indice):
     recuperato dal progetto.
     """
     indice = str(testo_indice or "")
+    # L'indice è un dato del progetto, non del singolo widget della tab.
+    # La memoria unica viene aggiornata prima delle copie visuali.
+    try:
+        memoria_progetto_unica()["indice"] = indice
+    except NameError:
+        # La funzione viene definita più avanti nel file; questa compatibilità
+        # protegge esclusivamente l'eventuale inizializzazione molto precoce.
+        pass
     st.session_state["indice_raw"] = indice
     st.session_state["indice_editoriale"] = indice
     st.session_state["indice_widget_version"] = int(
@@ -2327,6 +2335,16 @@ def leggi_sezione_memorizzata(sezione):
     invece dal callback ``sincronizza_modifica_manuale``.
     """
     chiave = chiave_sezione(sezione)
+    # Prima della textarea e delle vecchie cache, leggiamo il manoscritto
+    # unico. Una pausa o un rerun non può quindi rendere invisibile un testo
+    # già concluso e registrato dal generatore.
+    progetto = memoria_progetto_unica()
+    testo_unico = str(progetto.get("contenuti", {}).get(sezione, "") or "")
+    if testo_unico.strip():
+        st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo_unico
+        st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo_unico
+        st.session_state[chiave] = testo_unico
+        return testo_unico
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     memoria_protetta = st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})
     valore_widget = st.session_state.get(chiave, "") or st.session_state.get(chiave_sezione_precedente(sezione), "")
@@ -2339,9 +2357,13 @@ def leggi_sezione_memorizzata(sezione):
         memoria[sezione] = memoria_protetta[sezione]
     valore_memoria = memoria.get(sezione, "")
     if str(valore_memoria).strip():
+        progetto["contenuti"][sezione] = valore_memoria
         return valore_memoria
     archivio_stesura = st.session_state.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
-    return memoria_protetta.get(sezione, "") or archivio_stesura.get(sezione, "") or valore_widget or ""
+    testo = memoria_protetta.get(sezione, "") or archivio_stesura.get(sezione, "") or valore_widget or ""
+    if str(testo).strip():
+        progetto["contenuti"][sezione] = testo
+    return testo
 
 
 def scrivi_sezione_memorizzata(sezione, contenuto):
@@ -2351,8 +2373,10 @@ def scrivi_sezione_memorizzata(sezione, contenuto):
     possa lasciare visibile solo l'ultimo testo generato.
     """
     testo = contenuto or ""
+    progetto = memoria_progetto_unica()
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
-    precedente = str(memoria.get(sezione, "") or "")
+    precedente = str(progetto.get("contenuti", {}).get(sezione, "") or "")
+    progetto["contenuti"][sezione] = testo
     memoria[sezione] = testo
     st.session_state.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo
     # Questa chiave non è più usata da una textarea: può quindi essere
@@ -2382,6 +2406,9 @@ def scrivi_sezione_stesura_completa(sezione, contenuto):
 
 def contenuto_memorizzato_puro(sezione):
     """Legge la copia stabile senza lasciarsi influenzare dal widget corrente."""
+    contenuto_unico = memoria_progetto_unica().get("contenuti", {}).get(sezione, "")
+    if str(contenuto_unico).strip():
+        return contenuto_unico
     memoria = st.session_state.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     contenuto = memoria.get(sezione, "")
     if not str(contenuto).strip():
@@ -2404,6 +2431,7 @@ def elenco_sezioni_progetto(sezioni_base):
     risultato = []
     for sezione in [
         *(sezioni_base or []),
+        *memoria_progetto_unica().get("contenuti", {}).keys(),
         *st.session_state.get(CHIAVE_REGISTRO_SEZIONI, []),
         *dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).keys(),
         *dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}).keys(),
@@ -2428,6 +2456,8 @@ def sincronizza_modifica_manuale(sezione, chiave_widget=None):
             archivio[sezione] = contenuto
         else:
             archivio.pop(sezione, None)
+    if not str(contenuto or "").strip():
+        memoria_progetto_unica().get("contenuti", {}).pop(sezione, None)
 
 
 def prepara_sezione_editor_selezionata():
@@ -2448,12 +2478,14 @@ def prepara_sezione_editor_selezionata():
 
 def reidrata_sezioni_memorizzate(sezioni):
     """Riporta nell'editor tutte le sezioni già salvate prima di renderizzare i widget."""
+    progetto = memoria_progetto_unica()
+    memoria_unica = progetto.get("contenuti", {}) or {}
     memoria = st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}
     memoria_protetta = st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}
     archivio_stesura = st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}
     da_reidratare = set(st.session_state.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
     for sezione in sezioni:
-        contenuto = memoria.get(sezione)
+        contenuto = memoria_unica.get(sezione, "") or memoria.get(sezione)
         if not str(contenuto or "").strip():
             contenuto = memoria_protetta.get(sezione, "")
         if not str(contenuto or "").strip():
@@ -2467,6 +2499,7 @@ def reidrata_sezioni_memorizzate(sezioni):
             st.session_state[chiave] = contenuto
             memoria[sezione] = contenuto
             memoria_protetta[sezione] = contenuto
+            progetto["contenuti"][sezione] = contenuto
             da_reidratare.discard(sezione)
     if da_reidratare:
         st.session_state[CHIAVE_SEZIONI_DA_REIDRATARE] = list(da_reidratare)
@@ -2491,14 +2524,35 @@ CAMPI_SALVATAGGIO_PROGETTO = {
 }
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 
+# Memoria unica del progetto. È la sola fonte autorevole per sidebar, indice,
+# manoscritto, fonti e immagini. Le vecchie chiavi rimangono soltanto come
+# copie di compatibilità con sessioni e CSV esportati in precedenza.
+CHIAVE_PROGETTO_UNICO = "progetto_editoriale_unico"
+
+
+def memoria_progetto_unica():
+    """Restituisce la fotografia editoriale unica, riparando dati parziali."""
+    progetto = st.session_state.setdefault(CHIAVE_PROGETTO_UNICO, {})
+    if not isinstance(progetto, dict):
+        progetto = {}
+        st.session_state[CHIAVE_PROGETTO_UNICO] = progetto
+    for nome in ("sidebar", "contenuti", "fonti", "immagini"):
+        if not isinstance(progetto.get(nome), dict):
+            progetto[nome] = {}
+    progetto["indice"] = str(progetto.get("indice", "") or "")
+    return progetto
+
 
 def sidebar_memorizzata_corrente():
     """Restituisce tutti i campi editoriali, inclusi quelli non visibili dopo un rerun."""
-    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    progetto = memoria_progetto_unica()
+    memoria = dict(progetto.get("sidebar", {}) or {})
+    memoria.update(dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {}))
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
         if chiave in st.session_state:
             memoria[nome] = st.session_state.get(chiave, "")
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(memoria)
+    progetto["sidebar"] = dict(memoria)
     return memoria
 
 
@@ -2519,17 +2573,19 @@ def esporta_progetto_editoriale_csv():
     writer.writeheader()
     writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "1"})
 
+    progetto = memoria_progetto_unica()
     for nome, valore in sidebar_memorizzata_corrente().items():
         writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
     # L'indice viene registrato due volte: la seconda copia protegge i CSV
     # aperti e risalvati da programmi che possono alterare una riga molto lunga.
     indice_da_esportare = str(
-        st.session_state.get("indice_raw", "") or st.session_state.get("indice_editoriale", "")
+        progetto.get("indice", "") or st.session_state.get("indice_raw", "") or ""
     )
     writer.writerow({"tipo": "progetto", "chiave": "indice_raw", "valore": indice_da_esportare})
     writer.writerow({"tipo": "progetto", "chiave": "indice_backup", "valore": indice_da_esportare})
 
-    contenuti = dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {})
+    contenuti = dict(progetto.get("contenuti", {}) or {})
+    contenuti.update(dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}))
     for sezione in st.session_state.get("lista_capitoli", []):
@@ -2657,7 +2713,9 @@ def mostra_memoria_visiva_progetto():
     # Includiamo anche un testo presente nel widget ma non ancora confluito
     # nella cache, per esempio subito dopo una modifica manuale.
     for chiave, valore in st.session_state.items():
-        if chiave.startswith("txt_") and str(valore).strip():
+        # I campi visuali temporanei terminano in _vN: non sono sezioni
+        # aggiuntive e non devono comparire come voci duplicate nella memoria.
+        if chiave.startswith("txt_") and not re.search(r"_v\d+$", chiave) and str(valore).strip():
             titolo = next((s for s in contenuti if chiave_sezione(s) == chiave), chiave[4:].replace("_", " "))
             contenuti[titolo] = valore
 
@@ -2700,6 +2758,18 @@ def applica_snapshot_progetto(snapshot):
     if not snapshot:
         return False
     sidebar = snapshot.get("sidebar", {})
+    # L'importazione sostituisce una sola fotografia completa, non una serie
+    # di cache separate. Da qui in avanti sidebar, indice e testi hanno la
+    # medesima origine e non possono risultare disallineati.
+    progetto = memoria_progetto_unica()
+    progetto["sidebar"] = dict(sidebar or {})
+    progetto["contenuti"] = {
+        str(sezione): str(contenuto)
+        for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items()
+        if str(sezione).strip() and str(contenuto or "").strip()
+    }
+    progetto["fonti"] = dict(snapshot.get("fonti", {}) or {})
+    progetto["immagini"] = dict(snapshot.get("immagini_capitoli", {}) or {})
     campi_ripristinati = []
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
         # Il controllo deve essere sulla presenza della chiave, non sul suo
@@ -2723,15 +2793,16 @@ def applica_snapshot_progetto(snapshot):
     # almeno la struttura leggibile dai titoli realmente salvati.
     if not indice.strip() and (snapshot.get("contenuti", {}) or {}):
         indice = "\n".join(str(sezione) for sezione in snapshot["contenuti"].keys() if str(sezione).strip())
-    if indice:
-        imposta_indice_progetto(indice)
+    # Anche un indice vuoto viene scritto nella memoria unica: impedisce che
+    # una vecchia bozza della pagina si mescoli al CSV appena importato.
+    imposta_indice_progetto(indice)
     for sezione, contenuto in (snapshot.get("contenuti", {}) or {}).items():
         if contenuto:
             scrivi_sezione_memorizzata(sezione, contenuto)
-    immagini = snapshot.get("immagini_capitoli", {}) or {}
+    immagini = progetto["immagini"]
     if immagini:
         st.session_state["immagini_capitoli"] = immagini
-    fonti = snapshot.get("fonti", {}) or {}
+    fonti = progetto["fonti"]
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
@@ -2789,10 +2860,12 @@ def salva_progetto_corrente(sidebar, sezioni):
     sidebar_completa = sidebar_memorizzata_corrente()
     sidebar_completa.update({nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO})
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar_completa)
+    progetto = memoria_progetto_unica()
+    progetto["sidebar"] = dict(sidebar_completa)
     # Il salvataggio manuale non deve mai trasformarsi in una fotografia
     # parziale. Prima conserva tutte le sezioni dell'ultima sessione cloud e
     # poi applica i testi più recenti presenti nella pagina.
-    contenuti = {}
+    contenuti = dict(progetto.get("contenuti", {}) or {})
     precedente = {}
     if not st.session_state.get("commercial_project_reset_requested"):
         precedente = carica_progetto_automatico()
@@ -2807,20 +2880,20 @@ def salva_progetto_corrente(sidebar, sezioni):
         if str(testo).strip():
             contenuti[sezione] = testo
     contenuti = {sezione: testo for sezione, testo in contenuti.items() if str(testo).strip()}
+    progetto["contenuti"] = dict(contenuti)
     st.session_state[CHIAVE_MEMORIA_SEZIONI] = dict(contenuti)
     st.session_state[CHIAVE_MEMORIA_PROTETTA] = dict(contenuti)
     # Un salvataggio da una pagina appena riaperta non deve mai cancellare un
     # indice già presente nel cloud solo perché il relativo widget non è ancora
     # stato renderizzato. Il RESET PROGETTO è l'unica eccezione esplicita.
-    indice_corrente = str(
-        st.session_state.get("indice_raw", "") or st.session_state.get("indice_editoriale", "") or ""
-    )
+    indice_corrente = str(progetto.get("indice", "") or st.session_state.get("indice_raw", "") or "")
     indice_precedente = str(
         precedente.get("indice_raw", "") or precedente.get("indice_backup", "") or ""
     )
     if not indice_corrente.strip() and indice_precedente.strip():
         indice_corrente = indice_precedente
         imposta_indice_progetto(indice_corrente)
+    progetto["indice"] = indice_corrente
     snapshot = {
         "sidebar": sidebar_completa,
         "indice_raw": indice_corrente,
@@ -2838,6 +2911,7 @@ def salva_progetto_corrente(sidebar, sezioni):
             "firma_ricerca_preliminare": st.session_state.get("firma_ricerca_preliminare", ""),
         },
     }
+    progetto["fonti"] = dict(snapshot["fonti"])
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     firma = hashlib.sha256(serializzato.encode("utf-8")).hexdigest()
     # Consideriamo concluso il salvataggio solo quando Supabase ha confermato
@@ -5882,6 +5956,12 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         # sezione resta leggibile anche se la pausa avviene nel
                         # rerun immediatamente successivo alla sua generazione.
                         scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
+                        # Porta l'editor esattamente alla sezione appena
+                        # conclusa. Al rerun la sua textarea avrà una chiave
+                        # nuova e mostrerà il testo già presente nel manoscritto
+                        # unico, non il vecchio campo vuoto del browser.
+                        st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
+                        st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
                         st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                         # SCRIVI TUTTO IL LIBRO è un ciclo protetto: ogni
                         # sezione conclusa viene inviata immediatamente al
