@@ -129,6 +129,13 @@ MODELLO_ANALISI_FONTI = os.getenv("SOURCE_ANALYSIS_MODEL", MODELLO_EDITORIALE)
 MODELLO_CONTROLLO_COPYRIGHT_COMPLETO = os.getenv("COPYRIGHT_SCREENING_MODEL", MODELLO_STESURA)
 MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO = os.getenv("COPYRIGHT_REVIEW_MODEL", MODELLO_EDITORIALE)
 MODELLO_DEEPSEEK_PRO = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+# Le API client possono attendere fino a dieci minuti per impostazione
+# predefinita. Per indice e fonti è un'attesa eccessiva: una risposta che si
+# blocca deve tornare alla UI con un esito chiaro, non lasciare lo spinner
+# attivo senza fine. I retry sono gestiti dall'app con logica editoriale,
+# quindi vengono disattivati nelle chiamate con un limite esplicito.
+TIMEOUT_RICERCA_WEB_SECONDI = 90.0
+TIMEOUT_INDICE_SECONDI = 150.0
 
 
 def provider_ia_selezionato():
@@ -208,7 +215,12 @@ def separa_mappa_e_registro_fonti_web(testo):
 
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
-    """Cerca e sintetizza fonti autorevoli prima dell'indice; il dossier resta interno al progetto."""
+    """Cerca fonti con un tempo massimo, senza bloccare la generazione dell'indice.
+
+    La ricerca migliora l'indice, ma non può diventare un punto morto: se il
+    provider non chiude la richiesta entro il limite, il credito web viene
+    restituito e l'indice prosegue usando il brief della sidebar.
+    """
     firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
     if not forza and st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
@@ -233,7 +245,10 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         if usa_deepseek_pro():
             # Ricerca nativa DeepSeek: nessuna chiamata a GPT. Il registro
             # viene conservato e mostrato nella stessa area delle fonti GPT.
-            risposta = client_deepseek.responses.create(
+            client_ricerca = client_deepseek.with_options(
+                timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0
+            )
+            risposta = client_ricerca.responses.create(
                 model=MODELLO_DEEPSEEK_PRO,
                 tools=[{"type": "web_search"}],
                 tool_choice={"type": "web_search"},
@@ -242,7 +257,10 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
                 input=istruzioni_ricerca,
             )
         else:
-            risposta = client.responses.create(
+            client_ricerca = client.with_options(
+                timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0
+            )
+            risposta = client_ricerca.responses.create(
                 model=MODELLO_ANALISI_FONTI,
                 tools=[{"type": "web_search_preview"}],
                 input=istruzioni_ricerca,
@@ -269,8 +287,13 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         except Exception:
             st.session_state["fonti_web_salvate"] = False
         return mappa
-    except Exception:
+    except Exception as exc:
         refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=CREDIT_COSTS["indice_ricerca_web"])
+        st.session_state["ultimo_esito_ricerca_preliminare"] = (
+            "Ricerca preliminare non disponibile o scaduta: l'indice verrà creato "
+            "dal brief della sidebar. Il credito della ricerca è stato riaccreditato."
+        )
+        st.session_state["ultimo_errore_ricerca_preliminare"] = str(exc)
         return ""
 
 
@@ -1325,7 +1348,15 @@ def _client_e_modello_testuale(modello_richiesto=None):
     return client_openai, (modello_richiesto or MODELLO_STESURA)
 
 
-def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None, model=None, reason="generazione_testo"):
+def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None,
+               model=None, reason="generazione_testo", timeout_seconds=None):
+    """Invia una richiesta testuale con timeout esplicito per i flussi editoriali.
+
+    La progettazione di indice usa il modello completo e può includere audit e
+    correzione. Senza un limite il client SDK può attendere dieci minuti e il
+    pulsante sembra bloccato. Il timeout ferma la sola richiesta in corso e
+    lascia intatti progetto, crediti e contenuti già salvati.
+    """
     riferimento = None
     try:
         if addebita:
@@ -1344,7 +1375,16 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
         elif usa_deepseek_pro():
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
-        response = client_testuale.chat.completions.create(**richiesta)
+        if timeout_seconds is None and model in {
+            MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
+        }:
+            timeout_seconds = TIMEOUT_INDICE_SECONDI
+        client_richiesta = client_testuale
+        if timeout_seconds:
+            client_richiesta = client_testuale.with_options(
+                timeout=float(timeout_seconds), max_retries=0
+            )
+        response = client_richiesta.chat.completions.create(**richiesta)
         testo = response.choices[0].message.content.strip()
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
@@ -2212,15 +2252,158 @@ def conta_sezioni_indice(indice):
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
                               budget_strutturale=""):
+    """Genera un indice robusto: nessuna proposta valida sparisce dopo l'attesa.
+
+    Il controllo 8/10 continua a certificare un indice "approvato", ma non è
+    più un interruttore che cancella una struttura già completa e nei limiti.
+    Un indice strutturalmente valido ma ancora migliorabile viene mostrato,
+    salvato e segnalato con trasparenza: l'utente può valutarlo o rigenerarlo
+    dal voto, senza ripetere la ricerca né pagare una seconda volta.
+    """
+    costo = CREDIT_COSTS["indice_generazione_editoriale"]
+    riferimento = addebita_azione_diretta("genera_indice_controllato", amount=costo)
+    indice_di_partenza = firma_indice(indice_da_superare)
+    difetti_bloccanti = (
+        "non sono stati riconosciuti capitoli", "capitoli senza almeno due sottocapitoli",
+        "sono richieste", "un capitolo del ricettario", "il ricettario contiene sottocapitoli",
+        "manca una sezione con quiz", "manca una sezione di simulazione", "struttura troppo breve",
+        "oltre il massimo consentito",
+    )
+
+    def valuta_candidata(indice_candidato):
+        """Restituisce validità strutturale e rilievi senza far cadere la UI."""
+        candidata = normalizza_indice_generato(indice_candidato)
+        problemi = criticita_indice_generato(
+            candidata, genere, titolo, trama, obiettivo,
+            minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli,
+        )
+        if massimo_sezioni and conta_sezioni_indice(candidata) > massimo_sezioni:
+            problemi.append(
+                f"l'indice contiene {conta_sezioni_indice(candidata)} sezioni, "
+                f"oltre il massimo consentito di {massimo_sezioni}"
+            )
+        identica = bool(indice_di_partenza and firma_indice(candidata) == indice_di_partenza)
+        if identica:
+            problemi.append(
+                "la proposta è identica all'indice valutato: applica concretamente i miglioramenti richiesti"
+            )
+        blocchi = any(
+            any(blocco in problema for blocco in difetti_bloccanti) for problema in problemi
+        )
+        return candidata, problemi, blocchi, identica
+
+    try:
+        corrente = normalizza_indice_generato(
+            chiedi_gpt(prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE)
+        )
+    except Exception as exc:
+        refund_credits(riferimento, reason="genera_indice_fallito", amount=costo)
+        st.session_state["ultimo_controllo_indice"] = (
+            "Indice non generato: la richiesta non ha restituito una risposta utilizzabile. "
+            "Il credito di progettazione è stato riaccreditato."
+        )
+        st.session_state["ultimo_errore_indice"] = str(exc)
+        return ""
+
+    migliore_strutturale = ""
+    ultimo_problema = ""
+    # Bozza iniziale + una correzione mirata: non moltiplica le attese API.
+    for tentativo in range(2):
+        corrente, problemi, ha_blocchi, proposta_identica = valuta_candidata(corrente)
+        if corrente and not ha_blocchi and not proposta_identica:
+            migliore_strutturale = corrente
+            try:
+                voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
+                    corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
+                    addebita=False,
+                )
+            except Exception as exc:
+                voto_editoriale, difetti_editoriali = 0, f"audit non disponibile ({exc})"
+            if voto_editoriale >= 8:
+                messaggio = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
+                if tentativo:
+                    messaggio = f"Indice corretto automaticamente e approvato {voto_editoriale}/10."
+                st.session_state["ultimo_controllo_indice"] = messaggio
+                return corrente
+            ultimo_problema = f"audit editoriale {voto_editoriale}/10: {difetti_editoriali}"
+        else:
+            voto_editoriale, difetti_editoriali = 0, "vincoli strutturali da correggere prima della valutazione editoriale"
+            ultimo_problema = "; ".join(problemi) or "risposta senza una struttura riconoscibile"
+
+        if tentativo == 1:
+            break
+
+        supera_limite = bool(massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni)
+        if supera_limite:
+            revisione = f"""Riduci e riorganizza l'indice qui sotto. Restituisci SOLO l'indice gerarchico pulito.
+
+VINCOLO INDEROGABILE: al massimo {massimo_sezioni} voci totali tra Parti, Capitoli e sottocapitoli.
+BUDGET DA RISPETTARE: {budget_strutturale or 'struttura compatta senza voci ridondanti'}.
+Unisci argomenti contigui e cancella i sottocapitoli ripetitivi: non limitarti ad abbreviare i titoli.
+Prima di rispondere conta le voci; se sono oltre il massimo, continua ad accorpare finché rientrano.
+
+INDICE DA COMPRIMERE
+{corrente}
+"""
+        else:
+            revisione = prompt + f"""
+
+REVISIONE OBBLIGATORIA DELL'INDICE
+Correggi questa proposta senza commenti, saluti, Markdown o testo esterno all'indice.
+Difetti da risolvere: {ultimo_problema}.
+Mantieni soltanto argomenti attinenti al brief, applica i limiti di struttura e restituisci
+solo l'indice gerarchico pulito. Non ripetere l'indice precedente senza modifiche visibili.
+
+INDICE DA CORREGGERE
+{corrente}
+"""
+        try:
+            corrente = normalizza_indice_generato(
+                chiedi_gpt(revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE)
+            )
+        except Exception as exc:
+            ultimo_problema = f"correzione non disponibile ({exc})"
+            break
+
+    if migliore_strutturale:
+        # Risposta affidabile anche quando il voto automatico è prudente: il
+        # testo non sparisce, il bottone VOTO INDICE resta disponibile per il
+        # perfezionamento e l'utente non deve ricliccare la generazione.
+        st.session_state["ultimo_controllo_indice"] = (
+            "Attenzione: indice strutturalmente valido e pubblicato, ma il controllo editoriale "
+            f"richiede un miglioramento prima della stesura: {ultimo_problema}. "
+            "Usa VOTO INDICE e, se necessario, RIGENERA INDICE SEGUENDO IL VOTO."
+        )
+        return migliore_strutturale
+
+    refund_credits(riferimento, reason="genera_indice_non_pubblicabile", amount=costo)
+    st.session_state["ultimo_controllo_indice"] = (
+        "Indice non pubblicato: non è stata prodotta una struttura utilizzabile nei limiti richiesti. "
+        "Il credito di progettazione è stato riaccreditato. Riprova senza pagare due volte."
+    )
+    return ""
+
+
+def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
+                              indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
+                              budget_strutturale=""):
     """Un solo clic genera, valuta e rigenera automaticamente fino alla soglia editoriale richiesta."""
     riferimento = addebita_azione_diretta("genera_indice_controllato", amount=CREDIT_COSTS["indice_generazione_editoriale"])
-    try:
-        # L'indice resta affidato al modello editoriale completo: è la base
-        # dell'intero libro e deve distribuire correttamente argomenti e sezioni.
-        corrente = normalizza_indice_generato(chiedi_gpt(prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
-    except Exception:
+    # L'indice resta affidato al modello editoriale completo, ma un timeout o
+    # una risposta non utilizzabile non deve lasciare lo spinner senza esito.
+    risposta_iniziale = chiedi_gpt(
+        prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
+        timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="genera_indice",
+    )
+    if not str(risposta_iniziale or "").strip() or str(risposta_iniziale).startswith("ERRORE:"):
         refund_credits(riferimento, reason="genera_indice_fallito", amount=CREDIT_COSTS["indice_generazione_editoriale"])
-        raise
+        st.session_state["ultimo_controllo_indice"] = (
+            "Indice non generato: il cervello non ha concluso la risposta entro il tempo previsto. "
+            "Nessun credito di progettazione è stato trattenuto: riprova tra poco."
+        )
+        st.session_state["ultimo_errore_indice"] = str(risposta_iniziale or "risposta vuota")
+        return ""
+    corrente = normalizza_indice_generato(risposta_iniziale)
     indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
     for tentativo in range(massimo_tentativi):
@@ -2299,9 +2482,19 @@ da correggere e verifica di aver applicato almeno le correzioni necessarie.
 INDICE RIFIUTATO DA CORREGGERE
 {corrente}
 """
-        corrente = normalizza_indice_generato(chiedi_gpt(revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE))
+        risposta_revisione = chiedi_gpt(
+            revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
+            timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="correzione_indice",
+        )
+        if not str(risposta_revisione or "").strip() or str(risposta_revisione).startswith("ERRORE:"):
+            st.session_state["ultimo_controllo_indice"] = (
+                "La bozza dell'indice è stata creata, ma la correzione automatica non ha concluso "
+                "la risposta entro il tempo previsto. Riprova la generazione tra poco."
+            )
+            st.session_state["ultimo_errore_indice"] = str(risposta_revisione or "risposta vuota")
+            return ""
+        corrente = normalizza_indice_generato(risposta_revisione)
     return ""
-
 
 def tipo_sezione_editoriale(sezione):
     """Classifica tutte le voci scrivibili, compresa la Prefazione."""
@@ -5624,7 +5817,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
 3. Incollalo come primo messaggio e invialo.
 
-4. GPT partirà da una domanda semplice sul libro che vuoi creare. Se le informazioni sono già chiare, preparerà subito la scheda; altrimenti farà una sola domanda breve per chiarire la scelta più importante.
+4. Dopo la tua idea, GPT chiederà sempre se vuoi aggiungere una personalizzazione del libro. Solo dopo la tua risposta preparerà la scheda; se manca un dato davvero decisivo, potrà fare un'ultima domanda breve.
 
 5. Alla fine riceverai una scheda pronta. Copia ogni risposta nel campo con lo stesso nome nella sidebar di Scrittore Site.
 
@@ -5800,12 +5993,22 @@ FASE 2 — POCHE DOMANDE
 
 Dopo la risposta dell'utente:
 
-1. Analizza l'idea e ricava autonomamente tutto ciò che è ragionevole dedurre.
-2. Se pubblico, obiettivo e argomento sono abbastanza chiari, prepara subito la scheda finale.
-3. Fai una sola domanda aggiuntiva soltanto se manca una scelta che cambia davvero il progetto, per esempio il pubblico o il tipo di libro.
-4. La domanda aggiuntiva deve essere molto breve e offrire al massimo tre alternative concrete.
-5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista, lunghezza o Cervello AI: sceglili tu.
-6. Non fare più di due domande complessive, salvo che l'idea sia troppo vaga per creare una scheda affidabile.
+1. Prima di redigere la scheda, fai SEMPRE questa domanda esplicita e soltanto questa:
+
+“Vuoi personalizzare questo libro?
+
+A. No, procedi con un progetto editoriale generale
+B. Sì, voglio aggiungere voce personale, episodi, esempi, materiali o priorità
+C. Sì, voglio indicare soprattutto confini da rispettare o punti in cui fermare la scrittura
+
+Quale scegli?”
+
+2. Se l'utente sceglie A, non aggiungere campi personali e passa alla scheda.
+3. Se sceglie B o C, chiedi in un solo messaggio i dettagli indispensabili: cosa includere, cosa evitare e, solo se utile, quando fermare la stesura per aggiungere una nota. Non inventare mai dati personali.
+4. Solo dopo la risposta sulla personalizzazione analizza l'idea e ricava autonomamente tutto ciò che è ragionevole dedurre.
+5. Se pubblico, obiettivo e argomento sono abbastanza chiari, prepara subito la scheda finale. Fai un'ulteriore domanda soltanto se manca una scelta che cambia davvero il progetto; deve essere breve e offrire al massimo tre alternative concrete.
+6. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista, lunghezza o Cervello AI: sceglili tu.
+7. Non fare più di due domande successive alla risposta iniziale dell'utente, salvo che l'idea sia troppo vaga per creare una scheda affidabile.
 
 Esempio di unica domanda aggiuntiva utile:
 
@@ -5894,12 +6097,12 @@ Per CERVELLO AI scegli un solo valore tra:
 
 Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di verifica copyright web o generazione immagini. Con DeepSeek è disponibile la ricerca delle fonti con registro visibile. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
 
-PERSONALIZZAZIONE DEL LIBRO (FACOLTATIVA)
+PERSONALIZZAZIONE DEL LIBRO (OPZIONALE, DA CHIEDERE PRIMA DELLA SCHEDA)
 
 La sidebar dispone anche di questi campi facoltativi: voce o prospettiva dell'autore; episodi, casi, esempi o materiali personali; priorità personali per il lettore; confini da rispettare; eventuali note aggiunte durante una pausa guidata.
 
-- Non chiedere questi dati per default e non fare una domanda aggiuntiva soltanto per ottenerli.
-- Se l'utente li offre spontaneamente, oppure chiede esplicitamente un libro più personale, aiutalo a formularli in modo concreto e coerente con il progetto.
+- Poni sempre la domanda A/B/C prevista nella FASE 2 prima di redigere la scheda. La personalizzazione resta facoltativa: la scelta A non richiede altri dati.
+- Se l'utente sceglie B o C, aiutalo a formularli in modo concreto e coerente con il progetto.
 - Non inventare mai esperienze, testimonianze, risultati o dettagli personali non dichiarati dall'utente.
 - Se i dati non sono disponibili, non aggiungere il blocco facoltativo nella scheda finale e non sostituirli con formule generiche.
 - Se sono disponibili, restituisci il blocco facoltativo dopo APPROFONDIMENTI: deve essere pronto da copiare nei campi di Personalizza il tuo libro. La modalità di pausa può essere soltanto: Continua automaticamente; Fermati prima di ogni Parte; Fermati prima della conclusione; Fermati prima delle Parti e della conclusione.
@@ -5980,7 +6183,7 @@ Ora copia ogni voce nel campo con lo stesso nome nella sidebar di Scrittore Site
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
             opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
-            personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION FIELDS — The sidebar also contains optional fields for author voice or perspective, personal episodes/cases/materials, reader priorities, boundaries to respect, and a guided-pause mode during full-book writing. Do not ask for these by default and never ask an extra question solely to obtain them. If the user voluntarily provides them or explicitly wants a more personal book, help formulate them concretely. Never invent personal experiences, testimonials or facts. Only when the user has provided relevant information, append the optional personalization fields after APPROFONDIMENTI in the final form; otherwise omit them entirely. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
+            personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION — Before drafting the final form, always ask explicitly whether the user wants to personalize the book: A. no, proceed with a general editorial project; B. yes, add personal voice, episodes, examples, materials or reader priorities; C. yes, mainly define boundaries or guided pauses. If A is selected, omit all optional personalization fields. If B or C is selected, ask in one message only for the indispensable details, then formulate the relevant fields concretely. Never invent personal experiences, testimonials or facts. Append personalization fields after APPROFONDIMENTI only when the user has chosen personalization and supplied relevant details. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
 {istruzioni_multilingue[lingua_sel]}
