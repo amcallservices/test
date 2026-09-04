@@ -12,7 +12,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-COMMERCIAL_VERSION = "beta 3d"
+COMMERCIAL_VERSION = "beta 7a"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
