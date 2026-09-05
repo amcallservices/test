@@ -2472,6 +2472,24 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 "la proposta è identica all'indice valutato: applica concretamente i miglioramenti richiesti "
                 "modificando struttura e titoli pertinenti"
             )
+        supera_limite = bool(massimo_sezioni and sezioni_generate > massimo_sezioni)
+        problemi_senza_estensione = [
+            problema for problema in problemi
+            if "oltre il massimo consentito" not in problema
+        ]
+        if supera_limite and not problemi_senza_estensione and not proposta_identica:
+            # Una struttura già leggibile e completa non deve sparire perché
+            # il modello ha superato soltanto una fascia numerica. Pubblicarla
+            # evita una seconda richiesta AI, non spreca crediti e lascia
+            # all'utente la scelta di rigenerarla più compatta in seguito.
+            st.session_state["ultimo_controllo_indice"] = (
+                f"Indice pubblicato con avviso: {sezioni_generate + 1} sezioni totali inclusa la Prefazione, "
+                f"oltre la fascia massima del profilo ({massimo_sezioni + 1}). "
+                "La struttura è stata mantenuta perché non presenta altre criticità oggettive; "
+                "puoi conservarla o rigenerarla più compatta senza perdere il progetto."
+            )
+            avanza(100, "Indice pubblicato con avviso sulla lunghezza.")
+            return corrente
         difetti_bloccanti = (
             "non sono stati riconosciuti capitoli", "capitoli senza almeno due sottocapitoli",
             "sono richieste", "un capitolo del ricettario", "il ricettario contiene sottocapitoli", "manca una sezione con quiz", "manca una sezione di simulazione",
@@ -2502,7 +2520,6 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         if tentativo == massimo_tentativi - 1:
             st.session_state["ultimo_controllo_indice"] = "Attenzione: l'indice non ha raggiunto la soglia minima di 8/10 e richiede una verifica manuale: " + "; ".join(problemi)
             return ""
-        supera_limite = bool(massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni)
         if supera_limite:
             # Una richiesta dedicata alla compressione è più affidabile del prompt editoriale completo,
             # che potrebbe contenere molte istruzioni e spingere il modello a espandere l'indice.
