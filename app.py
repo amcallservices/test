@@ -2292,6 +2292,34 @@ def conta_sezioni_indice(indice):
     return sum(1 for riga in (indice or "").splitlines() if re.search(regex, riga.strip()))
 
 
+def capitoli_eccessivamente_frammentati(indice, massimo_sottocapitoli):
+    """Individua capitoli spezzati in micro-voci anziché argomenti completi."""
+    if not massimo_sottocapitoli:
+        return []
+    righe = [riga.strip() for riga in normalizza_indice_generato(indice).splitlines() if riga.strip()]
+    regex_capitolo = r"(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+"
+    regex_limite = r"(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\s+"
+    rilevati = []
+    for posizione, capitolo in enumerate(righe):
+        if not re.match(regex_capitolo, capitolo):
+            continue
+        fine = next(
+            (
+                indice_successivo for indice_successivo in range(posizione + 1, len(righe))
+                if re.match(regex_capitolo, righe[indice_successivo])
+                or re.match(regex_limite, righe[indice_successivo])
+            ),
+            len(righe),
+        )
+        sottocapitoli = [
+            riga for riga in righe[posizione + 1:fine]
+            if re.match(r"^\d+\.\d+\s+", riga)
+        ]
+        if len(sottocapitoli) > massimo_sottocapitoli:
+            rilevati.append((capitolo, len(sottocapitoli)))
+    return rilevati
+
+
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
                               budget_strutturale=""):
@@ -2429,7 +2457,8 @@ INDICE DA CORREGGERE
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
-                              budget_strutturale="", profilo_lunghezza="Standard KDP", aggiorna_stato=None):
+                              budget_strutturale="", profilo_lunghezza="Standard KDP",
+                              massimo_sottocapitoli=None, aggiorna_stato=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2470,7 +2499,17 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
         )
         stima_capacita = stima_budget_parole_indice(corrente, profilo_lunghezza)
-        sotto_soglia_pagine = not stima_capacita["raggiunge_soglia"]
+        capitoli_frammentati = capitoli_eccessivamente_frammentati(
+            corrente, massimo_sottocapitoli
+        )
+        frammentazione_eccessiva = bool(capitoli_frammentati)
+        if frammentazione_eccessiva:
+            dettagli = "; ".join(
+                f"{capitolo} ({numero})" for capitolo, numero in capitoli_frammentati[:3]
+            )
+            problemi.append(
+                f"indice troppo dettagliato: capitoli oltre {massimo_sottocapitoli} sottocapitoli ({dettagli})"
+            )
         sezioni_generate = conta_sezioni_indice(corrente)
         if massimo_sezioni and sezioni_generate > massimo_sezioni:
             problemi.append(
@@ -2515,12 +2554,12 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
             )
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica and not (
-            sotto_soglia_pagine and tentativo < massimo_tentativi - 1
+            frammentazione_eccessiva and tentativo < massimo_tentativi - 1
         ):
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
                 esito += " Note qualitative considerate: " + "; ".join(problemi)
-            if sotto_soglia_pagine:
+            if not stima_capacita["raggiunge_soglia"]:
                 esito += (
                     " Avviso di lunghezza: con i limiti delle sezioni questo indice stima "
                     f"{stima_capacita['pagine_minime']}–{stima_capacita['pagine_massime']} pagine 6×9, "
@@ -2555,27 +2594,24 @@ Prima di rispondere conta le voci; se sono oltre il massimo, continua ad accorpa
 INDICE DA COMPRIMERE
 {corrente}
 """
-        elif sotto_soglia_pagine:
-            # L'indice è formalmente valido ma, sommando i limiti delle sue
-            # sezioni, non può raggiungere la soglia di pagine scelta. Una
-            # sola revisione prova a coprire passaggi mancanti del brief;
-            # al secondo esito il libro resta comunque pubblicabile.
+        elif frammentazione_eccessiva:
+            # Gli esempi, le varianti, gli errori comuni e le verifiche non
+            # meritano automaticamente una voce propria: chiediamo una sola
+            # compressione per restituire capitoli più leggibili e sostanziosi.
             revisione = prompt + f"""
 
-RIEQUILIBRIO MIRATO DEL BUDGET DI STESURA — TENTATIVO {tentativo + 1}
-L'indice attuale ha una capacità stimata di {stima_capacita['pagine_minime']}–{stima_capacita['pagine_massime']} pagine 6×9,
-mentre il profilo {profilo_lunghezza} ha obiettivo {stima_capacita['obiettivo_pagine']} e soglia con tolleranza
-{stima_capacita['soglia_pagine']} pagine. La stima deriva esclusivamente dai limiti di parole delle voci già presenti:
-Prefazione, Parti, capitoli-cornice e sezioni autonome.
+COMPRESSIONE DEL DETTAGLIO DELL'INDICE — TENTATIVO {tentativo + 1}
+Alcuni capitoli sono spezzati in troppi micro-sottocapitoli. Riscrivi l'intero indice con argomenti più ampi e completi:
+ogni Capitolo può avere al massimo {massimo_sottocapitoli} sottocapitoli. Accorpa nello stesso sottocapitolo esempi,
+varianti, errori comuni, strumenti, verifiche e casi che sviluppano il medesimo tema. Mantieni separati soltanto passaggi
+che cambiano davvero competenza, scena, decisione, problema o risultato per il lettore.
 
-Rileggi il brief e riscrivi l'intero indice solo se individui passaggi, casi, verifiche, scene o applicazioni DAVVERO
-distinti e necessari al risultato promesso. Distribuiscili in modo logico, senza duplicare concetti né creare titoli
-generici. Non superare il massimo già indicato. Se non esistono argomenti nuovi utili, conserva una struttura concisa:
-non inventare voci e non inserire riempitivi soltanto per aumentare la stima delle pagine.
+Non aggiungere nuove voci per inseguire la stima delle pagine; non eliminare invece passaggi indispensabili al brief.
+Non superare il massimo complessivo già indicato e non trasformare titoli diversi in duplicati generici.
 
 Restituisci SOLO l'indice gerarchico pulito.
 
-INDICE DA RIEQUILIBRARE
+INDICE DA COMPATTARE
 {corrente}
 """
         else:
@@ -5084,6 +5120,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "Standard KDP": (0, 0),
         "Approfondito": (0, 0),
     }[val_lunghezza]
+    massimo_sottocapitoli_per_capitolo = {
+        "Compatto": 3,
+        "Standard KDP": 4,
+        "Approfondito": 5,
+    }[val_lunghezza]
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -6124,6 +6165,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 minimo_capitoli=minimi_struttura_indice[1],
                 budget_strutturale=budget_struttura_indice,
                 profilo_lunghezza=val_lunghezza,
+                massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
             )
             if not indice_test:
                 raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
@@ -7043,10 +7085,12 @@ Costruisci l'indice come un progetto editoriale eseguibile, non come un elenco g
 Ricava dal brief il risultato finale promesso, il pubblico e il livello di partenza, i problemi
 concreti, il metodo didattico, i deliverable e i limiti del libro.
 Definisci una sequenza dal livello iniziale al risultato finale. Ogni Parte deve avere una
-funzione distinta; ogni Capitolo deve avere un obiettivo autonomo; ogni sottocapitolo deve
-avere un confine preciso, un risultato concreto e almeno un deliverable coerente: procedura,
-prompt copiabile, esempio eseguibile, checklist, tabella, esercizio, caso studio o criterio
-di verifica. Non creare sottocapitoli ripetitivi.
+funzione distinta e ogni Capitolo un obiettivo autonomo. Crea un sottocapitolo soltanto quando
+apre un argomento davvero diverso: non creare voci separate per esempio, variante, errore comune,
+strumento, checklist, verifica o caso studio se possono essere sviluppati bene nella medesima sezione.
+Ogni voce deve quindi contenere un argomento completo e concreto, non un singolo passaggio minimo.
+Per questo profilo non superare {massimo_sottocapitoli_per_capitolo} sottocapitoli per Capitolo.
+Mantieni separati solo passaggi che cambiano realmente competenza, scena, decisione, problema o risultato.
 Distribuisci gli argomenti dell'obiettivo e della trama senza anticipare tutto nell'introduzione.
 Per strumenti o software soggetti ad aggiornamento, separa principi stabili, funzioni da verificare
 e applicazioni. Mantieni coerenza con genere, tipologia, stile, POV, obiettivo e argomento.
@@ -7116,6 +7160,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
                     profilo_lunghezza=val_lunghezza,
+                    massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
                     aggiorna_stato=aggiorna_avanzamento_indice,
                 )
                 st.session_state.pop("analisi_voto_indice", None)
@@ -7227,6 +7272,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             minimo_capitoli=minimi_struttura_indice[1],
                             budget_strutturale=budget_struttura_indice,
                             profilo_lunghezza=val_lunghezza,
+                            massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
                         )
                         if proposta:
                             st.session_state["indice_proposto_dal_voto"] = proposta
