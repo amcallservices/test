@@ -2429,7 +2429,7 @@ INDICE DA CORREGGERE
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
-                              budget_strutturale="", aggiorna_stato=None):
+                              budget_strutturale="", profilo_lunghezza="Standard KDP", aggiorna_stato=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2469,6 +2469,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         problemi = criticita_indice_generato(
             corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
         )
+        stima_capacita = stima_budget_parole_indice(corrente, profilo_lunghezza)
+        sotto_soglia_pagine = not stima_capacita["raggiunge_soglia"]
         sezioni_generate = conta_sezioni_indice(corrente)
         if massimo_sezioni and sezioni_generate > massimo_sezioni:
             problemi.append(
@@ -2512,12 +2514,25 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
                 corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
             )
-        if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica:
+        if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica and not (
+            sotto_soglia_pagine and tentativo < massimo_tentativi - 1
+        ):
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
                 esito += " Note qualitative considerate: " + "; ".join(problemi)
+            if sotto_soglia_pagine:
+                esito += (
+                    " Avviso di lunghezza: con i limiti delle sezioni questo indice stima "
+                    f"{stima_capacita['pagine_minime']}–{stima_capacita['pagine_massime']} pagine 6×9, "
+                    f"sotto la soglia con tolleranza ({stima_capacita['soglia_pagine']}/"
+                    f"{stima_capacita['obiettivo_pagine']}). È stato pubblicato perché completo e di qualità: "
+                    "il software non aggiunge riempitivi né blocca la pubblicazione."
+                )
             if tentativo:
-                esito = f"Indice corretto automaticamente al controllo {tentativo} e approvato {voto_editoriale}/10."
+                esito = (
+                    f"Indice corretto automaticamente al controllo {tentativo} e approvato "
+                    f"{voto_editoriale}/10. " + esito
+                )
             st.session_state["ultimo_controllo_indice"] = esito
             avanza(100, "Indice approvato e pronto per il salvataggio.")
             return corrente
@@ -2538,6 +2553,29 @@ Unisci argomenti contigui e cancella i sottocapitoli ripetitivi: non limitarti a
 Prima di rispondere conta le voci; se sono oltre il massimo, continua ad accorpare finché rientrano.
 
 INDICE DA COMPRIMERE
+{corrente}
+"""
+        elif sotto_soglia_pagine:
+            # L'indice è formalmente valido ma, sommando i limiti delle sue
+            # sezioni, non può raggiungere la soglia di pagine scelta. Una
+            # sola revisione prova a coprire passaggi mancanti del brief;
+            # al secondo esito il libro resta comunque pubblicabile.
+            revisione = prompt + f"""
+
+RIEQUILIBRIO MIRATO DEL BUDGET DI STESURA — TENTATIVO {tentativo + 1}
+L'indice attuale ha una capacità stimata di {stima_capacita['pagine_minime']}–{stima_capacita['pagine_massime']} pagine 6×9,
+mentre il profilo {profilo_lunghezza} ha obiettivo {stima_capacita['obiettivo_pagine']} e soglia con tolleranza
+{stima_capacita['soglia_pagine']} pagine. La stima deriva esclusivamente dai limiti di parole delle voci già presenti:
+Prefazione, Parti, capitoli-cornice e sezioni autonome.
+
+Rileggi il brief e riscrivi l'intero indice solo se individui passaggi, casi, verifiche, scene o applicazioni DAVVERO
+distinti e necessari al risultato promesso. Distribuiscili in modo logico, senza duplicare concetti né creare titoli
+generici. Non superare il massimo già indicato. Se non esistono argomenti nuovi utili, conserva una struttura concisa:
+non inventare voci e non inserire riempitivi soltanto per aumentare la stima delle pagine.
+
+Restituisci SOLO l'indice gerarchico pulito.
+
+INDICE DA RIEQUILIBRARE
 {corrente}
 """
         else:
@@ -2581,6 +2619,66 @@ def tipo_sezione_editoriale(sezione):
 
 
 PAROLE_PER_PAGINA_6X9 = 275
+
+
+def stima_budget_parole_indice(indice, profilo_lunghezza):
+    """Stima la capacità reale di un indice prima della stesura.
+
+    Il calcolo non usa un numero teorico di capitoli: somma i limiti reali
+    della Prefazione, delle Parti, dei capitoli-cornice e delle sezioni
+    sostanziali. Serve a guidare una sola eventuale revisione dell'indice,
+    mai a imporre voci vuote o a bloccare un libro già valido.
+    """
+    profilo = PROFILI_LUNGHEZZA_STESURA.get(
+        profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+    )
+    regex = (
+        r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|"
+        r"الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+\.)"
+    )
+    sezioni = []
+    for riga in str(indice or "").splitlines():
+        voce = riga.strip()
+        if voce and (sezione_prefazione(voce) or re.search(regex, voce)) and voce not in sezioni:
+            sezioni.append(voce)
+    if not any(sezione_prefazione(sezione) for sezione in sezioni):
+        # Il generatore restituisce il corpo dell'indice e il software
+        # aggiunge la Prefazione dopo: la stima deve già considerarla.
+        sezioni.insert(0, titolo_prefazione())
+
+    parole_minime = 0
+    parole_massime = 0
+    dettaglio = {"prefazione": 0, "parti": 0, "capitoli_cornice": 0, "sezioni": 0}
+    for sezione in sezioni:
+        tipo = tipo_sezione_editoriale(sezione)
+        if tipo == "prefazione":
+            minimo, massimo, categoria = 140, 220, "prefazione"
+        elif tipo == "parte":
+            minimo, massimo, categoria = 110, 180, "parti"
+        elif tipo == "capitolo" and individua_sottocapitoli_del_capitolo(sezione, sezioni):
+            minimo, massimo, categoria = 160, 260, "capitoli_cornice"
+        else:
+            minimo, massimo, categoria = profilo["min_parole"], profilo["max_parole"], "sezioni"
+        parole_minime += minimo
+        parole_massime += massimo
+        dettaglio[categoria] += 1
+
+    obiettivo_pagine = int(profilo["pagine_minime"])
+    tolleranza = float(profilo.get("tolleranza_pagine", 0.15))
+    obiettivo_parole = obiettivo_pagine * PAROLE_PER_PAGINA_6X9
+    soglia_parole = math.ceil(obiettivo_parole * (1 - tolleranza))
+    return {
+        "sezioni_totali": len(sezioni),
+        "parole_minime": parole_minime,
+        "parole_massime": parole_massime,
+        "pagine_minime": math.ceil(parole_minime / PAROLE_PER_PAGINA_6X9) if parole_minime else 0,
+        "pagine_massime": math.ceil(parole_massime / PAROLE_PER_PAGINA_6X9) if parole_massime else 0,
+        "obiettivo_pagine": obiettivo_pagine,
+        "soglia_pagine": math.ceil(obiettivo_pagine * (1 - tolleranza)),
+        "soglia_parole": soglia_parole,
+        "raggiunge_soglia": parole_massime >= soglia_parole,
+        "dettaglio": dettaglio,
+    }
 
 
 def riepilogo_stima_pagine_manoscritto(sezioni, contenuti, indice, profilo_lunghezza):
@@ -6025,6 +6123,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 minimo_parti=minimi_struttura_indice[0],
                 minimo_capitoli=minimi_struttura_indice[1],
                 budget_strutturale=budget_struttura_indice,
+                profilo_lunghezza=val_lunghezza,
             )
             if not indice_test:
                 raise RuntimeError(st.session_state.get("ultimo_controllo_indice", "L'indice di collaudo non ha superato il controllo."))
@@ -7016,6 +7115,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     minimo_parti=minimi_struttura_indice[0],
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
+                    profilo_lunghezza=val_lunghezza,
                     aggiorna_stato=aggiorna_avanzamento_indice,
                 )
                 st.session_state.pop("analisi_voto_indice", None)
@@ -7126,6 +7226,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             minimo_parti=minimi_struttura_indice[0],
                             minimo_capitoli=minimi_struttura_indice[1],
                             budget_strutturale=budget_struttura_indice,
+                            profilo_lunghezza=val_lunghezza,
                         )
                         if proposta:
                             st.session_state["indice_proposto_dal_voto"] = proposta
