@@ -224,6 +224,46 @@ CONTACT_LABELS = {
     "中文": "联系我们",
 }
 
+# Il referral resta un servizio commerciale separato dall'editor: queste
+# etichette coprono le stesse lingue selezionabili nel progetto dell'utente.
+REFERRAL_COPY = {
+    "Italiano": {
+        "title": "🎁 Invita e guadagna crediti",
+        "intro": "Condividi il tuo link personale. Il premio arriva solo dopo il primo pacchetto ammesso acquistato dall’amico invitato.",
+        "link": "Il tuo link personale",
+        "copy": "Tocca il link per copiarlo e condividerlo.",
+        "rewards": "Premi: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionale 150+50 crediti. Il primo numero va a te, il secondo al nuovo utente. Il pacchetto Prova non dà premi.",
+        "registered": "Inviti registrati",
+        "rewarded": "Premi assegnati",
+        "pending": "In attesa del primo acquisto ammesso",
+        "empty": "Non hai ancora inviti registrati.",
+    },
+    "English": {
+        "title": "🎁 Invite friends and earn credits", "intro": "Share your personal link. Rewards are granted only after your friend’s first eligible package purchase.", "link": "Your personal link", "copy": "Tap the link to copy and share it.", "rewards": "Rewards: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 credits. The first number is yours, the second is for the new user. The Trial package gives no reward.", "registered": "Registered referrals", "rewarded": "Rewards granted", "pending": "Waiting for the first eligible purchase", "empty": "You have no registered referrals yet."
+    },
+    "Español": {
+        "title": "🎁 Invita y gana créditos", "intro": "Comparte tu enlace personal. La recompensa llega solo tras la primera compra elegible de la persona invitada.", "link": "Tu enlace personal", "copy": "Toca el enlace para copiarlo y compartirlo.", "rewards": "Premios: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 créditos. El primer número es para ti y el segundo para el nuevo usuario. El paquete Prueba no da premios.", "registered": "Invitaciones registradas", "rewarded": "Premios asignados", "pending": "En espera de la primera compra elegible", "empty": "Aún no tienes invitaciones registradas."
+    },
+    "Français": {
+        "title": "🎁 Invitez et gagnez des crédits", "intro": "Partagez votre lien personnel. La récompense est attribuée après le premier achat éligible de la personne invitée.", "link": "Votre lien personnel", "copy": "Touchez le lien pour le copier et le partager.", "rewards": "Récompenses : Base 15+10 · Creator 38+15 · Studio 75+30 · Professionnel 150+50 crédits. Le premier nombre est pour vous, le second pour le nouvel utilisateur. Le pack Essai ne donne pas de récompense.", "registered": "Invitations enregistrées", "rewarded": "Récompenses attribuées", "pending": "En attente du premier achat éligible", "empty": "Vous n’avez encore aucune invitation enregistrée."
+    },
+    "Deutsch": {
+        "title": "🎁 Freunde einladen und Credits verdienen", "intro": "Teile deinen persönlichen Link. Die Prämie wird erst nach dem ersten zulässigen Paketkauf der eingeladenen Person gutgeschrieben.", "link": "Dein persönlicher Link", "copy": "Tippe auf den Link, um ihn zu kopieren und zu teilen.", "rewards": "Prämien: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionell 150+50 Credits. Die erste Zahl ist für dich, die zweite für den neuen Nutzer. Das Testpaket bringt keine Prämie.", "registered": "Registrierte Einladungen", "rewarded": "Gutgeschriebene Prämien", "pending": "Warten auf den ersten zulässigen Kauf", "empty": "Noch keine Einladungen registriert."
+    },
+    "Română": {
+        "title": "🎁 Invită și câștigă credite", "intro": "Distribuie linkul personal. Recompensa se acordă numai după prima achiziție eligibilă a persoanei invitate.", "link": "Linkul tău personal", "copy": "Atinge linkul pentru a-l copia și distribui.", "rewards": "Recompense: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 credite. Primul număr este pentru tine, al doilea pentru utilizatorul nou. Pachetul de probă nu oferă recompense.", "registered": "Invitații înregistrate", "rewarded": "Recompense acordate", "pending": "În așteptarea primei achiziții eligibile", "empty": "Nu ai încă invitații înregistrate."
+    },
+    "Русский": {
+        "title": "🎁 Приглашайте и получайте кредиты", "intro": "Поделитесь личной ссылкой. Награда начисляется только после первой подходящей покупки приглашённого пользователя.", "link": "Ваша личная ссылка", "copy": "Нажмите на ссылку, чтобы скопировать и поделиться ею.", "rewards": "Награды: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 кредитов. Первое число — вам, второе — новому пользователю. Пробный пакет не даёт наград.", "registered": "Зарегистрированные приглашения", "rewarded": "Начисленные награды", "pending": "Ожидание первой подходящей покупки", "empty": "Зарегистрированных приглашений пока нет."
+    },
+    "العربية": {
+        "title": "🎁 ادعُ الأصدقاء واكسب أرصدة", "intro": "شارك رابطك الشخصي. تُمنح المكافأة فقط بعد أول عملية شراء مؤهلة للشخص المدعو.", "link": "رابطك الشخصي", "copy": "اضغط على الرابط لنسخه ومشاركته.", "rewards": "المكافآت: Base ‏15+10 · Creator ‏38+15 · Studio ‏75+30 · Professional ‏150+50 رصيداً. الرقم الأول لك والثاني للمستخدم الجديد. باقة التجربة لا تمنح مكافآت.", "registered": "الدعوات المسجلة", "rewarded": "المكافآت الممنوحة", "pending": "بانتظار أول عملية شراء مؤهلة", "empty": "لا توجد دعوات مسجلة بعد."
+    },
+    "中文": {
+        "title": "🎁 邀请好友并赚取积分", "intro": "分享您的专属链接。只有受邀好友首次购买符合条件的套餐后才会发放奖励。", "link": "您的专属链接", "copy": "点击链接即可复制并分享。", "rewards": "奖励：Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 积分。第一个数字归您，第二个数字归新用户。试用套餐没有奖励。", "registered": "已登记邀请", "rewarded": "已发放奖励", "pending": "等待首次符合条件的购买", "empty": "您暂时没有已登记的邀请。"
+    },
+}
+
 # Testi della pagina pubblica nelle stesse nove lingue offerte dall'editor.
 # Il cambio lingua qui modifica solo la home: non altera un eventuale libro dell'utente.
 HOME_COPY = {
@@ -510,6 +550,106 @@ def _supabase(method: str, path: str, *, payload: Any | None = None, params: dic
     return response.json()
 
 
+def _normalizza_codice_referral(value: Any) -> str:
+    """Accetta solo il formato pubblico di un codice referral, mai testo libero."""
+    code = "".join(
+        carattere for carattere in str(value or "").upper()
+        if carattere.isascii() and carattere.isalnum()
+    )
+    return code if len(code) == 12 and code.startswith("SS") else ""
+
+
+def _cattura_referral_dalla_url() -> None:
+    """Conserva il codice del link soltanto fino alla registrazione del nuovo utente."""
+    if _mode() == "demo" or st.session_state.get("commercial_user"):
+        return
+    try:
+        code = _normalizza_codice_referral(st.query_params.get("ref", ""))
+    except Exception:
+        code = ""
+    if code:
+        st.session_state["commercial_pending_referral_code"] = code
+
+
+def _rimuovi_referral_dalla_url() -> None:
+    """Evita che un vecchio link venga riassociato dopo una registrazione riuscita."""
+    try:
+        if "ref" in st.query_params:
+            del st.query_params["ref"]
+    except Exception:
+        pass
+
+
+def _collega_referral_nuovo_account(user_id: str) -> dict[str, Any]:
+    """Registra l'invito al momento della registrazione, prima di eventuali refresh o conferme email."""
+    code = _normalizza_codice_referral(
+        st.session_state.get("commercial_pending_referral_code", "")
+    )
+    if not code or not user_id or _mode() == "demo" or not _supabase_ready():
+        return {"ok": False, "status": "no_pending_referral"}
+    try:
+        outcome = _supabase(
+            "POST",
+            "rest/v1/rpc/claim_writer_referral",
+            payload={"p_referred_user_id": user_id, "p_code": code},
+        )
+    except Exception:
+        # Non blocchiamo mai la registrazione dell'account: il referral è un
+        # vantaggio opzionale e non deve compromettere l'accesso al software.
+        return {"ok": False, "status": "claim_unavailable"}
+
+    status = str((outcome or {}).get("status", "")) if isinstance(outcome, dict) else ""
+    if status in {"claimed", "invalid_code", "self_referral", "purchase_already_exists"}:
+        st.session_state.pop("commercial_pending_referral_code", None)
+        _rimuovi_referral_dalla_url()
+    return outcome if isinstance(outcome, dict) else {"ok": False, "status": "claim_unavailable"}
+
+
+def _codice_referral_personale(user_id: str) -> str:
+    """Legge il codice già creato dal database; lo rigenera solo se manca."""
+    if not user_id or _mode() == "demo" or not _supabase_ready():
+        return ""
+    try:
+        records = _supabase(
+            "GET",
+            "rest/v1/writer_referral_codes",
+            params={"select": "code", "user_id": f"eq.{user_id}", "limit": "1"},
+        ) or []
+        if records:
+            return _normalizza_codice_referral(records[0].get("code", ""))
+        generated = _supabase(
+            "POST",
+            "rest/v1/rpc/ensure_writer_referral_code",
+            payload={"p_user_id": user_id},
+        )
+        return _normalizza_codice_referral(generated)
+    except Exception:
+        return ""
+
+
+def _riepilogo_referral(user_id: str) -> dict[str, int]:
+    """Conta gli inviti dell'utente senza leggere o mostrare i dati di altri account."""
+    summary = {"registered": 0, "rewarded": 0, "pending": 0}
+    if not user_id or _mode() == "demo" or not _supabase_ready():
+        return summary
+    try:
+        rows = _supabase(
+            "GET",
+            "rest/v1/writer_referrals",
+            params={
+                "select": "status",
+                "referrer_user_id": f"eq.{user_id}",
+                "limit": "1000",
+            },
+        ) or []
+        summary["registered"] = len(rows)
+        summary["rewarded"] = sum(1 for row in rows if row.get("status") == "rewarded")
+        summary["pending"] = sum(1 for row in rows if row.get("status") == "pending")
+    except Exception:
+        pass
+    return summary
+
+
 def carica_progetto_automatico() -> dict[str, Any]:
     """Recupera l'ultima bozza dell'account senza interrompere l'editor se la tabella non è ancora configurata."""
     user = st.session_state.get("commercial_user_context") or {}
@@ -714,7 +854,8 @@ def _apri_progetto_pulito_dopo_accesso() -> None:
     st.session_state["commercial_editor_avvio_pulito"] = True
 
 
-def _supabase_signup(email: str, password: str) -> None:
+def _supabase_signup(email: str, password: str) -> dict[str, Any]:
+    """Crea l'account e restituisce solo l'identificatore necessario al referral opzionale."""
     url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/signup"
     payload = {"email": email.strip(), "password": password}
     app_url = _secret("APP_BASE_URL").rstrip("/")
@@ -744,6 +885,15 @@ def _supabase_signup(email: str, password: str) -> None:
             "registrata, usa Accedi oppure Password dimenticata; altrimenti "
             "riprova tra qualche minuto."
         )
+    try:
+        data = response.json()
+    except ValueError:
+        data = {}
+    user = data.get("user") if isinstance(data, dict) else {}
+    return {
+        "id": str((user or {}).get("id", "")),
+        "email": str((user or {}).get("email", email.strip())),
+    }
 
 
 def _supabase_resend_confirmation(email: str) -> None:
@@ -1427,9 +1577,15 @@ def _account_gate() -> dict[str, Any]:
         password = st.text_input("Password", type="password", key="commercial_signup_password")
         if st.button("Crea account", key="commercial_signup"):
             try:
-                _supabase_signup(email, password)
+                nuovo_account = _supabase_signup(email, password)
+                esito_referral = _collega_referral_nuovo_account(nuovo_account.get("id", ""))
                 st.session_state["commercial_pending_confirmation_email"] = email.strip()
                 st.success("Account creato. Controlla l'email di conferma, poi accedi.")
+                if esito_referral.get("status") == "claimed":
+                    st.info(
+                        "Invito registrato: il bonus sarà assegnato automaticamente "
+                        "dopo il tuo primo acquisto di un pacchetto ammesso."
+                    )
             except Exception as error:
                 st.error(str(error))
         st.divider()
@@ -1675,6 +1831,34 @@ def _process_checkout_return() -> None:
         st.error(f"Pagamento ricevuto ma non ancora accreditato: {error}")
 
 
+def _render_referral_sidebar(user: dict[str, Any]) -> None:
+    """Mostra il link referral senza esporre email, saldi o inviti di altri utenti."""
+    lingua = st.session_state.get("editor_language", "Italiano")
+    testo = REFERRAL_COPY.get(lingua, REFERRAL_COPY["Italiano"])
+    with st.expander(testo["title"], expanded=False):
+        st.caption(testo["intro"])
+        codice = _codice_referral_personale(str(user.get("id", "")))
+        if not codice:
+            st.info("Il tuo link personale sarà disponibile tra pochi istanti. Riprova aggiornando il saldo.")
+            return
+
+        base_url = _secret("APP_BASE_URL").rstrip("/") or "https://scrittoresite.streamlit.app"
+        link = f"{base_url}/?ref={codice}"
+        st.markdown(f"**{testo['link']}**")
+        st.code(link, language=None)
+        st.caption(testo["copy"])
+        st.caption(testo["rewards"])
+
+        riepilogo = _riepilogo_referral(str(user.get("id", "")))
+        if not riepilogo["registered"]:
+            st.caption(testo["empty"])
+        else:
+            prima, seconda, terza = st.columns(3)
+            prima.metric(testo["registered"], riepilogo["registered"])
+            seconda.metric(testo["rewarded"], riepilogo["rewarded"])
+            terza.metric(testo["pending"], riepilogo["pending"])
+
+
 def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
     is_admin = _is_admin(user)
@@ -1728,6 +1912,9 @@ def _commerce_sidebar() -> None:
             use_container_width=True,
             help="WhatsApp",
         )
+
+        if not is_admin and _mode() != "demo":
+            _render_referral_sidebar(user)
 
         if is_admin:
             with st.expander("🧪 Collaudo software", expanded=False):
@@ -1886,6 +2073,10 @@ def bootstrap_commercial_app() -> None:
     except Exception:
         recovery_requested = False
         logout_requested = False
+    # Il parametro ?ref= viene raccolto prima della home e dell'accesso. Non
+    # cambia alcun progetto: resta solo una preferenza temporanea per un
+    # eventuale nuovo account creato in questa visita.
+    _cattura_referral_dalla_url()
     browser_action = _sincronizza_sessione_browser()
     if browser_action == "logout":
         # Il componente ha ricevuto il comando di cancellazione e riporta il
