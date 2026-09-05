@@ -1404,6 +1404,44 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     return stima_gpt
 
 
+def tutela_azione_preventivo(azione_id):
+    """Spiega con precisione cosa un'azione a credito non può alterare."""
+    azione = str(azione_id).casefold()
+    if "scrivi_tutto" in azione or "scrivi_sottocapitoli" in azione:
+        return "Le sezioni già presenti restano invariate; vengono elaborate solo quelle ancora vuote."
+    if "rigenera_sezione" in azione or "scrivi_sezione" in azione:
+        return "Interviene solo sulla sezione selezionata; le altre sezioni restano invariate."
+    if "rielabora_sezioni_originalita" in azione:
+        return "Interviene solo sulle sezioni segnalate dal controllo; il resto del manoscritto resta invariato."
+    if "indice" in azione:
+        return "Non modifica le sezioni già scritte, le immagini o le fonti caricate dall'utente."
+    if "fonti" in azione:
+        return "Aggiorna solo il registro delle fonti; indice, testi e immagini restano invariati."
+    if "copyright" in azione or "controlla_fatti" in azione or "coerenza" in azione:
+        return "È un controllo: non modifica automaticamente il manoscritto."
+    if "immagine" in azione:
+        return "Genera o aggiorna solo l'immagine richiesta; il testo del manoscritto resta invariato."
+    return "Non pubblica nulla e non modifica altre parti del progetto senza una tua conferma successiva."
+
+
+def mostra_avviso_operativo(livello, sezione, dettaglio, azione_consigliata, *, contenuti_sicuri=True):
+    """Avviso leggibile che distingue problema, dati al sicuro e recupero.
+
+    È una presentazione UI: non modifica code, crediti, salvataggi o testi.
+    """
+    icona = {"errore": "🔴", "attenzione": "🟡", "ok": "🟢"}.get(livello, "ℹ️")
+    messaggio = f"{icona} **{sezione}**\n\n**Cosa è successo:** {dettaglio}"
+    if contenuti_sicuri:
+        messaggio += "\n\n**Cosa resta al sicuro:** le sezioni già completate non vengono cancellate."
+    messaggio += f"\n\n**Cosa fare ora:** {azione_consigliata}"
+    if livello == "errore":
+        st.error(messaggio)
+    elif livello == "attenzione":
+        st.warning(messaggio)
+    else:
+        st.success(messaggio)
+
+
 def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
                             use_container_width=False, disabled=False, tipo=None):
     """Mostra una conferma preventiva prima delle sole azioni che consumano crediti."""
@@ -1431,9 +1469,18 @@ def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
     if preventivo.get("azione_id") != azione_id:
         return False
 
-    st.warning(
-        f"Preventivo: questa azione può consumare {preventivo['stima']} crediti. "
-        f"{preventivo['descrizione']}"
+    motore_preventivo = "DeepSeek V4 Pro" if usa_deepseek_pro() else "GPT-5.4 (OpenAI)"
+    st.warning(f"**Preventivo prima dell'avvio — {preventivo['stima']} crediti al massimo**")
+    col_cosa_fa, col_tutela = st.columns(2)
+    with col_cosa_fa:
+        st.caption("**Cosa verrà fatto**")
+        st.write(preventivo["descrizione"])
+    with col_tutela:
+        st.caption("**Cosa resterà invariato**")
+        st.write(tutela_azione_preventivo(azione_id))
+    st.caption(
+        f"**Cervello selezionato:** {motore_preventivo}. "
+        "Se una richiesta non restituisce un risultato utilizzabile, il costo della fase non completata non viene trattenuto oppure viene riaccreditato."
     )
     col_conferma, col_annulla = st.columns(2)
     with col_conferma:
@@ -3659,6 +3706,58 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
             st.write(report_locale.get("messaggio", "Nessun dettaglio disponibile."))
         if report_web:
             st.caption("Esito web disponibile nella sezione Controllo originalità e copyright.")
+
+
+def suggerimento_editoriale_contestuale(sezione, sezioni, obiettivo_libro, argomento):
+    """Crea una bussola locale per l'editor, senza IA e senza modificare testi."""
+    sezioni = list(sezioni or [])
+    posizione = sezioni.index(sezione) if sezione in sezioni else -1
+    precedente = sezioni[posizione - 1] if posizione > 0 else ""
+    successiva = sezioni[posizione + 1] if 0 <= posizione < len(sezioni) - 1 else ""
+    titolo = str(sezione or "").strip()
+    titolo_minuscolo = titolo.casefold()
+    if sezione_prefazione(titolo):
+        obiettivo = "Orientare il lettore: chiarisci promessa, contesto e utilità del libro senza anticiparne lo sviluppo."
+        evita = "Non trasformarla in un capitolo completo e non ripetere le spiegazioni che seguiranno."
+    elif titolo_minuscolo.startswith(("parte ", "part ", "parte", "teil ", "часть ", "الجزء", "部分")):
+        obiettivo = "Presentare il filo conduttore della Parte e preparare il passaggio alle sezioni che la compongono."
+        evita = "Non sostituirti ai capitoli o sottocapitoli successivi con spiegazioni troppo estese."
+    elif titolo_minuscolo.startswith(("capitolo", "chapter", "chapitre", "kapitel", "capitol", "глава", "الفصل", "章节")):
+        obiettivo = "Sviluppare il tema indicato dal titolo con un percorso chiaro, esempi pertinenti e una conclusione utile."
+        evita = "Non ripetere definizioni o esempi già assegnati alle sezioni precedenti."
+    else:
+        obiettivo = "Trattare un aspetto specifico del percorso editoriale con contenuto concreto e autonomo."
+        evita = "Non ampliare il tema fino a coprire sezioni vicine e non ripetere formule già usate."
+    collegamento = (
+        f"Riprende e approfondisce: {precedente}." if precedente else
+        "È il primo punto del percorso: definisci subito il contesto necessario al lettore."
+    )
+    risultato = (
+        f"Al termine il lettore dovrebbe fare un passo concreto verso: {obiettivo_libro}."
+        if str(obiettivo_libro or "").strip() else
+        f"Al termine il lettore deve comprendere o saper applicare il tema: {titolo}."
+    )
+    if successiva:
+        risultato += f" Prepara senza anticiparla la sezione successiva: {successiva}."
+    if str(argomento or "").strip():
+        obiettivo += f" Mantieni la coerenza con l'argomento generale: {str(argomento).strip()[:220]}."
+    return {
+        "obiettivo": obiettivo,
+        "collegamento": collegamento,
+        "evita": evita,
+        "risultato": risultato,
+    }
+
+
+def mostra_suggerimento_editoriale_contestuale(sezione, sezioni, obiettivo_libro, argomento):
+    """Mostra la bussola soltanto su richiesta: nessun campo viene scritto."""
+    suggerimento = suggerimento_editoriale_contestuale(sezione, sezioni, obiettivo_libro, argomento)
+    with st.expander("💡 Bussola editoriale della sezione", expanded=False):
+        st.caption("Suggerimento locale e gratuito: non genera testo e non modifica il manoscritto.")
+        st.write(f"**Obiettivo:** {suggerimento['obiettivo']}")
+        st.write(f"**Collegamento:** {suggerimento['collegamento']}")
+        st.write(f"**Evita:** {suggerimento['evita']}")
+        st.write(f"**Risultato per il lettore:** {suggerimento['risultato']}")
 
 
 def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS,
@@ -6674,7 +6773,13 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                 else:
                     aggiorna_avanzamento_indice(100, "Generazione conclusa: controlla l'esito editoriale sotto.")
                     # Non cancellare mai un indice già presente se la nuova proposta non supera i controlli.
-                    st.error(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
+                    mostra_avviso_operativo(
+                        "errore", "Indice non pubblicato",
+                        "La proposta non ha superato il controllo editoriale oppure non ha restituito una struttura utilizzabile.",
+                        "Rivedi il brief o riprova la generazione: l'indice precedente, se presente, e le sezioni già scritte restano invariati.",
+                    )
+                    with st.expander("Dettaglio dell'esito dell'indice", expanded=False):
+                        st.caption(st.session_state.get("ultimo_controllo_indice", "Indice non approvato: riprova con un brief più specifico."))
                 
         # Ogni indice esistente viene normalizzato una sola volta con la
         # Prefazione iniziale, anche quando è stato importato o scritto a mano.
@@ -7085,7 +7190,17 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         placeholder="Esempio: usa un caso realistico, chiarisci questo dubbio, evita questo esempio.",
                     )
                 if st.session_state.get("job_scrittura_errore"):
-                    st.caption(f"Ultimo errore: {st.session_state['job_scrittura_errore']}")
+                    sezione_con_errore = checkpoint_richiesto or (
+                        coda_scrittura[0] if coda_scrittura else "Sezione in attesa"
+                    )
+                    mostra_avviso_operativo(
+                        "errore", f"Generazione sospesa — {sezione_con_errore}",
+                        "La sezione corrente non ha completato la richiesta. "
+                        "Il sistema non l'ha saltata e non ha cancellato le sezioni precedenti.",
+                        "Premi RIPRENDI GENERAZIONE: verrà riprovata prima la sezione indicata.",
+                    )
+                    with st.expander("Dettaglio tecnico dell'ultimo errore", expanded=False):
+                        st.caption(str(st.session_state["job_scrittura_errore"]))
                 riprendi, stop_pausa = st.columns(2)
                 with riprendi:
                     if st.button("▶ RIPRENDI GENERAZIONE", use_container_width=True, key="riprendi_scrittura_libro"):
@@ -7210,6 +7325,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.session_state[chiave_sezione(sez_scelta)] = contenuto_memorizzato_puro(sez_scelta)
                 st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = sez_scelta
             k_sessione = chiave_sezione(sez_scelta)
+            mostra_suggerimento_editoriale_contestuale(
+                sez_scelta, opzioni_editor, val_goal, val_trama
+            )
             sottocapitoli_capitolo = individua_sottocapitoli_del_capitolo(sez_scelta, lista_cap_base)
             if sottocapitoli_capitolo:
                 # Il capitolo è una vera sezione editoriale introduttiva, non
@@ -7331,7 +7449,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.write(st.session_state[chiave_audit_capitolo])
             messaggio_stesura = st.session_state.pop("messaggio_stesura_sezione", "")
             if messaggio_stesura:
-                st.success(messaggio_stesura)
+                if messaggio_stesura.startswith("La sezione non è stata salvata:"):
+                    mostra_avviso_operativo(
+                        "errore", "Generazione della sezione sospesa", messaggio_stesura,
+                        "Riprova la stessa sezione oppure usa SALVA SESSIONE dopo avere verificato il testo.",
+                    )
+                else:
+                    st.success(messaggio_stesura)
             messaggio_correzione_finale = st.session_state.pop("messaggio_correzione_finale", "")
             if messaggio_correzione_finale:
                 st.info(messaggio_correzione_finale)
@@ -7357,6 +7481,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         except Exception as exc:
                             st.session_state["messaggio_stesura_sezione"] = (
                                 f"La sezione non è stata salvata: {exc}. Le altre sezioni restano invariate."
+                            )
+                            mostra_avviso_operativo(
+                                "errore", f"Sezione: {sez_scelta}",
+                                "La richiesta non ha prodotto un contenuto che possa essere salvato.",
+                                "Riprova questa sola sezione: le altre restano disponibili e non vengono riscritte.",
                             )
                     if sezione_salvata:
                         # Il rerun richiama l'editor prima che il widget venga
