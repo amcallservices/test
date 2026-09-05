@@ -7108,14 +7108,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 ]
 
             def sezione_pronta_per_la_coda(sezione):
-                """Non considera completata una Prefazione vuota o tronca."""
+                """Usa il medesimo esito del pulsante di scrittura dettagliata.
+
+                Nessuna sezione già salvata come valida può tornare nella coda
+                per una soglia più alta applicata soltanto alla stesura intera.
+                """
                 testo = pulisci_testo_editoriale(
-                    contenuto_memorizzato_puro(sezione)
+                    leggi_sezione_memorizzata(sezione)
                 ).strip()
                 if not testo:
                     return False
                 if sezione_prefazione(sezione):
-                    return len(testo.split()) >= 60 and not motivo_chiusura_tecnica(testo)
+                    return len(testo.split()) >= 30 and not motivo_chiusura_tecnica(testo)
                 return True
 
             manoscritto = memoria_progetto_unica().get("contenuti", {})
@@ -7160,6 +7164,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # recuperi: un errore di un progetto precedente non puo'
                     # mai condizionare la prima sezione del nuovo libro.
                     st.session_state["job_scrittura_tentativi"] = {}
+                    # Ricevute della stesura corrente: restano valide anche
+                    # se Streamlit ridisegna editor o tabs durante la coda.
+                    st.session_state["job_scrittura_sezioni_confermate"] = {}
                     # La Prefazione viene sempre avviata e verificata nel
                     # flusso principale prima del timer. Usa però lo stesso
                     # generatore del pulsante "Scrivi contenuto dettagliato".

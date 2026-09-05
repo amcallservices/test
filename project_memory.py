@@ -14,6 +14,10 @@ from typing import Any
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
 CHIAVE_ARCHIVIO_STESURA_COMPLETA = "archivio_stesura_completa"
+# Registro esclusivo della singola esecuzione di "Scrivi tutto il libro".
+# Non è una quinta copia destinata all'utente: è la ricevuta anti-rerun che
+# impedisce a un widget transitorio di far rigenerare una sezione già pagata.
+CHIAVE_SEZIONI_CONFERMATE_JOB = "job_scrittura_sezioni_confermate"
 CHIAVE_REGISTRO_SEZIONI = "registro_sezioni_manoscritto"
 CHIAVE_SEZIONI_DA_REIDRATARE = "sezioni_editor_da_reidratare"
 CHIAVE_SEZIONE_EDITOR_ATTIVA = "sezione_editor_attiva"
@@ -91,6 +95,24 @@ def leggi_sezione_memorizzata(
         stato.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo_unico
         stato[chiave] = testo_unico
         return testo_unico
+
+    # Durante la stesura completa questa ricevuta ha priorità sullo stato dei
+    # widget. Se un rerun ha temporaneamente svuotato una delle copie visive,
+    # qui la ricostruiamo prima che la coda possa decidere di rigenerare la
+    # stessa sezione e addebitare inutilmente una seconda chiamata.
+    confermate = stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB, {})
+    testo_confermato = (
+        str(confermate.get(sezione, "") or "")
+        if isinstance(confermate, dict)
+        else ""
+    )
+    if testo_confermato.strip():
+        progetto["contenuti"][sezione] = testo_confermato
+        stato.setdefault(CHIAVE_MEMORIA_SEZIONI, {})[sezione] = testo_confermato
+        stato.setdefault(CHIAVE_MEMORIA_PROTETTA, {})[sezione] = testo_confermato
+        stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})[sezione] = testo_confermato
+        stato[chiave] = testo_confermato
+        return testo_confermato
     memoria = stato.setdefault(CHIAVE_MEMORIA_SEZIONI, {})
     memoria_protetta = stato.setdefault(CHIAVE_MEMORIA_PROTETTA, {})
     valore_widget = stato.get(chiave, "") or stato.get(chiave_precedente(sezione), "")
@@ -139,6 +161,9 @@ def scrivi_sezione_stesura_completa(
 ) -> str:
     testo = scrivi_sezione_memorizzata(stato, sezione, contenuto, chiave_sezione)
     stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})[sezione] = testo
+    confermate = stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB)
+    if isinstance(confermate, dict) and str(testo or "").strip():
+        confermate[sezione] = testo
     return testo
 
 
@@ -148,6 +173,12 @@ def contenuto_memorizzato_puro(
     contenuto_unico = memoria_progetto_unica(stato).get("contenuti", {}).get(sezione, "")
     if str(contenuto_unico).strip():
         return contenuto_unico
+    confermate = stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB, {})
+    contenuto_confermato = (
+        confermate.get(sezione, "") if isinstance(confermate, dict) else ""
+    )
+    if str(contenuto_confermato).strip():
+        return contenuto_confermato
     contenuto = stato.setdefault(CHIAVE_MEMORIA_SEZIONI, {}).get(sezione, "")
     if not str(contenuto).strip():
         contenuto = stato.setdefault(CHIAVE_MEMORIA_PROTETTA, {}).get(sezione, "")
@@ -198,6 +229,24 @@ def sincronizza_modifica_manuale(
         return
 
     contenuto = stato.get(chiave_da_leggere, "")
+    confermate = stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB, {})
+    testo_confermato = (
+        str(confermate.get(sezione, "") or "")
+        if isinstance(confermate, dict)
+        else ""
+    )
+    job_in_corso = bool(
+        stato.get("job_scrittura_attivo")
+        or stato.get("job_scrittura_pausa")
+        or stato.get("job_scrittura_in_attesa")
+    )
+    if not str(contenuto or "").strip() and testo_confermato.strip() and job_in_corso:
+        # Un campo vuoto durante il cambio automatico non è un comando
+        # dell'utente: ripristina la sezione confermata e non toccare la coda.
+        scrivi_sezione_memorizzata(stato, sezione, testo_confermato, chiave_sezione)
+        stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})[sezione] = testo_confermato
+        return
+
     scrivi_sezione_memorizzata(stato, sezione, contenuto, chiave_sezione)
     archivio = stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
     if sezione in archivio:
@@ -207,6 +256,8 @@ def sincronizza_modifica_manuale(
             archivio.pop(sezione, None)
     if not str(contenuto or "").strip():
         memoria_progetto_unica(stato).get("contenuti", {}).pop(sezione, None)
+        if isinstance(confermate, dict):
+            confermate.pop(sezione, None)
 
 
 def prepara_sezione_editor_selezionata(
