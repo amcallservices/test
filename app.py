@@ -3189,7 +3189,7 @@ def etichette_centro_progetto(lingua):
     return testi.get(lingua, testi["English"])
 
 
-def riepilogo_operativo_progetto():
+def riepilogo_operativo_progetto(campi_obbligatori=None):
     """Legge lo stato reale del progetto senza alterare sessione o memoria."""
     sezioni = elenco_sezioni_progetto(st.session_state.get("lista_capitoli", []))
     contenuti = dict(memoria_progetto_unica().get("contenuti", {}) or {})
@@ -3198,7 +3198,16 @@ def riepilogo_operativo_progetto():
         if testo:
             contenuti[sezione] = testo
     sidebar = sidebar_memorizzata_corrente()
-    campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
+    # Il Centro usa gli stessi campi che abilitano realmente la generazione
+    # dell'indice. Personalizzazione e checkpoint restano visibili in memoria,
+    # ma non possono far apparire un brief completo come incompleto.
+    campi_operativi = dict(campi_obbligatori or {})
+    if campi_operativi:
+        campi_compilati = sum(1 for valore in campi_operativi.values() if str(valore).strip())
+        campi_totali = len(campi_operativi)
+    else:
+        campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
+        campi_totali = len(CAMPI_SALVATAGGIO_PROGETTO)
     registro_fonti = str(st.session_state.get("registro_fonti_web", "") or "").strip()
     numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
     if registro_fonti and not numero_fonti:
@@ -3208,7 +3217,8 @@ def riepilogo_operativo_progetto():
     completati_job = max(0, totale_job - len(coda)) if totale_job else 0
     return {
         "campi_compilati": campi_compilati,
-        "campi_totali": len(CAMPI_SALVATAGGIO_PROGETTO),
+        "campi_totali": campi_totali,
+        "brief_pronto": bool(campi_totali) and campi_compilati == campi_totali,
         "indice_pronto": bool(str(st.session_state.get("indice_raw", "") or "").strip()),
         "sezioni_previste": len(sezioni),
         "sezioni_scritte": sum(1 for sezione in sezioni if str(contenuti.get(sezione, "") or "").strip()),
@@ -3225,10 +3235,10 @@ def riepilogo_operativo_progetto():
     }
 
 
-def mostra_centro_progetto(lingua):
+def mostra_centro_progetto(lingua, campi_obbligatori=None):
     """Rende visibile il punto esatto in cui si trova il progetto editoriale."""
     etichette = etichette_centro_progetto(lingua)
-    stato = riepilogo_operativo_progetto()
+    stato = riepilogo_operativo_progetto(campi_obbligatori)
     st.markdown(f"### {etichette['titolo']}")
     col_brief, col_indice, col_testo, col_fonti = st.columns(4)
     col_brief.metric(etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}")
@@ -3259,7 +3269,7 @@ def mostra_centro_progetto(lingua):
     elif stato["job_fermato"]:
         st.warning(f"**{etichette['stato']}: {etichette['fermato']}**")
         prossimo = etichette["continua"]
-    elif stato["campi_compilati"] < stato["campi_totali"]:
+    elif not stato["brief_pronto"]:
         st.info(f"**{etichette['stato']}:** {etichette['configura']}")
         prossimo = etichette["configura"]
     elif not stato["indice_pronto"]:
@@ -5434,7 +5444,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.caption(VERSIONE_DEPLOY)
-mostra_centro_progetto(lingua_sel)
+mostra_centro_progetto(lingua_sel, campi_obbligatori_sidebar)
 
 if st.session_state.get("admin_test_mode"):
     # Pannello visibile soltanto dopo l'avvio dal comando protetto della
