@@ -3028,6 +3028,165 @@ CAMPI_SALVATAGGIO_PROGETTO = {
 }
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 
+
+# La chat guidata non conserva un secondo progetto: quando l'utente approva
+# la scheda, scrive direttamente nelle stesse chiavi della sidebar. Le funzioni
+# sono fuori dalla UI perché i pulsanti usano callback Streamlit sicure anche
+# dopo che i widget della sidebar sono stati creati.
+CAMPI_CHAT_GUIDATA_SIDEBAR = {
+    "TITOLO DEL LIBRO": "titolo",
+    "NOME AUTORE": "autore",
+    "LINGUA": "lingua",
+    "GENERE LETTERARIO": "genere",
+    "TIPOLOGIA SCRITTURA": "tipologia_scrittura",
+    "STILE DI RACCONTO": "stile_racconto",
+    "PUNTO DI VISTA": "punto_di_vista",
+    "LUNGHEZZA DELLE SEZIONI": "lunghezza",
+    "CERVELLO AI": "provider_ia",
+    "OBIETTIVO DEL LIBRO": "obiettivo",
+    "RISULTATO FINALE DESIDERATO": "risultato_finale",
+    "TRAMA O ARGOMENTO": "argomento",
+    "APPROFONDIMENTI": "approfondimenti",
+    "VOCE O PROSPETTIVA PERSONALE": "voce_personale",
+    "MATERIALI PERSONALI": "materiale_personale",
+    "PRIORITÀ PERSONALI PER IL LETTORE": "priorita_personali",
+    "CONFINI PERSONALI DA RISPETTARE": "confini_personali",
+    "PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO": "modalita_checkpoint",
+}
+
+CAMPI_CHAT_GUIDATA_OBBLIGATORI = {
+    "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
+    "stile_racconto", "punto_di_vista", "lunghezza", "obiettivo",
+    "risultato_finale", "argomento",
+}
+
+OPZIONI_CHAT_GUIDATA = {
+    "genere": {
+        "Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico",
+        "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing",
+        "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza",
+        "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)",
+        "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico",
+    },
+    "tipologia_scrittura": {
+        "Standard", "Professionale Accademico", "Persuasivo (Neuromarketing Applicato)",
+        "Conversazionale ed Empatico", "Scientifico Divulgativo", "Storytelling Immersivo",
+        "Giornalistico d'Inchiesta", "Socratico (Dialogico / Riflessivo)", "Epico ed Evocativo",
+        "Minimalista ed Essenziale",
+    },
+    "stile_racconto": {
+        "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante",
+        "Socratico (Domanda/Risposta)", "Storytelling Emozionale",
+        "Diretto e Pratico (Action-oriented)", "Storico e Documentale",
+    },
+    "punto_di_vista": {
+        "Tu (Diretto, confidenziale e personale)", "Voi (Plurale, autorevole e rispettoso)",
+        "Noi (Inclusivo, partecipativo e didattico)",
+        "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)",
+    },
+    "lunghezza": {"Compatto", "Standard KDP", "Approfondito"},
+}
+
+
+def _valore_scelta_chat_guidata(campo, valore):
+    """Normalizza solo le selezioni tecniche; i testi editoriali restano liberi."""
+    valore = re.sub(r"\s+", " ", str(valore or "")).strip()
+    if campo == "lunghezza":
+        valore_basso = valore.casefold()
+        if valore_basso.startswith("compatto"):
+            return "Compatto"
+        if valore_basso.startswith("standard"):
+            return "Standard KDP"
+        if valore_basso.startswith("approfondito"):
+            return "Approfondito"
+    if campo == "modalita_checkpoint":
+        valore_basso = valore.casefold()
+        if not valore_basso or valore_basso.startswith("continua"):
+            return ""
+        if "ogni parte" in valore_basso:
+            return "parti"
+        if "parti" in valore_basso and "conclus" in valore_basso:
+            return "parti_e_conclusione"
+        if "conclus" in valore_basso:
+            return "conclusione"
+        return ""
+    opzioni = OPZIONI_CHAT_GUIDATA.get(campo)
+    if opzioni is not None and valore not in opzioni:
+        return ""
+    if campo == "lingua" and valore not in TRADUZIONI:
+        return ""
+    return valore
+
+
+def estrai_scheda_chat_guidata(testo):
+    """Legge soltanto la scheda finale con etichette note, mai testo libero."""
+    testo = str(testo or "").replace("\r\n", "\n")
+    risultati = {}
+    corrispondenze = []
+    for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items():
+        espressione = rf"(?im)^\s*{re.escape(etichetta)}\s*(?:\([^\n)]*\))?\s*:\s*"
+        for match in re.finditer(espressione, testo):
+            corrispondenze.append((match.start(), match.end(), campo))
+    corrispondenze.sort(key=lambda dato: dato[0])
+    for posizione, (_, fine, campo) in enumerate(corrispondenze):
+        inizio_successivo = (
+            corrispondenze[posizione + 1][0]
+            if posizione + 1 < len(corrispondenze) else len(testo)
+        )
+        valore = testo[fine:inizio_successivo].strip(" \n:-")
+        valore = _valore_scelta_chat_guidata(campo, valore)
+        if valore:
+            risultati[campo] = valore
+    return risultati
+
+
+def avvia_chat_sidebar_guidata():
+    st.session_state["chat_sidebar_attiva"] = True
+    st.session_state["chat_sidebar_messaggi"] = [{
+        "role": "assistant",
+        "content": "Ciao! Che libro vuoi creare? Puoi descriverlo anche con una sola frase.",
+    }]
+    st.session_state.pop("chat_sidebar_scheda_pronta", None)
+    st.session_state.pop("chat_sidebar_esito_applicazione", None)
+    st.session_state["chat_sidebar_input_nonce"] = 0
+
+
+def reimposta_chat_sidebar_guidata():
+    for chiave in list(st.session_state):
+        if chiave.startswith("chat_sidebar_"):
+            st.session_state.pop(chiave, None)
+
+
+def applica_scheda_chat_guidata(sovrascrivi=False):
+    """Callback: compila le chiavi sidebar senza toccare il cervello scelto."""
+    scheda = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
+    applicati, mantenuti = [], []
+    for campo, valore in scheda.items():
+        if campo == "provider_ia":
+            continue
+        chiave_sidebar = CAMPI_SALVATAGGIO_PROGETTO.get(campo)
+        if not chiave_sidebar or not str(valore).strip():
+            continue
+        valore_corrente = str(st.session_state.get(chiave_sidebar, "")).strip()
+        if sovrascrivi or not valore_corrente:
+            st.session_state[chiave_sidebar] = valore
+            applicati.append(campo.replace("_", " "))
+        else:
+            mantenuti.append(campo.replace("_", " "))
+    if applicati:
+        # Mantiene la memoria unica coerente già nel callback, senza attendere
+        # che il render successivo della sidebar ricostruisca i suoi widget.
+        memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+        for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+            memoria[nome] = st.session_state.get(chiave, "")
+        st.session_state[CHIAVE_MEMORIA_SIDEBAR] = memoria
+        progetto = memoria_progetto_unica()
+        progetto["sidebar"] = dict(memoria)
+    messaggio = "Scheda applicata: " + (", ".join(applicati) if applicati else "nessun campo da aggiornare") + "."
+    if mantenuti:
+        messaggio += " Campi già compilati mantenuti: " + ", ".join(mantenuti) + "."
+    st.session_state["chat_sidebar_esito_applicazione"] = messaggio
+
 # Memoria unica del progetto. È la sola fonte autorevole per sidebar, indice,
 # manoscritto, fonti e immagini. Le vecchie chiavi rimangono soltanto come
 # copie di compatibilità con sessioni e CSV esportati in precedenza.
@@ -7003,8 +7162,132 @@ PRIORITÀ PERSONALI PER IL LETTORE (FACOLTATIVO):
 CONFINI PERSONALI DA RISPETTARE (FACOLTATIVO):
 
 PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
-        st.caption(guida_chat["etichetta"])
-        st.code(prompt_chat_sidebar, language=None)
+        # Il prompt manuale resta disponibile per chi vuole usarlo nella
+        # propria ChatGPT, ma non occupa più tutta la pagina.
+        with st.expander("📋 Crea la tua chat per compilare la sidebar", expanded=False):
+            st.caption(guida_chat["etichetta"])
+            st.code(prompt_chat_sidebar, language=None)
+
+        # Alternativa facoltativa al copia/incolla: una conversazione interna
+        # che usa il cervello già selezionato nella sidebar. L'avvio è gratuito;
+        # si scala credito soltanto quando il cervello restituisce una risposta.
+        with st.expander("💬 Chat guidata per compilare la sidebar (opzionale)", expanded=False):
+            costo_chat_visibile = 1 if usa_deepseek_pro() else CREDIT_COSTS["chat_sidebar_guidata"]
+            cervello_chat = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
+            st.info(
+                f"La chat usa il cervello selezionato: **{cervello_chat}**. "
+                f"L'avvio e i tuoi messaggi sono gratuiti; ogni risposta della chat costa "
+                f"**{costo_chat_visibile} {'credito' if costo_chat_visibile == 1 else 'crediti'}**."
+            )
+            st.caption(
+                "Puoi cambiare cervello nella sidebar anche durante la conversazione: "
+                "la risposta successiva userà la nuova scelta e il relativo costo."
+            )
+
+            if not st.session_state.get("chat_sidebar_attiva"):
+                st.button(
+                    "💬 AVVIA CHAT GUIDATA",
+                    key="avvia_chat_sidebar_guidata",
+                    on_click=avvia_chat_sidebar_guidata,
+                    use_container_width=True,
+                )
+            else:
+                messaggi_chat = list(st.session_state.get("chat_sidebar_messaggi", []) or [])
+                for messaggio in messaggi_chat:
+                    with st.chat_message(messaggio.get("role", "assistant")):
+                        st.markdown(messaggio.get("content", ""))
+
+                nonce_chat = int(st.session_state.get("chat_sidebar_input_nonce", 0))
+                chiave_input_chat = f"chat_sidebar_input_{nonce_chat}"
+                testo_utente_chat = st.text_area(
+                    "Il tuo messaggio",
+                    key=chiave_input_chat,
+                    placeholder="Descrivi l'idea del libro oppure rispondi alla domanda della chat.",
+                    height=90,
+                )
+                if st.button(
+                    f"➤ INVIA — risposta IA: {costo_chat_visibile} {'credito' if costo_chat_visibile == 1 else 'crediti'}",
+                    key=f"invia_chat_sidebar_{nonce_chat}",
+                    use_container_width=True,
+                ):
+                    testo_utente_chat = str(testo_utente_chat or "").strip()
+                    if not testo_utente_chat:
+                        st.warning("Scrivi prima un messaggio per la chat.")
+                    else:
+                        messaggi_chat.append({"role": "user", "content": testo_utente_chat})
+                        cronologia = messaggi_chat[-12:]
+                        conversazione = "\n\n".join(
+                            f"{'UTENTE' if voce.get('role') == 'user' else 'ASSISTENTE'}:\n{voce.get('content', '')}"
+                            for voce in cronologia
+                        )
+                        istruzioni_chat_interattiva = f"""{prompt_chat_sidebar}
+
+MODALITÀ CHAT INTERATTIVA
+Stai dialogando dentro Scrittore Site. Rispondi in modo naturale e fai soltanto le domande indispensabili indicate nel prompt.
+Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
+Quando le informazioni sono sufficienti, restituisci la scheda finale con tutte e sole le etichette previste, una per riga e senza blocchi di codice. Prima della scheda non aggiungere commenti.
+Finché le informazioni non sono sufficienti, non produrre una scheda parziale: continua semplicemente il dialogo."""
+                        with st.spinner("La chat sta preparando la risposta..."):
+                            risposta_chat = chiedi_gpt(
+                                conversazione,
+                                istruzioni_chat_interattiva,
+                                addebita=True,
+                                amount=CREDIT_COSTS["chat_sidebar_guidata"],
+                                max_completion_tokens=1700,
+                                model=MODELLO_EDITORIALE,
+                                reason="chat_sidebar_guidata",
+                                timeout_seconds=90,
+                            )
+                        if str(risposta_chat or "").startswith("ERRORE:"):
+                            st.error(
+                                "La chat non ha prodotto una risposta. Nessun credito è stato trattenuto; "
+                                "puoi inviare di nuovo il messaggio."
+                            )
+                        else:
+                            messaggi_chat.append({"role": "assistant", "content": risposta_chat})
+                            st.session_state["chat_sidebar_messaggi"] = messaggi_chat
+                            scheda_estratta = estrai_scheda_chat_guidata(risposta_chat)
+                            if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_estratta):
+                                # Il provider viene sempre preso dalla scelta corrente, non dalla risposta IA.
+                                scheda_estratta["provider_ia"] = cervello_chat
+                                st.session_state["chat_sidebar_scheda_pronta"] = scheda_estratta
+                            st.session_state["chat_sidebar_input_nonce"] = nonce_chat + 1
+                            st.rerun()
+
+                scheda_chat_pronta = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
+                if scheda_chat_pronta:
+                    st.success("La scheda è pronta. Puoi applicarla alla sidebar senza copiare i singoli campi.")
+                    with st.expander("Vedi i dati che verranno applicati", expanded=False):
+                        for campo, valore in scheda_chat_pronta.items():
+                            if campo != "provider_ia":
+                                st.write(f"**{campo.replace('_', ' ').capitalize()}:** {valore}")
+                        st.caption(f"Cervello AI mantenuto: {cervello_chat}")
+                    st.button(
+                        "✍️ COMPILA SOLO I CAMPI VUOTI",
+                        key="applica_chat_sidebar_solo_vuoti",
+                        on_click=applica_scheda_chat_guidata,
+                        args=(False,),
+                        use_container_width=True,
+                    )
+                    st.caption("Questa scelta conserva tutti i campi della sidebar già compilati.")
+                    st.button(
+                        "⚠️ SOSTITUISCI I CAMPI GIÀ COMPILATI",
+                        key="applica_chat_sidebar_sovrascrivi",
+                        on_click=applica_scheda_chat_guidata,
+                        args=(True,),
+                        use_container_width=True,
+                    )
+                    st.caption("Sostituisce i dati editoriali già presenti, ma non cambia il cervello scelto nella sidebar.")
+
+                esito_applicazione_chat = st.session_state.get("chat_sidebar_esito_applicazione", "")
+                if esito_applicazione_chat:
+                    st.success(esito_applicazione_chat)
+                st.button(
+                    "↺ CHIUDI E REIMPOSTA QUESTA CHAT",
+                    key="reset_chat_sidebar_guidata",
+                    on_click=reimposta_chat_sidebar_guidata,
+                    use_container_width=True,
+                )
 
     # TAB 1: INDICE (CHIRURGIA: FIX SENSO LOGICO E PULIZIA ASSOLUTA DELL'INDICE E CONNESSIONE SARTORIALE)
     with tabs[1]:
