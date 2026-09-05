@@ -21,10 +21,15 @@ _session_component = components.declare_component(
     "scrittore_site_session",
     path=str(SESSION_COMPONENT_PATH),
 )
-# Griglia commerciale: un Test Prep approfondito fino a 60 sezioni usa normalmente
-# 75 crediti (60 sezioni, indice, voto, controllo finale e metadati).
+# Riferimento commerciale unico per il libro standard: 75 crediti per la
+# stesura delle sezioni e 10 crediti per la progettazione dell'indice.
+# I controlli, le rigenerazioni, le immagini e le altre funzioni opzionali
+# restano separati, così l'utente vede sempre il loro preventivo prima dell'uso.
 AI_REQUEST_CREDITS = 1
-STANDARD_BOOK_CREDITS = 75
+STANDARD_BOOK_SECTION_CREDITS = 75
+STANDARD_BOOK_INDEX_GPT_CREDITS = 10
+STANDARD_BOOK_GPT_CREDITS = STANDARD_BOOK_SECTION_CREDITS + STANDARD_BOOK_INDEX_GPT_CREDITS
+STANDARD_BOOK_DEEPSEEK_UNITS = STANDARD_BOOK_GPT_CREDITS
 # Tariffario unico delle azioni IA. Un credito dei pacchetti principali vale
 # circa €0,0667: le azioni leggere con GPT-5.4 mini restano a 1 credito,
 # mentre ricerca web e revisioni GPT-5.4 usano una quota superiore in rapporto
@@ -36,8 +41,9 @@ CREDIT_COSTS = {
     # un credito per risposta; DeepSeek usa una unità interna, cioè un terzo
     # di credito. Il messaggio dell'utente e l'avvio della chat restano gratuiti.
     "chat_sidebar_guidata": 1,
-    "indice_ricerca_web": 2,
-    "indice_generazione_editoriale": 3,
+    # Indice professionale GPT: ricerca 4 + generazione 6 = 10 crediti.
+    "indice_ricerca_web": 4,
+    "indice_generazione_editoriale": 6,
     "voto_indice": 1,
     "rigenera_indice": 3,
     "verifica_fatti_web": 2,
@@ -81,8 +87,10 @@ def _unita_deepseek(reason: str, amount: int) -> int:
     amount = max(1, int(amount or 1))
     tariffe = {
         "chat_sidebar_guidata": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
-        "ricerca_preliminare_indice": 2,          # 2/3 di credito
-        "genera_indice_controllato": 3,           # 1 credito; ricerca + indice = 5 unità
+        # Indice professionale DeepSeek: 4 + 6 = 10 unità interne,
+        # equivalenti a 3⅓ crediti. Il terzo residuo resta custodito nel saldo.
+        "ricerca_preliminare_indice": 4,
+        "genera_indice_controllato": 6,
         "voto_indice": 1,
         "verifica_fatti": 1,                      # controllo editoriale locale
         "audit_fatti": 1,
@@ -147,20 +155,21 @@ LEGACY_PACKAGES = {
     "professionale_1050": {"credits": 1050},
 }
 
-# Stime commerciali: un Test Prep approfondito usa normalmente 75 crediti
-# (60 sezioni + 15 crediti per indice, voto, controllo finale e metadati).
+# Stime trasparenti del libro standard: 75 crediti di stesura + 10 crediti
+# per l'indice. Le attività opzionali restano escluse per non promettere
+# crediti che l'utente potrebbe scegliere di usare diversamente.
 PACKAGE_BOOK_ESTIMATES = {
     "prova_15": "15 crediti per provare le funzioni principali",
-    "base_150": "Fino a 2 Test Prep completi",
-    "creator_375": "Fino a 5 Test Prep completi",
-    "studio_750": "Fino a 10 Test Prep completi",
-    "professionale_1500": "Fino a 20 Test Prep completi",
+    "base_150": "1 libro standard con GPT oppure 5 con DeepSeek",
+    "creator_375": "4 libri standard con GPT oppure 13 con DeepSeek",
+    "studio_750": "8 libri standard con GPT oppure 26 con DeepSeek",
+    "professionale_1500": "17 libri standard con GPT oppure 52 con DeepSeek",
 }
 PACKAGE_ESTIMATE_NOTE = (
-    "Stima indicativa: un Test Prep approfondito considera 60 sezioni e 15 crediti "
-    "per indice, voto, controllo coerenza e metadati (75 crediti totali). "
-    "Il consumo effettivo dipende da lunghezza, rigenerazioni, immagini, "
-    "verifiche online e funzioni avanzate utilizzate."
+    "Calcolo trasparente: un libro standard usa 75 crediti per le sezioni e 10 "
+    "per l'indice, quindi 85 crediti con GPT-5.4. Con DeepSeek V4 Pro il rapporto "
+    "è 1:3: 85 unità interne, cioè 28⅓ crediti. Rigenerazioni, immagini, verifiche "
+    "online e strumenti opzionali vengono sempre preventivati a parte."
 )
 
 # Testo commerciale prudente: i crediti residui proteggono l'utente quando
@@ -172,44 +181,44 @@ PACKAGE_HOME_GUIDE = {
     },
     "base_150": {
         "ideal": "Ideale per: il primo manuale o progetto editoriale completo.",
-        "estimate": "Stima prudente: 1 libro standard da circa 80 sezioni, con margine per controlli.",
+        "estimate": "1 libro standard con GPT oppure 5 con DeepSeek.",
     },
     "creator_375": {
         "ideal": "Ideale per: chi pubblica più guide, manuali o Test Prep.",
-        "estimate": "Stima prudente: fino a 3 libri standard oppure fino a 5 Test Prep completi.",
+        "estimate": "4 libri standard con GPT oppure 13 con DeepSeek.",
     },
     "studio_750": {
         "ideal": "Ideale per: creator, docenti e progetti editoriali continuativi.",
-        "estimate": "Stima prudente: fino a 7 libri standard oppure fino a 10 Test Prep completi.",
+        "estimate": "8 libri standard con GPT oppure 26 con DeepSeek.",
     },
     "professionale_1500": {
         "ideal": "Ideale per: professionisti, scuole e cataloghi di più libri.",
-        "estimate": "Stima prudente: fino a 15 libri standard oppure fino a 20 Test Prep completi.",
+        "estimate": "17 libri standard con GPT oppure 52 con DeepSeek.",
     },
 }
 
-# Preventivi prudenti per un libro standard da circa 80 sezioni, con indice,
-# voto, controllo coerenza e metadati. GPT richiede circa 97 crediti; DeepSeek
-# applica il rapporto 1:3 e richiede circa 33 crediti. Immagini, copyright web,
-# rigenerazioni e funzioni extra restano esclusi dalla stima.
+# Ogni libro standard stimato qui include 75 crediti per le sezioni e 10 per
+# l'indice: 85 crediti GPT. DeepSeek usa 85 unità interne, cioè 28⅓ crediti.
+# Le quantità indicano esclusivamente libri completi, senza usare il residuo
+# per attività facoltative come rigenerazioni, immagini e controlli extra.
 PACKAGE_ENGINE_BOOKS = {
     "prova_15": (0, 0),
-    "base_150": (1, 4),
-    "creator_375": (3, 11),
-    "studio_750": (7, 22),
-    "professionale_1500": (15, 45),
+    "base_150": (1, 5),
+    "creator_375": (4, 13),
+    "studio_750": (8, 26),
+    "professionale_1500": (17, 52),
 }
 
 HOME_ENGINE_ESTIMATE_COPY = {
-    "Italiano": ("libri standard", "GPT-5.4 / DeepSeek: prova indice e prime sezioni.", "Stima prudente: libro standard di circa 80 sezioni con indice, voto, controllo coerenza e metadati. Rigenerazioni, immagini, verifica copyright web e strumenti aggiuntivi possono aumentare il consumo."),
-    "English": ("standard books", "GPT-5.4 / DeepSeek: try the outline and first sections.", "Conservative estimate: a standard book of about 80 sections with outline, score, coherence check and metadata. Regenerations, images, web copyright checks and extra tools may increase consumption."),
-    "Español": ("libros estándar", "GPT-5.4 / DeepSeek: prueba el índice y las primeras secciones.", "Estimación prudente: libro estándar de unas 80 secciones con índice, evaluación, control de coherencia y metadatos. Las regeneraciones, imágenes y herramientas adicionales pueden aumentar el consumo."),
-    "Français": ("livres standard", "GPT-5.4 / DeepSeek : essayez le plan et les premières sections.", "Estimation prudente : livre standard d'environ 80 sections avec plan, évaluation, contrôle de cohérence et métadonnées. Les régénérations, images et outils supplémentaires peuvent augmenter la consommation."),
-    "Deutsch": ("Standardbücher", "GPT-5.4 / DeepSeek: Gliederung und erste Abschnitte ausprobieren.", "Vorsichtige Schätzung: Standardbuch mit etwa 80 Abschnitten inklusive Gliederung, Bewertung, Kohärenzprüfung und Metadaten. Regenerierungen, Bilder und Zusatzwerkzeuge können den Verbrauch erhöhen."),
-    "Română": ("cărți standard", "GPT-5.4 / DeepSeek: testează cuprinsul și primele secțiuni.", "Estimare prudentă: carte standard de circa 80 de secțiuni cu cuprins, evaluare, control de coerență și metadate. Regenerările, imaginile și instrumentele suplimentare pot crește consumul."),
-    "Русский": ("стандартных книг", "GPT-5.4 / DeepSeek: попробуйте оглавление и первые разделы.", "Осторожная оценка: стандартная книга примерно из 80 разделов с оглавлением, оценкой, проверкой связности и метаданными. Повторные генерации, изображения и дополнительные инструменты могут увеличить расход."),
-    "العربية": ("كتب قياسية", "GPT-5.4 / DeepSeek: جرّب الفهرس والأقسام الأولى.", "تقدير متحفظ: كتاب قياسي من نحو 80 قسماً مع الفهرس والتقييم وفحص الاتساق والبيانات الوصفية. قد تزيد إعادة التوليد والصور والأدوات الإضافية من الاستهلاك."),
-    "中文": ("标准图书", "GPT-5.4 / DeepSeek：可试用目录和前几节。", "保守估算：约 80 节的标准图书，含目录、评估、一致性检查和元数据。重新生成、图片和附加工具可能增加消耗。"),
+    "Italiano": ("libri standard", "GPT-5.4 / DeepSeek: prova indice e prime sezioni.", "Calcolo preciso: libro standard = 75 crediti per le sezioni + 10 per l'indice. Totale GPT-5.4: 85 crediti; DeepSeek V4 Pro: 85 unità interne, pari a 28⅓ crediti. Rigenerazioni, immagini, verifiche online e strumenti opzionali restano esclusi."),
+    "English": ("standard books", "GPT-5.4 / DeepSeek: try the outline and first sections.", "Exact calculation: a standard book uses 75 credits for sections plus 10 for the outline. GPT-5.4 total: 85 credits; DeepSeek V4 Pro: 85 internal units, equal to 28⅓ credits. Regenerations, images, online checks and optional tools are excluded."),
+    "Español": ("libros estándar", "GPT-5.4 / DeepSeek: prueba el índice y las primeras secciones.", "Cálculo exacto: un libro estándar usa 75 créditos para las secciones y 10 para el índice. Total GPT-5.4: 85 créditos; DeepSeek V4 Pro: 85 unidades internas, equivalentes a 28⅓ créditos. Regeneraciones, imágenes, verificaciones online y herramientas opcionales no se incluyen."),
+    "Français": ("livres standard", "GPT-5.4 / DeepSeek : essayez le plan et les premières sections.", "Calcul précis : un livre standard utilise 75 crédits pour les sections et 10 pour le plan. Total GPT-5.4 : 85 crédits ; DeepSeek V4 Pro : 85 unités internes, soit 28⅓ crédits. Les régénérations, images, vérifications en ligne et outils facultatifs sont exclus."),
+    "Deutsch": ("Standardbücher", "GPT-5.4 / DeepSeek: Gliederung und erste Abschnitte ausprobieren.", "Genaue Berechnung: Ein Standardbuch benötigt 75 Credits für die Abschnitte und 10 für die Gliederung. GPT-5.4 insgesamt: 85 Credits; DeepSeek V4 Pro: 85 interne Einheiten, entsprechend 28⅓ Credits. Regenerierungen, Bilder, Online-Prüfungen und optionale Werkzeuge sind nicht enthalten."),
+    "Română": ("cărți standard", "GPT-5.4 / DeepSeek: testează cuprinsul și primele secțiuni.", "Calcul exact: o carte standard folosește 75 de credite pentru secțiuni și 10 pentru cuprins. Total GPT-5.4: 85 de credite; DeepSeek V4 Pro: 85 de unități interne, adică 28⅓ credite. Regenerările, imaginile, verificările online și instrumentele opționale nu sunt incluse."),
+    "Русский": ("стандартных книг", "GPT-5.4 / DeepSeek: попробуйте оглавление и первые разделы.", "Точный расчёт: стандартная книга использует 75 кредитов на разделы и 10 на оглавление. Всего GPT-5.4: 85 кредитов; DeepSeek V4 Pro: 85 внутренних единиц, то есть 28⅓ кредита. Повторные генерации, изображения, онлайн-проверки и дополнительные инструменты не включены."),
+    "العربية": ("كتب قياسية", "GPT-5.4 / DeepSeek: جرّب الفهرس والأقسام الأولى.", "حساب دقيق: يستخدم الكتاب القياسي 75 رصيداً للأقسام و10 أرصدة للفهرس. إجمالي GPT-5.4: 85 رصيداً؛ DeepSeek V4 Pro: 85 وحدة داخلية، أي 28⅓ رصيداً. لا يشمل ذلك إعادة التوليد أو الصور أو التحقق عبر الإنترنت أو الأدوات الاختيارية."),
+    "中文": ("标准图书", "GPT-5.4 / DeepSeek：可试用目录和前几节。", "精确计算：一本标准图书的章节需要 75 积分，目录需要 10 积分。GPT-5.4 总计 85 积分；DeepSeek V4 Pro 为 85 个内部单位，即 28⅓ 积分。不包括重新生成、图片、在线核查和可选工具。"),
 }
 
 CONTACT_LABELS = {
@@ -1337,7 +1346,8 @@ def _landing_page() -> None:
         etichetta_deepseek = "libro standard" if home_language == "Italiano" and stima_deepseek == 1 else stima_etichetta
         stima_cervelli = (
             stima_prova if not stima_gpt else
-            f"🧠 GPT-5.4: circa {stima_gpt} {etichetta_gpt}<br>⚡ DeepSeek: circa {stima_deepseek} {etichetta_deepseek}"
+            f"🧠 GPT-5.4: {stima_gpt} {etichetta_gpt} · 85 {C['credit_word']} / {stima_etichetta.rstrip('s')}<br>"
+            f"⚡ DeepSeek: {stima_deepseek} {etichetta_deepseek} · 28⅓ {C['credit_word']} / {stima_etichetta.rstrip('s')}"
         )
         with column:
             st.markdown(
@@ -1481,7 +1491,7 @@ def _landing_page() -> None:
     st.markdown("<div class='ss-trust'>CSV serve a salvare e ripristinare il progetto editoriale completo. Word e PDF servono invece a leggere, revisionare, stampare o pubblicare il manoscritto.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
-    st.markdown("<div class='ss-credit-note'>Un Test Prep approfondito fino a 60 sezioni usa normalmente 75 crediti: 60 sezioni, indice, voto dell’indice, controllo coerenza e metadati. Le funzioni avanzate consumano crediti aggiuntivi solo dopo il preventivo.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-credit-note'>Un libro standard usa 75 crediti per la stesura delle sezioni e 10 per l'indice: 85 crediti con GPT-5.4. Con DeepSeek V4 Pro lo stesso calcolo equivale a 85 unità interne, cioè 28⅓ crediti. Le funzioni opzionali vengono sempre mostrate con un preventivo separato.</div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
     invito_a, invito_b = st.columns([1.35, 0.65])
     with invito_a:
@@ -1495,7 +1505,7 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    st.markdown("<div class='ss-section'><h2>Pacchetti crediti chiari</h2><p class='ss-muted'>Scegli il pacchetto in base a ciò che vuoi realizzare. Le stime sono prudenti e includono un margine per le funzioni di controllo.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Pacchetti crediti chiari</h2><p class='ss-muted'>Stima basata su libri standard completi: 75 crediti di sezioni + 10 di indice. GPT-5.4 richiede 85 crediti per libro; DeepSeek V4 Pro 28⅓ crediti. Le attività opzionali restano escluse dal conteggio.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
     for column, (package_key, package) in zip(price_columns, PACKAGES.items()):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
