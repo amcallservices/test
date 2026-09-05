@@ -952,10 +952,11 @@ def _landing_page() -> None:
             background:rgba(255,255,255,.86); box-shadow:0 7px 18px rgba(20,77,120,.10); backdrop-filter:blur(10px)}
           .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
             font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
-          .ss-languages-hero {max-width:1060px; margin:.75rem auto 1.55rem; padding:1rem 1.25rem; text-align:center;
-            border:1px solid #93c5fd; border-radius:15px; background:linear-gradient(135deg,#e0f2fe,#f8fbff); box-shadow:0 9px 22px rgba(20,77,120,.08)}
-          .ss-languages-hero b {display:block; color:#0f4c81; font-size:1.13rem; margin-bottom:.3rem}
-          .ss-languages-hero span {display:block; color:#365d79; line-height:1.5; font-size:.94rem}
+          .ss-languages-hero {max-width:1120px; margin:1rem auto 1.85rem; padding:1.35rem 1.8rem; text-align:center;
+            border:1px solid #0284c7; border-radius:20px; background:linear-gradient(135deg,#0369a1 0%,#0ea5e9 56%,#38bdf8 100%);
+            box-shadow:0 15px 32px rgba(2,132,199,.28)}
+          .ss-languages-hero b {display:block; color:#fff; font-size:clamp(1.28rem,2vw,1.7rem); margin-bottom:.48rem; font-weight:900; letter-spacing:-.02em}
+          .ss-languages-hero span {display:block; max-width:920px; margin:0 auto; color:#effaff; line-height:1.55; font-size:1rem; font-weight:600}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;

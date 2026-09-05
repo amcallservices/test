@@ -5187,24 +5187,54 @@ with st.sidebar:
         key="provider_ia",
         help="GPT conserva tutte le funzioni, comprese verifica copyright web e immagini. DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
-    if usa_deepseek_pro():
-        st.info("DeepSeek Pro attivo: scrittura, indice, ricerca fonti web, fonti caricate e controlli editoriali usano esclusivamente DeepSeek. Il registro delle fonti trovate è visibile sotto il caricamento fonti. Verifica copyright web e immagini richiedono GPT e restano disattivate per evitare un uso misto.")
-        with st.expander("Tariffario DeepSeek Pro", expanded=False):
-            st.write("• Rapporto DeepSeek/GPT: 1 a 3. Tre operazioni equivalenti da 1 credito GPT consumano 1 credito DeepSeek.")
-            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.")
-            st.write("• Ricerca fonti web nativa + indice completo: circa 2 crediti in totale.")
-            st.write("• Voto indice, report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.")
-            st.write("• Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.")
-            st.write("• 10 ricette: circa 4 crediti. Verifica copyright web e immagini restano disponibili soltanto con GPT.")
-    else:
-        st.info("GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.")
-        with st.expander("Tariffario GPT-5.4", expanded=False):
-            st.write("• Scrittura, rigenerazione, quiz ed esempi: 1 credito per ogni operazione.")
-            st.write("• Indice completo: 5 crediti (2 per ricerca web + 3 per progettazione editoriale).")
-            st.write("• Voto indice: 1 credito; rigenerazione indice: 3 crediti.")
-            st.write("• Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.")
-            st.write("• Coerenza completa del manoscritto: 10 crediti; controllo successivo: 1 credito per blocco modificato.")
-            st.write("• 10 ricette: 10 crediti; immagine di capitolo: 5 crediti; controllo copyright web: da 2 crediti.")
+    tariffari_sidebar = {
+        "Italiano": {
+            "gpt_info": "GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.",
+            "gpt_title": "Tariffario GPT-5.4",
+            "gpt": ["Scrittura, rigenerazione, quiz ed esempi: 1 credito per ogni operazione.", "Indice completo: 5 crediti (2 ricerca web + 3 progettazione editoriale).", "Voto indice: 1 credito; rigenerazione indice: 3 crediti.", "Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.", "Coerenza completa: 10 crediti; controllo successivo: 1 credito per blocco modificato.", "10 ricette: 10 crediti; immagine di capitolo: 5 crediti; copyright web: da 2 crediti."],
+            "ds_info": "DeepSeek Pro attivo: scrittura, indice, ricerca fonti e controlli editoriali usano DeepSeek. Il copyright web e le immagini richiedono GPT e restano disattivati.",
+            "ds_title": "Tariffario DeepSeek Pro",
+            "ds": ["Rapporto DeepSeek/GPT: 1 a 3. Tre operazioni equivalenti da 1 credito GPT consumano 1 credito DeepSeek.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti web nativa + indice completo: circa 2 crediti in totale.", "Voto indice, report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Copyright web e immagini sono disponibili solo con GPT."],
+        },
+        "English": {
+            "gpt_info": "GPT-5.4 is active: it uses the complete engine, including web research, web copyright checks and image generation.", "gpt_title": "GPT-5.4 pricing", "gpt": ["Writing, rewriting, quizzes and examples: 1 credit per action.", "Complete outline: 5 credits (2 web research + 3 editorial design).", "Outline review: 1 credit; outline rewrite: 3 credits.", "Fact check: 2 credits; syntax report and KDP metadata: 1 credit each.", "Full consistency check: 10 credits; later checks: 1 credit per changed block.", "10 recipes: 10 credits; chapter image: 5 credits; web copyright: from 2 credits."],
+            "ds_info": "DeepSeek Pro is active: writing, outlines, source research and editorial checks use DeepSeek. Web copyright and images require GPT and are disabled.", "ds_title": "DeepSeek Pro pricing", "ds": ["DeepSeek/GPT ratio: 1 to 3. Three equivalent 1-credit GPT actions use 1 DeepSeek credit.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native web source research + complete outline: about 2 credits total.", "Outline review, syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. Web copyright and images are available with GPT only."],
+        },
+        "Español": {
+            "gpt_info": "GPT-5.4 está activo: utiliza el motor completo, incluida la investigación web, la comprobación de copyright web y la generación de imágenes.", "gpt_title": "Tarifas de GPT-5.4", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 5 créditos (2 de investigación web + 3 de diseño editorial).", "Evaluación del índice: 1 crédito; regeneración: 3 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; imagen de capítulo: 5 créditos; copyright web: desde 2 créditos."],
+            "ds_info": "DeepSeek Pro está activo: escritura, índice, investigación de fuentes y controles editoriales usan DeepSeek. El copyright web y las imágenes requieren GPT y están desactivados.", "ds_title": "Tarifas de DeepSeek Pro", "ds": ["Relación DeepSeek/GPT: 1 a 3. Tres operaciones GPT equivalentes de 1 crédito consumen 1 crédito DeepSeek.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Investigación nativa de fuentes web + índice completo: unos 2 créditos en total.", "Evaluación del índice, informe sintáctico y metadatos: 1 crédito cada 3 controles equivalentes.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "10 recetas: unos 4 créditos. Copyright web e imágenes solo con GPT."],
+        },
+        "Français": {
+            "gpt_info": "GPT-5.4 est actif : il utilise le moteur complet, avec recherche web, contrôle de copyright web et génération d’images.", "gpt_title": "Tarifs GPT-5.4", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 5 crédits (2 recherche web + 3 conception éditoriale).", "Évaluation du plan : 1 crédit ; régénération : 3 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "10 recettes : 10 crédits ; image de chapitre : 5 crédits ; copyright web : dès 2 crédits."],
+            "ds_info": "DeepSeek Pro est actif : rédaction, plan, recherche de sources et contrôles éditoriaux utilisent DeepSeek. Le copyright web et les images nécessitent GPT et sont désactivés.", "ds_title": "Tarifs DeepSeek Pro", "ds": ["Rapport DeepSeek/GPT : 1 pour 3. Trois opérations GPT équivalentes à 1 crédit consomment 1 crédit DeepSeek.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 opérations.", "Recherche native de sources web + plan complet : environ 2 crédits au total.", "Évaluation du plan, rapport syntaxique et métadonnées : 1 crédit tous les 3 contrôles équivalents.", "Cohérence complète : environ 4 crédits ; mises à jour : 1 crédit tous les 3 blocs.", "10 recettes : environ 4 crédits. Copyright web et images uniquement avec GPT."],
+        },
+        "Deutsch": {
+            "gpt_info": "GPT-5.4 ist aktiv: Es nutzt die vollständige Engine einschließlich Webrecherche, Web-Copyright-Prüfung und Bildgenerierung.", "gpt_title": "GPT-5.4 Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 5 Credits (2 Webrecherche + 3 redaktionelle Planung).", "Gliederungsbewertung: 1 Credit; Neugenerierung: 3 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "10 Rezepte: 10 Credits; Kapitelbild: 5 Credits; Web-Copyright: ab 2 Credits."],
+            "ds_info": "DeepSeek Pro ist aktiv: Schreiben, Gliederung, Quellenrecherche und redaktionelle Kontrollen nutzen DeepSeek. Web-Copyright und Bilder benötigen GPT und sind deaktiviert.", "ds_title": "DeepSeek Pro Preise", "ds": ["DeepSeek/GPT-Verhältnis: 1 zu 3. Drei gleichwertige GPT-Vorgänge zu 1 Credit verbrauchen 1 DeepSeek-Credit.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Webquellen-Recherche + vollständige Gliederung: insgesamt etwa 2 Credits.", "Gliederungsbewertung, Syntaxbericht und Metadaten: 1 Credit je 3 gleichwertige Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits; Updates: 1 Credit je 3 Blöcke.", "10 Rezepte: etwa 4 Credits. Web-Copyright und Bilder nur mit GPT."],
+        },
+        "Română": {
+            "gpt_info": "GPT-5.4 este activ: folosește motorul complet, inclusiv cercetare web, verificare copyright web și generare de imagini.", "gpt_title": "Tarife GPT-5.4", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per acțiune.", "Cuprins complet: 5 credite (2 cercetare web + 3 proiectare editorială).", "Evaluarea cuprinsului: 1 credit; regenerare: 3 credite.", "Verificarea faptelor: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; controale ulterioare: 1 credit per bloc modificat.", "10 rețete: 10 credite; imagine de capitol: 5 credite; copyright web: de la 2 credite."],
+            "ds_info": "DeepSeek Pro este activ: scrierea, cuprinsul, cercetarea surselor și controalele editoriale folosesc DeepSeek. Copyright-ul web și imaginile necesită GPT și sunt dezactivate.", "ds_title": "Tarife DeepSeek Pro", "ds": ["Raport DeepSeek/GPT: 1 la 3. Trei operațiuni GPT echivalente de 1 credit consumă 1 credit DeepSeek.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Cercetare nativă de surse web + cuprins complet: circa 2 credite în total.", "Evaluare cuprins, raport sintactic și metadate: 1 credit la 3 controale echivalente.", "Coerență completă: circa 4 credite; actualizări: 1 credit la 3 blocuri.", "10 rețete: circa 4 credite. Copyright web și imagini doar cu GPT."],
+        },
+        "Русский": {
+            "gpt_info": "GPT-5.4 активен: используется полный движок, включая веб-поиск, проверку авторских прав в сети и генерацию изображений.", "gpt_title": "Тарифы GPT-5.4", "gpt": ["Написание, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 5 кредитов (2 веб-поиск + 3 редакционное проектирование).", "Оценка структуры: 1 кредит; регенерация: 3 кредита.", "Проверка фактов: 2 кредита; синтаксический отчёт и метаданные KDP: по 1 кредиту.", "Полная проверка связности: 10 кредитов; следующие проверки: 1 кредит за изменённый блок.", "10 рецептов: 10 кредитов; изображение главы: 5 кредитов; веб-copyright: от 2 кредитов."],
+            "ds_info": "DeepSeek Pro активен: написание, структура, поиск источников и редакционные проверки используют DeepSeek. Веб-copyright и изображения требуют GPT и отключены.", "ds_title": "Тарифы DeepSeek Pro", "ds": ["Соотношение DeepSeek/GPT: 1 к 3. Три эквивалентных действия GPT по 1 кредиту используют 1 кредит DeepSeek.", "Написание, переработка, тесты и примеры: 1 кредит за 3 действия.", "Нативный поиск веб-источников + полная структура: около 2 кредитов всего.", "Оценка структуры, синтаксический отчёт и метаданные: 1 кредит за 3 эквивалентные проверки.", "Полная связность: около 4 кредитов; обновления: 1 кредит за 3 блока.", "10 рецептов: около 4 кредитов. Веб-copyright и изображения доступны только с GPT."],
+        },
+        "العربية": {
+            "gpt_info": "GPT-5.4 نشط: يستخدم المحرك الكامل، بما في ذلك البحث على الويب وفحص حقوق النشر وتوليد الصور.", "gpt_title": "أسعار GPT-5.4", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد لكل عملية.", "فهرس كامل: 5 أرصدة (2 للبحث على الويب + 3 للتخطيط التحريري).", "تقييم الفهرس: رصيد واحد؛ إعادة التوليد: 3 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد واحد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ الفحوصات اللاحقة: رصيد لكل كتلة معدلة.", "10 وصفات: 10 أرصدة؛ صورة الفصل: 5 أرصدة؛ حقوق النشر على الويب: من رصيدين."],
+            "ds_info": "DeepSeek Pro نشط: الكتابة والفهرس وبحث المصادر والفحوصات التحريرية تستخدم DeepSeek. حقوق النشر على الويب والصور تحتاج GPT وهي معطلة.", "ds_title": "أسعار DeepSeek Pro", "ds": ["نسبة DeepSeek/GPT هي 1 إلى 3. ثلاث عمليات GPT مكافئة لرصيد واحد تستهلك رصيد DeepSeek واحداً.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد كل 3 عمليات.", "بحث أصلي في مصادر الويب + فهرس كامل: نحو رصيدين إجمالاً.", "تقييم الفهرس والتقرير النحوي والبيانات: رصيد واحد كل 3 فحوصات مكافئة.", "اتساق كامل: نحو 4 أرصدة؛ التحديثات: رصيد واحد كل 3 كتل.", "10 وصفات: نحو 4 أرصدة. حقوق النشر على الويب والصور متاحة مع GPT فقط."],
+        },
+        "中文": {
+            "gpt_info": "GPT-5.4 已启用：使用完整引擎，包括网页研究、网页版权检查和图片生成。", "gpt_title": "GPT-5.4 价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：5 积分（2 积分网页研究 + 3 积分编辑规划）。", "目录评估：1 积分；重新生成：3 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续检查：每个修改区块 1 积分。", "10 道食谱：10 积分；章节图片：5 积分；网页版权：2 积分起。"],
+            "ds_info": "DeepSeek Pro 已启用：写作、目录、来源研究和编辑检查使用 DeepSeek。网页版权和图片需要 GPT，现已禁用。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。三项相当于 1 GPT 积分的操作消耗 1 DeepSeek 积分。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生网页来源研究 + 完整目录：总计约 2 积分。", "目录评估、句法报告和元数据：每 3 项等效检查 1 积分。", "完整一致性：约 4 积分；更新：每 3 个区块 1 积分。", "10 道食谱：约 4 积分。网页版权和图片仅可使用 GPT。"],
+        },
+    }
+    tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
+    motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
+    st.info(tariffario[f"{motore_tariffario}_info"])
+    with st.expander(tariffario[f"{motore_tariffario}_title"], expanded=False):
+        for voce_tariffario in tariffario[motore_tariffario]:
+            st.write(f"• {voce_tariffario}")
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
@@ -5423,18 +5453,24 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     # Le variabili sono lette qui per rendere esplicita la loro appartenenza
     # alla stessa fotografia della sidebar, salvata anche prima di un rerun.
     val_note_checkpoint = st.session_state.get("book_personal_checkpoint_notes", "")
+    opzioni_lunghezza = list(PROFILI_LUNGHEZZA_STESURA.keys())
     val_lunghezza_scelta = st.selectbox(
         testo_ui("lunghezza", lingua_sel),
-        [""] + list(PROFILI_LUNGHEZZA_STESURA.keys()),
+        [""] + opzioni_lunghezza,
         index=0,
         key="profilo_lunghezza_stesura",
         format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
-        help=testo_ui("lunghezza_help", lingua_sel)
+        help=testo_ui("lunghezza_help", lingua_sel),
     )
-    # Profilo tecnico sicuro solo per evitare errori prima che l'utente scelga;
-    # la tendina resta visivamente vuota e il progetto non è pronto finché non
-    # viene effettuata una selezione reale.
-    val_lunghezza = val_lunghezza_scelta or "Standard KDP"
+    # Il valore visibile può provenire da una sessione/CSV precedente. Tutta la
+    # logica usa esclusivamente una chiave tecnica presente nel profilo: un
+    # valore non valido non può più interrompere la sidebar con un KeyError.
+    val_lunghezza_normalizzata = _valore_scelta_chat_guidata(
+        "lunghezza", val_lunghezza_scelta
+    )
+    if val_lunghezza_normalizzata not in PROFILI_LUNGHEZZA_STESURA:
+        val_lunghezza_normalizzata = ""
+    val_lunghezza = val_lunghezza_normalizzata or "Standard KDP"
     # Memorizza la sidebar in ogni esecuzione, prima di qualsiasi pulsante che
     # possa avviare una generazione o un rerun.
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
