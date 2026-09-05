@@ -44,7 +44,9 @@ CREDIT_COSTS = {
     # Indice professionale GPT: ricerca 4 + generazione 6 = 10 crediti.
     "indice_ricerca_web": 4,
     "indice_generazione_editoriale": 6,
-    "voto_indice": 1,
+    # Il voto usa il modello editoriale completo e legge l'intera struttura:
+    # due crediti mantengono un margine prudente anche sugli indici più lunghi.
+    "voto_indice": 2,
     "rigenera_indice": 3,
     "verifica_fatti_web": 2,
     "audit_fatti_capitolo": 2,
@@ -91,7 +93,10 @@ def _unita_deepseek(reason: str, amount: int) -> int:
         # equivalenti a 3⅓ crediti. Il terzo residuo resta custodito nel saldo.
         "ricerca_preliminare_indice": 4,
         "genera_indice_controllato": 6,
-        "voto_indice": 1,
+        # Tre unità interne equivalgono a un credito: il voto DeepSeek resta
+        # più conveniente, ma non viene più contabilizzato come un controllo
+        # leggero da un terzo di credito.
+        "voto_indice": 3,
         "verifica_fatti": 1,                      # controllo editoriale locale
         "audit_fatti": 1,
         "audit_editoriale": 1,
@@ -718,19 +723,25 @@ def salva_progetto_automatico(snapshot: dict[str, Any]) -> bool:
         return False
 
 
-def elimina_progetto_automatico() -> None:
-    """Rimuove il salvataggio cloud dell'utente quando sceglie esplicitamente di azzerare il progetto."""
+def elimina_progetto_automatico() -> bool:
+    """Rimuove integralmente la bozza cloud prima di azzerare la pagina.
+
+    Restituisce ``False`` se il cloud non conferma la cancellazione: in quel
+    caso l'app mantiene visibile il progetto, invece di mostrare un reset che
+    al login successivo farebbe ricomparire dati precedenti.
+    """
     user = st.session_state.get("commercial_user_context") or {}
     if _mode() == "demo" or not _supabase_ready() or not user.get("id"):
-        return
+        return _mode() == "demo"
     try:
         _supabase(
             "DELETE",
             "rest/v1/writer_project_autosaves",
             params={"user_id": f"eq.{user['id']}"},
         )
+        return True
     except Exception:
-        pass
+        return False
 
 
 def _init_demo_account() -> dict[str, Any]:
@@ -1737,6 +1748,118 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
     _supabase("POST", "rest/v1/rpc/refund_credits", payload={"p_user_id": user["id"], "p_credits": amount, "p_reason": reason, "p_reference": reference})
 
 
+def _numero_utilizzo(usage: Any, *nomi: str) -> int:
+    """Legge in modo tollerante i token restituiti dai due provider.
+
+    I provider usano talvolta oggetti SDK e talvolta dizionari; questo
+    adattatore mantiene il registro disponibile anche quando manca un campo
+    opzionale come i token di cache o di ragionamento.
+    """
+    for nome in nomi:
+        valore = usage.get(nome) if isinstance(usage, dict) else getattr(usage, nome, None)
+        if valore is not None:
+            try:
+                return max(0, int(valore))
+            except (TypeError, ValueError):
+                continue
+    return 0
+
+
+def _dettaglio_utilizzo(usage: Any) -> dict[str, int]:
+    dettagli_input = usage.get("prompt_tokens_details", {}) if isinstance(usage, dict) else getattr(usage, "prompt_tokens_details", None)
+    dettagli_output = usage.get("completion_tokens_details", {}) if isinstance(usage, dict) else getattr(usage, "completion_tokens_details", None)
+    dettagli_input = dettagli_input or {}
+    dettagli_output = dettagli_output or {}
+    return {
+        "input_tokens": _numero_utilizzo(usage, "prompt_tokens", "input_tokens"),
+        "output_tokens": _numero_utilizzo(usage, "completion_tokens", "output_tokens"),
+        "cached_input_tokens": _numero_utilizzo(dettagli_input, "cached_tokens", "cache_read_input_tokens", "prompt_cache_hit_tokens"),
+        "reasoning_tokens": _numero_utilizzo(dettagli_output, "reasoning_tokens"),
+    }
+
+
+def _stima_costo_ai_usd(provider: str, model: str, token: dict[str, int]) -> float:
+    """Stima trasparente basata sul listino API, senza mai influire sui crediti."""
+    modello = str(model or "").casefold()
+    input_tokens = max(0, int(token.get("input_tokens", 0)))
+    output_tokens = max(0, int(token.get("output_tokens", 0)))
+    cached = min(input_tokens, max(0, int(token.get("cached_input_tokens", 0))))
+    if str(provider).casefold().startswith("deepseek") or "deepseek" in modello:
+        prezzo_input, prezzo_cache, prezzo_output = 0.435, 0.003625, 0.87
+    elif "mini" in modello:
+        prezzo_input, prezzo_cache, prezzo_output = 0.75, 0.075, 4.50
+    else:
+        prezzo_input, prezzo_cache, prezzo_output = 2.50, 0.25, 15.00
+    costo = ((input_tokens - cached) * prezzo_input + cached * prezzo_cache + output_tokens * prezzo_output) / 1_000_000
+    return round(max(0.0, costo), 8)
+
+
+def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, int]:
+    """Restituisce l'addebito effettivo, compresi i terzi DeepSeek accumulati."""
+    user = st.session_state.get("commercial_user_context") or {}
+    if _is_admin(user):
+        return {"credits_charged": 0, "deepseek_units": 0}
+    movimento = (st.session_state.get("commercial_deepseek_charges", {}) or {}).get(reference, {})
+    if isinstance(movimento, dict):
+        return {
+            "credits_charged": max(0, int(movimento.get("charged", 0) or 0)),
+            "deepseek_units": max(0, int(movimento.get("units", 0) or 0)),
+        }
+    return {"credits_charged": max(0, int(amount or 0)), "deepseek_units": 0}
+
+
+def registra_utilizzo_ai(
+    *,
+    reference: str | None,
+    operation: str,
+    model: str,
+    usage: Any = None,
+    credits_requested: int = 0,
+    success: bool = True,
+    refunded: bool = False,
+    error_code: str = "",
+) -> None:
+    """Registra solo dati tecnici aggregati delle chiamate AI.
+
+    Non memorizza prompt, risposte, titoli o contenuti del libro. Il registro
+    è una telemetria amministrativa best-effort: se Supabase non è disponibile,
+    una generazione editoriale non viene mai bloccata per questo motivo.
+    """
+    user = st.session_state.get("commercial_user_context") or {}
+    user_id = str(user.get("id", "") or "")
+    if not user_id or _mode() == "demo" or not _supabase_ready():
+        return
+    try:
+        dettaglio = _dettaglio_utilizzo(usage)
+        provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
+        addebito = dettaglio_addebito_ai(str(reference or ""), credits_requested)
+        if refunded or not success:
+            addebito["credits_charged"] = 0
+        payload = {
+            "user_id": user_id,
+            "reference": str(reference or uuid.uuid4().hex),
+            "provider": provider,
+            "model": str(model or ""),
+            "operation": str(operation or "ai_request")[:120],
+            "input_tokens": dettaglio["input_tokens"],
+            "output_tokens": dettaglio["output_tokens"],
+            "cached_input_tokens": dettaglio["cached_input_tokens"],
+            "reasoning_tokens": dettaglio["reasoning_tokens"],
+            "credits_requested": max(0, int(credits_requested or 0)),
+            "credits_charged": addebito["credits_charged"],
+            "deepseek_units": addebito["deepseek_units"],
+            "estimated_cost_usd": _stima_costo_ai_usd(provider, model, dettaglio),
+            "success": bool(success),
+            "error_code": str(error_code or "")[:160],
+        }
+        _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload)
+    except Exception:
+        # Il registro non deve mai compromettere un testo, un addebito o un
+        # salvataggio. L'assenza della tabella viene segnalata solo nel pannello
+        # amministratore, dopo l'esecuzione della migrazione SQL.
+        return
+
+
 def _grant_admin_credits(target_email: str, amount: int, reason: str) -> tuple[str, int]:
     """Accredita crediti a un utente dal pannello protetto dell'amministratore."""
     email = str(target_email or "").strip().lower()
@@ -1886,26 +2009,44 @@ def _render_referral_sidebar(user: dict[str, Any]) -> None:
             terza.metric(testo["pending"], riepilogo["pending"])
 
 
-def _salva_snapshot_prima_del_logout(user: dict[str, Any]) -> tuple[bool, str]:
-    """Conferma il salvataggio dell'ultima fotografia prima di cancellare la sessione browser."""
-    snapshot = st.session_state.get("commercial_logout_snapshot")
-    proprietario = str(st.session_state.get("commercial_logout_snapshot_owner", ""))
-    user_id = str(user.get("id", ""))
-
-    # Una fotografia di un account precedente non deve mai essere scritta su
-    # quello corrente. Senza una fotografia non c'è nulla da proteggere.
-    if not isinstance(snapshot, dict) or not snapshot or proprietario != user_id:
-        return True, ""
-
-    try:
-        if salva_progetto_automatico(snapshot):
-            return True, ""
-    except Exception:
-        pass
-    return False, (
-        "Non è stato possibile salvare l’ultima stesura nel tuo account. "
-        "L’uscita è stata annullata: attendi un momento e riprova, così il lavoro non va perso."
+def logout_sicuro_richiesto() -> bool:
+    """Indica che l'utente vuole uscire solo dopo il salvataggio finale."""
+    user = st.session_state.get("commercial_user_context") or {}
+    return bool(
+        st.session_state.get("commercial_logout_requested_for")
+        and str(st.session_state.get("commercial_logout_requested_for")) == str(user.get("id", ""))
     )
+
+
+def richiedi_logout_sicuro(user: dict[str, Any]) -> None:
+    """Rinvia l'uscita alla fine del rerun, quando sidebar ed editor sono aggiornati."""
+    st.session_state["commercial_logout_requested_for"] = str(user.get("id", ""))
+
+
+def annulla_logout_sicuro(messaggio: str) -> None:
+    """Conserva la sessione aperta se la fotografia finale non arriva al cloud."""
+    st.session_state.pop("commercial_logout_requested_for", None)
+    st.session_state["commercial_logout_error"] = str(messaggio or "Salvataggio finale non riuscito.")
+
+
+def completa_logout_sicuro() -> None:
+    """Cancella la sessione soltanto dopo conferma del salvataggio finale."""
+    _cancella_cookie_sessione()
+    for chiave in list(st.session_state.keys()):
+        if not chiave.startswith("commercial_"):
+            del st.session_state[chiave]
+    for chiave in (
+        "commercial_logout_snapshot",
+        "commercial_logout_snapshot_owner",
+        "commercial_logout_requested_for",
+        "commercial_logout_error",
+        "commercial_user",
+        "commercial_user_context",
+        "commercial_show_auth",
+        "commercial_project_reset_requested",
+    ):
+        st.session_state.pop(chiave, None)
+    st.rerun()
 
 
 def _commerce_sidebar() -> None:
@@ -2071,6 +2212,61 @@ def _commerce_sidebar() -> None:
                     except Exception as error:
                         st.error(str(error))
 
+            with st.expander("📊 Consumi AI e costi stimati", expanded=False):
+                st.caption(
+                    "Registro tecnico riservato: token, modello, operazione, crediti e costo API stimato. "
+                    "Non contiene prompt né contenuti dei libri."
+                )
+                try:
+                    utilizzi = _supabase(
+                        "GET",
+                        "rest/v1/writer_ai_usage_events",
+                        params={
+                            "select": "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,success",
+                            "order": "created_at.desc",
+                            "limit": "500",
+                        },
+                    ) or []
+                except Exception:
+                    utilizzi = None
+                if utilizzi is None:
+                    st.info(
+                        "Il registro sarà attivo dopo l'esecuzione della migrazione "
+                        "commercial_ai_usage_migration.sql nel SQL Editor di Supabase."
+                    )
+                elif not utilizzi:
+                    st.caption("Nessuna chiamata AI registrata dopo l'attivazione del monitoraggio.")
+                else:
+                    costo_totale = sum(float(voce.get("estimated_cost_usd", 0) or 0) for voce in utilizzi)
+                    token_totali = sum(
+                        int(voce.get("input_tokens", 0) or 0) + int(voce.get("output_tokens", 0) or 0)
+                        for voce in utilizzi
+                    )
+                    chiamate_ok = sum(1 for voce in utilizzi if voce.get("success"))
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Chiamate registrate", len(utilizzi))
+                    c2.metric("Token elaborati", f"{token_totali:,}".replace(",", "."))
+                    c3.metric("Costo API stimato", f"${costo_totale:.4f}")
+                    st.caption(f"Esiti riusciti: {chiamate_ok}/{len(utilizzi)}. Mostrate le ultime 500 chiamate.")
+                    st.dataframe(
+                        [
+                            {
+                                "Data": str(voce.get("created_at", ""))[:19].replace("T", " "),
+                                "Cervello": voce.get("provider", ""),
+                                "Operazione": voce.get("operation", ""),
+                                "Token input": int(voce.get("input_tokens", 0) or 0),
+                                "Token output": int(voce.get("output_tokens", 0) or 0),
+                                "Crediti": int(voce.get("credits_charged", 0) or 0),
+                                "Unità DS": int(voce.get("deepseek_units", 0) or 0),
+                                "Costo $": round(float(voce.get("estimated_cost_usd", 0) or 0), 6),
+                                "Esito": "OK" if voce.get("success") else "Non riuscita",
+                            }
+                            for voce in utilizzi
+                        ],
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
         with st.expander("Ricarica crediti", expanded=apri_ricarica):
             if is_admin:
@@ -2097,29 +2293,15 @@ def _commerce_sidebar() -> None:
                 movements = st.session_state.get("commercial_demo_ledger", [])[-12:]
                 st.write(movements or "Nessun movimento ancora.")
 
+        messaggio_logout = st.session_state.pop("commercial_logout_error", "")
+        if messaggio_logout:
+            st.error(messaggio_logout)
         if _mode() != "demo" and st.button("Esci", key="commercial_logout", use_container_width=True):
-            # Prima di svuotare la memoria locale chiediamo sempre al cloud di
-            # confermare l'ultima fotografia pronta. Se il cloud non risponde,
-            # l'utente resta dentro: è preferibile bloccare l'uscita piuttosto
-            # che far sparire anche una sola sezione già scritta.
-            salvataggio_ok, messaggio_errore = _salva_snapshot_prima_del_logout(user)
-            if not salvataggio_ok:
-                st.error(messaggio_errore)
-                return
-            # Chiudendo l'account svuotiamo anche la memoria locale del libro,
-            # ma il cloud ora ha confermato la fotografia appena preparata.
-            _cancella_cookie_sessione()
-            for chiave in list(st.session_state.keys()):
-                if not chiave.startswith("commercial_"):
-                    del st.session_state[chiave]
-            st.session_state.pop("commercial_logout_snapshot", None)
-            st.session_state.pop("commercial_logout_snapshot_owner", None)
-            st.session_state.pop("commercial_user", None)
-            st.session_state.pop("commercial_user_context", None)
-            st.session_state.pop("commercial_show_auth", None)
-            st.session_state.pop("commercial_project_reset_requested", None)
-            # Nel rerun successivo il componente riceve una sola istruzione:
-            # "logout". Così cancella lo storage browser prima del ritorno home.
+            # La sidebar viene renderizzata prima dell'editor. Per includere
+            # anche l'ultima modifica manuale, rimandiamo la chiusura alla fine
+            # di questo rerun: lì l'app ricostruisce e conferma la fotografia
+            # completa prima di cancellare il cookie della sessione.
+            richiedi_logout_sicuro(user)
             st.rerun()
 
 

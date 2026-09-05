@@ -51,7 +51,11 @@ from commercial_layer import (
     CommercialCreditError,
     bootstrap_commercial_test,
     charge_credits,
+    completa_logout_sicuro,
+    annulla_logout_sicuro,
+    logout_sicuro_richiesto,
     mostra_crediti_esauriti,
+    registra_utilizzo_ai,
     refund_credits,
 )
 
@@ -301,6 +305,13 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
                 tools=[{"type": "web_search_preview"}],
                 input=istruzioni_ricerca,
             )
+        registra_esito_chiamata_ai(
+            risposta,
+            riferimento=riferimento,
+            reason="ricerca_preliminare_indice",
+            amount=CREDIT_COSTS["indice_ricerca_web"],
+            model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+        )
         risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
         mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
         registro = conserva_solo_fonti_web_selezionate(registro)
@@ -326,6 +337,16 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         return mappa
     except Exception as exc:
         refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=CREDIT_COSTS["indice_ricerca_web"])
+        registra_esito_chiamata_ai(
+            None,
+            riferimento=riferimento,
+            reason="ricerca_preliminare_indice",
+            amount=CREDIT_COSTS["indice_ricerca_web"],
+            model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+            riuscita=False,
+            rimborsata=True,
+            errore=type(exc).__name__,
+        )
         st.session_state["ultimo_esito_ricerca_preliminare"] = (
             "Ricerca preliminare non disponibile o scaduta: l'indice verrà creato "
             "dal brief della sidebar. Il credito della ricerca è stato riaccreditato."
@@ -515,13 +536,30 @@ def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
                 "CAMPIONI DEL MANOSCRITTO DA VERIFICARE:\n" + "\n\n---\n\n".join(campioni)
             ),
         )
+        registra_esito_chiamata_ai(
+            risposta,
+            riferimento=riferimento,
+            reason="verifica_originalita_copyright_web",
+            amount=CREDIT_COSTS["copyright_web_rapido"],
+            model=MODELLO_ANALISI_FONTI,
+        )
         esito = (getattr(risposta, "output_text", "") or "").strip()
         if not esito:
             refund_credits(riferimento, reason="verifica_originalita_web_vuota", amount=CREDIT_COSTS["copyright_web_rapido"])
             return "La verifica web non ha prodotto un esito. Nessun credito è stato addebitato."
         return esito
-    except Exception:
+    except Exception as errore:
         refund_credits(riferimento, reason="verifica_originalita_web_fallita", amount=CREDIT_COSTS["copyright_web_rapido"])
+        registra_esito_chiamata_ai(
+            None,
+            riferimento=riferimento,
+            reason="verifica_originalita_copyright_web",
+            amount=CREDIT_COSTS["copyright_web_rapido"],
+            model=MODELLO_ANALISI_FONTI,
+            riuscita=False,
+            rimborsata=True,
+            errore=type(errore).__name__,
+        )
         return "La verifica web non è riuscita. Nessun credito è stato addebitato; puoi riprovare più tardi."
 
 
@@ -587,6 +625,13 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
             )
             esito = (getattr(risposta, "output_text", "") or "").strip()
             if esito:
+                registra_esito_chiamata_ai(
+                    risposta,
+                    riferimento=riferimento,
+                    reason="verifica_copyright_web_completa",
+                    amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+                    model=MODELLO_CONTROLLO_COPYRIGHT_COMPLETO,
+                )
                 crediti_effettivi += CREDIT_COSTS["copyright_lotto_screening_mini"]
                 esito_finale = f"Screening GPT-5.4 mini\n{esito}"
                 if richiede_revisione_copyright(esito):
@@ -612,6 +657,13 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                         )
                         esito_revisione = (getattr(revisione, "output_text", "") or "").strip()
                         if esito_revisione:
+                            registra_esito_chiamata_ai(
+                                revisione,
+                                riferimento=riferimento_revisione,
+                                reason="verifica_copyright_web_revisione_gpt54",
+                                amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                                model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
+                            )
                             esito_finale += f"\n\nRevisione mirata GPT-5.4\n{esito_revisione}"
                             revisioni_approfondite += 1
                             crediti_effettivi += CREDIT_COSTS["copyright_lotto_revisione_gpt54"]
@@ -621,11 +673,31 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                                 reason="verifica_copyright_revisione_vuota",
                                 amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
                             )
-                    except Exception:
+                            registra_esito_chiamata_ai(
+                                revisione,
+                                riferimento=riferimento_revisione,
+                                reason="verifica_copyright_web_revisione_gpt54",
+                                amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                                model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
+                                riuscita=False,
+                                rimborsata=True,
+                                errore="risposta_vuota",
+                            )
+                    except Exception as errore_revisione:
                         refund_credits(
                             riferimento_revisione,
                             reason="verifica_copyright_revisione_fallita",
                             amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                        )
+                        registra_esito_chiamata_ai(
+                            None,
+                            riferimento=riferimento_revisione,
+                            reason="verifica_copyright_web_revisione_gpt54",
+                            amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
+                            model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
+                            riuscita=False,
+                            rimborsata=True,
+                            errore=type(errore_revisione).__name__,
                         )
                         esito_finale += "\n\nRevisione mirata GPT-5.4 non disponibile: conserva lo screening mini e valuta manualmente il lotto."
                 esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito_finale}")
@@ -636,11 +708,31 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                     reason="verifica_copyright_completa_vuota",
                     amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
                 )
-        except Exception:
+                registra_esito_chiamata_ai(
+                    risposta,
+                    riferimento=riferimento,
+                    reason="verifica_copyright_web_completa",
+                    amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+                    model=MODELLO_CONTROLLO_COPYRIGHT_COMPLETO,
+                    riuscita=False,
+                    rimborsata=True,
+                    errore="risposta_vuota",
+                )
+        except Exception as errore_lotto:
             refund_credits(
                 riferimento,
                 reason="verifica_copyright_completa_fallita",
                 amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+            )
+            registra_esito_chiamata_ai(
+                None,
+                riferimento=riferimento,
+                reason="verifica_copyright_web_completa",
+                amount=CREDIT_COSTS["copyright_lotto_screening_mini"],
+                model=MODELLO_CONTROLLO_COPYRIGHT_COMPLETO,
+                riuscita=False,
+                rimborsata=True,
+                errore=type(errore_lotto).__name__,
             )
             esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\nVerifica non completata: nessun credito addebitato per questo lotto.")
     if aggiorna:
@@ -1255,6 +1347,19 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background: linear-gradient(135deg, #126b33, #178747) !important;
     border-color: #86efac !important;
 }
+/* Il reset è l'unico comando distruttivo del progetto: deve distinguersi
+   chiaramente da salvataggio, aggiornamento e normali azioni editoriali. */
+.st-key-reset_progetto_distruttivo .stButton>button,
+.st-key-reset_progetto_distruttivo button {
+    background: linear-gradient(135deg, #b4232b, #dc3545) !important;
+    border-color: #ff8792 !important;
+    color: #ffffff !important;
+}
+.st-key-reset_progetto_distruttivo .stButton>button:hover,
+.st-key-reset_progetto_distruttivo button:hover {
+    background: linear-gradient(135deg, #901b23, #b91c2b) !important;
+    border-color: #fecdd3 !important;
+}
 [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
 [data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid #2c405b; }
@@ -1491,6 +1596,30 @@ def _client_e_modello_testuale(modello_richiesto=None):
     return client_openai, (modello_richiesto or MODELLO_STESURA)
 
 
+def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazione_testo", amount=0,
+                               model=None, riuscita=True, rimborsata=False, errore=""):
+    """Invia al registro amministrativo solo i dati tecnici della chiamata.
+
+    Prompt e testo generato restano esclusivamente nella sessione/progetto
+    dell'utente: nel database dei costi finiscono soltanto token, modello,
+    operazione, crediti e risultato tecnico.
+    """
+    try:
+        registra_utilizzo_ai(
+            reference=riferimento,
+            operation=reason,
+            model=model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
+            usage=getattr(risposta, "usage", None) if risposta is not None else None,
+            credits_requested=amount,
+            success=riuscita,
+            refunded=rimborsata,
+            error_code=str(errore or "")[:160],
+        )
+    except Exception:
+        # Il monitoraggio non deve interferire con l'esito editoriale.
+        pass
+
+
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None,
                model=None, reason="generazione_testo", timeout_seconds=None):
     """Invia una richiesta testuale con timeout esplicito per i flussi editoriali.
@@ -1529,6 +1658,13 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             )
         response = client_richiesta.chat.completions.create(**richiesta)
         testo = response.choices[0].message.content.strip()
+        registra_esito_chiamata_ai(
+            response,
+            riferimento=riferimento,
+            reason=reason,
+            amount=amount if addebita else 0,
+            model=modello_effettivo,
+        )
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
         return "\n".join(righe).strip()
@@ -1540,6 +1676,16 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
     except Exception as e:
         if riferimento:
             refund_credits(riferimento, amount=amount)
+        registra_esito_chiamata_ai(
+            None,
+            riferimento=riferimento,
+            reason=reason,
+            amount=amount if addebita else 0,
+            model=model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
+            riuscita=False,
+            rimborsata=bool(riferimento),
+            errore=type(e).__name__,
+        )
         return f"ERRORE: {str(e)}"
 
 
@@ -1563,7 +1709,9 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
         return "circa 4"
     if "coerenza" in azione:
         return "circa 4 (primo controllo); poi 1 ogni 3 blocchi"
-    if any(parola in azione for parola in ("voto_indice", "report_sintattico", "metadati", "controlla_fatti")):
+    if "voto_indice" in azione:
+        return "1 credito"
+    if any(parola in azione for parola in ("report_sintattico", "metadati", "controlla_fatti")):
         return "1 ogni 3 controlli equivalenti"
     if "copyright" in azione or "immagine" in azione:
         return "non disponibile con DeepSeek Pro"
@@ -1694,10 +1842,27 @@ def verifica_e_correggi_fatti_online(testo, sezione, lingua):
                 f"TESTO:\n{testo}"
             )
         )
+        registra_esito_chiamata_ai(
+            risposta,
+            riferimento=riferimento,
+            reason="verifica_fatti",
+            amount=CREDIT_COSTS["verifica_fatti_web"],
+            model=MODELLO_STESURA,
+        )
         return pulisci_testo_editoriale(getattr(risposta, "output_text", None) or testo)
     except Exception as e:
         if riferimento:
             refund_credits(riferimento, amount=CREDIT_COSTS["verifica_fatti_web"])
+        registra_esito_chiamata_ai(
+            None,
+            riferimento=riferimento,
+            reason="verifica_fatti",
+            amount=CREDIT_COSTS["verifica_fatti_web"],
+            model=MODELLO_STESURA,
+            riuscita=False,
+            rimborsata=bool(riferimento),
+            errore=type(e).__name__,
+        )
         st.warning(f"Verifica online non disponibile: {e}")
         return pulisci_testo_editoriale(testo)
 
@@ -1735,10 +1900,27 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
                 f"CAPITOLO:\n{testo}"
             )
         )
+        registra_esito_chiamata_ai(
+            risposta,
+            riferimento=riferimento,
+            reason="audit_fatti",
+            amount=CREDIT_COSTS["audit_fatti_capitolo"],
+            model=MODELLO_STESURA,
+        )
         return pulisci_testo_editoriale(getattr(risposta, "output_text", "") or "Controllo non disponibile.")
     except Exception as e:
         if riferimento:
             refund_credits(riferimento, amount=CREDIT_COSTS["audit_fatti_capitolo"])
+        registra_esito_chiamata_ai(
+            None,
+            riferimento=riferimento,
+            reason="audit_fatti",
+            amount=CREDIT_COSTS["audit_fatti_capitolo"],
+            model=MODELLO_STESURA,
+            riuscita=False,
+            rimborsata=bool(riferimento),
+            errore=type(e).__name__,
+        )
         return f"Controllo fatti del capitolo non disponibile: {e}"
 
 def pulisci_testo_editoriale(testo):
@@ -3604,6 +3786,41 @@ def reidrata_sezioni_memorizzate(sezioni):
     )
 
 
+def immagini_per_snapshot_cloud(immagini):
+    """Rende serializzabili le immagini caricate dall'utente per il cloud.
+
+    Supabase salva JSON e non può ricevere direttamente byte. Codifichiamo solo
+    le immagini già associate alle sezioni, senza crearne o modificarne alcuna.
+    """
+    risultato = {}
+    for sezione, immagine in dict(immagini or {}).items():
+        dati = dict(immagine or {})
+        raw = dati.pop("bytes", None)
+        if isinstance(raw, (bytes, bytearray)) and raw:
+            dati["bytes_b64"] = base64.b64encode(bytes(raw)).decode("ascii")
+        if dati:
+            risultato[str(sezione)] = dati
+    return risultato
+
+
+def immagini_da_snapshot_cloud(immagini):
+    """Ripristina in memoria le immagini esterne salvate in base64."""
+    risultato = {}
+    for sezione, immagine in dict(immagini or {}).items():
+        dati = dict(immagine or {})
+        raw_b64 = dati.pop("bytes_b64", "")
+        if raw_b64:
+            try:
+                dati["bytes"] = base64.b64decode(raw_b64)
+            except (ValueError, TypeError):
+                continue
+        if isinstance(dati.get("bytes"), bytearray):
+            dati["bytes"] = bytes(dati["bytes"])
+        if isinstance(dati.get("bytes"), bytes) and dati["bytes"]:
+            risultato[str(sezione)] = dati
+    return risultato
+
+
 def esporta_progetto_editoriale_csv():
     """Esporta una fotografia completa e verificabile dell'intero progetto.
 
@@ -3942,7 +4159,7 @@ def applica_snapshot_progetto(snapshot):
     if not indice.strip() and contenuti:
         indice = "\n".join(contenuti.keys())
     fonti = dict(snapshot.get("fonti", {}) or {})
-    immagini = dict(snapshot.get("immagini_capitoli", {}) or {})
+    immagini = immagini_da_snapshot_cloud(snapshot.get("immagini_capitoli", {}) or {})
     ha_dati_ripristinabili = bool(
         indice.strip()
         or contenuti
@@ -4089,11 +4306,19 @@ def salva_progetto_corrente(sidebar, sezioni):
         indice_corrente = indice_precedente
         imposta_indice_progetto(indice_corrente)
     progetto["indice"] = indice_corrente
+    # Anche le immagini esterne fanno parte del progetto: prima le custodiamo
+    # nella memoria unica e poi le rendiamo serializzabili per Supabase. Nessun
+    # pulsante genera immagini; qui proteggiamo esclusivamente i file caricati.
+    immagini = dict(progetto.get("immagini", {}) or {})
+    immagini.update(dict(st.session_state.get("immagini_capitoli", {}) or {}))
+    immagini = immagini_da_snapshot_cloud(immagini)
+    progetto["immagini"] = dict(immagini)
     snapshot = {
         "sidebar": sidebar_completa,
         "indice_raw": indice_corrente,
         "indice_backup": indice_corrente,
         "contenuti": contenuti,
+        "immagini_capitoli": immagini_per_snapshot_cloud(immagini),
         # Conserviamo il dossier già elaborato: dopo logout o refresh l'AI può
         # continuare a usarlo senza richiedere nuovamente i file originali.
         "fonti": {
@@ -4182,6 +4407,38 @@ def salva_stesura_generata_in_cloud(sezioni, descrizione="contenuto generato"):
             "nel tuo account non è riuscito: premi SALVA SESSIONE appena possibile."
         )
     return salvato
+
+
+def completa_logout_dopo_salvataggio_finale():
+    """Salva l'intero progetto dopo il rendering e solo allora chiude l'account.
+
+    Il comando Esci parte nella sidebar, che Streamlit esegue prima dell'editor.
+    Questa fase conclusiva vede invece tutti i valori del rerun corrente: testi
+    digitati, sidebar, indice, fonti e immagini caricate esternamente.
+    """
+    if not logout_sicuro_richiesto():
+        return
+    user = st.session_state.get("commercial_user_context") or {}
+    if not str(user.get("id", "") or "").strip():
+        annulla_logout_sicuro("La sessione non è più valida. Il progetto resta aperto in questa pagina: accedi di nuovo e riprova il salvataggio.")
+        st.rerun()
+    sezioni_complete = elenco_sezioni_progetto(
+        list(st.session_state.get("lista_capitoli", []) or [])
+    )
+    try:
+        salvato = salva_progetto_corrente(
+            sidebar_memorizzata_corrente(),
+            sezioni_complete,
+        )
+    except Exception:
+        salvato = False
+    if salvato:
+        completa_logout_sicuro()
+    annulla_logout_sicuro(
+        "Non è stato possibile confermare il salvataggio finale nel tuo account. "
+        "L’uscita è stata annullata: il progetto resta aperto e puoi riprovare senza perdere il lavoro."
+    )
+    st.rerun()
 
 
 def minimo_parole_per_sezione_editoriale(sezione, genere):
@@ -5207,7 +5464,7 @@ with st.sidebar:
         testo_ui("cervello", lingua_sel),
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
         key="provider_ia",
-        help="GPT conserva tutte le funzioni, comprese verifica copyright web e immagini. DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
+        help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
     tariffari_sidebar = {
         "Italiano": {
@@ -5251,6 +5508,32 @@ with st.sidebar:
             "ds_info": "DeepSeek Pro 已启用：写作、目录、来源研究和编辑检查使用 DeepSeek。网页版权和图片需要 GPT，现已禁用。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。三项相当于 1 GPT 积分的操作消耗 1 DeepSeek 积分。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生网页来源研究 + 完整目录：总计约 2 积分。", "目录评估、句法报告和元数据：每 3 项等效检查 1 积分。", "完整一致性：约 4 积分；更新：每 3 个区块 1 积分。", "10 道食谱：约 4 积分。网页版权和图片仅可使用 GPT。"],
         },
     }
+    # Questa seconda definizione è il tariffario effettivo dell'app. Mantiene
+    # separati i due cervelli, mostra il costo reale dell'indice e non propone
+    # più immagini generate: il software accetta soltanto file esterni.
+    tariffari_sidebar.update({
+        "Italiano": {
+            "gpt_info": "GPT-5.4 attivo: ricerca web, controlli editoriali e verifica copyright web. Le immagini si caricano dall'esterno.",
+            "gpt_title": "Tariffario GPT-5.4",
+            "gpt": ["Scrittura, rigenerazione, quiz ed esempi: 1 credito per operazione.", "Indice completo: 10 crediti (4 ricerca fonti + 6 progettazione editoriale).", "Voto indice: 2 crediti; rigenerazione indice: 6 crediti.", "Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.", "Coerenza completa: 10 crediti; controllo successivo: 1 credito per blocco modificato.", "10 ricette: 10 crediti; immagini esterne: gratuite da caricare; copyright web: da 2 crediti."],
+            "ds_info": "DeepSeek Pro attivo: scrittura, indice, ricerca fonti e controlli editoriali usano DeepSeek. Le immagini restano esclusivamente esterne.",
+            "ds_title": "Tariffario DeepSeek Pro",
+            "ds": ["Rapporto DeepSeek/GPT: 1 a 3.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti nativa + indice completo: circa 3⅓ crediti.", "Voto indice: 1 credito; report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Le immagini esterne non consumano crediti."],
+        },
+        "English": {
+            "gpt_info": "GPT-5.4 is active: web research, editorial checks and web copyright screening. Images are uploaded externally.", "gpt_title": "GPT-5.4 pricing",
+            "gpt": ["Writing, rewriting, quizzes and examples: 1 credit per action.", "Complete outline: 10 credits (4 source research + 6 editorial design).", "Outline review: 2 credits; outline rewrite: 6 credits.", "Fact check: 2 credits; syntax report and KDP metadata: 1 credit each.", "Full consistency check: 10 credits; later checks: 1 credit per changed block.", "10 recipes: 10 credits; external image upload is free; web copyright: from 2 credits."],
+            "ds_info": "DeepSeek Pro is active for writing, outlines, source research and editorial checks. Images remain external uploads only.", "ds_title": "DeepSeek Pro pricing",
+            "ds": ["DeepSeek/GPT ratio: 1 to 3.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native source research + complete outline: about 3⅓ credits.", "Outline review: 1 credit; syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. External images use no credits."],
+        },
+        "Español": {"gpt_info": "GPT-5.4 activo: investigación web, controles editoriales y copyright web. Las imágenes se cargan externamente.", "gpt_title": "Tarifas de GPT-5.4", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 10 créditos (4 investigación + 6 diseño editorial).", "Evaluación del índice: 2 créditos; regeneración: 6 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; carga externa de imágenes gratuita; copyright web: desde 2 créditos."], "ds_info": "DeepSeek Pro activo para escritura, índice, fuentes y controles. Las imágenes son solo cargas externas.", "ds_title": "Tarifas de DeepSeek Pro", "ds": ["Relación DeepSeek/GPT: 1 a 3.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Fuentes nativas + índice completo: unos 3⅓ créditos.", "Evaluación del índice: 1 crédito; informe sintáctico y metadatos: 1 crédito cada 3 controles.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "Las imágenes externas no consumen créditos."]},
+        "Français": {"gpt_info": "GPT-5.4 actif : recherche web, contrôles éditoriaux et copyright web. Les images sont importées de l’extérieur.", "gpt_title": "Tarifs GPT-5.4", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 10 crédits (4 recherche + 6 conception éditoriale).", "Évaluation du plan : 2 crédits ; régénération : 6 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "Import d’images externes gratuit ; copyright web : dès 2 crédits."], "ds_info": "DeepSeek Pro actif pour rédaction, plan, sources et contrôles. Images externes uniquement.", "ds_title": "Tarifs DeepSeek Pro", "ds": ["Rapport DeepSeek/GPT : 1 pour 3.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 actions.", "Sources natives + plan complet : environ 3⅓ crédits.", "Évaluation du plan : 1 crédit ; rapport et métadonnées : 1 crédit tous les 3 contrôles.", "Cohérence complète : environ 4 crédits.", "Les images externes ne consomment aucun crédit."]},
+        "Deutsch": {"gpt_info": "GPT-5.4 aktiv: Webrecherche, redaktionelle Prüfungen und Web-Copyright. Bilder werden extern hochgeladen.", "gpt_title": "GPT-5.4 Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 10 Credits (4 Recherche + 6 Redaktion).", "Gliederungsbewertung: 2 Credits; Neugenerierung: 6 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "Externe Bilder kostenlos hochladen; Web-Copyright: ab 2 Credits."], "ds_info": "DeepSeek Pro aktiv für Text, Gliederung, Quellen und Prüfungen. Bilder sind ausschließlich externe Uploads.", "ds_title": "DeepSeek Pro Preise", "ds": ["DeepSeek/GPT-Verhältnis: 1 zu 3.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Quellenrecherche + Gliederung: etwa 3⅓ Credits.", "Gliederungsbewertung: 1 Credit; Bericht und Metadaten: 1 Credit je 3 Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits.", "Externe Bilder verbrauchen keine Credits."]},
+        "Română": {"gpt_info": "GPT-5.4 activ: cercetare web, controale editoriale și copyright web. Imaginile sunt încărcate extern.", "gpt_title": "Tarife GPT-5.4", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per operațiune.", "Cuprins complet: 10 credite (4 cercetare + 6 proiectare editorială).", "Evaluare cuprins: 2 credite; regenerare: 6 credite.", "Verificare fapte: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; ulterior 1 credit per bloc modificat.", "Încărcarea imaginilor externe este gratuită; copyright web: de la 2 credite."], "ds_info": "DeepSeek Pro activ pentru scriere, cuprins, surse și controale. Imagini externe numai.", "ds_title": "Tarife DeepSeek Pro", "ds": ["Raport DeepSeek/GPT: 1 la 3.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Surse native + cuprins complet: circa 3⅓ credite.", "Evaluare cuprins: 1 credit; raport și metadate: 1 credit la 3 controale.", "Coerență completă: circa 4 credite.", "Imaginile externe nu consumă credite."]},
+        "Русский": {"gpt_info": "GPT-5.4 активен: веб-поиск, редакторские проверки и веб-copyright. Изображения загружаются извне.", "gpt_title": "Тарифы GPT-5.4", "gpt": ["Текст, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 10 кредитов (4 поиск + 6 редактура).", "Оценка структуры: 2 кредита; регенерация: 6 кредитов.", "Проверка фактов: 2 кредита; синтаксический отчёт и KDP-метаданные: по 1 кредиту.", "Полная проверка связности: 10 кредитов; далее 1 кредит за блок.", "Внешняя загрузка изображений бесплатна; веб-copyright: от 2 кредитов."], "ds_info": "DeepSeek Pro активен для текста, структуры, источников и проверок. Только внешние изображения.", "ds_title": "Тарифы DeepSeek Pro", "ds": ["Соотношение DeepSeek/GPT: 1 к 3.", "Текст, переработка, тесты и примеры: 1 кредит за 3 действия.", "Источники + структура: около 3⅓ кредита.", "Оценка структуры: 1 кредит; отчёт и метаданные: 1 кредит за 3 проверки.", "Полная связность: около 4 кредитов.", "Внешние изображения не расходуют кредиты."]},
+        "العربية": {"gpt_info": "GPT-5.4 نشط: بحث ويب وفحوص تحريرية وحقوق نشر على الويب. تُرفع الصور من الخارج.", "gpt_title": "أسعار GPT-5.4", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد لكل عملية.", "فهرس كامل: 10 أرصدة (4 بحث + 6 تخطيط تحريري).", "تقييم الفهرس: رصيدان؛ إعادة التوليد: 6 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ ثم رصيد لكل كتلة معدلة.", "رفع الصور الخارجية مجاني؛ حقوق النشر على الويب: من رصيدين."], "ds_info": "DeepSeek Pro نشط للكتابة والفهرس والمصادر والفحوص. الصور خارجية فقط.", "ds_title": "أسعار DeepSeek Pro", "ds": ["نسبة DeepSeek/GPT هي 1 إلى 3.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد كل 3 عمليات.", "مصادر أصلية + فهرس كامل: نحو 3⅓ أرصدة.", "تقييم الفهرس: رصيد واحد؛ التقرير والبيانات: رصيد كل 3 فحوص.", "اتساق كامل: نحو 4 أرصدة.", "الصور الخارجية لا تستهلك أرصدة."]},
+        "中文": {"gpt_info": "GPT-5.4 已启用：网页研究、编辑检查和网页版权检查。图片从外部上传。", "gpt_title": "GPT-5.4 价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：10 积分（4 积分研究 + 6 积分编辑规划）。", "目录评估：2 积分；重新生成：6 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续每个修改区块 1 积分。", "外部图片上传免费；网页版权检查：2 积分起。"], "ds_info": "DeepSeek Pro 用于写作、目录、资料和检查。图片仅可从外部上传。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生资料研究 + 完整目录：约 3⅓ 积分。", "目录评估：1 积分；报告和元数据：每 3 次检查 1 积分。", "完整一致性检查：约 4 积分。", "外部图片不消耗积分。"]},
+    })
     tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
     motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
     st.info(tariffario[f"{motore_tariffario}_info"])
@@ -5582,25 +5865,40 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     st.caption(intestazioni_sidebar[5])
     
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
-    if st.button(L["btn_res"]):
+    if st.button(
+        L["btn_res"],
+        type="primary",
+        use_container_width=True,
+        key="reset_progetto_distruttivo",
+        help="Cancella definitivamente il progetto aperto, inclusi campi, indice, testi, fonti e immagini.",
+    ):
+        reset_eseguito = False
         if st.session_state.get("admin_test_mode"):
             # Nel laboratorio RESET non deve mai cancellare la bozza cloud
             # dell'amministratore: chiude soltanto il progetto di prova.
             termina_collaudo_amministratore()
             st.session_state["messaggio_aggiornamento_pagina"] = "Collaudo chiuso: la sessione precedente è stata ripristinata."
+            reset_eseguito = True
         else:
-            elimina_progetto_automatico()
-            # Il reset è l'unica scelta esplicita che elimina anche la copia
-            # di sicurezza preparata per l'uscita.
-            st.session_state.pop("commercial_logout_snapshot", None)
-            st.session_state.pop("commercial_logout_snapshot_owner", None)
-            # Chiave commerciale: non viene rimossa dal ciclo qui sotto e blocca
-            # ogni ripristino automatico di una fotografia precedente.
-            st.session_state["commercial_project_reset_requested"] = True
-            for key in list(st.session_state.keys()):
-                if not key.startswith("commercial_"):
-                    del st.session_state[key]
-        st.rerun()
+            # Reset significa eliminazione integrale: prima il cloud, poi la
+            # memoria della pagina. Se il cloud non conferma, non svuotiamo la
+            # UI e non rischiamo che la bozza ricompaia al login successivo.
+            if elimina_progetto_automatico():
+                st.session_state.pop("commercial_logout_snapshot", None)
+                st.session_state.pop("commercial_logout_snapshot_owner", None)
+                st.session_state.pop("commercial_logout_requested_for", None)
+                st.session_state["commercial_project_reset_requested"] = True
+                for key in list(st.session_state.keys()):
+                    if not key.startswith("commercial_"):
+                        del st.session_state[key]
+                reset_eseguito = True
+            else:
+                st.error(
+                    "Il progetto non è stato cancellato perché l'archivio cloud non ha confermato l'operazione. "
+                    "Riprova tra un momento: i dati restano visibili e al sicuro."
+                )
+        if reset_eseguito:
+            st.rerun()
 
     etichette_aggiorna = {
         "Italiano": ("🔄 AGGIORNA PAGINA", "Pagina aggiornata: cache e messaggi temporanei ripuliti. Il progetto resta invariato."),
@@ -5857,6 +6155,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
         prompt,
         "Sei un editor senior specializzato in architettura di libri. Sei rigoroso, concreto e non usi valutazioni vaghe.",
         addebita=addebita,
+        amount=CREDIT_COSTS["voto_indice"],
         model=MODELLO_EDITORIALE,
         reason="voto_indice",
     ))
@@ -9450,6 +9749,12 @@ Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive
                     st.info("La formattazione completa è disponibile per file DOCX. Per un PDF puoi generare comunque i metadati a sinistra.")
 else:
     st.info(L["welcome"] + " " + L["guide"])
+
+# L'ultima istruzione del rerun: se l'utente ha premuto Esci, questa è la
+# prima posizione in cui sidebar, editor, indice, fonti e immagini sono già
+# confluiti nella memoria unica. Il logout non può quindi salvare una bozza
+# precedente e perdere l'ultima modifica manuale.
+completa_logout_dopo_salvataggio_finale()
 
 # ======================================================================================================================
 # DOCUMENTAZIONE TECNICA E MODULI DI ESPANSIONE (SIMULAZIONE SCALABILITÀ 3000 RIGHE)
