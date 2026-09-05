@@ -7505,18 +7505,42 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             1 for voce in messaggi_chat
                             if voce.get("role") == "user"
                         )
+                        ultimo_messaggio_chat = testo_utente_chat.casefold()
+                        conferma_chat = bool(re.search(
+                            r"\b(confermo|conferma|procedi|prosegui|vai|ok|okay|yes|si|sì|continue|go ahead|continúa|continuez|weiter|продолж|افعل|继续)\b",
+                            ultimo_messaggio_chat,
+                        ))
+                        autonomia_creativa_chat = bool(re.search(
+                            r"(fai tu|scegli tu|decidi tu|usa la tua immaginazione|fa tu|make it up|you decide|hazlo tú|elige tú|fais[- ]le|choisis|mach du|entscheide du|tu decizi|alege tu|делай сам|реши сам|افعلها أنت|قرر أنت|你来决定|你决定)",
+                            ultimo_messaggio_chat,
+                        ))
+                        istruzione_chiusura_chat = (
+                            "L'ultimo messaggio contiene una conferma o richiesta di procedere: produci ADESSO la scheda finale completa. Non porre domande, non chiedere conferme e non offrire alternative."
+                            if conferma_chat else
+                            "L'utente non ha ancora dato una conferma conclusiva: segui il protocollo sotto e chiedi soltanto il prossimo dato davvero necessario."
+                        )
+                        istruzione_autonomia_chat = (
+                            "L'utente ti ha chiesto di scegliere autonomamente: usa immaginazione editoriale coerente con tutta la conversazione e compila tutti i campi descrittivi. Puoi inventare soltanto impostazioni narrative, esempi generici, tono, obiettivo, pubblico plausibile e priorità editoriali; non attribuire mai all'autore esperienze, testimonianze, risultati, biografia, fonti o fatti reali non dichiarati. Produci subito la scheda finale."
+                            if autonomia_creativa_chat else
+                            "Se l'utente non ti chiede di scegliere autonomamente, non inventare informazioni personali o fatti non dichiarati."
+                        )
                         istruzioni_chat_interattiva = f"""{prompt_chat_sidebar}
 
 MODALITÀ CHAT INTERATTIVA — PRIORITÀ ASSOLUTA
 Il tuo scopo non è intrattenere una conversazione generica: devi accompagnare con naturalezza l'utente fino alla compilazione affidabile della sidebar. In questa conversazione l'utente ha già inviato {risposte_utente_chat} messaggi.
 
+SEGNALI DELL'ULTIMO MESSAGGIO
+{istruzione_chiusura_chat}
+{istruzione_autonomia_chat}
+
 PROTOCOLLO DI GUIDA OBBLIGATORIO
 1. Leggi tutta la cronologia e memorizza ogni dato già espresso. Non chiedere mai di nuovo titolo, argomento, pubblico, obiettivo o preferenze che sono già chiari.
 2. Dopo la prima descrizione concreta del libro, poni una sola volta la domanda A/B/C sulla personalizzazione prevista dal prompt principale. Non discutere altri argomenti prima di aver ricevuto questa scelta, salvo una risposta di una frase che aiuti davvero il progetto.
-3. Se l'utente sceglie A o comunica chiaramente di non volere personalizzazioni, prepara subito la scheda completa. Se sceglie B o C, chiedi in un unico messaggio soltanto i dettagli personali indispensabili e, alla risposta successiva, prepara la scheda.
-4. Puoi porre al massimo un chiarimento editoriale aggiuntivo, e solo se senza quel dato il progetto cambierebbe materialmente. Offri fino a tre scelte concrete. Altrimenti deduci in modo ragionevole e completa tu i campi.
-5. Se l'utente apre un discorso laterale, rispondi con intelligenza in non più di due frasi solo quando è utile al suo libro; poi riporta immediatamente al prossimo passo necessario per la scheda. Non aprire ricerche, dibattiti, consigli generici o nuove conversazioni indipendenti.
-6. Non creare mai indice, capitoli, testo del libro, piani marketing, prezzi, pagine o campi esterni. Non inventare esperienze personali, fatti o preferenze.
+3. Se l'utente sceglie A o comunica chiaramente di non volere personalizzazioni, prepara subito la scheda completa. Se sceglie B o C, chiedi in un unico messaggio soltanto i dettagli personali indispensabili. Non proporre liste generiche, non chiedere di confermare una tua proposta e non aprire un secondo giro: alla risposta successiva prepara la scheda. Spiega che può anche rispondere “fai tu”.
+4. Se l'utente risponde “confermo”, “ok”, “procedi”, “vai”, o esprime una richiesta equivalente dopo B/C, interpreta la risposta come autorizzazione a chiudere subito: completa la scheda con ciò che è noto e lascia vuoti solo i campi personali che non possono essere costruiti senza attribuire falsamente esperienze all'autore.
+5. Puoi porre al massimo un chiarimento editoriale aggiuntivo, e solo se senza quel dato il progetto cambierebbe materialmente. Offri fino a tre scelte concrete. Altrimenti deduci in modo ragionevole e completa tu i campi.
+6. Se l'utente apre un discorso laterale, rispondi con intelligenza in non più di due frasi solo quando è utile al suo libro; poi riporta immediatamente al prossimo passo necessario per la scheda. Non aprire ricerche, dibattiti, consigli generici o nuove conversazioni indipendenti.
+7. Non creare mai indice, capitoli, testo del libro, piani marketing, prezzi, pagine o campi esterni. Non inventare esperienze personali, fatti o preferenze.
 
 CRITERIO DI CHIUSURA
 Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta sulla personalizzazione, i dati sono sufficienti: non fare altre domande. Produci la scheda finale completa, anche se alcuni dettagli devono essere scelti da te in modo coerente.
