@@ -4118,14 +4118,13 @@ l'idea, senza rimandare la conclusione a una sezione successiva.
 
 
 def genera_prefazione_del_libro(prompt, system_prompt, sezione, lingua, limite_output):
-    """Genera la prima sezione senza il protocollo tecnico dei capitoli.
+    """Genera in modo affidabile la prima sezione della coda editoriale.
 
-    La Prefazione e' una sezione editoriale autonoma e breve. In passato
-    passava dal generatore con il marcatore ``[[FINE_SEZIONE]]``: se il modello
-    consegnava un testo corretto ma ometteva quel marcatore, l'intera coda si
-    fermava prima ancora di poter salvare la prima voce. Qui chiediamo solo un
-    testo concluso, lo validiamo sul contenuto reale e lasciamo invariati i
-    criteri usati da GPT-5.4 e DeepSeek.
+    La Prefazione e' più breve di un capitolo, ma non deve mai essere la causa
+    di un libro bloccato al primo passo. Il primo tentativo è quello a credito;
+    tutti i recuperi sono gratuiti. Un testo già completo e concluso viene
+    mantenuto come base di sicurezza, invece di essere scartato solo perché
+    non ha raggiunto una soglia ideale al primo tentativo.
     """
     istruzione_base = prompt + f"""
 
@@ -4137,17 +4136,22 @@ il bisogno da cui nasce il libro e il percorso che trovera', senza riassumere
 o anticipare i capitoli. Mantieni con precisione genere, tono e punto di vista
 gia' indicati nel brief. Termina con una frase piena, definitiva e pertinente.
 """
-    ultimo_testo = ""
+    minimo_ideale = 100
+    minimo_salvabile = 60
+    migliore_prefazione_completa = ""
     ultimo_errore = ""
-    # Il primo tentativo e' l'unica nuova operazione addebitata. Il secondo e'
-    # una riparazione gratuita della risposta se troppo corta o non conclusa.
-    for tentativo in range(2):
+    # Il primo tentativo è l'unica nuova operazione addebitata. I due recuperi
+    # successivi intervengono esclusivamente se la stessa prima risposta non
+    # era utilizzabile: non sono nuove richieste dell'utente.
+    for tentativo in range(3):
         recupero = "" if tentativo == 0 else """
 
 RISCRITTURA DI RECUPERO
-La bozza precedente era troppo breve o non risultava conclusa. Riscrivi da
-zero una Prefazione completa di almeno 100 parole, senza aggiungere indice,
-titoli interni o parti del libro. Chiudi con una frase completa.
+La Prefazione precedente era troppo breve oppure non risultava chiaramente
+conclusa. Riscrivi da zero una Prefazione autonoma di almeno 100 parole, senza
+aggiungere indice, titoli interni o parti del libro. L'ultimo periodo deve
+chiudere un'idea concreta e non può terminare con virgola, due punti, elenco o
+parola di collegamento.
 """
         try:
             candidato = genera_sezione_con_ripetizione(
@@ -4163,16 +4167,56 @@ titoli interni o parti del libro. Chiudi con una frase completa.
             ultimo_errore = str(exc)
             continue
 
-        ultimo_testo = pulisci_testo_editoriale(candidato).strip()
-        if (
-            len(ultimo_testo.split()) >= 80
-            and not motivo_chiusura_tecnica(ultimo_testo)
-        ):
-            return ultimo_testo
-        ultimo_errore = (
-            "testo insufficiente o non concluso"
-            if ultimo_testo else "risposta vuota"
-        )
+        testo = pulisci_testo_editoriale(candidato).strip()
+        if not testo or testo.upper().startswith("ERRORE:"):
+            ultimo_errore = "risposta vuota o non utilizzabile"
+            continue
+        if motivo_chiusura_tecnica(testo):
+            ultimo_errore = "ultima frase non conclusa"
+            continue
+        # Conserviamo ogni versione realmente conclusa: se il motore risponde
+        # con una Prefazione valida ma un po' breve, il recupero può ampliarla
+        # senza fare sparire il testo già buono.
+        if len(testo.split()) > len(migliore_prefazione_completa.split()):
+            migliore_prefazione_completa = testo
+        if len(testo.split()) >= minimo_ideale:
+            return testo
+        ultimo_errore = "prefazione completa ma troppo breve"
+
+    if migliore_prefazione_completa:
+        integrazione_prompt = f"""
+Completa la Prefazione qui sotto senza riscriverla e senza aggiungere titoli,
+elenchi, fonti o commenti. Aggiungi un solo breve paragrafo coerente sul
+percorso del lettore, poi chiudi con una frase completa. Restituisci solo
+l'integrazione finale in lingua {lingua}.
+
+PREFAZIONE DA COMPLETARE:
+{migliore_prefazione_completa}
+"""
+        try:
+            integrazione = genera_sezione_con_ripetizione(
+                integrazione_prompt, system_prompt, sezione, lingua,
+                tentativi=2,
+                max_completion_tokens=min(max(320, limite_output), 620),
+                addebita=False,
+            )
+            testo_integrato = pulisci_testo_editoriale(
+                f"{migliore_prefazione_completa}\n\n{integrazione}"
+            ).strip()
+            if (
+                len(testo_integrato.split()) >= minimo_salvabile
+                and not motivo_chiusura_tecnica(testo_integrato)
+            ):
+                return testo_integrato
+        except Exception as exc:
+            ultimo_errore = str(exc)
+
+        # Una Prefazione compiuta non deve bloccare l'intero libro soltanto
+        # perché il modello non ha ampliato un testo già valido. Il controllo
+        # finale potrà comunque segnalarla come breve, ma memoria e anteprima
+        # riceveranno sempre la prima sezione completa.
+        if len(migliore_prefazione_completa.split()) >= minimo_salvabile:
+            return migliore_prefazione_completa
 
     raise RuntimeError(
         "La Prefazione non ha prodotto un testo completo e salvabile. "
