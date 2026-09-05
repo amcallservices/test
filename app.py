@@ -3041,6 +3041,200 @@ def mostra_memoria_visiva_progetto():
             st.info("Non ci sono ancora sezioni salvate.")
 
 
+def etichette_centro_progetto(lingua):
+    """Etichette sintetiche del riepilogo, separate dalla logica editoriale.
+
+    Il Centro del progetto e' soltanto una lettura della memoria condivisa:
+    non crea richieste IA, non salva e non modifica l'indice o il manoscritto.
+    """
+    testi = {
+        "Italiano": {
+            "titolo": "🧭 Centro del progetto", "sidebar": "Brief", "indice": "Indice",
+            "manoscritto": "Manoscritto", "fonti": "Fonti", "stato": "Stato operativo",
+            "prossimo": "Prossimo passo", "dettaglio": "Dettaglio", "configura": "Completa il brief nella sidebar.",
+            "crea_indice": "Genera l'indice professionale.", "continua": "Continua la stesura dalle sezioni rimaste.",
+            "controlla": "Esegui il controllo finale prima dell'esportazione.",
+            "in_corso": "Stesura automatica in corso", "in_pausa": "Stesura in pausa",
+            "fermato": "Stesura interrotta", "indice_pronto": "Indice pronto", "nessun": "nessuna",
+            "nota": "Riepilogo informativo: non genera né modifica contenuti.",
+        },
+        "English": {
+            "titolo": "🧭 Project center", "sidebar": "Brief", "indice": "Outline",
+            "manoscritto": "Manuscript", "fonti": "Sources", "stato": "Current status",
+            "prossimo": "Next step", "dettaglio": "Detail", "configura": "Complete the brief in the sidebar.",
+            "crea_indice": "Generate the professional outline.", "continua": "Continue writing the remaining sections.",
+            "controlla": "Run the final review before exporting.",
+            "in_corso": "Automatic writing in progress", "in_pausa": "Writing paused",
+            "fermato": "Writing stopped", "indice_pronto": "Outline ready", "nessun": "none",
+            "nota": "Informational summary: it does not generate or change content.",
+        },
+        "Español": {
+            "titolo": "🧭 Centro del proyecto", "sidebar": "Brief", "indice": "Índice",
+            "manoscritto": "Manuscrito", "fonti": "Fuentes", "stato": "Estado actual",
+            "prossimo": "Siguiente paso", "dettaglio": "Detalle", "configura": "Completa el brief en la barra lateral.",
+            "crea_indice": "Genera el índice profesional.", "continua": "Continúa la redacción de las secciones restantes.",
+            "controlla": "Ejecuta la revisión final antes de exportar.",
+            "in_corso": "Redacción automática en curso", "in_pausa": "Redacción en pausa",
+            "fermato": "Redacción detenida", "indice_pronto": "Índice listo", "nessun": "ninguna",
+            "nota": "Resumen informativo: no genera ni modifica contenido.",
+        },
+        "Français": {
+            "titolo": "🧭 Centre du projet", "sidebar": "Brief", "indice": "Plan",
+            "manoscritto": "Manuscrit", "fonti": "Sources", "stato": "État actuel",
+            "prossimo": "Prochaine étape", "dettaglio": "Détail", "configura": "Complétez le brief dans la barre latérale.",
+            "crea_indice": "Générez le plan professionnel.", "continua": "Continuez les sections restantes.",
+            "controlla": "Lancez le contrôle final avant l’export.",
+            "in_corso": "Rédaction automatique en cours", "in_pausa": "Rédaction en pause",
+            "fermato": "Rédaction arrêtée", "indice_pronto": "Plan prêt", "nessun": "aucune",
+            "nota": "Résumé informatif : il ne génère ni ne modifie le contenu.",
+        },
+        "Deutsch": {
+            "titolo": "🧭 Projektzentrale", "sidebar": "Briefing", "indice": "Gliederung",
+            "manoscritto": "Manuskript", "fonti": "Quellen", "stato": "Aktueller Status",
+            "prossimo": "Nächster Schritt", "dettaglio": "Detail", "configura": "Briefing in der Seitenleiste vervollständigen.",
+            "crea_indice": "Professionelle Gliederung erstellen.", "continua": "Verbleibende Abschnitte weiter schreiben.",
+            "controlla": "Endkontrolle vor dem Export ausführen.",
+            "in_corso": "Automatisches Schreiben läuft", "in_pausa": "Schreiben pausiert",
+            "fermato": "Schreiben gestoppt", "indice_pronto": "Gliederung bereit", "nessun": "keine",
+            "nota": "Nur Übersicht: Es werden keine Inhalte erstellt oder geändert.",
+        },
+        "Română": {
+            "titolo": "🧭 Centrul proiectului", "sidebar": "Brief", "indice": "Cuprins",
+            "manoscritto": "Manuscris", "fonti": "Surse", "stato": "Stare curentă",
+            "prossimo": "Pasul următor", "dettaglio": "Detaliu", "configura": "Completează brief-ul din bara laterală.",
+            "crea_indice": "Generează cuprinsul profesional.", "continua": "Continuă scrierea secțiunilor rămase.",
+            "controlla": "Rulează controlul final înainte de export.",
+            "in_corso": "Scriere automată în curs", "in_pausa": "Scriere întreruptă temporar",
+            "fermato": "Scriere oprită", "indice_pronto": "Cuprins pregătit", "nessun": "niciuna",
+            "nota": "Rezumat informativ: nu generează și nu modifică conținutul.",
+        },
+        "Русский": {
+            "titolo": "🧭 Центр проекта", "sidebar": "Бриф", "indice": "Оглавление",
+            "manoscritto": "Рукопись", "fonti": "Источники", "stato": "Текущий статус",
+            "prossimo": "Следующий шаг", "dettaglio": "Детали", "configura": "Заполните бриф на боковой панели.",
+            "crea_indice": "Создайте профессиональное оглавление.", "continua": "Продолжите создание оставшихся разделов.",
+            "controlla": "Выполните итоговую проверку перед экспортом.",
+            "in_corso": "Автоматическое написание идёт", "in_pausa": "Написание приостановлено",
+            "fermato": "Написание остановлено", "indice_pronto": "Оглавление готово", "nessun": "нет",
+            "nota": "Информационная сводка: она не создаёт и не изменяет содержимое.",
+        },
+        "العربية": {
+            "titolo": "🧭 مركز المشروع", "sidebar": "الموجز", "indice": "الفهرس",
+            "manoscritto": "المخطوطة", "fonti": "المصادر", "stato": "الحالة الحالية",
+            "prossimo": "الخطوة التالية", "dettaglio": "التفاصيل", "configura": "أكمل الموجز في الشريط الجانبي.",
+            "crea_indice": "أنشئ الفهرس الاحترافي.", "continua": "تابع كتابة الأقسام المتبقية.",
+            "controlla": "شغّل الفحص النهائي قبل التصدير.",
+            "in_corso": "الكتابة التلقائية جارية", "in_pausa": "الكتابة متوقفة مؤقتاً",
+            "fermato": "تم إيقاف الكتابة", "indice_pronto": "الفهرس جاهز", "nessun": "لا يوجد",
+            "nota": "ملخص معلوماتي: لا ينشئ المحتوى ولا يعدّله.",
+        },
+        "中文": {
+            "titolo": "🧭 项目中心", "sidebar": "写作简报", "indice": "目录",
+            "manoscritto": "手稿", "fonti": "来源", "stato": "当前状态",
+            "prossimo": "下一步", "dettaglio": "详情", "configura": "请在侧边栏完成写作简报。",
+            "crea_indice": "生成专业目录。", "continua": "继续撰写其余部分。",
+            "controlla": "导出前运行最终检查。",
+            "in_corso": "正在自动写作", "in_pausa": "写作已暂停",
+            "fermato": "写作已停止", "indice_pronto": "目录已准备好", "nessun": "无",
+            "nota": "信息摘要：不会生成或修改任何内容。",
+        },
+    }
+    return testi.get(lingua, testi["English"])
+
+
+def riepilogo_operativo_progetto():
+    """Legge lo stato reale del progetto senza alterare sessione o memoria."""
+    sezioni = elenco_sezioni_progetto(st.session_state.get("lista_capitoli", []))
+    contenuti = dict(memoria_progetto_unica().get("contenuti", {}) or {})
+    for sezione in sezioni:
+        testo = str(leggi_sezione_memorizzata(sezione) or "").strip()
+        if testo:
+            contenuti[sezione] = testo
+    sidebar = sidebar_memorizzata_corrente()
+    campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
+    registro_fonti = str(st.session_state.get("registro_fonti_web", "") or "").strip()
+    numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
+    if registro_fonti and not numero_fonti:
+        numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
+    coda = list(st.session_state.get("job_scrittura_coda", []) or [])
+    totale_job = max(0, int(st.session_state.get("job_scrittura_totale", 0) or 0))
+    completati_job = max(0, totale_job - len(coda)) if totale_job else 0
+    return {
+        "campi_compilati": campi_compilati,
+        "campi_totali": len(CAMPI_SALVATAGGIO_PROGETTO),
+        "indice_pronto": bool(str(st.session_state.get("indice_raw", "") or "").strip()),
+        "sezioni_previste": len(sezioni),
+        "sezioni_scritte": sum(1 for sezione in sezioni if str(contenuti.get(sezione, "") or "").strip()),
+        "fonti": numero_fonti,
+        "job_attivo": bool(st.session_state.get("job_scrittura_attivo")),
+        "job_pausa": bool(st.session_state.get("job_scrittura_pausa")),
+        "job_fermato": bool(st.session_state.get("job_scrittura_fermato")),
+        "coda": coda,
+        "totale_job": totale_job,
+        "completati_job": completati_job,
+        "ultima_sezione": str(st.session_state.get("job_scrittura_ultima_completata", "") or "").strip(),
+        "errore": str(st.session_state.get("job_scrittura_errore", "") or "").strip(),
+        "ultimo_indice": str(st.session_state.get("ultimo_controllo_indice", "") or "").strip(),
+    }
+
+
+def mostra_centro_progetto(lingua):
+    """Rende visibile il punto esatto in cui si trova il progetto editoriale."""
+    etichette = etichette_centro_progetto(lingua)
+    stato = riepilogo_operativo_progetto()
+    st.markdown(f"### {etichette['titolo']}")
+    col_brief, col_indice, col_testo, col_fonti = st.columns(4)
+    col_brief.metric(etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}")
+    col_indice.metric(etichette["indice"], "✓" if stato["indice_pronto"] else "—")
+    col_testo.metric(
+        etichette["manoscritto"],
+        f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}" if stato["sezioni_previste"] else "0",
+    )
+    col_fonti.metric(etichette["fonti"], stato["fonti"])
+
+    if stato["job_attivo"]:
+        sezione_corrente = stato["coda"][0] if stato["coda"] else stato["ultima_sezione"]
+        dettaglio = (
+            f"{stato['completati_job']}/{stato['totale_job']} · {sezione_corrente}"
+            if stato["totale_job"] else sezione_corrente
+        )
+        st.info(f"**{etichette['stato']}: {etichette['in_corso']}** — {dettaglio}")
+        if stato["totale_job"]:
+            st.progress(
+                min(100, int(stato["completati_job"] / stato["totale_job"] * 100)),
+                text=f"{etichette['in_corso']}: {dettaglio}",
+            )
+        prossimo = etichette["continua"]
+    elif stato["job_pausa"]:
+        dettagli_pausa = stato["coda"][0] if stato["coda"] else etichette["nessun"]
+        st.warning(f"**{etichette['stato']}: {etichette['in_pausa']}** — {dettagli_pausa}")
+        prossimo = etichette["continua"]
+    elif stato["job_fermato"]:
+        st.warning(f"**{etichette['stato']}: {etichette['fermato']}**")
+        prossimo = etichette["continua"]
+    elif stato["campi_compilati"] < stato["campi_totali"]:
+        st.info(f"**{etichette['stato']}:** {etichette['configura']}")
+        prossimo = etichette["configura"]
+    elif not stato["indice_pronto"]:
+        st.info(f"**{etichette['stato']}:** {etichette['crea_indice']}")
+        prossimo = etichette["crea_indice"]
+    elif stato["sezioni_previste"] and stato["sezioni_scritte"] < stato["sezioni_previste"]:
+        st.info(
+            f"**{etichette['stato']}: {etichette['indice_pronto']}** — "
+            f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}"
+        )
+        prossimo = etichette["continua"]
+    else:
+        st.success(f"**{etichette['stato']}: {etichette['indice_pronto']}**")
+        prossimo = etichette["controlla"]
+    st.caption(f"**{etichette['prossimo']}:** {prossimo}")
+    if stato["errore"]:
+        st.caption(f"**{etichette['dettaglio']}:** {stato['errore']}")
+    elif stato["ultimo_indice"] and not stato["indice_pronto"]:
+        st.caption(f"**{etichette['dettaglio']}:** {stato['ultimo_indice']}")
+    st.caption(etichette["nota"])
+
+
 def applica_snapshot_progetto(snapshot):
     """Ripristina una fotografia completa, anche se il progetto e' ancora iniziale.
 
@@ -3362,6 +3556,109 @@ def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, gener
         "prompt_correzione": prompt_correzione,
         "stati": stati,
     }
+
+
+def etichette_report_pubblicazione(lingua):
+    """Testi compatti per l'esito a semaforo prima dell'esportazione."""
+    testi = {
+        "Italiano": ("🚦 Pronto per pubblicare?", "Struttura", "Manoscritto", "Frasi concluse", "Originalità", "Esportazione", "Interventi necessari", "Dettagli del controllo", "Da verificare"),
+        "English": ("🚦 Ready to publish?", "Structure", "Manuscript", "Complete sentences", "Originality", "Export", "Required actions", "Review details", "To be checked"),
+        "Español": ("🚦 ¿Listo para publicar?", "Estructura", "Manuscrito", "Frases completas", "Originalidad", "Exportación", "Acciones necesarias", "Detalles de la revisión", "Por verificar"),
+        "Français": ("🚦 Prêt à publier ?", "Structure", "Manuscrit", "Phrases terminées", "Originalité", "Export", "Actions nécessaires", "Détails du contrôle", "À vérifier"),
+        "Deutsch": ("🚦 Bereit zur Veröffentlichung?", "Struktur", "Manuskript", "Vollständige Sätze", "Originalität", "Export", "Erforderliche Schritte", "Prüfdetails", "Zu prüfen"),
+        "Română": ("🚦 Gata de publicare?", "Structură", "Manuscris", "Fraze complete", "Originalitate", "Export", "Acțiuni necesare", "Detalii control", "De verificat"),
+        "Русский": ("🚦 Готово к публикации?", "Структура", "Рукопись", "Завершённые фразы", "Оригинальность", "Экспорт", "Необходимые действия", "Детали проверки", "Нужно проверить"),
+        "العربية": ("🚦 هل هو جاهز للنشر؟", "البنية", "المخطوطة", "اكتمال الجمل", "الأصالة", "التصدير", "الإجراءات المطلوبة", "تفاصيل الفحص", "بحاجة للتحقق"),
+        "中文": ("🚦 可以发布了吗？", "结构", "手稿", "句子完整性", "原创性", "导出", "需要处理的事项", "检查详情", "待检查"),
+    }
+    return testi.get(lingua, testi["English"])
+
+
+def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, lingua):
+    """Mostra un esito operativo, senza avviare controlli, IA o modifiche.
+
+    Riusa gli esiti già disponibili nella sessione. I report estesi restano
+    nell'expander, mentre in pagina compaiono soltanto gli interventi concreti.
+    """
+    (
+        titolo, et_struttura, et_manoscritto, et_frasi, et_originalita,
+        et_export, et_interventi, et_dettagli, et_da_verificare,
+    ) = etichette_report_pubblicazione(lingua)
+    stati = list(esito_finale.get("stati", []) or [])
+    problemi = list(esito_finale.get("problemi", []) or [])
+    stati_non_completi = [voce for voce in stati if voce.get("Stato") != "COMPLETA"]
+    report_completezza = list(st.session_state.get("report_completezza_manoscritto", []) or [])
+    completezza_non_superata = [voce for voce in report_completezza if voce.get("Esito") != "COMPLETA"]
+    report_locale = st.session_state.get("report_originalita_fonti")
+    report_web = str(st.session_state.get("report_originalita_web_completa", "") or st.session_state.get("report_originalita_web", "") or "").strip()
+    ha_indice = bool(str(st.session_state.get("indice_raw", "") or "").strip())
+    ha_testi = bool(sezioni) and any(str(contenuti.get(sezione, "") or "").strip() for sezione in sezioni)
+
+    st.markdown(f"### {titolo}")
+    col_a, col_b, col_c, col_d = st.columns(4)
+    with col_a:
+        if ha_indice and sezioni:
+            st.success(f"**{et_struttura}**\n\n✓")
+        else:
+            st.error(f"**{et_struttura}**\n\n✕")
+    with col_b:
+        if not ha_testi:
+            st.error(f"**{et_manoscritto}**\n\n✕")
+        elif stati_non_completi:
+            st.warning(f"**{et_manoscritto}**\n\n⚠ {len(stati_non_completi)}")
+        else:
+            st.success(f"**{et_manoscritto}**\n\n✓")
+    with col_c:
+        if not report_completezza:
+            st.info(f"**{et_frasi}**\n\n• {et_da_verificare}")
+        elif completezza_non_superata:
+            st.warning(f"**{et_frasi}**\n\n⚠ {len(completezza_non_superata)}")
+        else:
+            st.success(f"**{et_frasi}**\n\n✓")
+    with col_d:
+        if isinstance(report_locale, dict) and report_locale.get("eseguito"):
+            if report_locale.get("trovate"):
+                st.error(f"**{et_originalita}**\n\n✕")
+            elif report_web and richiede_revisione_copyright(report_web):
+                st.warning(f"**{et_originalita}**\n\n⚠")
+            else:
+                st.success(f"**{et_originalita}**\n\n✓")
+        else:
+            st.info(f"**{et_originalita}**\n\n• {et_da_verificare}")
+
+    if esito_finale.get("pronto"):
+        st.success(f"**{et_export}:** ✓")
+    else:
+        st.warning(f"**{et_export}:** ⚠")
+
+    azioni = list(problemi)
+    azioni.extend(
+        f"{voce.get('Sezione', '')}: {voce.get('Dettaglio', '')}"
+        for voce in completezza_non_superata
+        if voce.get("Sezione")
+    )
+    if isinstance(report_locale, dict) and report_locale.get("trovate"):
+        azioni.append(report_locale.get("messaggio", "Controlla le somiglianze segnalate dalle fonti caricate."))
+    if report_web and richiede_revisione_copyright(report_web):
+        azioni.append("Il controllo web segnala elementi da rivedere: apri il dettaglio copyright e rielabora solo le sezioni indicate.")
+    azioni = list(dict.fromkeys(azione for azione in azioni if str(azione).strip()))
+    if azioni:
+        st.markdown(f"**{et_interventi}**")
+        for azione in azioni[:8]:
+            st.write("- " + str(azione))
+    else:
+        st.success("✓ Nessun intervento tecnico richiesto dai controlli già eseguiti.")
+
+    with st.expander(et_dettagli, expanded=False):
+        st.caption("Questo riepilogo non sostituisce la rilettura editoriale né una certificazione legale.")
+        if stati:
+            st.dataframe(stati, hide_index=True, use_container_width=True)
+        if report_completezza:
+            st.dataframe(report_completezza, hide_index=True, use_container_width=True)
+        if isinstance(report_locale, dict):
+            st.write(report_locale.get("messaggio", "Nessun dettaglio disponibile."))
+        if report_web:
+            st.caption("Esito web disponibile nella sezione Controllo originalità e copyright.")
 
 
 def genera_sezione_con_ripetizione(prompt, system_prompt, sezione, lingua, tentativi=2, amount=AI_REQUEST_CREDITS,
@@ -5038,6 +5335,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.caption(VERSIONE_DEPLOY)
+mostra_centro_progetto(lingua_sel)
 
 if st.session_state.get("admin_test_mode"):
     # Pannello visibile soltanto dopo l'avvio dal comando protetto della
@@ -7645,6 +7943,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.session_state.get("indice_raw", ""), sezioni_controllo_finale, contenuti_export,
             val_titolo, val_trama, val_genere, val_goal
         ) if lista_cap_base else {"pronto": False, "problemi": ["Indice assente."], "prompt_correzione": [], "stati": []}
+        mostra_report_prontezza_pubblicazione(
+            esito_finale_export, sezioni_controllo_finale, contenuti_export, lingua_sel
+        )
         export_boza = not esito_finale_export["pronto"]
         if not lista_cap_base:
             st.warning("Esportazione non disponibile: genera e sincronizza prima l'indice del libro.")
@@ -7653,7 +7954,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 "Il controllo finale ha rilevato elementi da sistemare. Puoi comunque esportare il file; "
                 "controlla le correzioni suggerite prima della pubblicazione."
             )
-            with st.expander("Controllo finale: sezioni e correzioni richieste", expanded=True):
+            with st.expander("Controllo finale: sezioni e correzioni richieste", expanded=False):
                 st.dataframe(esito_finale_export["stati"], hide_index=True, use_container_width=True)
                 st.write("Problemi rilevati:")
                 for problema in esito_finale_export["problemi"][:15]:
