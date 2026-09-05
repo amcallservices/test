@@ -7501,14 +7501,28 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             f"{'UTENTE' if voce.get('role') == 'user' else 'ASSISTENTE'}:\n{voce.get('content', '')}"
                             for voce in cronologia
                         )
+                        risposte_utente_chat = sum(
+                            1 for voce in messaggi_chat
+                            if voce.get("role") == "user"
+                        )
                         istruzioni_chat_interattiva = f"""{prompt_chat_sidebar}
 
-MODALITÀ CHAT INTERATTIVA
-Stai dialogando dentro Scrittore Site. Dialoga con intelligenza e naturalezza: considera il contesto già fornito, riconosci le intenzioni dell'utente, fai domande concise soltanto quando servono davvero e non ripetere informazioni già chiare.
-Puoi proporre alternative concrete quando una scelta editoriale cambierebbe in modo significativo il progetto, spiegandole in una frase semplice. Non inventare mai esperienze personali, fatti o preferenze non dichiarate.
+MODALITÀ CHAT INTERATTIVA — PRIORITÀ ASSOLUTA
+Il tuo scopo non è intrattenere una conversazione generica: devi accompagnare con naturalezza l'utente fino alla compilazione affidabile della sidebar. In questa conversazione l'utente ha già inviato {risposte_utente_chat} messaggi.
+
+PROTOCOLLO DI GUIDA OBBLIGATORIO
+1. Leggi tutta la cronologia e memorizza ogni dato già espresso. Non chiedere mai di nuovo titolo, argomento, pubblico, obiettivo o preferenze che sono già chiari.
+2. Dopo la prima descrizione concreta del libro, poni una sola volta la domanda A/B/C sulla personalizzazione prevista dal prompt principale. Non discutere altri argomenti prima di aver ricevuto questa scelta, salvo una risposta di una frase che aiuti davvero il progetto.
+3. Se l'utente sceglie A o comunica chiaramente di non volere personalizzazioni, prepara subito la scheda completa. Se sceglie B o C, chiedi in un unico messaggio soltanto i dettagli personali indispensabili e, alla risposta successiva, prepara la scheda.
+4. Puoi porre al massimo un chiarimento editoriale aggiuntivo, e solo se senza quel dato il progetto cambierebbe materialmente. Offri fino a tre scelte concrete. Altrimenti deduci in modo ragionevole e completa tu i campi.
+5. Se l'utente apre un discorso laterale, rispondi con intelligenza in non più di due frasi solo quando è utile al suo libro; poi riporta immediatamente al prossimo passo necessario per la scheda. Non aprire ricerche, dibattiti, consigli generici o nuove conversazioni indipendenti.
+6. Non creare mai indice, capitoli, testo del libro, piani marketing, prezzi, pagine o campi esterni. Non inventare esperienze personali, fatti o preferenze.
+
+CRITERIO DI CHIUSURA
+Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta sulla personalizzazione, i dati sono sufficienti: non fare altre domande. Produci la scheda finale completa, anche se alcuni dettagli devono essere scelti da te in modo coerente.
+
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
-Quando le informazioni sono sufficienti, restituisci la scheda finale con tutte e sole le etichette previste, una per riga e senza blocchi di codice. Prima della scheda non aggiungere commenti.
-Finché le informazioni non sono sufficienti, non produrre una scheda parziale: continua semplicemente il dialogo."""
+Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
                         with st.spinner("La chat sta preparando la risposta..."):
                             risposta_chat = chiedi_gpt(
                                 conversazione,
