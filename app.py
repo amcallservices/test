@@ -3252,16 +3252,16 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
     if stato["job_attivo"]:
         sezione_corrente = stato["coda"][0] if stato["coda"] else stato["ultima_sezione"]
         dettaglio = (
-            f"{stato['completati_job']}/{stato['totale_job']} · {sezione_corrente}"
-            if stato["totale_job"] else sezione_corrente
+            f"{stato['sezioni_scritte']}/{stato['sezioni_previste']} · {sezione_corrente}"
+            if stato["sezioni_previste"] else sezione_corrente
         )
         st.info(f"**{etichette['stato']}: {etichette['in_corso']}** — {dettaglio}")
-        if stato["totale_job"]:
+        if stato["sezioni_previste"]:
             st.progress(
-                min(100, int(stato["completati_job"] / stato["totale_job"] * 100)),
+                min(100, int(stato["sezioni_scritte"] / stato["sezioni_previste"] * 100)),
                 text=f"{etichette['in_corso']}: {dettaglio}",
             )
-        prossimo = etichette["continua"]
+        prossimo = etichette["in_corso"]
     elif stato["job_pausa"]:
         dettagli_pausa = stato["coda"][0] if stato["coda"] else etichette["nessun"]
         st.warning(f"**{etichette['stato']}: {etichette['in_pausa']}** — {dettagli_pausa}")
@@ -3277,18 +3277,28 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         prossimo = etichette["crea_indice"]
     elif stato["sezioni_previste"] and stato["sezioni_scritte"] < stato["sezioni_previste"]:
         st.info(
-            f"**{etichette['stato']}: {etichette['indice_pronto']}** — "
+            f"**{etichette['stato']}: {etichette['manoscritto']}** — "
             f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}"
         )
         prossimo = etichette["continua"]
     else:
-        st.success(f"**{etichette['stato']}: {etichette['indice_pronto']}**")
+        st.success(
+            f"**{etichette['stato']}: {etichette['manoscritto']} ✓** — "
+            f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}"
+        )
         prossimo = etichette["controlla"]
     st.caption(f"**{etichette['prossimo']}:** {prossimo}")
     if stato["errore"]:
         st.caption(f"**{etichette['dettaglio']}:** {stato['errore']}")
     elif stato["ultimo_indice"] and not stato["indice_pronto"]:
         st.caption(f"**{etichette['dettaglio']}:** {stato['ultimo_indice']}")
+    if (
+        stato["indice_pronto"]
+        and stato["sezioni_previste"]
+        and stato["sezioni_scritte"] >= stato["sezioni_previste"]
+        and not stato["job_attivo"]
+    ):
+        st.caption("🛡️ " + nota_originalita_facoltativa(lingua))
     st.caption(etichette["nota"])
 
 
@@ -3627,6 +3637,22 @@ def etichette_report_pubblicazione(lingua):
         "Русский": ("🚦 Готово к публикации?", "Структура", "Рукопись", "Завершённые фразы", "Оригинальность", "Экспорт", "Необходимые действия", "Детали проверки", "Нужно проверить"),
         "العربية": ("🚦 هل هو جاهز للنشر؟", "البنية", "المخطوطة", "اكتمال الجمل", "الأصالة", "التصدير", "الإجراءات المطلوبة", "تفاصيل الفحص", "بحاجة للتحقق"),
         "中文": ("🚦 可以发布了吗？", "结构", "手稿", "句子完整性", "原创性", "导出", "需要处理的事项", "检查详情", "待检查"),
+    }
+    return testi.get(lingua, testi["English"])
+
+
+def nota_originalita_facoltativa(lingua):
+    """Ricorda che il controllo è utile, ma non blocca l'esportazione."""
+    testi = {
+        "Italiano": "Controllo originalità: facoltativo e consigliato. Puoi comunque procedere al controllo finale e all'esportazione del manoscritto.",
+        "English": "Originality check: optional and recommended. You can still proceed to the final check and export the manuscript.",
+        "Español": "Control de originalidad: opcional y recomendado. Aun así puedes continuar con la revisión final y exportar el manuscrito.",
+        "Français": "Contrôle d’originalité : facultatif et recommandé. Vous pouvez quand même passer au contrôle final et exporter le manuscrit.",
+        "Deutsch": "Originalitätsprüfung: optional und empfohlen. Sie können dennoch die Endprüfung durchführen und das Manuskript exportieren.",
+        "Română": "Controlul originalității: opțional și recomandat. Poți continua totuși cu verificarea finală și exportul manuscrisului.",
+        "Русский": "Проверка оригинальности: необязательна, но рекомендуется. Вы всё равно можете выполнить финальную проверку и экспортировать рукопись.",
+        "العربية": "فحص الأصالة اختياري وموصى به. يمكنك مع ذلك متابعة الفحص النهائي وتصدير المخطوطة.",
+        "中文": "原创性检查为可选项，建议执行。你仍可继续最终检查并导出书稿。",
     }
     return testi.get(lingua, testi["English"])
 
@@ -4457,6 +4483,41 @@ l'indice. Restituisci un testo autonomo di almeno 80 parole.
     # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
     # stabile della stesura completa prima del rerun della coda automatica.
     return scrivi_sezione_stesura_completa(sezione, testo_pulito)
+
+
+def genera_e_conferma_sezione_del_libro(
+    sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
+    obiettivo, lingua, approfondimenti, profilo_lunghezza,
+):
+    """Usa il percorso del pulsante dettagliato e verifica subito la memoria.
+
+    La stesura di una sezione singola e quella del libro intero devono essere
+    indistinguibili: stesso generatore, stessa validazione, stesso archivio
+    editoriale. La verifica finale impedisce alla coda di avanzare se il testo
+    non è realmente recuperabile da editor, anteprima ed export.
+    """
+    testo_generato = scrivi_contenuto_dettagliato(
+        sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
+        obiettivo, lingua, approfondimenti, profilo_lunghezza,
+    )
+    testo_salvato = pulisci_testo_editoriale(
+        contenuto_memorizzato_puro(sezione)
+    ).strip()
+    if not testo_salvato:
+        raise RuntimeError(
+            f"'{sezione}' è stata generata ma non risulta nella memoria del progetto"
+        )
+    # Conserva una seconda copia coerente con l'archivio della stesura completa
+    # senza dipendere da widget o cache del browser.
+    scrivi_sezione_stesura_completa(sezione, testo_salvato or testo_generato)
+    testo_verificato = pulisci_testo_editoriale(
+        contenuto_memorizzato_puro(sezione)
+    ).strip()
+    if not testo_verificato:
+        raise RuntimeError(
+            f"'{sezione}' non è disponibile dopo il salvataggio verificato"
+        )
+    return testo_verificato
 
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
 def valuta_approccio_neurologico(genere, stile, narrativa):
@@ -6158,18 +6219,26 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
 
-    # Una correzione preparata dal controllo finale deve arrivare davvero
-    # all'editor. Streamlit non espone un'API Python per attivare una tab: il
-    # piccolo script prova il click visivo e, se il browser lo limita, il
-    # messaggio nell'editor indica comunque la sezione già predisposta.
-    if st.session_state.pop("apri_tab_scrittura_da_correzione", False):
+    # Una correzione preparata dal controllo finale o una stesura in corso
+    # deve arrivare davvero all'editor. Streamlit non espone un'API Python per
+    # attivare una tab: il piccolo script seleziona la terza scheda, che è
+    # sempre Scrittura & Quiz in tutte le lingue. Durante una pausa il click
+    # viene eseguito una volta e l'utente può poi consultare liberamente le
+    # altre sezioni dell'app.
+    apri_tab_scrittura = (
+        st.session_state.pop("apri_tab_scrittura_da_correzione", False)
+        or st.session_state.pop("apri_tab_scrittura_da_stesura", False)
+        or bool(st.session_state.get("job_scrittura_attivo"))
+        or bool(st.session_state.pop("apri_tab_scrittura_da_pausa", False))
+    )
+    if apri_tab_scrittura:
         components.html(
             """
             <script>
             setTimeout(function () {
               try {
                 const schede = Array.from(window.parent.document.querySelectorAll('[role="tab"]'));
-                const scrittura = schede.find(function (scheda) {
+                const scrittura = schede[2] || schede.find(function (scheda) {
                   const testo = (scheda.innerText || '').toLowerCase();
                   return testo.includes('scrittura') || testo.includes('write');
                 });
@@ -6960,10 +7029,39 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # successiva. Così pausa e stop operano davvero tra due richieste
             # AI, e nessun testo concluso resta invisibile nel browser.
             sezioni_intero_libro = elenco_sezioni_progetto(lista_cap_base)
+            # Un indice valido contiene sempre la Prefazione come prima voce.
+            # Se una vecchia sessione/importazione ha una lista non aggiornata,
+            # la reinseriamo nella coda senza toccare i capitoli già presenti.
+            prefazione_indice = next(
+                (sezione for sezione in lista_cap_base if sezione_prefazione(sezione)),
+                titolo_prefazione(lingua_sel),
+            )
+            if not any(sezione_prefazione(sezione) for sezione in sezioni_intero_libro):
+                sezioni_intero_libro = [prefazione_indice, *sezioni_intero_libro]
+            else:
+                sezioni_intero_libro = [
+                    prefazione_indice,
+                    *[
+                        sezione for sezione in sezioni_intero_libro
+                        if not sezione_prefazione(sezione)
+                    ],
+                ]
+
+            def sezione_pronta_per_la_coda(sezione):
+                """Non considera completata una Prefazione vuota o tronca."""
+                testo = pulisci_testo_editoriale(
+                    contenuto_memorizzato_puro(sezione)
+                ).strip()
+                if not testo:
+                    return False
+                if sezione_prefazione(sezione):
+                    return len(testo.split()) >= 60 and not motivo_chiusura_tecnica(testo)
+                return True
+
             manoscritto = memoria_progetto_unica().get("contenuti", {})
             da_generare_libro = [
                 sezione for sezione in sezioni_intero_libro
-                if not str(manoscritto.get(sezione, "") or "").strip()
+                if not sezione_pronta_per_la_coda(sezione)
             ]
             st.caption(
                 f"Stesura completa disponibile: {len(sezioni_intero_libro)} sezioni rilevate. "
@@ -6994,23 +7092,21 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # recuperi: un errore di un progetto precedente non puo'
                     # mai condizionare la prima sezione del nuovo libro.
                     st.session_state["job_scrittura_tentativi"] = {}
-                    # Prefazione, eventuale Parte iniziale e prima sezione
-                    # concreta vengono eseguite nel flusso principale. Il
-                    # timer automatico parte solo dopo che queste prime voci
-                    # sono state effettivamente scritte e memorizzate.
-                    st.session_state["job_scrittura_avvio_protetto_rimanenti"] = min(
-                        3, len(da_generare_libro)
-                    )
+                    # La Prefazione viene sempre avviata e verificata nel
+                    # flusso principale prima del timer. Usa però lo stesso
+                    # generatore del pulsante "Scrivi contenuto dettagliato".
+                    st.session_state["job_scrittura_avvio_protetto_rimanenti"] = 1
                     st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
                     st.session_state.pop("job_scrittura_errore", None)
                     st.session_state.pop("job_scrittura_ultima_completata", None)
+                    st.session_state["apri_tab_scrittura_da_stesura"] = True
                     notifica_sonora("avvio_scrittura_completa", lingua_sel, ripeti=True)
                     st.rerun()
 
             coda_scrittura = [
                 sezione for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
                 if sezione in sezioni_intero_libro
-                and not str(memoria_progetto_unica().get("contenuti", {}).get(sezione, "") or "").strip()
+                and not sezione_pronta_per_la_coda(sezione)
             ]
             st.session_state["job_scrittura_coda"] = list(coda_scrittura)
             totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura) or 1)))
@@ -7039,18 +7135,17 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     )
                     st.rerun()
                 st.info(
-                    f"Avvio protetto: scrittura e salvataggio di {sezione_iniziale} "
-                    "prima di procedere automaticamente."
+                    f"Scrittura iniziale: {sezione_iniziale}. "
+                    "Usa lo stesso controllo e salvataggio di Scrivi contenuto dettagliato."
                 )
                 try:
-                    contenuto_iniziale = scrivi_contenuto_dettagliato(
+                    contenuto_iniziale = genera_e_conferma_sezione_del_libro(
                         sezione_iniziale, st.session_state["indice_raw"], val_trama, val_genere,
                         val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
                         val_approfondimenti, val_lunghezza,
                     )
                     if not str(contenuto_iniziale or "").strip():
                         raise RuntimeError("il cervello selezionato non ha restituito testo")
-                    scrivi_sezione_stesura_completa(sezione_iniziale, contenuto_iniziale)
                     st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_iniziale
                     st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
                     st.session_state["job_scrittura_ultima_completata"] = sezione_iniziale
@@ -7097,9 +7192,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sezione
                             for sezione in (st.session_state.get("job_scrittura_coda", []) or [])
                             if sezione in sezioni_intero_libro
-                            and not str(
-                                memoria_progetto_unica().get("contenuti", {}).get(sezione, "") or ""
-                            ).strip()
+                            and not sezione_pronta_per_la_coda(sezione)
                         ]
                         st.session_state["job_scrittura_coda"] = list(coda_attuale)
                         if not coda_attuale:
@@ -7148,6 +7241,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
                                     st.session_state["job_scrittura_attivo"] = False
                                     st.session_state["job_scrittura_pausa"] = True
+                                    st.session_state["apri_tab_scrittura_da_pausa"] = True
                                     salva_stesura_generata_in_cloud(
                                         sezioni_intero_libro, "stesura messa in pausa"
                                     )
@@ -7181,15 +7275,13 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             "Attendi il salvataggio della sezione corrente."
                         )
                         try:
-                            contenuto_generato = scrivi_contenuto_dettagliato(
+                            contenuto_generato = genera_e_conferma_sezione_del_libro(
                                 sezione_corrente, st.session_state["indice_raw"], val_trama, val_genere,
                                 val_stile, val_narrativa, val_pov, val_goal, lingua_sel,
                                 val_approfondimenti, val_lunghezza,
                             )
                             if not str(contenuto_generato or "").strip():
                                 raise RuntimeError("il cervello selezionato non ha restituito testo")
-
-                            scrivi_sezione_stesura_completa(sezione_corrente, contenuto_generato)
                             st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_corrente
                             st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
                             st.session_state["job_scrittura_ultima_completata"] = sezione_corrente
@@ -7277,6 +7369,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.session_state["job_scrittura_attivo"] = True
                         st.session_state["job_scrittura_pausa"] = False
                         st.session_state["job_scrittura_in_attesa"] = True
+                        st.session_state["apri_tab_scrittura_da_stesura"] = True
                         st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 0.2
                         # La voce sospesa riparte dal flusso principale, che
                         # la scrive e la salva prima di restituire il controllo
