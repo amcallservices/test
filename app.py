@@ -4577,6 +4577,12 @@ def genera_e_conferma_sezione_del_libro(
         raise RuntimeError(
             f"'{sezione}' non è disponibile dopo il salvataggio verificato"
         )
+    # La Prefazione della stesura completa possiede una ricevuta propria.
+    # Non dipende dal nome del widget, dalla tab aperta o dalla ricostruzione
+    # della coda: dopo il primo salvataggio non potrà più essere generata una
+    # seconda volta soltanto perché Streamlit ha ridisegnato la pagina.
+    if sezione_prefazione(sezione) and "job_scrittura_prefazione_confermata" in st.session_state:
+        st.session_state["job_scrittura_prefazione_confermata"] = testo_verificato
     return testo_verificato
 
 # NUOVA FUNZIONE: Motore Decisionale per attivare i 3 Cervelli in base alla Sidebar
@@ -7113,9 +7119,28 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 Nessuna sezione già salvata come valida può tornare nella coda
                 per una soglia più alta applicata soltanto alla stesura intera.
                 """
-                testo = pulisci_testo_editoriale(
-                    leggi_sezione_memorizzata(sezione)
+                stesura_in_corso = bool(
+                    st.session_state.get("job_scrittura_attivo")
+                    or st.session_state.get("job_scrittura_pausa")
+                    or st.session_state.get("job_scrittura_in_attesa")
+                )
+                prefazione_confermata = pulisci_testo_editoriale(
+                    st.session_state.get("job_scrittura_prefazione_confermata", "")
                 ).strip()
+                if sezione_prefazione(sezione) and stesura_in_corso and prefazione_confermata:
+                    # Questa è la barriera definitiva contro il bug: prima di
+                    # decidere la coda ricostruiamo tutte le copie visibili
+                    # dalla Prefazione già approvata. Non si interroga l'AI.
+                    testo_corrente = pulisci_testo_editoriale(
+                        contenuto_memorizzato_puro(sezione)
+                    ).strip()
+                    if testo_corrente != prefazione_confermata:
+                        scrivi_sezione_stesura_completa(sezione, prefazione_confermata)
+                    testo = prefazione_confermata
+                else:
+                    testo = pulisci_testo_editoriale(
+                        leggi_sezione_memorizzata(sezione)
+                    ).strip()
                 if not testo:
                     return False
                 if sezione_prefazione(sezione):
@@ -7146,6 +7171,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_coda"] = list(da_generare_libro)
                     st.session_state["job_scrittura_totale"] = len(da_generare_libro)
+                    # Il pulsante "Scrivi tutto il libro" integra la
+                    # Prefazione come primo passaggio effettivo. Se era già
+                    # presente, ne conserva il testo; se è vuota, la riceverà
+                    # una sola volta dal generatore iniziale della coda.
+                    testo_prefazione_esistente = pulisci_testo_editoriale(
+                        leggi_sezione_memorizzata(prefazione_indice)
+                    ).strip()
+                    st.session_state["job_scrittura_prefazione_confermata"] = (
+                        testo_prefazione_esistente
+                        if sezione_pronta_per_la_coda(prefazione_indice)
+                        else ""
+                    )
                     # La Prefazione non dipende dalla lista ricostruita nei
                     # rerun: viene registrata come passaggio obbligatorio
                     # dell'intero libro prima di ogni capitolo.
