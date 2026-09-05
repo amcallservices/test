@@ -232,6 +232,21 @@ def separa_mappa_e_registro_fonti_web(testo):
     return testo, ""
 
 
+def conserva_solo_fonti_web_selezionate(registro, massimo_fonti=5):
+    """Conserva solo le fonti scelte dal ricercatore per questo brief.
+
+    Il modello riceve la consegna di ordinare prima le fonti per pertinenza e
+    autorevolezza. Qui manteniamo soltanto le prime voci selezionate: le fonti
+    consultate ma non scelte non sono mostrate nell'interfaccia, non entrano
+    nella memoria del progetto e non finiscono nel CSV.
+    """
+    righe = [
+        riga.strip() for riga in str(registro or "").splitlines()
+        if re.search(r"https?://\S+", riga)
+    ]
+    return "\n".join(righe[:max(1, int(massimo_fonti))])
+
+
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
     """Cerca fonti con un tempo massimo, senza bloccare la generazione dell'indice.
 
@@ -253,9 +268,12 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             "progressione didattica consigliata; aspetti concreti da assegnare all'indice. Riformula tutto con "
             "parole indipendenti, senza citazioni, titoli o formulazioni riconoscibili delle fonti. Non inserire URL, "
             "link Markdown o bibliografie nella MAPPA.\n\n"
-            "Alla fine inserisci obbligatoriamente una riga sola 'REGISTRO FONTI WEB' e sotto, massimo 8 righe nel "
-            "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata "
-            "interna dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
+            "Prima esplora liberamente le fonti necessarie, poi seleziona in autonomia SOLO le 3-5 più autorevoli, "
+            "aggiornate e direttamente pertinenti a titolo, argomento, genere e obiettivo del brief. Scarta le fonti "
+            "generiche, duplicate, deboli o marginali: non elencarle e non citarle. Alla fine inserisci obbligatoriamente "
+            "una riga sola 'REGISTRO FONTI WEB' e sotto esclusivamente le fonti selezionate, in ordine di utilità, nel "
+            "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata interna "
+            "dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
             f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
             f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
             f"Approfondimenti: {approfondimenti or 'Nessuno'}"
@@ -285,6 +303,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             )
         risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
         mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
+        registro = conserva_solo_fonti_web_selezionate(registro)
         if not mappa:
             refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=CREDIT_COSTS["indice_ricerca_web"])
             return ""
@@ -2410,7 +2429,7 @@ INDICE DA CORREGGERE
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
-                              budget_strutturale="", minimo_sezioni_orientativo=None, aggiorna_stato=None):
+                              budget_strutturale="", aggiorna_stato=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2455,17 +2474,6 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             problemi.append(
                 f"l'indice contiene {sezioni_generate} sezioni, oltre il massimo consentito di {massimo_sezioni}"
             )
-        # La fascia del profilo guida la progettazione, ma non deve mai
-        # trasformarsi in un blocco che costringe ad aggiungere riempitivi.
-        # Un indice breve ma specifico e completo viene quindi pubblicato con
-        # una nota trasparente, senza altra chiamata AI e senza altri crediti.
-        nota_indice_conciso = ""
-        if minimo_sezioni_orientativo and sezioni_generate < minimo_sezioni_orientativo:
-            nota_indice_conciso = (
-                f"Indice pubblicato con {sezioni_generate + 1} sezioni totali inclusa la Prefazione, "
-                "sotto la fascia orientativa del profilo: il brief è stato mantenuto compatto "
-                "per evitare voci ripetitive o riempitive."
-            )
         proposta_identica = bool(indice_di_partenza and firma_indice(corrente) == indice_di_partenza)
         if proposta_identica:
             problemi.append(
@@ -2508,8 +2516,6 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
                 esito += " Note qualitative considerate: " + "; ".join(problemi)
-            if nota_indice_conciso:
-                esito += " " + nota_indice_conciso
             if tentativo:
                 esito = f"Indice corretto automaticamente al controllo {tentativo} e approvato {voto_editoriale}/10."
             st.session_state["ultimo_controllo_indice"] = esito
@@ -2616,6 +2622,9 @@ def riepilogo_stima_pagine_manoscritto(sezioni, contenuti, indice, profilo_lungh
 
     obiettivo_pagine = int(profilo["pagine_minime"])
     obiettivo_parole = obiettivo_pagine * PAROLE_PER_PAGINA_6X9
+    tolleranza_pagine = float(profilo.get("tolleranza_pagine", 0.15))
+    soglia_parole_tolleranza = math.ceil(obiettivo_parole * (1 - tolleranza_pagine))
+    soglia_pagine_tolleranza = math.ceil(obiettivo_pagine * (1 - tolleranza_pagine))
     previsione_min_parole = parole_reali + parole_minime_rimanenti
     previsione_max_parole = parole_reali + parole_massime_rimanenti
     pagine_attuali = math.ceil(parole_reali / PAROLE_PER_PAGINA_6X9) if parole_reali else 0
@@ -2629,8 +2638,11 @@ def riepilogo_stima_pagine_manoscritto(sezioni, contenuti, indice, profilo_lungh
         "pagine_previste_max": pagine_previste_max,
         "obiettivo_pagine": obiettivo_pagine,
         "obiettivo_parole": obiettivo_parole,
-        "obiettivo_gia_raggiunto": parole_reali >= obiettivo_parole,
-        "obiettivo_realistico": previsione_max_parole >= obiettivo_parole,
+        "tolleranza_pagine": tolleranza_pagine,
+        "soglia_pagine_tolleranza": soglia_pagine_tolleranza,
+        "obiettivo_gia_raggiunto": parole_reali >= soglia_parole_tolleranza,
+        "obiettivo_nominale_raggiunto": parole_reali >= obiettivo_parole,
+        "obiettivo_realistico": previsione_max_parole >= soglia_parole_tolleranza,
     }
 
 
@@ -3106,7 +3118,11 @@ def esporta_progetto_editoriale_csv():
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
         if chiave in st.session_state:
-            fonti[chiave] = st.session_state.get(chiave, "")
+            valore_fonte = st.session_state.get(chiave, "")
+            fonti[chiave] = (
+                conserva_solo_fonti_web_selezionate(valore_fonte)
+                if chiave == "registro_fonti_web" else valore_fonte
+            )
 
     fotografia = {
         "sidebar": sidebar,
@@ -3147,7 +3163,9 @@ def mostra_memoria_visiva_progetto():
 
     campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
     st.markdown("### 🧠 Memoria del progetto")
-    registro_fonti = str(st.session_state.get("registro_fonti_web", "") or "").strip()
+    registro_fonti = conserva_solo_fonti_web_selezionate(
+        st.session_state.get("registro_fonti_web", "")
+    )
     numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
     if registro_fonti and not numero_fonti:
         numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
@@ -3299,7 +3317,9 @@ def riepilogo_operativo_progetto(campi_obbligatori=None):
     else:
         campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
         campi_totali = len(CAMPI_SALVATAGGIO_PROGETTO)
-    registro_fonti = str(st.session_state.get("registro_fonti_web", "") or "").strip()
+    registro_fonti = conserva_solo_fonti_web_selezionate(
+        st.session_state.get("registro_fonti_web", "")
+    )
     numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
     if registro_fonti and not numero_fonti:
         numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
@@ -3475,7 +3495,11 @@ def applica_snapshot_progetto(snapshot):
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
     ):
-        st.session_state[chiave] = fonti.get(chiave, "")
+        valore_fonte = fonti.get(chiave, "")
+        st.session_state[chiave] = (
+            conserva_solo_fonti_web_selezionate(valore_fonte)
+            if chiave == "registro_fonti_web" else valore_fonte
+        )
 
     if snapshot.get("_origine_importazione_csv"):
         st.session_state["autosave_stato"] = "✓ CSV importato integralmente: sidebar, indice, sezioni, fonti e immagini sono stati ripristinati."
@@ -3570,7 +3594,9 @@ def salva_progetto_corrente(sidebar, sezioni):
             "dossier_fonti_ai": st.session_state.get("dossier_fonti_ai", ""),
             "brief_fonti_originale": st.session_state.get("brief_fonti_originale", ""),
             "dossier_ricerca_preliminare": st.session_state.get("dossier_ricerca_preliminare", ""),
-            "registro_fonti_web": st.session_state.get("registro_fonti_web", ""),
+            "registro_fonti_web": conserva_solo_fonti_web_selezionate(
+                st.session_state.get("registro_fonti_web", "")
+            ),
             "firma_ricerca_preliminare": st.session_state.get("firma_ricerca_preliminare", ""),
         },
     }
@@ -4740,10 +4766,14 @@ with st.sidebar:
         else:
             st.error("Non è stato possibile aggiornare le fonti web. Nessun credito viene trattenuto se la ricerca non restituisce un dossier valido.")
 
-    registro_fonti_web = st.session_state.get("registro_fonti_web", "").strip()
+    registro_fonti_web = conserva_solo_fonti_web_selezionate(
+        st.session_state.get("registro_fonti_web", "")
+    )
+    if registro_fonti_web != str(st.session_state.get("registro_fonti_web", "") or "").strip():
+        st.session_state["registro_fonti_web"] = registro_fonti_web
     if registro_fonti_web:
-        with st.expander("🌐 Fonti trovate nella ricerca web", expanded=False):
-            st.caption("Registro interno delle fonti consultate per progettare l'indice. Non viene inserito nel libro.")
+        with st.expander("🌐 Fonti web selezionate per il progetto", expanded=False):
+            st.caption("Sono visualizzate solo le fonti più pertinenti e autorevoli selezionate automaticamente per questo brief. Non vengono inserite nel libro.")
             st.markdown(registro_fonti_web)
     
     st.divider()
@@ -4937,30 +4967,24 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
             f"tutte dedicate ai contenuti dell'indice. Obiettivo indicativo: circa "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
-            "Tolleranza massima sulla lunghezza: 5%."
+            "La singola sezione mantiene una tolleranza del 5%; l'obiettivo di pagine ha una tolleranza del 15%."
         )
     else:
         st.caption("Scegli una lunghezza delle sezioni per completare la sidebar.")
     profilo_indice = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]
     limite_sezioni_totali = profilo_indice["max_sezioni"]
-    minimo_sezioni_orientativo = profilo_indice["indice_minimo"]
     # La Prefazione viene aggiunta dal software dopo l'output del modello:
     # il limite passato al generatore le riserva sempre un posto.
     limite_voci_indice = max(1, limite_sezioni_totali - 1)
-    minimo_voci_indice = max(1, minimo_sezioni_orientativo - 1)
-    obiettivo_voci_indice = max(
-        minimo_voci_indice,
-        int((minimo_voci_indice + limite_voci_indice) / 2),
-    )
     budget_struttura_indice = {
-        "Compatto": "obiettivo 56-64 sezioni totali, Prefazione inclusa; in genere 3 Parti, 9-10 Capitoli e 4-5 sottocapitoli realmente distinti per Capitolo",
-        "Standard KDP": "obiettivo 92-100 sezioni totali, Prefazione inclusa; in genere 4 Parti, 14-15 Capitoli e 5-6 sottocapitoli realmente distinti per Capitolo",
-        "Approfondito": "obiettivo 120-132 sezioni totali, Prefazione inclusa; in genere 5 Parti, 16-18 Capitoli e 6-7 sottocapitoli realmente distinti per Capitolo",
+        "Compatto": "massimo 65 sezioni totali, Prefazione inclusa; usa soltanto Parti, Capitoli e sottocapitoli indispensabili al brief",
+        "Standard KDP": "massimo 110 sezioni totali, Prefazione inclusa; usa soltanto Parti, Capitoli e sottocapitoli indispensabili al brief",
+        "Approfondito": "massimo 160 sezioni totali, Prefazione inclusa; amplia soltanto argomenti davvero distinti e verificabili",
     }[val_lunghezza]
     minimi_struttura_indice = {
-        "Compatto": (3, 8),
-        "Standard KDP": (4, 10),
-        "Approfondito": (5, 12),
+        "Compatto": (0, 0),
+        "Standard KDP": (0, 0),
+        "Approfondito": (0, 0),
     }[val_lunghezza]
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
@@ -5837,7 +5861,7 @@ dettaglio assegnato senza anticipare o ripetere gli altri sottocapitoli.
 Profilo scelto: {val_lunghezza}.
 - Per una sezione autonoma, l'obiettivo è {profilo_lunghezza_corrente['parole']}.
 - Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
-- L'obiettivo del manoscritto completo è almeno {profilo_lunghezza_corrente['pagine_minime']} pagine nel formato 6×9; contribuisci a raggiungerlo con contenuto utile, senza gonfiare il testo.
+- L'obiettivo del manoscritto completo è {profilo_lunghezza_corrente['pagine_minime']} pagine nel formato 6×9, con tolleranza del 15%. Contribuisci con contenuto utile, senza gonfiare il testo; se una sezione è già completa e di qualità, non aggiungere riempitivi solo per aumentare le pagine.
 - Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
 - Prima di iniziare, distribuisci mentalmente lo spazio: sviluppa prima i passaggi essenziali e riserva sempre circa il 12% finale della sezione alla conclusione. Non avviare un nuovo esempio, elenco o periodo se non puoi terminarlo entro il limite.
 - Completa sempre l'ultima idea con una frase significativa: se lo spazio non basta, riduci prima dettagli secondari, esempi o elenchi, senza interrompere ragionamenti, procedure o scene.
@@ -6056,7 +6080,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori. In Personalizza il tuo libro puoi aggiungere voce, casi, priorità e confini personali: sono facoltativi, non consumano crediti, vengono salvati nel progetto/CSV e guidano ricerca, indice e testo in modo originale.
 
-2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, con indice orientativo da 56 a 64 sezioni totali e obiettivo di circa 100 pagine; Standard KDP (consigliato) circa 620-700 parole, con indice orientativo da 92 a 100 sezioni e obiettivo di circa 200 pagine; Approfondito circa 700-800 parole, con indice orientativo da 120 a 132 sezioni e obiettivo di circa 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare con immagini, tabelle e impaginazione. Le fasce guidano l'indice, ma non impongono riempitivi: un argomento completo può avere meno sezioni. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, con massimo 65 sezioni totali e obiettivo di 75 pagine; Standard KDP (consigliato) circa 620-700 parole, con massimo 110 sezioni e obiettivo di 150 pagine; Approfondito circa 700-800 parole, con massimo 160 sezioni e obiettivo di 220 pagine. La Prefazione è inclusa in questi massimi. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e hanno una tolleranza del 15%, perché immagini, tabelle e impaginazione possono modificarli. Il modello seleziona soltanto le fonti online più pertinenti al brief e costruisce l'indice con il minor numero di voci necessario: non aggiunge riempitivi e una struttura di qualità può essere pubblicata anche sotto la soglia. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
@@ -6673,11 +6697,11 @@ Per il PUNTO DI VISTA scegli un solo valore tra:
 
 Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
 
-- Compatto — circa 480-560 parole per sezione, indice orientativo 56-64 sezioni totali, obiettivo circa 100 pagine
-- Standard KDP — circa 620-700 parole per sezione, indice orientativo 92-100 sezioni totali, obiettivo circa 200 pagine
-- Approfondito — circa 700-800 parole per sezione, indice orientativo 120-132 sezioni totali, obiettivo circa 300 pagine
+- Compatto — circa 480-560 parole per sezione, massimo 65 sezioni totali inclusa la Prefazione, obiettivo 75 pagine
+- Standard KDP — circa 620-700 parole per sezione, massimo 110 sezioni totali inclusa la Prefazione, obiettivo 150 pagine
+- Approfondito — circa 700-800 parole per sezione, massimo 160 sezioni totali inclusa la Prefazione, obiettivo 220 pagine
 
-Scegli Standard KDP come impostazione predefinita. I limiti si riferiscono a tutte le sezioni dell'indice. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
+Scegli Standard KDP come impostazione predefinita. I limiti si riferiscono a tutte le sezioni dell'indice, Prefazione inclusa. Gli obiettivi di pagine 6×9 hanno una tolleranza del 15%: se il libro è completo e di qualità, non aggiungere mai riempitivi solo per raggiungerli. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
 
 Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearne di nuovi.
 
@@ -6879,8 +6903,10 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                 t_parte = trad_termini.get(lingua_sel, trad_termini["Italiano"])["parte"]
                 t_cap = trad_termini.get(lingua_sel, trad_termini["Italiano"])["cap"]
                 limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
-                limite_voci_indice = limite_sezioni_totali
-                obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
+                # La Prefazione è aggiunta dal software: riserviamo sempre
+                # una voce del limite totale senza sovrascrivere il calcolo
+                # già effettuato nella sidebar.
+                limite_voci_indice = max(1, limite_sezioni_totali - 1)
                 # --- FINE NUOVE RIGHE ---
 
                 # PROMPT BLINDATO PER L'INDICE: Ora prende in carico TUTTI i parametri della sidebar per coerenza assoluta.
@@ -6930,9 +6956,9 @@ L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
 === LIMITE ASSOLUTO DI ESTENSIONE ===
 Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni, Prefazione inclusa.
 La Prefazione viene aggiunta dal software: genera quindi AL MASSIMO {limite_voci_indice} voci qui sotto.
-Punta a {minimo_sezioni_orientativo}-{limite_sezioni_totali} sezioni totali, quindi circa {obiettivo_voci_indice} voci nell'output prima della Prefazione.
-Non superare mai {limite_voci_indice} voci. Se il brief non giustifica questa estensione con argomenti davvero distinti,
-pubblica un indice più corto ma completo e di qualità: è vietato aggiungere voci simili, generiche o riempitive.
+Non superare mai {limite_voci_indice} voci. Non esiste un numero minimo di voci da raggiungere: se il brief non giustifica
+questa estensione con argomenti davvero distinti, pubblica un indice più corto ma completo e di qualità. È vietato aggiungere
+voci simili, generiche o riempitive soltanto per aumentare la lunghezza del libro.
 Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
 
 === BUDGET STRUTTURALE OBBLIGATORIO ===
@@ -6987,7 +7013,6 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.",
                     val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                     massimo_sezioni=limite_voci_indice,
-                    minimo_sezioni_orientativo=minimo_voci_indice,
                     minimo_parti=minimi_struttura_indice[0],
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
@@ -7082,7 +7107,7 @@ Approfondimenti: {val_approfondimenti or "Nessuno"}
 {brief_personalizzazione_progetto()}
 
 LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'output; la Prefazione sarà aggiunta dal software.
-Punta a {minimo_sezioni_orientativo}-{limite_sezioni_totali} sezioni totali, ma pubblica una struttura più breve se è la scelta più completa e non ripetitiva.
+Non esiste un numero minimo di voci: pubblica una struttura più breve se è la scelta più completa, leggibile e non ripetitiva.
 BUDGET STRUTTURALE: {budget_struttura_indice}. Non introdurre voci inutili per raggiungere un numero.
 
 INDICE ATTUALE
@@ -7098,7 +7123,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                             indice_da_superare=indice_da_valutare,
                             massimo_sezioni=limite_voci_indice,
-                            minimo_sezioni_orientativo=minimo_voci_indice,
                             minimo_parti=minimi_struttura_indice[0],
                             minimo_capitoli=minimi_struttura_indice[1],
                             budget_strutturale=budget_struttura_indice,
@@ -8035,18 +8059,24 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.progress(
             min(100, int(
                 riepilogo_pagine["parole_reali"] /
-                max(1, riepilogo_pagine["obiettivo_parole"]) * 100
+                max(1, riepilogo_pagine["obiettivo_parole"] * (1 - riepilogo_pagine["tolleranza_pagine"])) * 100
             )),
             text=(
-                f"Obiettivo {val_lunghezza}: almeno "
-                f"{riepilogo_pagine['obiettivo_pagine']} pagine 6×9"
+                f"Obiettivo {val_lunghezza}: {riepilogo_pagine['obiettivo_pagine']} pagine 6×9 "
+                f"(soglia con tolleranza 15%: {riepilogo_pagine['soglia_pagine_tolleranza']})"
             ),
         )
         if riepilogo_pagine["obiettivo_gia_raggiunto"]:
-            st.success(
-                "Obiettivo di lunghezza raggiunto con il testo già creato. "
-                "Il software non aggiungerà contenuti superflui."
-            )
+            if riepilogo_pagine["obiettivo_nominale_raggiunto"]:
+                st.success(
+                    "Obiettivo di lunghezza raggiunto con il testo già creato. "
+                    "Il software non aggiungerà contenuti superflui."
+                )
+            else:
+                st.info(
+                    "Il manoscritto è entro la tolleranza del 15% rispetto all'obiettivo. "
+                    "Il software non aggiungerà riempitivi e non bloccherà l'esportazione."
+                )
         elif riepilogo_pagine["obiettivo_realistico"]:
             st.info(
                 "L'obiettivo è compatibile con l'indice e il profilo scelto. "
@@ -8054,9 +8084,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             )
         else:
             st.warning(
-                "Con l'indice attuale la stima prudente resta sotto l'obiettivo. "
+                "Con l'indice attuale la stima prudente resta sotto la soglia con tolleranza del 15%. "
                 "Le sezioni già complete non verranno allungate artificialmente: "
-                "potrai aggiungere in seguito nuovi argomenti utili o approfondire una sezione in modo mirato."
+                "il manoscritto potrà comunque essere esportato se completo e di qualità; potrai aggiungere in seguito "
+                "nuovi argomenti utili o approfondire una sezione in modo mirato."
             )
 
         if sezioni_con_testo:
