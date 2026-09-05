@@ -2410,7 +2410,7 @@ INDICE DA CORREGGERE
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
-                              budget_strutturale="", aggiorna_stato=None):
+                              budget_strutturale="", minimo_sezioni_orientativo=None, aggiorna_stato=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2450,9 +2450,21 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         problemi = criticita_indice_generato(
             corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
         )
-        if massimo_sezioni and conta_sezioni_indice(corrente) > massimo_sezioni:
+        sezioni_generate = conta_sezioni_indice(corrente)
+        if massimo_sezioni and sezioni_generate > massimo_sezioni:
             problemi.append(
-                f"l'indice contiene {conta_sezioni_indice(corrente)} sezioni, oltre il massimo consentito di {massimo_sezioni}"
+                f"l'indice contiene {sezioni_generate} sezioni, oltre il massimo consentito di {massimo_sezioni}"
+            )
+        # La fascia del profilo guida la progettazione, ma non deve mai
+        # trasformarsi in un blocco che costringe ad aggiungere riempitivi.
+        # Un indice breve ma specifico e completo viene quindi pubblicato con
+        # una nota trasparente, senza altra chiamata AI e senza altri crediti.
+        nota_indice_conciso = ""
+        if minimo_sezioni_orientativo and sezioni_generate < minimo_sezioni_orientativo:
+            nota_indice_conciso = (
+                f"Indice pubblicato con {sezioni_generate + 1} sezioni totali inclusa la Prefazione, "
+                "sotto la fascia orientativa del profilo: il brief è stato mantenuto compatto "
+                "per evitare voci ripetitive o riempitive."
             )
         proposta_identica = bool(indice_di_partenza and firma_indice(corrente) == indice_di_partenza)
         if proposta_identica:
@@ -2478,6 +2490,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
                 esito += " Note qualitative considerate: " + "; ".join(problemi)
+            if nota_indice_conciso:
+                esito += " " + nota_indice_conciso
             if tentativo:
                 esito = f"Indice corretto automaticamente al controllo {tentativo} e approvato {voto_editoriale}/10."
             st.session_state["ultimo_controllo_indice"] = esito
@@ -4904,20 +4918,27 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             f"{val_lunghezza}: {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['parole']} per sezione — "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['descrizione']}. "
             f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
-            f"tutte dedicate ai contenuti dell'indice. Obiettivo: almeno circa "
+            f"tutte dedicate ai contenuti dell'indice. Obiettivo indicativo: circa "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
             "Tolleranza massima sulla lunghezza: 5%."
         )
     else:
         st.caption("Scegli una lunghezza delle sezioni per completare la sidebar.")
-    limite_sezioni_totali = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]["max_sezioni"]
-    limite_voci_indice = limite_sezioni_totali
-    # Un margine operativo evita che l'indice arrivi al tetto e lo superi con una voce imprevista.
-    obiettivo_voci_indice = max(1, int(limite_voci_indice * 0.90))
+    profilo_indice = PROFILI_LUNGHEZZA_STESURA[val_lunghezza]
+    limite_sezioni_totali = profilo_indice["max_sezioni"]
+    minimo_sezioni_orientativo = profilo_indice["indice_minimo"]
+    # La Prefazione viene aggiunta dal software dopo l'output del modello:
+    # il limite passato al generatore le riserva sempre un posto.
+    limite_voci_indice = max(1, limite_sezioni_totali - 1)
+    minimo_voci_indice = max(1, minimo_sezioni_orientativo - 1)
+    obiettivo_voci_indice = max(
+        minimo_voci_indice,
+        int((minimo_voci_indice + limite_voci_indice) / 2),
+    )
     budget_struttura_indice = {
-        "Compatto": "massimo 3 Parti, massimo 8 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 43 voci)",
-        "Standard KDP": "massimo 4 Parti, massimo 13 Capitoli e massimo 4 sottocapitoli per Capitolo (circa 69 voci)",
-        "Approfondito": "massimo 5 Parti, massimo 15 Capitoli e massimo 5 sottocapitoli per Capitolo (circa 95 voci)",
+        "Compatto": "obiettivo 56-64 sezioni totali, Prefazione inclusa; in genere 3 Parti, 9-10 Capitoli e 4-5 sottocapitoli realmente distinti per Capitolo",
+        "Standard KDP": "obiettivo 92-100 sezioni totali, Prefazione inclusa; in genere 4 Parti, 14-15 Capitoli e 5-6 sottocapitoli realmente distinti per Capitolo",
+        "Approfondito": "obiettivo 120-132 sezioni totali, Prefazione inclusa; in genere 5 Parti, 16-18 Capitoli e 6-7 sottocapitoli realmente distinti per Capitolo",
     }[val_lunghezza]
     minimi_struttura_indice = {
         "Compatto": (3, 8),
@@ -6018,7 +6039,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
     guide_localizzate = {
         "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori. In Personalizza il tuo libro puoi aggiungere voce, casi, priorità e confini personali: sono facoltativi, non consumano crediti, vengono salvati nel progetto/CSV e guidano ricerca, indice e testo in modo originale.
 
-2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, fino a 50 sezioni totali e mira ad almeno 100 pagine; Standard KDP (consigliato) circa 620-700 parole, fino a 80 sezioni e mira ad almeno 200 pagine; Approfondito circa 700-800 parole, fino a 110 sezioni e mira ad almeno 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare leggermente con immagini, tabelle e impaginazione. I limiti si riferiscono a tutte le sezioni dell'indice. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
+2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, con indice orientativo da 56 a 64 sezioni totali e obiettivo di circa 100 pagine; Standard KDP (consigliato) circa 620-700 parole, con indice orientativo da 92 a 100 sezioni e obiettivo di circa 200 pagine; Approfondito circa 700-800 parole, con indice orientativo da 120 a 132 sezioni e obiettivo di circa 300 pagine. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e possono variare con immagini, tabelle e impaginazione. Le fasce guidano l'indice, ma non impongono riempitivi: un argomento completo può avere meno sezioni. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
 3. Apri Indice e premi Genera Indice Professionale. Prima dell'indice il software cerca e studia fonti online pertinenti al brief, crea un dossier interno e lo usa per progettare la struttura; la ricerca costa 2 crediti ed è riutilizzata finché non cambi i dati della sidebar. Se carichi PDF o DOCX, vengono studiati insieme alla ricerca. Se modifichi l'indice a mano, usa Salva e Sincronizza Capitoli. Voto Indice lo valuta; Rigenera indice seguendo il voto propone una nuova versione da applicare soltanto se ti convince.
 
@@ -6635,9 +6656,9 @@ Per il PUNTO DI VISTA scegli un solo valore tra:
 
 Per LUNGHEZZA DELLE SEZIONI scegli un solo valore tra:
 
-- Compatto — circa 480-560 parole per sezione, massimo 50 sezioni totali, obiettivo almeno 100 pagine
-- Standard KDP — circa 620-700 parole per sezione, massimo 80 sezioni totali, obiettivo almeno 200 pagine
-- Approfondito — circa 700-800 parole per sezione, massimo 110 sezioni totali, obiettivo almeno 300 pagine
+- Compatto — circa 480-560 parole per sezione, indice orientativo 56-64 sezioni totali, obiettivo circa 100 pagine
+- Standard KDP — circa 620-700 parole per sezione, indice orientativo 92-100 sezioni totali, obiettivo circa 200 pagine
+- Approfondito — circa 700-800 parole per sezione, indice orientativo 120-132 sezioni totali, obiettivo circa 300 pagine
 
 Scegli Standard KDP come impostazione predefinita. I limiti si riferiscono a tutte le sezioni dell'indice. Usa Compatto per guide rapide o libri brevi. Usa Approfondito solo per argomenti tecnici, esami, procedure o materie che richiedono più spiegazione.
 
@@ -6890,17 +6911,17 @@ e applicazioni. Mantieni coerenza con genere, tipologia, stile, POV, obiettivo e
 L'indice deve permettere di scrivere sezioni dettagliate senza riempitivi.
 
 === LIMITE ASSOLUTO DI ESTENSIONE ===
-Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni.
-Quindi genera AL MASSIMO {limite_voci_indice} voci nell'indice qui sotto. OBIETTIVO CONSIGLIATO: circa {obiettivo_voci_indice} voci, per lasciare margine.
-Non superare mai {limite_voci_indice} voci. Preferisci una struttura più compatta e completa invece di aggiungere voci
-simili o riempitive: accorpa argomenti contigui nello stesso sottocapitolo e rimuovi ogni voce che non aggiunge
-un risultato distinto. Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
+Profilo scelto: {val_lunghezza}. L'intero libro può contenere al massimo {limite_sezioni_totali} sezioni, Prefazione inclusa.
+La Prefazione viene aggiunta dal software: genera quindi AL MASSIMO {limite_voci_indice} voci qui sotto.
+Punta a {minimo_sezioni_orientativo}-{limite_sezioni_totali} sezioni totali, quindi circa {obiettivo_voci_indice} voci nell'output prima della Prefazione.
+Non superare mai {limite_voci_indice} voci. Se il brief non giustifica questa estensione con argomenti davvero distinti,
+pubblica un indice più corto ma completo e di qualità: è vietato aggiungere voci simili, generiche o riempitive.
+Conta internamente tutte le Parti, i Capitoli e i sottocapitoli prima di rispondere.
 
 === BUDGET STRUTTURALE OBBLIGATORIO ===
-Per questo profilo usa: {budget_struttura_indice}. Questo budget PREVALE su qualunque indicazione numerica
-generale presente sopra. Non creare 15-18 capitoli con 6-10 sottocapitoli ciascuno. Se un argomento è collegato
-a un altro, trattalo nello stesso sottocapitolo invece di creare una nuova voce. Prima dell'output verifica che
-la somma di Parti + Capitoli + sottocapitoli resti nel budget.
+Per questo profilo usa: {budget_struttura_indice}. Questa fascia è un obiettivo editoriale, non un pretesto per riempitivi.
+Se un argomento è collegato a un altro, trattalo nello stesso sottocapitolo invece di creare una nuova voce. Prima dell'output
+verifica che ogni voce abbia un contenuto autonomo e che la somma di Parti + Capitoli + sottocapitoli resti nel limite.
 """
                 if st.session_state.get("conoscenza_extra"):
                     dossier_fonti = st.session_state.get("brief_fonti_originale") or st.session_state.get("dossier_fonti_ai", "")
@@ -6949,6 +6970,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     prompt_idx, "Senior Book Architect esperto in flow logico-narrativo e design editoriale pulito.",
                     val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                     massimo_sezioni=limite_voci_indice,
+                    minimo_sezioni_orientativo=minimo_voci_indice,
                     minimo_parti=minimi_struttura_indice[0],
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
@@ -7042,9 +7064,9 @@ Risultato finale desiderato: {val_risultato}
 Approfondimenti: {val_approfondimenti or "Nessuno"}
 {brief_personalizzazione_progetto()}
 
-LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'indice e punta a circa
-{obiettivo_voci_indice}. Il libro completo resterà entro {limite_sezioni_totali} sezioni. Accorpa o elimina voci ridondanti: non superare il limite.
-BUDGET STRUTTURALE: {budget_struttura_indice}. Questo budget prevale su ogni schema numerico dell'indice attuale.
+LIMITE OBBLIGATORIO: mantieni al massimo {limite_voci_indice} voci nell'output; la Prefazione sarà aggiunta dal software.
+Punta a {minimo_sezioni_orientativo}-{limite_sezioni_totali} sezioni totali, ma pubblica una struttura più breve se è la scelta più completa e non ripetitiva.
+BUDGET STRUTTURALE: {budget_struttura_indice}. Non introdurre voci inutili per raggiungere un numero.
 
 INDICE ATTUALE
 {indice_da_valutare}
@@ -7059,6 +7081,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             val_genere, val_titolo, val_trama, val_goal, lingua_sel, val_stile, val_narrativa, val_pov,
                             indice_da_superare=indice_da_valutare,
                             massimo_sezioni=limite_voci_indice,
+                            minimo_sezioni_orientativo=minimo_voci_indice,
                             minimo_parti=minimi_struttura_indice[0],
                             minimo_capitoli=minimi_struttura_indice[1],
                             budget_strutturale=budget_struttura_indice,
