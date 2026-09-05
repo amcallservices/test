@@ -183,6 +183,20 @@ def sincronizza_modifica_manuale(
     chiave_da_leggere: str,
     chiave_sezione: Callable[[str], str],
 ) -> None:
+    """Salva una modifica reale dell'editor, mai un widget assente.
+
+    Durante la stesura automatica Streamlit cambia sezione e ricrea i campi
+    dell'editor. In quel passaggio la chiave del campo precedente può non
+    essere ancora presente nello stato: leggerla come stringa vuota farebbe
+    sembrare che l'utente abbia cancellato il testo e potrebbe eliminare una
+    sezione già generata, come la Prefazione. Una chiave assente non è quindi
+    mai una cancellazione esplicita. Se il campo esiste, invece, anche un
+    contenuto vuoto continua a rappresentare la scelta volontaria dell'utente
+    di svuotare la sezione.
+    """
+    if chiave_da_leggere not in stato:
+        return
+
     contenuto = stato.get(chiave_da_leggere, "")
     scrivi_sezione_memorizzata(stato, sezione, contenuto, chiave_sezione)
     archivio = stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
