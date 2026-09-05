@@ -10,6 +10,7 @@ from typing import Any
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
+from project_memory import CAMPI_SALVATAGGIO_PROGETTO, CHIAVE_MEMORIA_SIDEBAR
 
 
 COMMERCIAL_VERSION = "beta 7a"
@@ -47,7 +48,9 @@ CREDIT_COSTS = {
     # Il voto usa il modello editoriale completo e legge l'intera struttura:
     # due crediti mantengono un margine prudente anche sugli indici più lunghi.
     "voto_indice": 2,
-    "rigenera_indice": 3,
+    # La rigenerazione usa la stessa progettazione editoriale dell'indice,
+    # quindi il preventivo deve coincidere con l'addebito reale.
+    "rigenera_indice": 6,
     "verifica_fatti_web": 2,
     "audit_fatti_capitolo": 2,
     "controllo_coerenza_iniziale": 10,
@@ -1799,8 +1802,12 @@ def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, int]:
     user = st.session_state.get("commercial_user_context") or {}
     if _is_admin(user):
         return {"credits_charged": 0, "deepseek_units": 0}
-    movimento = (st.session_state.get("commercial_deepseek_charges", {}) or {}).get(reference, {})
-    if isinstance(movimento, dict):
+    movimenti = st.session_state.get("commercial_deepseek_charges", {}) or {}
+    movimento = movimenti.get(reference)
+    # Solo DeepSeek crea questo movimento. In precedenza il fallback vuoto
+    # veniva trattato come un movimento valido e ogni chiamata GPT risultava
+    # erroneamente a zero crediti nel pannello amministratore.
+    if isinstance(movimento, dict) and movimento:
         return {
             "credits_charged": max(0, int(movimento.get("charged", 0) or 0)),
             "deepseek_units": max(0, int(movimento.get("units", 0) or 0)),
@@ -2019,13 +2026,29 @@ def logout_sicuro_richiesto() -> bool:
 
 
 def richiedi_logout_sicuro(user: dict[str, Any]) -> None:
-    """Rinvia l'uscita alla fine del rerun, quando sidebar ed editor sono aggiornati."""
-    st.session_state["commercial_logout_requested_for"] = str(user.get("id", ""))
+    """Acquisisce subito la sidebar e rinvia la chiusura al salvataggio finale.
+
+    Il bottone Esci viene disegnato prima dell'editor. Conservare qui la
+    fotografia dei widget evita che un rerun successivo salvi una sidebar
+    precedente, parziale o temporaneamente svuotata.
+    """
+    owner = str(user.get("id", "") or "")
+    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    widget_values = {}
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        valore = st.session_state.get(chiave, memoria.get(nome, ""))
+        widget_values[chiave] = "" if valore is None else valore
+    st.session_state["commercial_logout_sidebar_snapshot"] = {
+        "owner": owner,
+        "widget_values": widget_values,
+    }
+    st.session_state["commercial_logout_requested_for"] = owner
 
 
 def annulla_logout_sicuro(messaggio: str) -> None:
     """Conserva la sessione aperta se la fotografia finale non arriva al cloud."""
     st.session_state.pop("commercial_logout_requested_for", None)
+    st.session_state.pop("commercial_logout_sidebar_snapshot", None)
     st.session_state["commercial_logout_error"] = str(messaggio or "Salvataggio finale non riuscito.")
 
 
@@ -2038,6 +2061,7 @@ def completa_logout_sicuro() -> None:
     for chiave in (
         "commercial_logout_snapshot",
         "commercial_logout_snapshot_owner",
+        "commercial_logout_sidebar_snapshot",
         "commercial_logout_requested_for",
         "commercial_logout_error",
         "commercial_user",
@@ -2238,16 +2262,24 @@ def _commerce_sidebar() -> None:
                     st.caption("Nessuna chiamata AI registrata dopo l'attivazione del monitoraggio.")
                 else:
                     costo_totale = sum(float(voce.get("estimated_cost_usd", 0) or 0) for voce in utilizzi)
+                    preventivi_totali = sum(int(voce.get("credits_requested", 0) or 0) for voce in utilizzi)
+                    crediti_addebitati = sum(int(voce.get("credits_charged", 0) or 0) for voce in utilizzi)
+                    unita_deepseek = sum(int(voce.get("deepseek_units", 0) or 0) for voce in utilizzi)
                     token_totali = sum(
                         int(voce.get("input_tokens", 0) or 0) + int(voce.get("output_tokens", 0) or 0)
                         for voce in utilizzi
                     )
                     chiamate_ok = sum(1 for voce in utilizzi if voce.get("success"))
-                    c1, c2, c3 = st.columns(3)
+                    c1, c2, c3, c4 = st.columns(4)
                     c1.metric("Chiamate registrate", len(utilizzi))
-                    c2.metric("Token elaborati", f"{token_totali:,}".replace(",", "."))
-                    c3.metric("Costo API stimato", f"${costo_totale:.4f}")
-                    st.caption(f"Esiti riusciti: {chiamate_ok}/{len(utilizzi)}. Mostrate le ultime 500 chiamate.")
+                    c2.metric("Crediti addebitati", crediti_addebitati)
+                    c3.metric("Unità DeepSeek", unita_deepseek)
+                    c4.metric("Costo API stimato", f"${costo_totale:.4f}")
+                    st.caption(
+                        f"Preventivi: {preventivi_totali} crediti · Token elaborati: "
+                        f"{token_totali:,}".replace(",", ".") +
+                        f" · Esiti riusciti: {chiamate_ok}/{len(utilizzi)}. Mostrate le ultime 500 chiamate."
+                    )
                     st.dataframe(
                         [
                             {
@@ -2256,7 +2288,8 @@ def _commerce_sidebar() -> None:
                                 "Operazione": voce.get("operation", ""),
                                 "Token input": int(voce.get("input_tokens", 0) or 0),
                                 "Token output": int(voce.get("output_tokens", 0) or 0),
-                                "Crediti": int(voce.get("credits_charged", 0) or 0),
+                                "Preventivo": int(voce.get("credits_requested", 0) or 0),
+                                "Addebitati": int(voce.get("credits_charged", 0) or 0),
                                 "Unità DS": int(voce.get("deepseek_units", 0) or 0),
                                 "Costo $": round(float(voce.get("estimated_cost_usd", 0) or 0), 6),
                                 "Esito": "OK" if voce.get("success") else "Non riuscita",

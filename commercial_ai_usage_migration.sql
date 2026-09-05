@@ -33,3 +33,26 @@ alter table public.writer_ai_usage_events enable row level security;
 -- Nessun utente può leggere o scrivere il registro: l'app usa la service role
 -- lato server e lo mostra esclusivamente agli indirizzi amministratore.
 revoke all on table public.writer_ai_usage_events from anon, authenticated;
+
+-- RECUPERO STORICO UNA TANTUM
+-- Le prime righe GPT potevano riportare 0 crediti pur essendo state addebitate.
+-- Questo aggiornamento legge esclusivamente il ledger esistente e corregge
+-- soltanto la telemetria: non modifica saldi, pagamenti, crediti o contenuti.
+with addebiti_ai as (
+  select
+    user_id,
+    reference,
+    sum(-delta)::integer as crediti_addebitati
+  from public.writer_credit_ledger
+  where delta < 0
+  group by user_id, reference
+)
+update public.writer_ai_usage_events as utilizzo
+set credits_charged = addebiti_ai.crediti_addebitati
+from addebiti_ai
+where utilizzo.user_id = addebiti_ai.user_id
+  and utilizzo.reference = addebiti_ai.reference
+  and utilizzo.success is true
+  and utilizzo.provider like 'GPT%'
+  and utilizzo.deepseek_units = 0
+  and utilizzo.credits_charged = 0;

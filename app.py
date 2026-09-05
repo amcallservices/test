@@ -1699,16 +1699,20 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     # a descrivere il costo della singola sezione.
     numeri_stima = re.findall(r"\d+", str(stima_gpt))
     totale_gpt = int(numeri_stima[0]) if numeri_stima else 0
-    if "genera_indice" in azione:
+    if "rigenera_indice" in azione:
         return "circa 2"
+    if "genera_indice" in azione:
+        return "circa 3⅓"
+    if "fonti" in azione:
+        return "circa 1⅓"
     if any(parola in azione for parola in ("scrivi_tutto", "scrivi_sottocapitoli", "rielabora_sezioni_originalita")):
         return f"fino a {max(1, math.ceil(totale_gpt / 3))}"
     if any(parola in azione for parola in ("scrivi_sezione", "rigenera_sezione", "rielabora", "quiz", "esempi")):
         return "1 ogni 3 operazioni"
     if "ricette" in azione:
-        return "circa 4"
+        return "circa 3⅓"
     if "coerenza" in azione:
-        return "circa 4 (primo controllo); poi 1 ogni 3 blocchi"
+        return "circa 3⅓ (primo controllo); poi 1 credito ogni 3 blocchi"
     if "voto_indice" in azione:
         return "1 credito"
     if any(parola in azione for parola in ("report_sintattico", "metadati", "controlla_fatti")):
@@ -1716,6 +1720,14 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     if "copyright" in azione or "immagine" in azione:
         return "non disponibile con DeepSeek Pro"
     return stima_gpt
+
+
+def applica_sostituzioni_tariffario(testo, sostituzioni):
+    """Aggiorna un valore numerico già tradotto senza alterare il resto della UI."""
+    risultato = str(testo or "")
+    for precedente, aggiornato in sostituzioni:
+        risultato = risultato.replace(precedente, aggiornato)
+    return risultato
 
 
 def tutela_azione_preventivo(azione_id):
@@ -4290,7 +4302,21 @@ def salva_progetto_corrente(sidebar, sezioni):
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
         if chiave not in st.session_state and nome in (sidebar or {}):
             st.session_state[chiave] = sidebar.get(nome, "")
-    fotografia_sidebar = memoria_core.fotografia_sidebar_integrale(st.session_state)
+    # Se Esci è stato premuto, questa fotografia è stata acquisita prima del
+    # rerun dal bottone stesso. Ha priorità sui widget che Streamlit può
+    # ricreare durante il salvataggio finale.
+    snapshot_logout = st.session_state.get("commercial_logout_sidebar_snapshot", {}) or {}
+    owner_logout = str(snapshot_logout.get("owner", "") or "") if isinstance(snapshot_logout, dict) else ""
+    owner_corrente = str((st.session_state.get("commercial_user_context") or {}).get("id", "") or "")
+    valori_logout = (
+        dict(snapshot_logout.get("widget_values", {}) or {})
+        if owner_logout and owner_logout == owner_corrente and logout_sicuro_richiesto()
+        else None
+    )
+    fotografia_sidebar = memoria_core.fotografia_sidebar_integrale(
+        st.session_state,
+        valori_widget_preferiti=valori_logout,
+    )
     sidebar_completa = dict(fotografia_sidebar["valori"])
     sidebar_widget_values = dict(fotografia_sidebar["widget"])
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar_completa)
@@ -5560,6 +5586,21 @@ with st.sidebar:
         "العربية": {"gpt_info": "GPT-5.4 نشط: بحث ويب وفحوص تحريرية وحقوق نشر على الويب. تُرفع الصور من الخارج.", "gpt_title": "أسعار GPT-5.4", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد لكل عملية.", "فهرس كامل: 10 أرصدة (4 بحث + 6 تخطيط تحريري).", "تقييم الفهرس: رصيدان؛ إعادة التوليد: 6 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ ثم رصيد لكل كتلة معدلة.", "رفع الصور الخارجية مجاني؛ حقوق النشر على الويب: من رصيدين."], "ds_info": "DeepSeek Pro نشط للكتابة والفهرس والمصادر والفحوص. الصور خارجية فقط.", "ds_title": "أسعار DeepSeek Pro", "ds": ["نسبة DeepSeek/GPT هي 1 إلى 3.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد كل 3 عمليات.", "مصادر أصلية + فهرس كامل: نحو 3⅓ أرصدة.", "تقييم الفهرس: رصيد واحد؛ التقرير والبيانات: رصيد كل 3 فحوص.", "اتساق كامل: نحو 4 أرصدة.", "الصور الخارجية لا تستهلك أرصدة."]},
         "中文": {"gpt_info": "GPT-5.4 已启用：网页研究、编辑检查和网页版权检查。图片从外部上传。", "gpt_title": "GPT-5.4 价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：10 积分（4 积分研究 + 6 积分编辑规划）。", "目录评估：2 积分；重新生成：6 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续每个修改区块 1 积分。", "外部图片上传免费；网页版权检查：2 积分起。"], "ds_info": "DeepSeek Pro 用于写作、目录、资料和检查。图片仅可从外部上传。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生资料研究 + 完整目录：约 3⅓ 积分。", "目录评估：1 积分；报告和元数据：每 3 次检查 1 积分。", "完整一致性检查：约 4 积分。", "外部图片不消耗积分。"]},
     })
+    # Il tariffario viene scritto in nove lingue. Questo passaggio conclusivo
+    # mantiene coerenti in ogni traduzione le due stime DeepSeek ricalibrate:
+    # 10 unità interne corrispondono a 3⅓ crediti, non a 4.
+    sostituzioni_tariffario_ds = (
+        ("circa 4", "circa 3⅓"), ("about 4", "about 3⅓"),
+        ("unos 4", "unos 3⅓"), ("environ 4", "environ 3⅓"),
+        ("etwa 4", "etwa 3⅓"), ("circa 4", "circa 3⅓"),
+        ("около 4", "около 3⅓"), ("نحو 4", "نحو 3⅓"),
+        ("约 4", "约 3⅓"),
+    )
+    for tariffario_tradotto in tariffari_sidebar.values():
+        tariffario_tradotto["ds"] = [
+            applica_sostituzioni_tariffario(voce, sostituzioni_tariffario_ds)
+            for voce in tariffario_tradotto.get("ds", [])
+        ]
     tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
     motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
     st.info(tariffario[f"{motore_tariffario}_info"])

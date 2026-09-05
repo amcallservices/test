@@ -68,19 +68,26 @@ def memoria_progetto_unica(stato: MutableMapping[str, Any]) -> dict[str, Any]:
     return progetto
 
 
-def fotografia_sidebar_integrale(stato: MutableMapping[str, Any]) -> dict[str, Any]:
+def fotografia_sidebar_integrale(
+    stato: MutableMapping[str, Any],
+    valori_widget_preferiti: MutableMapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Cattura tutte le scelte della sidebar in forma ripristinabile.
 
-    I valori del widget del rerun corrente hanno sempre priorità: sono gli
-    ultimi inseriti dall'utente. La memoria unica copre invece i campi non
-    ancora ridisegnati in una pagina appena ricaricata.
+    I valori del widget del rerun corrente hanno sempre priorità. Durante il
+    logout può arrivare una fotografia esplicita, acquisita nel preciso istante
+    in cui l'utente ha premuto Esci: quella ha precedenza e protegge l'ultima
+    scelta della sidebar da un eventuale rerun di Streamlit.
     """
     progetto = memoria_progetto_unica(stato)
     memoria = dict(progetto.get("sidebar", {}) or {})
     memoria.update(dict(stato.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {}))
     widget = {}
+    preferiti = dict(valori_widget_preferiti or {})
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
-        if chiave in stato:
+        if chiave in preferiti:
+            valore = preferiti.get(chiave, "")
+        elif chiave in stato:
             valore = stato.get(chiave, "")
         else:
             valore = memoria.get(nome, "")
