@@ -2543,6 +2543,66 @@ def tipo_sezione_editoriale(sezione):
     return classifica_sezione(sezione, sezione_prefazione)
 
 
+PAROLE_PER_PAGINA_6X9 = 275
+
+
+def riepilogo_stima_pagine_manoscritto(sezioni, contenuti, indice, profilo_lunghezza):
+    """Calcola pagine attuali e previsione prudente senza gonfiare il testo.
+
+    Le sezioni già scritte usano sempre il loro conteggio reale. Per le voci
+    ancora vuote viene mostrato un intervallo editoriale: Prefazione, Parti e
+    capitoli-cornice restano volutamente più brevi, mentre le sezioni
+    sostanziali seguono il profilo selezionato. È una stima trasparente, non
+    un invito ad aggiungere riempitivi per raggiungere un numero di pagine.
+    """
+    profilo = PROFILI_LUNGHEZZA_STESURA.get(
+        profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+    )
+    parole_reali = 0
+    parole_minime_rimanenti = 0
+    parole_massime_rimanenti = 0
+    sezioni_mancanti = 0
+    righe_indice = str(indice or "").splitlines()
+    for sezione in sezioni or []:
+        testo = pulisci_testo_editoriale(
+            str((contenuti or {}).get(sezione, "") or "")
+        ).strip()
+        if testo:
+            parole_reali += len(testo.split())
+            continue
+        sezioni_mancanti += 1
+        tipo = tipo_sezione_editoriale(sezione)
+        if tipo == "prefazione":
+            minimo, massimo = 140, 220
+        elif tipo == "parte":
+            minimo, massimo = 110, 180
+        elif tipo == "capitolo" and individua_sottocapitoli_del_capitolo(sezione, righe_indice):
+            minimo, massimo = 160, 260
+        else:
+            minimo, massimo = profilo["min_parole"], profilo["max_parole"]
+        parole_minime_rimanenti += minimo
+        parole_massime_rimanenti += massimo
+
+    obiettivo_pagine = int(profilo["pagine_minime"])
+    obiettivo_parole = obiettivo_pagine * PAROLE_PER_PAGINA_6X9
+    previsione_min_parole = parole_reali + parole_minime_rimanenti
+    previsione_max_parole = parole_reali + parole_massime_rimanenti
+    pagine_attuali = math.ceil(parole_reali / PAROLE_PER_PAGINA_6X9) if parole_reali else 0
+    pagine_previste_min = math.ceil(previsione_min_parole / PAROLE_PER_PAGINA_6X9) if previsione_min_parole else 0
+    pagine_previste_max = math.ceil(previsione_max_parole / PAROLE_PER_PAGINA_6X9) if previsione_max_parole else 0
+    return {
+        "parole_reali": parole_reali,
+        "pagine_attuali": pagine_attuali,
+        "sezioni_mancanti": sezioni_mancanti,
+        "pagine_previste_min": pagine_previste_min,
+        "pagine_previste_max": pagine_previste_max,
+        "obiettivo_pagine": obiettivo_pagine,
+        "obiettivo_parole": obiettivo_parole,
+        "obiettivo_gia_raggiunto": parole_reali >= obiettivo_parole,
+        "obiettivo_realistico": previsione_max_parole >= obiettivo_parole,
+    }
+
+
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 # Archivio ridondante delle sezioni create dall'IA. È distinto dalla memoria
 # dei widget Streamlit: se la sidebar si aggiorna durante una pausa, il testo
@@ -7841,14 +7901,60 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.subheader(L["preview_tit"])
         sezioni_anteprima = elenco_sezioni_progetto(opzioni_editor)
         contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
-        parole_anteprima = sum(len(pulisci_testo_editoriale(testo).split()) for testo in contenuti_libro.values())
         sezioni_con_testo = [s for s, testo in contenuti_libro.items() if pulisci_testo_editoriale(testo).strip()]
-        stima_pagine_6x9 = max(1, math.ceil(parole_anteprima / 275)) if parole_anteprima else 0
-        metrica_a, metrica_b, metrica_c = st.columns(3)
+        riepilogo_pagine = riepilogo_stima_pagine_manoscritto(
+            sezioni_anteprima,
+            contenuti_libro,
+            st.session_state.get("indice_raw", ""),
+            val_lunghezza,
+        )
+        pagine_finali = (
+            str(riepilogo_pagine["pagine_attuali"])
+            if not riepilogo_pagine["sezioni_mancanti"]
+            else (
+                f"{riepilogo_pagine['pagine_previste_min']}–"
+                f"{riepilogo_pagine['pagine_previste_max']}"
+            )
+        )
+        metrica_a, metrica_b, metrica_c, metrica_d = st.columns(4)
         metrica_a.metric("Sezioni leggibili", len(sezioni_con_testo))
-        metrica_b.metric("Parole manoscritto", f"{parole_anteprima:,}".replace(",", "."))
-        metrica_c.metric("Pagine 6×9 stimate", stima_pagine_6x9)
-        st.caption("Stima orientativa basata su circa 275 parole per pagina 6×9; impaginazione, immagini e font possono modificarla.")
+        metrica_b.metric(
+            "Parole manoscritto",
+            f"{riepilogo_pagine['parole_reali']:,}".replace(",", "."),
+        )
+        metrica_c.metric("Pagine 6×9 attuali", riepilogo_pagine["pagine_attuali"])
+        metrica_d.metric("Pagine finali stimate", pagine_finali)
+        st.caption(
+            "Stima orientativa basata su circa 275 parole per pagina 6×9. "
+            "La previsione finale usa il profilo scelto per le sezioni ancora vuote; "
+            "immagini, font e impaginazione possono modificarla."
+        )
+        st.progress(
+            min(100, int(
+                riepilogo_pagine["parole_reali"] /
+                max(1, riepilogo_pagine["obiettivo_parole"]) * 100
+            )),
+            text=(
+                f"Obiettivo {val_lunghezza}: almeno "
+                f"{riepilogo_pagine['obiettivo_pagine']} pagine 6×9"
+            ),
+        )
+        if riepilogo_pagine["obiettivo_gia_raggiunto"]:
+            st.success(
+                "Obiettivo di lunghezza raggiunto con il testo già creato. "
+                "Il software non aggiungerà contenuti superflui."
+            )
+        elif riepilogo_pagine["obiettivo_realistico"]:
+            st.info(
+                "L'obiettivo è compatibile con l'indice e il profilo scelto. "
+                "Le sezioni mancanti verranno sviluppate con contenuto utile, senza riempitivi."
+            )
+        else:
+            st.warning(
+                "Con l'indice attuale la stima prudente resta sotto l'obiettivo. "
+                "Le sezioni già complete non verranno allungate artificialmente: "
+                "potrai aggiungere in seguito nuovi argomenti utili o approfondire una sezione in modo mirato."
+            )
 
         if sezioni_con_testo:
             with st.expander("🧭 Indice cliccabile dell'anteprima", expanded=False):
