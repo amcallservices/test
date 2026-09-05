@@ -1383,23 +1383,33 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
 if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
     st.markdown("""
     <style>
-    [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 55% -15%, #eef6ff 0%, #f8fafc 42%, #edf2f7 100%) !important; color:#17253a !important; }
-    section[data-testid="stSidebar"] { background: linear-gradient(180deg, #ffffff 0%, #edf4fb 100%) !important; border-right-color:#c7d7e8 !important; }
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 { color:#17253a !important; }
-    section[data-testid="stSidebar"] .stTextInput input, section[data-testid="stSidebar"] .stTextArea textarea, section[data-testid="stSidebar"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div { background:#ffffff !important; color:#17253a !important; border-color:#a9bfd6 !important; }
-    .stButton>button { background:#ffffff !important; color:#17253a !important; border-color:#a9bfd6 !important; }
-    .stButton>button:hover { background:#e8f3ff !important; color:#102a43 !important; border-color:#1976e9 !important; }
-    .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#1976e9,#2997ef) !important; color:#ffffff !important; border-color:#1976e9 !important; }
+    /* Tema chiaro azzurrino: sostituisce integralmente solo i colori della UI. */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], section.main {
+      background:radial-gradient(circle at 7% 4%, #d8f0ff 0%, transparent 31%),radial-gradient(circle at 96% 17%, #c8e8ff 0%, transparent 27%),linear-gradient(135deg,#eaf7ff 0%,#f6fbff 48%,#dfefff 100%) !important;
+      color:#142b43 !important;
+    }
+    [data-testid="stAppViewBlockContainer"], section.main > div.block-container { background:transparent !important; }
+    section[data-testid="stSidebar"] { background:linear-gradient(180deg,#e9f6ff 0%,#d6ecff 100%) !important; border-right:1px solid #9dcaeb !important; }
+    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3,
+    [data-testid="stMain"] .stMarkdown, [data-testid="stMain"] label, [data-testid="stMain"] p, [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3 { color:#142b43 !important; }
+    section[data-testid="stSidebar"] .stTextInput input, section[data-testid="stSidebar"] .stTextArea textarea,
+    [data-testid="stMain"] .stTextInput input, [data-testid="stMain"] .stTextArea textarea,
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div { background:#ffffff !important; color:#142b43 !important; border-color:#9fc6e4 !important; }
+    [data-testid="stMain"] [data-testid="stAlert"], section[data-testid="stSidebar"] [data-testid="stAlert"],
+    [data-testid="stExpander"], [data-testid="stDataFrame"] { background:rgba(255,255,255,.84) !important; border-color:#b8d7ed !important; color:#142b43 !important; }
+    .stButton>button { background:#ffffff !important; color:#16466f !important; border-color:#8dbde1 !important; box-shadow:0 3px 9px rgba(38,114,166,.10) !important; }
+    .stButton>button:hover { background:#dcefff !important; color:#0b365d !important; border-color:#1976e9 !important; }
+    .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#087cc7,#28a8ed) !important; color:#ffffff !important; border-color:#087cc7 !important; }
     .st-key-avvia_chat_sidebar_guidata .stButton>button, .st-key-avvia_chat_sidebar_guidata button { background:linear-gradient(135deg,#15803d,#22a75a) !important; color:#ffffff !important; border-color:#52d486 !important; }
     .st-key-avvia_chat_sidebar_guidata .stButton>button:hover, .st-key-avvia_chat_sidebar_guidata button:hover { background:linear-gradient(135deg,#126b33,#178747) !important; border-color:#86efac !important; }
-    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom-color:#bfd0e2 !important; }
-    [data-testid="stTabs"] button[role="tab"] { color:#355273 !important; }
-    [data-testid="stTabs"] button[aria-selected="true"] { color:#102a43 !important; background:#e6f1fb !important; }
-    .ss-workspace-header { border-color:#b9cce0 !important; background:linear-gradient(135deg,#ffffff,#edf5fc) !important; box-shadow:0 12px 30px rgba(41,76,112,.13) !important; }
-    .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#17253a !important; }
-    .ss-workspace-subtitle { color:#4f6680 !important; }
-    .ss-workspace-chip { color:#284866 !important; background:#f4f9fd !important; border-color:#b7cde1 !important; }
-    .ss-section-card { background:rgba(255,255,255,.8) !important; border-color:#c9d9e8 !important; }
+    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom-color:#a8cce7 !important; }
+    [data-testid="stTabs"] button[role="tab"] { color:#2a587e !important; }
+    [data-testid="stTabs"] button[aria-selected="true"] { color:#0b3f6b !important; background:#cfeaff !important; }
+    .ss-workspace-header { border-color:#9fcbe8 !important; background:linear-gradient(135deg,#ffffff,#dff2ff) !important; box-shadow:0 12px 30px rgba(38,114,166,.16) !important; }
+    .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#142b43 !important; }
+    .ss-workspace-subtitle { color:#476b88 !important; }
+    .ss-workspace-chip { color:#174f7a !important; background:#eff9ff !important; border-color:#a6cce7 !important; }
+    .ss-section-card { background:rgba(255,255,255,.88) !important; border-color:#b5d6ed !important; box-shadow:0 8px 20px rgba(38,114,166,.08) !important; }
     </style>
     """, unsafe_allow_html=True)
 
