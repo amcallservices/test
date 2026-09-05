@@ -585,8 +585,12 @@ def _collega_referral_nuovo_account(user_id: str) -> dict[str, Any]:
     code = _normalizza_codice_referral(
         st.session_state.get("commercial_pending_referral_code", "")
     )
-    if not code or not user_id or _mode() == "demo" or not _supabase_ready():
+    if not code:
         return {"ok": False, "status": "no_pending_referral"}
+    if not user_id:
+        return {"ok": False, "status": "account_id_missing"}
+    if _mode() == "demo" or not _supabase_ready():
+        return {"ok": False, "status": "claim_unavailable"}
     try:
         outcome = _supabase(
             "POST",
@@ -855,7 +859,7 @@ def _apri_progetto_pulito_dopo_accesso() -> None:
 
 
 def _supabase_signup(email: str, password: str) -> dict[str, Any]:
-    """Crea l'account e restituisce solo l'identificatore necessario al referral opzionale."""
+    """Crea l'account e riconosce il suo ID in entrambi i formati restituiti da Supabase."""
     url = f"{_secret('SUPABASE_URL').rstrip('/')}/auth/v1/signup"
     payload = {"email": email.strip(), "password": password}
     app_url = _secret("APP_BASE_URL").rstrip("/")
@@ -889,7 +893,12 @@ def _supabase_signup(email: str, password: str) -> dict[str, Any]:
         data = response.json()
     except ValueError:
         data = {}
-    user = data.get("user") if isinstance(data, dict) else {}
+    # A seconda della configurazione di conferma email, Supabase può restituire
+    # l'utente dentro "user" oppure direttamente come oggetto principale.
+    # Accettiamo entrambi i formati: il referral viene quindi associato subito
+    # al nuovo account, prima che possa eseguire un acquisto.
+    nested_user = data.get("user") if isinstance(data, dict) else None
+    user = nested_user if isinstance(nested_user, dict) else data if isinstance(data, dict) else {}
     return {
         "id": str((user or {}).get("id", "")),
         "email": str((user or {}).get("email", email.strip())),
@@ -1579,12 +1588,20 @@ def _account_gate() -> dict[str, Any]:
             try:
                 nuovo_account = _supabase_signup(email, password)
                 esito_referral = _collega_referral_nuovo_account(nuovo_account.get("id", ""))
+                referral_in_attesa = bool(_normalizza_codice_referral(
+                    st.session_state.get("commercial_pending_referral_code", "")
+                ))
                 st.session_state["commercial_pending_confirmation_email"] = email.strip()
                 st.success("Account creato. Controlla l'email di conferma, poi accedi.")
                 if esito_referral.get("status") == "claimed":
                     st.info(
                         "Invito registrato: il bonus sarà assegnato automaticamente "
                         "dopo il tuo primo acquisto di un pacchetto ammesso."
+                    )
+                elif referral_in_attesa:
+                    st.warning(
+                        "Account creato, ma l’invito non è stato ancora registrato. "
+                        "Non effettuare acquisti: aggiorna la pagina o contatta l’assistenza."
                     )
             except Exception as error:
                 st.error(str(error))
