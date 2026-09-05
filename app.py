@@ -1120,6 +1120,17 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .stButton>button[kind="primary"]:hover, .stButton>button[data-testid="baseButton-primary"]:hover {
     background: linear-gradient(135deg, #1669cf, #1e88e5) !important;
 }
+.st-key-avvia_chat_sidebar_guidata .stButton>button,
+.st-key-avvia_chat_sidebar_guidata button {
+    background: linear-gradient(135deg, #15803d, #22a75a) !important;
+    border-color: #52d486 !important;
+    color: #ffffff !important;
+}
+.st-key-avvia_chat_sidebar_guidata .stButton>button:hover,
+.st-key-avvia_chat_sidebar_guidata button:hover {
+    background: linear-gradient(135deg, #126b33, #178747) !important;
+    border-color: #86efac !important;
+}
 [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
 [data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid #2c405b; }
@@ -1255,6 +1266,8 @@ if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
     .stButton>button { background:#ffffff !important; color:#17253a !important; border-color:#a9bfd6 !important; }
     .stButton>button:hover { background:#e8f3ff !important; color:#102a43 !important; border-color:#1976e9 !important; }
     .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#1976e9,#2997ef) !important; color:#ffffff !important; border-color:#1976e9 !important; }
+    .st-key-avvia_chat_sidebar_guidata .stButton>button, .st-key-avvia_chat_sidebar_guidata button { background:linear-gradient(135deg,#15803d,#22a75a) !important; color:#ffffff !important; border-color:#52d486 !important; }
+    .st-key-avvia_chat_sidebar_guidata .stButton>button:hover, .st-key-avvia_chat_sidebar_guidata button:hover { background:linear-gradient(135deg,#126b33,#178747) !important; border-color:#86efac !important; }
     [data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom-color:#bfd0e2 !important; }
     [data-testid="stTabs"] button[role="tab"] { color:#355273 !important; }
     [data-testid="stTabs"] button[aria-selected="true"] { color:#102a43 !important; background:#e6f1fb !important; }
@@ -3140,11 +3153,28 @@ def estrai_scheda_chat_guidata(testo):
     return risultati
 
 
+def messaggio_benvenuto_chat_sidebar(lingua):
+    """Primo messaggio gratuito, allineato alla lingua già scelta nel brief."""
+    messaggi = {
+        "Italiano": "Ciao! Che libro vuoi creare? Puoi descriverlo anche con una sola frase.",
+        "English": "Hello! What book would you like to create? You can describe it in just one sentence.",
+        "Español": "¡Hola! ¿Qué libro quieres crear? Puedes describirlo incluso con una sola frase.",
+        "Français": "Bonjour ! Quel livre souhaitez-vous créer ? Vous pouvez le décrire en une seule phrase.",
+        "Deutsch": "Hallo! Welches Buch möchten Sie erstellen? Sie können es auch mit nur einem Satz beschreiben.",
+        "Română": "Bună! Ce carte vrei să creezi? O poți descrie și într-o singură propoziție.",
+        "Русский": "Здравствуйте! Какую книгу вы хотите создать? Её можно описать даже одним предложением.",
+        "العربية": "مرحبًا! ما الكتاب الذي تريد إنشاءه؟ يمكنك وصفه بجملة واحدة فقط.",
+        "中文": "你好！你想创作什么书？即使只用一句话描述也可以。",
+    }
+    return messaggi.get(str(lingua or "").strip(), messaggi["Italiano"])
+
+
 def avvia_chat_sidebar_guidata():
+    lingua = st.session_state.get("editor_language", "Italiano") or "Italiano"
     st.session_state["chat_sidebar_attiva"] = True
     st.session_state["chat_sidebar_messaggi"] = [{
         "role": "assistant",
-        "content": "Ciao! Che libro vuoi creare? Puoi descriverlo anche con una sola frase.",
+        "content": messaggio_benvenuto_chat_sidebar(lingua),
     }]
     st.session_state.pop("chat_sidebar_scheda_pronta", None)
     st.session_state.pop("chat_sidebar_esito_applicazione", None)
@@ -6888,6 +6918,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.subheader(guida_chat["titolo"])
         st.info(guida_chat["nota"])
         st.markdown(guida_chat["passi"])
+        istruzioni_chat_guidata = {
+            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto per parlare direttamente con Scrittore Site. Usa lingua e cervello selezionati nella sidebar. L'avvio è gratuito; ogni risposta costa 1 credito con GPT oppure 1/3 di credito con DeepSeek (1 credito ogni 3 risposte). Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
+            "English": "**Optional alternative:** open the guided chat below to speak directly with Scrittore Site. It uses the language and brain selected in the sidebar. Starting is free; each reply costs 1 credit with GPT or 1/3 credit with DeepSeek (1 credit every 3 replies). At the end you may fill only empty fields automatically or replace existing ones.",
+            "Español": "**Alternativa opcional:** abre el chat guiado de abajo para hablar directamente con Scrittore Site. Usa el idioma y el motor elegidos en la barra lateral. Iniciar es gratuito; cada respuesta cuesta 1 crédito con GPT o 1/3 de crédito con DeepSeek (1 crédito cada 3 respuestas). Al final puedes completar solo campos vacíos o sustituir los existentes.",
+            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous pour dialoguer directement avec Scrittore Site. Il utilise la langue et le moteur choisis dans la barre latérale. Le démarrage est gratuit ; chaque réponse coûte 1 crédit avec GPT ou 1/3 de crédit avec DeepSeek (1 crédit toutes les 3 réponses). À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
+            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat und sprechen Sie direkt mit Scrittore Site. Er verwendet die in der Seitenleiste gewählte Sprache und KI. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt mit GPT oder 1/3 Punkt mit DeepSeek (1 Punkt je 3 Antworten). Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
+            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos pentru a vorbi direct cu Scrittore Site. Folosește limba și motorul selectate în bara laterală. Pornirea este gratuită; fiecare răspuns costă 1 credit cu GPT sau 1/3 credit cu DeepSeek (1 credit la 3 răspunsuri). La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
+            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже, чтобы общаться напрямую со Scrittore Site. Он использует язык и модель, выбранные на боковой панели. Запуск бесплатен; каждый ответ стоит 1 кредит с GPT или 1/3 кредита с DeepSeek (1 кредит за 3 ответа). В конце можно заполнить только пустые поля или заменить существующие.",
+            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه للتحدث مباشرة مع Scrittore Site. تستخدم اللغة والمحرك المختارين في الشريط الجانبي. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا مع GPT أو ثلث رصيد مع DeepSeek (رصيد واحد كل 3 ردود). في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
+            "中文": "**可选方式：** 打开下方的引导式聊天，直接与 Scrittore Site 对话。它使用侧边栏中选择的语言和模型。启动免费；GPT 每次回复消耗 1 积分，DeepSeek 每次消耗 1/3 积分（每 3 次回复消耗 1 积分）。最后可自动仅填写空字段，或替换已有字段。",
+        }
+        st.info(istruzioni_chat_guidata.get(lingua_sel, istruzioni_chat_guidata["Italiano"]))
         istruzione_lingua_prompt = {
             "Italiano": f"LINGUA OPERATIVA OBBLIGATORIA: comunica sempre con l'utente e restituisci la scheda finale esclusivamente in {lingua_sel}. Non tradurre i nomi esatti delle opzioni di Scrittore Site indicate sotto.",
             "English": f"MANDATORY WORKING LANGUAGE: communicate with the user and return the final form only in {lingua_sel}. Do not translate the exact Scrittore Site option names shown below.",
@@ -7172,12 +7214,17 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
         # che usa il cervello già selezionato nella sidebar. L'avvio è gratuito;
         # si scala credito soltanto quando il cervello restituisce una risposta.
         with st.expander("💬 Chat guidata per compilare la sidebar (opzionale)", expanded=False):
-            costo_chat_visibile = 1 if usa_deepseek_pro() else CREDIT_COSTS["chat_sidebar_guidata"]
+            usa_deepseek_chat = usa_deepseek_pro()
+            costo_chat_visibile = (
+                "1/3 di credito (1 credito ogni 3 risposte)"
+                if usa_deepseek_chat else
+                f"{CREDIT_COSTS['chat_sidebar_guidata']} credito"
+            )
             cervello_chat = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
             st.info(
                 f"La chat usa il cervello selezionato: **{cervello_chat}**. "
                 f"L'avvio e i tuoi messaggi sono gratuiti; ogni risposta della chat costa "
-                f"**{costo_chat_visibile} {'credito' if costo_chat_visibile == 1 else 'crediti'}**."
+                f"**{costo_chat_visibile}**."
             )
             st.caption(
                 "Puoi cambiare cervello nella sidebar anche durante la conversazione: "
@@ -7206,7 +7253,7 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                     height=90,
                 )
                 if st.button(
-                    f"➤ INVIA — risposta IA: {costo_chat_visibile} {'credito' if costo_chat_visibile == 1 else 'crediti'}",
+                    f"➤ INVIA — risposta IA: {costo_chat_visibile}",
                     key=f"invia_chat_sidebar_{nonce_chat}",
                     use_container_width=True,
                 ):
@@ -7223,7 +7270,8 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                         istruzioni_chat_interattiva = f"""{prompt_chat_sidebar}
 
 MODALITÀ CHAT INTERATTIVA
-Stai dialogando dentro Scrittore Site. Rispondi in modo naturale e fai soltanto le domande indispensabili indicate nel prompt.
+Stai dialogando dentro Scrittore Site. Dialoga con intelligenza e naturalezza: considera il contesto già fornito, riconosci le intenzioni dell'utente, fai domande concise soltanto quando servono davvero e non ripetere informazioni già chiare.
+Puoi proporre alternative concrete quando una scelta editoriale cambierebbe in modo significativo il progetto, spiegandole in una frase semplice. Non inventare mai esperienze personali, fatti o preferenze non dichiarate.
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
 Quando le informazioni sono sufficienti, restituisci la scheda finale con tutte e sole le etichette previste, una per riga e senza blocchi di codice. Prima della scheda non aggiungere commenti.
 Finché le informazioni non sono sufficienti, non produrre una scheda parziale: continua semplicemente il dialogo."""

@@ -33,10 +33,9 @@ STANDARD_BOOK_CREDITS = 75
 CREDIT_COSTS = {
     "scrittura_sezione": 1,
     # Chat opzionale che guida la compilazione della sidebar: con GPT costa
-    # tre crediti per risposta; DeepSeek usa tre unità interne, cioè un
-    # credito visibile. Il messaggio dell'utente e l'avvio della chat restano
-    # gratuiti.
-    "chat_sidebar_guidata": 3,
+    # un credito per risposta; DeepSeek usa una unità interna, cioè un terzo
+    # di credito. Il messaggio dell'utente e l'avvio della chat restano gratuiti.
+    "chat_sidebar_guidata": 1,
     "indice_ricerca_web": 2,
     "indice_generazione_editoriale": 3,
     "voto_indice": 1,
@@ -81,7 +80,7 @@ def _unita_deepseek(reason: str, amount: int) -> int:
     """
     amount = max(1, int(amount or 1))
     tariffe = {
-        "chat_sidebar_guidata": 3,               # 3 unità = 1 credito DeepSeek
+        "chat_sidebar_guidata": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
         "ricerca_preliminare_indice": 2,          # 2/3 di credito
         "genera_indice_controllato": 3,           # 1 credito; ricerca + indice = 5 unità
         "voto_indice": 1,
