@@ -1037,6 +1037,130 @@ TRADUZIONI = {
     }
 }
 
+# Testi dell'interfaccia separati dai dati editoriali: cambiano soltanto ciò
+# che l'utente vede, mai i valori tecnici salvati nei progetti e nei CSV.
+TESTI_UI = {
+    "Italiano": {
+        "seleziona": "— Seleziona —", "lingua": "🌐 Lingua", "cervello": "🧠 Cervello AI",
+        "fonti_carica": "Carica fonti esterne", "risultato": "Risultato finale desiderato",
+        "risultato_placeholder": "Es: Alla fine il lettore deve saper applicare il metodo in autonomia e verificare il risultato.",
+        "approfondimenti": "Approfondimenti (facoltativo)", "approfondimenti_placeholder": "Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
+        "lunghezza": "Lunghezza delle sezioni", "lunghezza_help": "Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti.",
+        "salva": "💾 SALVA SESSIONE", "ripristina": "🔄 RIAGGIORNA ALL'ULTIMA STESURA", "formattazione": "🛠️ 5. Formattazione",
+    },
+    "English": {
+        "seleziona": "— Select —", "lingua": "🌐 Language", "cervello": "🧠 AI engine",
+        "fonti_carica": "Upload external sources", "risultato": "Desired final result",
+        "risultato_placeholder": "Example: By the end, the reader can apply the method independently and verify the result.",
+        "approfondimenti": "Further details (optional)", "approfondimenti_placeholder": "Add instructions, priority topics, constraints, examples or required themes.",
+        "lunghezza": "Section length", "lunghezza_help": "Sets the generated-text length for each section without changing the credit cost.",
+        "salva": "💾 SAVE SESSION", "ripristina": "🔄 RESTORE LATEST DRAFT", "formattazione": "🛠️ 5. Formatting",
+    },
+    "Español": {
+        "seleziona": "— Selecciona —", "lingua": "🌐 Idioma", "cervello": "🧠 Motor de IA",
+        "fonti_carica": "Cargar fuentes externas", "risultato": "Resultado final deseado",
+        "risultato_placeholder": "Ejemplo: Al final, el lector podrá aplicar el método de forma autónoma y verificar el resultado.",
+        "approfondimenti": "Profundización (opcional)", "approfondimenti_placeholder": "Incluye instrucciones, aspectos prioritarios, límites, ejemplos o temas obligatorios.",
+        "lunghezza": "Longitud de las secciones", "lunghezza_help": "Define la longitud del texto generado por sección sin cambiar el coste en créditos.",
+        "salva": "💾 GUARDAR SESIÓN", "ripristina": "🔄 RESTAURAR ÚLTIMO BORRADOR", "formattazione": "🛠️ 5. Formato",
+    },
+    "Français": {
+        "seleziona": "— Sélectionnez —", "lingua": "🌐 Langue", "cervello": "🧠 Moteur IA",
+        "fonti_carica": "Importer des sources externes", "risultato": "Résultat final souhaité",
+        "risultato_placeholder": "Exemple : à la fin, le lecteur pourra appliquer la méthode de façon autonome et vérifier le résultat.",
+        "approfondimenti": "Approfondissements (facultatif)", "approfondimenti_placeholder": "Ajoutez des consignes, priorités, contraintes, exemples ou thèmes obligatoires.",
+        "lunghezza": "Longueur des sections", "lunghezza_help": "Définit la longueur du texte généré pour chaque section sans modifier le coût en crédits.",
+        "salva": "💾 ENREGISTRER LA SESSION", "ripristina": "🔄 RESTAURER LA DERNIÈRE VERSION", "formattazione": "🛠️ 5. Mise en forme",
+    },
+    "Deutsch": {
+        "seleziona": "— Auswählen —", "lingua": "🌐 Sprache", "cervello": "🧠 KI-Modell",
+        "fonti_carica": "Externe Quellen hochladen", "risultato": "Gewünschtes Endergebnis",
+        "risultato_placeholder": "Beispiel: Am Ende kann der Leser die Methode selbstständig anwenden und das Ergebnis prüfen.",
+        "approfondimenti": "Vertiefungen (optional)", "approfondimenti_placeholder": "Fügen Sie Anweisungen, Schwerpunkte, Vorgaben, Beispiele oder Pflichthemen hinzu.",
+        "lunghezza": "Abschnittslänge", "lunghezza_help": "Legt die Textlänge je Abschnitt fest, ohne die Kreditkosten zu ändern.",
+        "salva": "💾 SITZUNG SPEICHERN", "ripristina": "🔄 LETZTEN ENTWURF WIEDERHERSTELLEN", "formattazione": "🛠️ 5. Formatierung",
+    },
+    "Română": {
+        "seleziona": "— Selectează —", "lingua": "🌐 Limbă", "cervello": "🧠 Motor IA",
+        "fonti_carica": "Încarcă surse externe", "risultato": "Rezultatul final dorit",
+        "risultato_placeholder": "Exemplu: La final, cititorul poate aplica metoda autonom și poate verifica rezultatul.",
+        "approfondimenti": "Aprofundări (opțional)", "approfondimenti_placeholder": "Adaugă instrucțiuni, aspecte prioritare, limite, exemple sau teme obligatorii.",
+        "lunghezza": "Lungimea secțiunilor", "lunghezza_help": "Stabilește lungimea textului generat pentru fiecare secțiune fără a schimba costul în credite.",
+        "salva": "💾 SALVEAZĂ SESIUNEA", "ripristina": "🔄 RESTABILEȘTE ULTIMA VERSIUNE", "formattazione": "🛠️ 5. Formatare",
+    },
+    "Русский": {
+        "seleziona": "— Выберите —", "lingua": "🌐 Язык", "cervello": "🧠 Модель ИИ",
+        "fonti_carica": "Загрузить внешние источники", "risultato": "Желаемый итоговый результат",
+        "risultato_placeholder": "Пример: в конце читатель сможет самостоятельно применить метод и проверить результат.",
+        "approfondimenti": "Дополнительные сведения (необязательно)", "approfondimenti_placeholder": "Добавьте инструкции, приоритетные аспекты, ограничения, примеры или обязательные темы.",
+        "lunghezza": "Длина разделов", "lunghezza_help": "Задаёт длину текста для каждого раздела без изменения стоимости в кредитах.",
+        "salva": "💾 СОХРАНИТЬ СЕССИЮ", "ripristina": "🔄 ВОССТАНОВИТЬ ПОСЛЕДНЮЮ ВЕРСИЮ", "formattazione": "🛠️ 5. Форматирование",
+    },
+    "العربية": {
+        "seleziona": "— اختر —", "lingua": "🌐 اللغة", "cervello": "🧠 محرك الذكاء الاصطناعي",
+        "fonti_carica": "تحميل مصادر خارجية", "risultato": "النتيجة النهائية المطلوبة",
+        "risultato_placeholder": "مثال: في النهاية يستطيع القارئ تطبيق المنهج بشكل مستقل والتحقق من النتيجة.",
+        "approfondimenti": "تفاصيل إضافية (اختياري)", "approfondimenti_placeholder": "أضف تعليمات أو جوانب ذات أولوية أو قيوداً أو أمثلة أو موضوعات إلزامية.",
+        "lunghezza": "طول الأقسام", "lunghezza_help": "يحدد طول النص المُنشأ لكل قسم من دون تغيير تكلفة الأرصدة.",
+        "salva": "💾 حفظ الجلسة", "ripristina": "🔄 استعادة آخر مسودة", "formattazione": "🛠️ 5. التنسيق",
+    },
+    "中文": {
+        "seleziona": "— 请选择 —", "lingua": "🌐 语言", "cervello": "🧠 AI 模型",
+        "fonti_carica": "上传外部资料", "risultato": "期望的最终结果",
+        "risultato_placeholder": "示例：完成后，读者能够独立运用该方法并验证结果。",
+        "approfondimenti": "补充说明（可选）", "approfondimenti_placeholder": "添加说明、重点、限制、示例或必需主题。",
+        "lunghezza": "章节长度", "lunghezza_help": "设定每个章节生成文本的长度，不会改变积分费用。",
+        "salva": "💾 保存会话", "ripristina": "🔄 恢复最新草稿", "formattazione": "🛠️ 5. 格式化",
+    },
+}
+
+
+def testo_ui(chiave, lingua=None):
+    """Restituisce testo UI localizzato con ripiego sicuro in italiano."""
+    lingua_effettiva = lingua or st.session_state.get("editor_language", "Italiano")
+    return TESTI_UI.get(lingua_effettiva, TESTI_UI["Italiano"]).get(
+        chiave, TESTI_UI["Italiano"].get(chiave, chiave)
+    )
+
+
+CAMPI_UI_AVANZATI = {
+    "Italiano": {"indice_salvato": "Indice conservato", "fonti_salvate": "Fonti web conservate", "sezione_salvata": "Sezione conservata", "testo_salvato": "Testo conservato", "indice": "Indice gerarchico:", "messaggio": "Il tuo messaggio", "cerca": "🔎 Cerca nel manoscritto", "sostituisci": "Sostituisci con", "maiuscole": "Distingui maiuscole e minuscole", "anteprima_sezione": "Vai a una sezione dell'anteprima", "immagine": "Carica un'immagine PNG, JPG o WEBP", "import_csv": "Importa progetto CSV", "manoscritto": "Carica manoscritto", "lingua_metadati": "Lingua dei metadati"},
+    "English": {"indice_salvato": "Saved index", "fonti_salvate": "Saved web sources", "sezione_salvata": "Saved section", "testo_salvato": "Saved text", "indice": "Hierarchical index:", "messaggio": "Your message", "cerca": "🔎 Search in the manuscript", "sostituisci": "Replace with", "maiuscole": "Match case", "anteprima_sezione": "Go to a preview section", "immagine": "Upload a PNG, JPG or WEBP image", "import_csv": "Import CSV project", "manoscritto": "Upload manuscript", "lingua_metadati": "Metadata language"},
+    "Español": {"indice_salvato": "Índice guardado", "fonti_salvate": "Fuentes web guardadas", "sezione_salvata": "Sección guardada", "testo_salvato": "Texto guardado", "indice": "Índice jerárquico:", "messaggio": "Tu mensaje", "cerca": "🔎 Buscar en el manuscrito", "sostituisci": "Sustituir por", "maiuscole": "Distinguir mayúsculas y minúsculas", "anteprima_sezione": "Ir a una sección de la vista previa", "immagine": "Cargar una imagen PNG, JPG o WEBP", "import_csv": "Importar proyecto CSV", "manoscritto": "Cargar manuscrito", "lingua_metadati": "Idioma de metadatos"},
+    "Français": {"indice_salvato": "Index enregistré", "fonti_salvate": "Sources web enregistrées", "sezione_salvata": "Section enregistrée", "testo_salvato": "Texte enregistré", "indice": "Index hiérarchique :", "messaggio": "Votre message", "cerca": "🔎 Rechercher dans le manuscrit", "sostituisci": "Remplacer par", "maiuscole": "Respecter la casse", "anteprima_sezione": "Aller à une section de l'aperçu", "immagine": "Importer une image PNG, JPG ou WEBP", "import_csv": "Importer un projet CSV", "manoscritto": "Importer un manuscrit", "lingua_metadati": "Langue des métadonnées"},
+    "Deutsch": {"indice_salvato": "Gespeicherter Index", "fonti_salvate": "Gespeicherte Webquellen", "sezione_salvata": "Gespeicherter Abschnitt", "testo_salvato": "Gespeicherter Text", "indice": "Hierarchischer Index:", "messaggio": "Ihre Nachricht", "cerca": "🔎 Im Manuskript suchen", "sostituisci": "Ersetzen durch", "maiuscole": "Groß- und Kleinschreibung beachten", "anteprima_sezione": "Zu einem Vorschauabschnitt gehen", "immagine": "PNG-, JPG- oder WEBP-Bild hochladen", "import_csv": "CSV-Projekt importieren", "manoscritto": "Manuskript hochladen", "lingua_metadati": "Metadatensprache"},
+    "Română": {"indice_salvato": "Cuprins salvat", "fonti_salvate": "Surse web salvate", "sezione_salvata": "Secțiune salvată", "testo_salvato": "Text salvat", "indice": "Cuprins ierarhic:", "messaggio": "Mesajul tău", "cerca": "🔎 Caută în manuscris", "sostituisci": "Înlocuiește cu", "maiuscole": "Distinge majuscule/minuscule", "anteprima_sezione": "Mergi la o secțiune din previzualizare", "immagine": "Încarcă o imagine PNG, JPG sau WEBP", "import_csv": "Importă proiect CSV", "manoscritto": "Încarcă manuscrisul", "lingua_metadati": "Limba metadatelor"},
+    "Русский": {"indice_salvato": "Сохранённое оглавление", "fonti_salvate": "Сохранённые веб-источники", "sezione_salvata": "Сохранённый раздел", "testo_salvato": "Сохранённый текст", "indice": "Иерархическое оглавление:", "messaggio": "Ваше сообщение", "cerca": "🔎 Поиск в рукописи", "sostituisci": "Заменить на", "maiuscole": "Учитывать регистр", "anteprima_sezione": "Перейти к разделу предпросмотра", "immagine": "Загрузить изображение PNG, JPG или WEBP", "import_csv": "Импортировать проект CSV", "manoscritto": "Загрузить рукопись", "lingua_metadati": "Язык метаданных"},
+    "العربية": {"indice_salvato": "الفهرس المحفوظ", "fonti_salvate": "مصادر الويب المحفوظة", "sezione_salvata": "القسم المحفوظ", "testo_salvato": "النص المحفوظ", "indice": "الفهرس الهرمي:", "messaggio": "رسالتك", "cerca": "🔎 البحث في المخطوط", "sostituisci": "استبدال بـ", "maiuscole": "مطابقة حالة الأحرف", "anteprima_sezione": "الانتقال إلى قسم من المعاينة", "immagine": "تحميل صورة PNG أو JPG أو WEBP", "import_csv": "استيراد مشروع CSV", "manoscritto": "تحميل المخطوط", "lingua_metadati": "لغة البيانات الوصفية"},
+    "中文": {"indice_salvato": "已保存的目录", "fonti_salvate": "已保存的网络资料", "sezione_salvata": "已保存的章节", "testo_salvato": "已保存的文本", "indice": "层级目录：", "messaggio": "你的消息", "cerca": "🔎 在稿件中搜索", "sostituisci": "替换为", "maiuscole": "区分大小写", "anteprima_sezione": "前往预览章节", "immagine": "上传 PNG、JPG 或 WEBP 图片", "import_csv": "导入 CSV 项目", "manoscritto": "上传稿件", "lingua_metadati": "元数据语言"},
+}
+
+
+def campo_ui(chiave, lingua=None):
+    lingua_effettiva = lingua or st.session_state.get("editor_language", "Italiano")
+    return CAMPI_UI_AVANZATI.get(lingua_effettiva, CAMPI_UI_AVANZATI["Italiano"]).get(
+        chiave, CAMPI_UI_AVANZATI["Italiano"].get(chiave, chiave)
+    )
+
+
+ETICHETTE_CAMPI_CONTROLLO = {
+    "Italiano": ("Ho verificato anteprima, lettore vocale, CSV e PDF", "Analisi e voto dell'indice", "Analisi completa del libro", "Proposta di indice migliorata (l'indice attuale resta al sicuro)", "Confermo la sostituzione in tutte le sezioni trovate.", "Metadati generati", "Prompt pronti per Rigenera con AI (il software non modifica nulla automaticamente)"),
+    "English": ("I have checked preview, voice reader, CSV and PDF", "Index analysis and score", "Complete book analysis", "Improved index proposal (the current index remains safe)", "I confirm replacement in every matched section.", "Generated metadata", "Prompts ready for Rewrite with AI (the software changes nothing automatically)"),
+    "Español": ("He comprobado la vista previa, lector de voz, CSV y PDF", "Análisis y valoración del índice", "Análisis completo del libro", "Propuesta de índice mejorada (el índice actual permanece seguro)", "Confirmo la sustitución en todas las secciones encontradas.", "Metadatos generados", "Prompts listos para Regenerar con IA (el software no modifica nada automáticamente)"),
+    "Français": ("J'ai vérifié l'aperçu, le lecteur vocal, le CSV et le PDF", "Analyse et évaluation de l'index", "Analyse complète du livre", "Proposition d'index améliorée (l'index actuel reste protégé)", "Je confirme le remplacement dans toutes les sections trouvées.", "Métadonnées générées", "Prompts prêts pour Réécrire avec l'IA (le logiciel ne modifie rien automatiquement)"),
+    "Deutsch": ("Ich habe Vorschau, Sprachleser, CSV und PDF geprüft", "Indexanalyse und Bewertung", "Vollständige Buchanalyse", "Verbesserter Indexvorschlag (der aktuelle Index bleibt sicher)", "Ich bestätige den Ersatz in allen gefundenen Abschnitten.", "Generierte Metadaten", "Prompts bereit für KI-Umschreibung (die Software ändert nichts automatisch)"),
+    "Română": ("Am verificat previzualizarea, cititorul vocal, CSV-ul și PDF-ul", "Analiza și evaluarea cuprinsului", "Analiza completă a cărții", "Propunere de cuprins îmbunătățită (cuprinsul actual rămâne în siguranță)", "Confirm înlocuirea în toate secțiunile găsite.", "Metadate generate", "Prompturi pregătite pentru Rescrie cu IA (software-ul nu modifică nimic automat)"),
+    "Русский": ("Я проверил предпросмотр, голосовой чтец, CSV и PDF", "Анализ и оценка оглавления", "Полный анализ книги", "Улучшенное предложение оглавления (текущее оглавление сохранено)", "Я подтверждаю замену во всех найденных разделах.", "Сгенерированные метаданные", "Промпты готовы для переписывания с ИИ (программа ничего не меняет автоматически)"),
+    "العربية": ("لقد تحققت من المعاينة والقارئ الصوتي وCSV وPDF", "تحليل وتقييم الفهرس", "التحليل الكامل للكتاب", "اقتراح فهرس محسّن (يبقى الفهرس الحالي آمناً)", "أؤكد الاستبدال في جميع الأقسام التي تم العثور عليها.", "بيانات وصفية تم إنشاؤها", "موجّهات جاهزة لإعادة الصياغة بالذكاء الاصطناعي (لا يعدّل البرنامج شيئاً تلقائياً)"),
+    "中文": ("我已检查预览、语音朗读、CSV 和 PDF", "目录分析与评分", "完整图书分析", "改进的目录建议（当前目录保持安全）", "我确认替换所有找到的章节。", "已生成的元数据", "可用于 AI 重写的提示词（软件不会自动修改任何内容）"),
+}
+
+
+def campo_controllo_ui(indice, lingua=None):
+    lingua_effettiva = lingua or st.session_state.get("editor_language", "Italiano")
+    valori = ETICHETTE_CAMPI_CONTROLLO.get(lingua_effettiva, ETICHETTE_CAMPI_CONTROLLO["Italiano"])
+    return valori[indice]
+
 # La Prefazione fa parte del libro e viene generata prima della Parte I.
 # I Ringraziamenti restano invece dismessi: non vengono più aggiunti né
 # richiesti alla stesura completa, ma non cancelliamo eventuali vecchi testi.
@@ -3250,10 +3374,50 @@ def etichette_personalizzazione(lingua):
             "conclusione": "Pause before the conclusion", "parti_e_conclusione": "Pause before Parts and conclusion",
             "nota": "Before continuing, would you like to add a personal detail for this section?",
         },
+        "Español": {
+            "titolo": "✍️ Personaliza tu libro (opcional)", "intro": "Añade lo que hace que el libro sea realmente tuyo. Estas respuestas no consumen créditos y se guardan con el proyecto, CSV y restauración.",
+            "voce": "¿Qué voz, experiencia o perspectiva debe distinguir este libro?", "materiale": "¿Qué episodios, casos, ejemplos o materiales personales deseas destacar?",
+            "priorita": "¿Qué preguntas o resultados deben quedar especialmente claros para el lector?", "confini": "¿Qué debe evitar el libro: tono, promesas, temas o ejemplos inadecuados?",
+            "check": "Durante Escribir todo el libro", "automatico": "Continuar automáticamente (recomendado)", "parti": "Pausar antes de cada Parte", "conclusione": "Pausar antes de la conclusión", "parti_e_conclusione": "Pausar antes de las Partes y de la conclusión", "nota": "Antes de continuar, ¿quieres añadir un detalle personal para esta sección?",
+        },
+        "Français": {
+            "titolo": "✍️ Personnalisez votre livre (facultatif)", "intro": "Ajoutez ce qui rend le livre vraiment personnel. Ces réponses ne consomment pas de crédits et sont conservées avec le projet, le CSV et la restauration.",
+            "voce": "Quelle voix, expérience ou perspective doit distinguer ce livre ?", "materiale": "Quels épisodes, cas, exemples ou matériaux personnels souhaitez-vous valoriser ?",
+            "priorita": "Quelles questions ou quels résultats doivent être particulièrement clairs pour le lecteur ?", "confini": "Que doit éviter le livre : ton, promesses, sujets ou exemples inadaptés ?",
+            "check": "Pendant Écrire tout le livre", "automatico": "Continuer automatiquement (recommandé)", "parti": "Pause avant chaque Partie", "conclusione": "Pause avant la conclusion", "parti_e_conclusione": "Pause avant les Parties et la conclusion", "nota": "Avant de continuer, souhaitez-vous ajouter un détail personnel pour cette section ?",
+        },
+        "Deutsch": {
+            "titolo": "✍️ Personalisiere dein Buch (optional)", "intro": "Füge hinzu, was das Buch wirklich zu deinem macht. Diese Antworten verbrauchen keine Credits und werden mit Projekt, CSV und Wiederherstellung gespeichert.",
+            "voce": "Welche Stimme, Erfahrung oder Perspektive soll dieses Buch prägen?", "materiale": "Welche Episoden, Fälle, Beispiele oder persönlichen Materialien sollen berücksichtigt werden?",
+            "priorita": "Welche Fragen oder Ergebnisse sollen für Leser besonders klar sein?", "confini": "Was soll das Buch vermeiden: Ton, Versprechen, Themen oder ungeeignete Beispiele?",
+            "check": "Während Ganzes Buch schreiben", "automatico": "Automatisch fortsetzen (empfohlen)", "parti": "Vor jedem Teil anhalten", "conclusione": "Vor dem Schluss anhalten", "parti_e_conclusione": "Vor Teilen und Schluss anhalten", "nota": "Möchtest du vor dem Fortsetzen ein persönliches Detail für diesen Abschnitt ergänzen?",
+        },
+        "Română": {
+            "titolo": "✍️ Personalizează cartea (opțional)", "intro": "Adaugă ceea ce face cartea cu adevărat a ta. Aceste răspunsuri nu consumă credite și se salvează cu proiectul, CSV-ul și restaurarea.",
+            "voce": "Ce voce, experiență sau perspectivă trebuie să distingă această carte?", "materiale": "Ce episoade, cazuri, exemple sau materiale personale vrei să valorifici?",
+            "priorita": "Ce întrebări sau rezultate trebuie să fie deosebit de clare pentru cititor?", "confini": "Ce trebuie să evite cartea: ton, promisiuni, teme sau exemple nepotrivite?",
+            "check": "În timpul Scrie toată cartea", "automatico": "Continuă automat (recomandat)", "parti": "Oprește înainte de fiecare Parte", "conclusione": "Oprește înainte de concluzie", "parti_e_conclusione": "Oprește înainte de părți și concluzie", "nota": "Înainte de a continua, vrei să adaugi un detaliu personal pentru această secțiune?",
+        },
+        "Русский": {
+            "titolo": "✍️ Персонализируйте книгу (необязательно)", "intro": "Добавьте то, что сделает книгу по-настоящему вашей. Эти ответы не расходуют кредиты и сохраняются вместе с проектом, CSV и восстановлением.",
+            "voce": "Какой голос, опыт или взгляд должен отличать эту книгу?", "materiale": "Какие эпизоды, случаи, примеры или личные материалы вы хотите использовать?",
+            "priorita": "Какие вопросы или результаты должны быть особенно понятны читателю?", "confini": "Чего должна избегать книга: тона, обещаний, тем или неподходящих примеров?",
+            "check": "Во время написания всей книги", "automatico": "Продолжать автоматически (рекомендуется)", "parti": "Остановиться перед каждой частью", "conclusione": "Остановиться перед заключением", "parti_e_conclusione": "Остановиться перед частями и заключением", "nota": "Перед продолжением хотите добавить личную деталь для этого раздела?",
+        },
+        "العربية": {
+            "titolo": "✍️ خصص كتابك (اختياري)", "intro": "أضف ما يجعل الكتاب ملكك حقاً. هذه الإجابات لا تستهلك أرصدة وتُحفظ مع المشروع وملف CSV والاستعادة.",
+            "voce": "ما الصوت أو الخبرة أو المنظور الذي يجب أن يميز هذا الكتاب؟", "materiale": "ما الأحداث أو الحالات أو الأمثلة أو المواد الشخصية التي تريد إبرازها؟",
+            "priorita": "ما الأسئلة أو النتائج التي يجب أن تكون واضحة للقارئ بشكل خاص؟", "confini": "ما الذي يجب أن يتجنبه الكتاب: النبرة أو الوعود أو الموضوعات أو الأمثلة غير المناسبة؟",
+            "check": "أثناء كتابة الكتاب كاملاً", "automatico": "المتابعة تلقائياً (موصى به)", "parti": "توقف قبل كل جزء", "conclusione": "توقف قبل الخاتمة", "parti_e_conclusione": "توقف قبل الأجزاء والخاتمة", "nota": "قبل المتابعة، هل تريد إضافة تفصيل شخصي لهذا القسم؟",
+        },
+        "中文": {
+            "titolo": "✍️ 个性化你的图书（可选）", "intro": "添加真正能体现你特色的内容。这些回答不消耗积分，会随项目、CSV 和恢复功能一起保存。",
+            "voce": "什么声音、经历或视角应使这本书与众不同？", "materiale": "你希望重点使用哪些事件、案例、示例或个人材料？",
+            "priorita": "读者最需要清楚理解哪些问题或成果？", "confini": "本书应避免什么：语气、承诺、主题或不合适的示例？",
+            "check": "在写完整本书期间", "automatico": "自动继续（推荐）", "parti": "每一部分前暂停", "conclusione": "结论前暂停", "parti_e_conclusione": "各部分和结论前暂停", "nota": "继续之前，是否要为本节添加个人细节？",
+        },
     }
-    # Le altre lingue mantengono una UI comprensibile e non alterano la lingua
-    # scelta per il libro: l'AI riceve sempre il brief nella lingua del progetto.
-    return testi.get(lingua, testi["English"])
+    return testi.get(lingua, testi["Italiano"])
 
 
 def brief_personalizzazione_progetto(sezione=""):
@@ -3515,16 +3679,16 @@ def mostra_memoria_visiva_progetto():
             valore = str(sidebar.get(nome, "")).strip() or "—"
             st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
         if st.session_state.get("indice_raw", "").strip():
-            st.text_area("Indice conservato", value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
+            st.text_area(campo_ui("indice_salvato"), value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
         if registro_fonti:
-            st.text_area("Fonti web conservate", value=registro_fonti, height=150, disabled=True, key="memoria_fonti_web")
+            st.text_area(campo_ui("fonti_salvate"), value=registro_fonti, height=150, disabled=True, key="memoria_fonti_web")
         if contenuti:
             sezioni = list(contenuti)
-            scelta = st.selectbox("Sezione conservata", sezioni, key="memoria_sezione_scelta")
+            scelta = st.selectbox(campo_ui("sezione_salvata"), sezioni, key="memoria_sezione_scelta")
             testo = str(contenuti.get(scelta, ""))
             st.caption(f"{len(testo.split())} parole conservate")
             st.text_area(
-                "Testo conservato", value=testo, height=230, disabled=True,
+                campo_ui("testo_salvato"), value=testo, height=230, disabled=True,
                 key=f"memoria_testo_{hashlib.sha256(scelta.encode('utf-8')).hexdigest()[:12]}",
             )
         else:
@@ -5000,7 +5164,7 @@ if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
 
 with st.sidebar:
-    lingua_scelta = st.selectbox("🌐 Lingua / Language", [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or "— Seleziona —")
+    lingua_scelta = st.selectbox(testo_ui("lingua"), [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or testo_ui("seleziona"))
     lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     intestazioni_sidebar = {
@@ -5018,7 +5182,7 @@ with st.sidebar:
     st.title(L["side_tit"])
     st.markdown(f"#### 1 · {intestazioni_sidebar[1]}")
     provider_ia = st.selectbox(
-        "🧠 Cervello AI",
+        testo_ui("cervello", lingua_sel),
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
         key="provider_ia",
         help="GPT conserva tutte le funzioni, comprese verifica copyright web e immagini. DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
@@ -5048,7 +5212,7 @@ with st.sidebar:
     st.divider()
     st.markdown(f"#### 2 · {intestazioni_sidebar[2]}")
     st.markdown("<small>Carica PDF o DOCX: l'IA ne ricava una mappa concettuale interna e scrive un testo autonomo, senza riprendere formulazioni delle fonti.</small>", unsafe_allow_html=True)
-    file_caricati = st.file_uploader("Carica Fonti Esterne", type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
+    file_caricati = st.file_uploader(testo_ui("fonti_carica", lingua_sel), type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     if file_caricati:
         if len(file_caricati) > 10:
             st.warning("Hai superato il limite di 10 file. Verranno analizzati i primi 10.")
@@ -5114,7 +5278,7 @@ with st.sidebar:
     st.markdown(f"#### 3 · {intestazioni_sidebar[3]}")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
-    val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or "— Seleziona —")
+    val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     stili_estesi = [
         "Standard", 
@@ -5128,7 +5292,7 @@ with st.sidebar:
         "Epico ed Evocativo", 
         "Minimalista ed Essenziale"
     ]
-    val_stile = st.selectbox(L["lbl_style"], [""] + stili_estesi, key="book_writing_style", format_func=lambda valore: valore or "— Seleziona —")
+    val_stile = st.selectbox(L["lbl_style"], [""] + stili_estesi, key="book_writing_style", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
 
     direttive_indice_tipologia = {
         "Standard": "Crea un percorso lineare da basi a sviluppo, applicazione, verifica e sintesi. Rispetta il budget di sezioni indicato nel prompt: non espandere l'indice con capitoli o sottocapitoli ripetitivi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
@@ -5149,7 +5313,7 @@ with st.sidebar:
     val_narrativa = st.selectbox(L["lbl_narrative"], [""] + [
         "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante", 
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale", "Diretto e Pratico (Action-oriented)", "Storico e Documentale"
-    ], key="book_narrative_style", format_func=lambda valore: valore or "— Seleziona —")
+    ], key="book_narrative_style", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     # NUOVO BLOCCO: Punto di Vista (POV)
     lista_pov = [
@@ -5158,7 +5322,7 @@ with st.sidebar:
         "Noi (Inclusivo, partecipativo e didattico)",
         "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)"
     ]
-    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or "— Seleziona —")
+    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     # Definizioni disponibili prima del loro primo utilizzo nella UI.
     # Restano presenti anche nel modulo di memoria sottostante per compatibilità.
@@ -5216,16 +5380,16 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "中文": "期望的最终结果",
     }
     val_risultato = st.text_area(
-        etichette_risultato.get(lingua_sel, "Risultato finale desiderato"),
+        testo_ui("risultato", lingua_sel),
         height=100,
-        placeholder="Es: Alla fine il lettore deve saper applicare il metodo in autonomia e verificare il risultato.",
+        placeholder=testo_ui("risultato_placeholder", lingua_sel),
         key="book_desired_result"
     )
     val_trama = st.text_area(L["lbl_plot"], height=150, key="book_plot")
     val_approfondimenti = st.text_area(
-        "Approfondimenti (facoltativo)",
+        testo_ui("approfondimenti", lingua_sel),
         height=130,
-        placeholder="Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
+        placeholder=testo_ui("approfondimenti_placeholder", lingua_sel),
         key="book_further_details"
     )
     # Blocco autonomo: non rende obbligatoria la personalizzazione e non
@@ -5260,12 +5424,12 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     # alla stessa fotografia della sidebar, salvata anche prima di un rerun.
     val_note_checkpoint = st.session_state.get("book_personal_checkpoint_notes", "")
     val_lunghezza_scelta = st.selectbox(
-        "Lunghezza delle sezioni",
+        testo_ui("lunghezza", lingua_sel),
         [""] + list(PROFILI_LUNGHEZZA_STESURA.keys()),
         index=0,
         key="profilo_lunghezza_stesura",
-        format_func=lambda valore: valore or "— Seleziona —",
-        help="Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti."
+        format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
+        help=testo_ui("lunghezza_help", lingua_sel)
     )
     # Profilo tecnico sicuro solo per evitare errori prima che l'utente scelga;
     # la tendina resta visivamente vuota e il progetto non è pronto finché non
@@ -5339,9 +5503,9 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         L["lbl_narrative"]: val_narrativa,
         L["lbl_pov"]: val_pov,
         L["lbl_goal"]: val_goal,
-        etichette_risultato.get(lingua_sel, "Risultato finale desiderato"): val_risultato,
+        testo_ui("risultato", lingua_sel): val_risultato,
         L["lbl_plot"]: val_trama,
-        "Lunghezza delle sezioni": val_lunghezza_scelta,
+        testo_ui("lunghezza", lingua_sel): val_lunghezza_scelta,
     }
     campi_sidebar_mancanti = [etichetta for etichetta, valore in campi_obbligatori_sidebar.items() if not str(valore).strip()]
     sidebar_pronta = not campi_sidebar_mancanti
@@ -5407,7 +5571,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     if st.session_state.pop("messaggio_aggiornamento_pagina", ""):
         st.success(messaggio_aggiorna)
 
-    if st.button("💾 SALVA SESSIONE", type="primary", use_container_width=True, key="salva_sessione_manuale"):
+    if st.button(testo_ui("salva", lingua_sel), type="primary", use_container_width=True, key="salva_sessione_manuale"):
         # Il cloud viene aggiornato esclusivamente con questo comando: durante
         # la stesura normale i testi restano nella memoria della pagina.
         sezioni_da_salvare = list(
@@ -5422,7 +5586,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         else:
             st.error("Non è stato possibile salvare la sessione nel tuo account. Il lavoro resta aperto in questa pagina.")
 
-    if st.button("🔄 RIAGGIORNA ALL'ULTIMA STESURA", use_container_width=True, key="ripristina_ultima_stesura"):
+    if st.button(testo_ui("ripristina", lingua_sel), use_container_width=True, key="ripristina_ultima_stesura"):
         if prepara_ripristino_ultima_stesura():
             st.rerun()
         else:
@@ -6037,7 +6201,7 @@ if st.session_state.get("admin_test_mode"):
     massimo_voci_visualizzato = limite_voci_indice
     indice_nei_limiti = bool(indice_test) and conta_sezioni_indice(indice_test) <= limite_voci_indice
     verifica_visiva_test = st.checkbox(
-        "Ho verificato anteprima, lettore vocale, CSV e PDF",
+        campo_controllo_ui(0),
         key="admin_test_verifica_visiva",
         help="Spunta soltanto dopo avere provato davvero le funzioni nel browser.",
     )
@@ -6691,7 +6855,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         esegui_collaudo_automatico()
         st.rerun()
 
-    tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + ["🛠️ 5. Formattazione"])
+    tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
 
     # Una correzione preparata dal controllo finale o una stesura in corso
     # deve arrivare davvero all'editor. Streamlit non espone un'API Python per
@@ -6739,11 +6903,23 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             "中文": "✍️ **个性化你的图书**是可选功能：写作声音、案例、重点和边界会随项目保存。也可在各部分或结论前选择引导暂停，不消耗积分。",
         }
         st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
+        avvisi_guida_base = {
+            "Italiano": ("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.", "📚 Guida completa e regole di utilizzo", "✨ Funzioni, salvataggio e copyright"),
+            "English": ("Complete the sidebar, then create the index and start writing. The full instructions remain available below.", "📚 Complete guide and rules", "✨ Features, saving and copyright"),
+            "Español": ("Completa la barra lateral, crea el índice y empieza a escribir. Las instrucciones completas están disponibles abajo.", "📚 Guía completa y reglas de uso", "✨ Funciones, guardado y copyright"),
+            "Français": ("Remplissez la barre latérale, puis créez l'index et commencez à écrire. Les instructions complètes restent disponibles ci-dessous.", "📚 Guide complet et règles d'utilisation", "✨ Fonctions, enregistrement et copyright"),
+            "Deutsch": ("Füllen Sie die Seitenleiste aus, erstellen Sie dann den Index und beginnen Sie zu schreiben. Die vollständige Anleitung steht unten bereit.", "📚 Vollständige Anleitung und Regeln", "✨ Funktionen, Speichern und Copyright"),
+            "Română": ("Completează bara laterală, apoi generează cuprinsul și începe să scrii. Instrucțiunile complete rămân disponibile mai jos.", "📚 Ghid complet și reguli de utilizare", "✨ Funcții, salvare și copyright"),
+            "Русский": ("Заполните боковую панель, затем создайте оглавление и начните писать. Полные инструкции доступны ниже.", "📚 Полное руководство и правила", "✨ Функции, сохранение и copyright"),
+            "العربية": ("أكمل الشريط الجانبي ثم أنشئ الفهرس وابدأ الكتابة. التعليمات الكاملة متاحة أدناه.", "📚 الدليل الكامل وقواعد الاستخدام", "✨ الميزات والحفظ وحقوق النشر"),
+            "中文": ("请先完成侧边栏，然后生成目录并开始写作。完整说明在下方提供。", "📚 完整指南和使用规则", "✨ 功能、保存和版权"),
+        }
+        avviso_guida, etichetta_guida_completa, etichetta_funzioni = avvisi_guida_base.get(lingua_sel, avvisi_guida_base["Italiano"])
         if not sidebar_pronta:
-            st.info("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.")
-        with st.expander("📚 Guida completa e regole di utilizzo", expanded=False):
+            st.info(avviso_guida)
+        with st.expander(etichetta_guida_completa, expanded=False):
             st.markdown(testo_guida)
-        with st.expander("✨ Funzioni, salvataggio e copyright", expanded=False):
+        with st.expander(etichetta_funzioni, expanded=False):
             st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
         st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
         st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
@@ -6915,6 +7091,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             },
         }
         guida_chat = guida_chat_sidebar.get(lingua_sel, guida_chat_sidebar["Italiano"])
+        etichette_tendine_chat = {
+            "Italiano": {"manuale": "📋 Crea la tua chat per compilare la sidebar", "guidata": "Chat guidata per compilare la sidebar (opzionale)"},
+            "English": {"manuale": "📋 Create your chat to complete the sidebar", "guidata": "Guided chat to complete the sidebar (optional)"},
+            "Español": {"manuale": "📋 Crea tu chat para completar la barra lateral", "guidata": "Chat guiado para completar la barra lateral (opcional)"},
+            "Français": {"manuale": "📋 Créez votre chat pour remplir la barre latérale", "guidata": "Chat guidé pour remplir la barre latérale (facultatif)"},
+            "Deutsch": {"manuale": "📋 Erstellen Sie Ihren Chat zum Ausfüllen der Seitenleiste", "guidata": "Geführter Chat zum Ausfüllen der Seitenleiste (optional)"},
+            "Română": {"manuale": "📋 Creează chatul tău pentru completarea barei laterale", "guidata": "Chat ghidat pentru completarea barei laterale (opțional)"},
+            "Русский": {"manuale": "📋 Создайте чат для заполнения боковой панели", "guidata": "Управляемый чат для заполнения боковой панели (необязательно)"},
+            "العربية": {"manuale": "📋 أنشئ محادثتك لملء الشريط الجانبي", "guidata": "دردشة موجّهة لملء الشريط الجانبي (اختياري)"},
+            "中文": {"manuale": "📋 创建聊天以填写侧边栏", "guidata": "引导式聊天填写侧边栏（可选）"},
+        }
+        etichette_chat = etichette_tendine_chat.get(lingua_sel, etichette_tendine_chat["Italiano"])
         st.subheader(guida_chat["titolo"])
         st.info(guida_chat["nota"])
         st.markdown(guida_chat["passi"])
@@ -7206,14 +7394,14 @@ CONFINI PERSONALI DA RISPETTARE (FACOLTATIVO):
 PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
         # Il prompt manuale resta disponibile per chi vuole usarlo nella
         # propria ChatGPT, ma non occupa più tutta la pagina.
-        with st.expander("📋 Crea la tua chat per compilare la sidebar", expanded=False):
+        with st.expander(etichette_chat["manuale"], expanded=False):
             st.caption(guida_chat["etichetta"])
             st.code(prompt_chat_sidebar, language=None)
 
         # Alternativa facoltativa al copia/incolla: una conversazione interna
         # che usa il cervello già selezionato nella sidebar. L'avvio è gratuito;
         # si scala credito soltanto quando il cervello restituisce una risposta.
-        with st.expander("💬 Chat guidata per compilare la sidebar (opzionale)", expanded=False):
+        with st.expander(f"🟢 {etichette_chat['guidata']}", expanded=False):
             usa_deepseek_chat = usa_deepseek_pro()
             costo_chat_visibile = (
                 "1/3 di credito (1 credito ogni 3 risposte)"
@@ -7247,7 +7435,7 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                 nonce_chat = int(st.session_state.get("chat_sidebar_input_nonce", 0))
                 chiave_input_chat = f"chat_sidebar_input_{nonce_chat}"
                 testo_utente_chat = st.text_area(
-                    "Il tuo messaggio",
+                    campo_ui("messaggio", lingua_sel),
                     key=chiave_input_chat,
                     placeholder="Descrivi l'idea del libro oppure rispondi alla domanda della chat.",
                     height=90,
@@ -7548,7 +7736,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
         versione_indice = int(st.session_state.get("indice_widget_version", 0))
         chiave_widget_indice = f"indice_editoriale_{versione_indice}"
         testo_input = st.text_area(
-            "Indice Gerarchico:",
+            campo_ui("indice", lingua_sel),
             value=testo_corrente,
             height=400,
             key=chiave_widget_indice,
@@ -7579,7 +7767,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     notifica_sonora("voto_indice_completato", lingua_sel, ripeti=True)
             if st.session_state.get("analisi_voto_indice"):
                 st.text_area(
-                    "Analisi e voto dell'indice",
+                    campo_controllo_ui(1, lingua_sel),
                     value=st.session_state["analisi_voto_indice"],
                     height=320,
                     key="output_voto_indice"
@@ -7636,7 +7824,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             )
                 if st.session_state.get("indice_proposto_dal_voto"):
                     st.text_area(
-                        "Proposta di indice migliorata (l'indice attuale è ancora al sicuro)",
+                        campo_controllo_ui(3, lingua_sel),
                         value=st.session_state["indice_proposto_dal_voto"],
                         height=400,
                         key="output_indice_proposto_dal_voto"
@@ -8127,9 +8315,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
             with st.expander("🔎 Ricerca e sostituzione nel libro", expanded=False):
                 st.caption("Cerca un termine nelle sezioni già scritte e sostituiscilo in tutto il manoscritto. L'operazione non avvia l'AI e non consuma crediti.")
-                cerca_globale = st.text_input("Testo da cercare", key="ricerca_globale_testo")
-                sostituisci_globale = st.text_input("Sostituisci con", key="ricerca_globale_sostituzione")
-                rispetta_maiuscole = st.checkbox("Distingui maiuscole e minuscole", key="ricerca_globale_maiuscole")
+                cerca_globale = st.text_input(campo_ui("cerca", lingua_sel), key="ricerca_globale_testo")
+                sostituisci_globale = st.text_input(campo_ui("sostituisci", lingua_sel), key="ricerca_globale_sostituzione")
+                rispetta_maiuscole = st.checkbox(campo_ui("maiuscole", lingua_sel), key="ricerca_globale_maiuscole")
                 if cerca_globale:
                     flag_ricerca = 0 if rispetta_maiuscole else re.IGNORECASE
                     occorrenze, sezioni_trovate = 0, []
@@ -8141,7 +8329,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             sezioni_trovate.append(sezione)
                     st.info(f"Trovate {occorrenze} occorrenze in {len(sezioni_trovate)} sezioni.")
                     conferma_sostituzione = st.checkbox(
-                        "Confermo la sostituzione in tutte le sezioni trovate.",
+                        campo_controllo_ui(4, lingua_sel),
                         key="ricerca_globale_conferma",
                     )
                     if st.button(
@@ -8465,7 +8653,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             st.subheader("🖼️ Inserisci immagine del capitolo")
             st.caption("Crea l'immagine esternamente e caricala qui: verrà inserita nell'anteprima, nel Word e nel PDF della sezione selezionata.")
             file_immagine = st.file_uploader(
-                "Carica un'immagine PNG, JPG o WEBP",
+                campo_ui("immagine", lingua_sel),
                 type=["png", "jpg", "jpeg", "webp"],
                 key=f"upload_immagine_{k_sessione}"
             )
@@ -8591,12 +8779,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
         if sezioni_con_testo:
             with st.expander("🧭 Indice cliccabile dell'anteprima", expanded=False):
+                # Compatibilità con il vecchio valore italiano memorizzato
+                # nelle sessioni precedenti: la nuova tendina usa un valore
+                # tecnico vuoto e visualizza l'etichetta nella lingua scelta.
+                if st.session_state.get("indice_tendina_anteprima") == "— Seleziona una sezione —":
+                    st.session_state["indice_tendina_anteprima"] = ""
                 sezione_da_aprire = st.selectbox(
-                    "Vai a una sezione dell'anteprima",
-                    ["— Seleziona una sezione —"] + sezioni_con_testo,
+                    campo_ui("anteprima_sezione", lingua_sel),
+                    [""] + sezioni_con_testo,
                     key="indice_tendina_anteprima",
+                    format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
                 )
-                if sezione_da_aprire != "— Seleziona una sezione —":
+                if sezione_da_aprire:
                     if st.button(
                         f"📖 MOSTRA SOLO “{sezione_da_aprire}”",
                         key="apri_sezione_anteprima",
@@ -8608,7 +8802,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # Tornando alla voce iniziale, il filtro viene rimosso e
                     # l'anteprima completa viene mostrata nello stesso istante.
                     st.session_state.pop("anteprima_sezione_filtrata", None)
-            cerca_anteprima = st.text_input("🔎 Cerca nel manoscritto", key="cerca_nell_anteprima")
+            cerca_anteprima = st.text_input(campo_ui("cerca", lingua_sel), key="cerca_nell_anteprima")
             if cerca_anteprima.strip():
                 termine = cerca_anteprima.strip()
                 risultati_ricerca = []
@@ -8727,7 +8921,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.warning("Analisi non aggiornata: il testo, l'indice o il brief sono cambiati dopo l'ultimo controllo. Premi di nuovo il pulsante per ottenere il report della versione corrente.")
             else:
                 st.text_area(
-                    "Analisi completa del libro",
+                    campo_controllo_ui(2, lingua_sel),
                     value=st.session_state["report_coerenza_libro"],
                     height=420,
                     key="output_report_coerenza_libro"
@@ -8751,7 +8945,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             )
         with col_csv_importa:
             csv_da_importare = st.file_uploader(
-                "Importa progetto CSV", type=["csv"], key="importa_progetto_editoriale_csv",
+                campo_ui("import_csv", lingua_sel), type=["csv"], key="importa_progetto_editoriale_csv",
                 help="Accetta solo un CSV esportato da Scrittore Site.",
             )
             if csv_da_importare and st.button("📤 Importa e ripristina progetto", use_container_width=True, key="conferma_importazione_progetto_csv"):
@@ -9038,7 +9232,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 st.rerun()
                 if esito_finale_export["prompt_correzione"]:
                     st.text_area(
-                        "Prompt pronti per Rigenera con AI (il software non modifica nulla automaticamente)",
+                        campo_controllo_ui(6, lingua_sel),
                         value="\n\n".join(esito_finale_export["prompt_correzione"]), height=280,
                         key="prompt_correzioni_export"
                     )
@@ -9084,7 +9278,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.subheader("🛠️ Formattazione")
         st.caption("Carica un manoscritto DOCX o PDF per generare metadati; i file DOCX possono anche essere formattati per il formato KDP 6×9.")
         manoscritto = st.file_uploader(
-            "Carica manoscritto",
+            campo_ui("manoscritto", lingua_sel),
             type=["docx", "pdf"],
             key="manoscritto_formattazione"
         )
@@ -9093,7 +9287,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             with col_metadati:
                 st.markdown("### Metadati KDP")
                 lingua_metadati = st.selectbox(
-                    "Lingua dei metadati",
+                    campo_ui("lingua_metadati", lingua_sel),
                     ["Italiano", "Inglese", "Spagnolo", "Francese", "Tedesco", "Rumeno", "Russo", "Arabo", "Cinese"],
                     key="lingua_metadati"
                 )
@@ -9125,7 +9319,7 @@ Sette frasi chiave pertinenti, separate da virgole, senza spiegazioni aggiuntive
                             st.error(f"Impossibile generare i metadati: {e}")
                 if st.session_state.get("metadati_formattazione"):
                     st.text_area(
-                        "Metadati generati",
+                        campo_controllo_ui(5, lingua_sel),
                         value=st.session_state["metadati_formattazione"],
                         height=480,
                         key="output_metadati_formattazione"

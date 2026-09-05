@@ -910,6 +910,20 @@ HOME_NAVIGATION = {
     "中文": ("使用流程", "功能", "双引擎", "积分", "常见问题"),
 }
 
+# Messaggio visibile nella home pubblica: la lingua scelta dall'utente viene
+# usata dall'editor, dall'indice, dalla chat guidata e dalla stesura.
+HOME_LANGUAGE_HIGHLIGHT = {
+    "Italiano": ("🌍 Scrivi il tuo libro nella tua lingua", "Scrittore Site lavora in italiano, inglese, spagnolo, francese, tedesco, rumeno, russo, arabo e cinese. Scegli la lingua del progetto e l'editor la segue dall'indice alla stesura."),
+    "English": ("🌍 Write your book in your language", "Scrittore Site works in Italian, English, Spanish, French, German, Romanian, Russian, Arabic and Chinese. Choose your project language and the editor follows it from outline to manuscript."),
+    "Español": ("🌍 Escribe tu libro en tu idioma", "Scrittore Site trabaja en italiano, inglés, español, francés, alemán, rumano, ruso, árabe y chino. Elige el idioma del proyecto y el editor lo sigue desde el índice hasta el manuscrito."),
+    "Français": ("🌍 Écrivez votre livre dans votre langue", "Scrittore Site fonctionne en italien, anglais, espagnol, français, allemand, roumain, russe, arabe et chinois. Choisissez la langue du projet : l’éditeur la suit du plan au manuscrit."),
+    "Deutsch": ("🌍 Schreiben Sie Ihr Buch in Ihrer Sprache", "Scrittore Site arbeitet auf Italienisch, Englisch, Spanisch, Französisch, Deutsch, Rumänisch, Russisch, Arabisch und Chinesisch. Wählen Sie die Projektsprache – der Editor folgt ihr von der Gliederung bis zum Manuskript."),
+    "Română": ("🌍 Scrie-ți cartea în limba ta", "Scrittore Site funcționează în italiană, engleză, spaniolă, franceză, germană, română, rusă, arabă și chineză. Alege limba proiectului, iar editorul o urmează de la cuprins la manuscris."),
+    "Русский": ("🌍 Пишите книгу на своём языке", "Scrittore Site работает на итальянском, английском, испанском, французском, немецком, румынском, русском, арабском и китайском. Выберите язык проекта — редактор использует его от структуры до рукописи."),
+    "العربية": ("🌍 اكتب كتابك بلغتك", "يعمل Scrittore Site بالإيطالية والإنجليزية والإسبانية والفرنسية والألمانية والرومانية والروسية والعربية والصينية. اختر لغة المشروع وسيتبعها المحرر من الفهرس إلى المخطوطة."),
+    "中文": ("🌍 用你的语言写书", "Scrittore Site 支持意大利语、英语、西班牙语、法语、德语、罗马尼亚语、俄语、阿拉伯语和中文。选择项目语言，编辑器会从目录到书稿全程遵循该语言。"),
+}
+
 
 def _landing_page() -> None:
     """Pagina di ingresso pubblica: compare prima dell'accesso."""
@@ -938,6 +952,10 @@ def _landing_page() -> None:
             background:rgba(255,255,255,.86); box-shadow:0 7px 18px rgba(20,77,120,.10); backdrop-filter:blur(10px)}
           .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
             font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
+          .ss-languages-hero {max-width:1060px; margin:.75rem auto 1.55rem; padding:1rem 1.25rem; text-align:center;
+            border:1px solid #93c5fd; border-radius:15px; background:linear-gradient(135deg,#e0f2fe,#f8fbff); box-shadow:0 9px 22px rgba(20,77,120,.08)}
+          .ss-languages-hero b {display:block; color:#0f4c81; font-size:1.13rem; margin-bottom:.3rem}
+          .ss-languages-hero span {display:block; color:#365d79; line-height:1.5; font-size:.94rem}
           .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
           .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
           .ss-card {background:#fff; border:1px solid #d9e5f0;
@@ -1041,6 +1059,7 @@ def _landing_page() -> None:
     A = HOME_AI_ENGINES_COPY[home_language]
     P = HOME_PERSONALIZATION_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
+    lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
 
     st.markdown(
@@ -1048,6 +1067,10 @@ def _landing_page() -> None:
         <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
         <a href='#ss-cervelli'>{N[2]}</a><a href='#ss-crediti'>{N[3]}</a><a href='#ss-faq'>{N[4]}</a>
         </nav>""",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
         unsafe_allow_html=True,
     )
 
