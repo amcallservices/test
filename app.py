@@ -7082,6 +7082,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_coda"] = list(da_generare_libro)
                     st.session_state["job_scrittura_totale"] = len(da_generare_libro)
+                    # La Prefazione non dipende dalla lista ricostruita nei
+                    # rerun: viene registrata come passaggio obbligatorio
+                    # dell'intero libro prima di ogni capitolo.
+                    st.session_state["job_scrittura_prefazione_obbligatoria"] = (
+                        prefazione_indice
+                        if not sezione_pronta_per_la_coda(prefazione_indice)
+                        else ""
+                    )
                     st.session_state["job_scrittura_attivo"] = True
                     st.session_state["job_scrittura_pausa"] = False
                     st.session_state["job_scrittura_in_attesa"] = True
@@ -7108,6 +7116,32 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if sezione in sezioni_intero_libro
                 and not sezione_pronta_per_la_coda(sezione)
             ]
+            prefazione_obbligatoria = str(
+                st.session_state.get("job_scrittura_prefazione_obbligatoria", "") or ""
+            ).strip()
+            if (
+                not prefazione_obbligatoria
+                and st.session_state.get("job_scrittura_attivo")
+                and not sezione_pronta_per_la_coda(prefazione_indice)
+            ):
+                # Compatibilità con una generazione avviata prima di questa
+                # correzione: la prima voce mancante viene recuperata senza
+                # obbligare l'utente a cancellare o riavviare il progetto.
+                prefazione_obbligatoria = prefazione_indice
+                st.session_state["job_scrittura_prefazione_obbligatoria"] = prefazione_indice
+            if prefazione_obbligatoria and not sezione_pronta_per_la_coda(prefazione_obbligatoria):
+                # Anche se una sessione vecchia, un CSV o una cache avesse
+                # costruito la coda senza Prefazione, questa riga la riporta
+                # davanti a tutto il resto. Non può essere saltata.
+                coda_scrittura = [
+                    prefazione_obbligatoria,
+                    *[
+                        sezione for sezione in coda_scrittura
+                        if not sezione_prefazione(sezione)
+                    ],
+                ]
+            elif prefazione_obbligatoria:
+                st.session_state.pop("job_scrittura_prefazione_obbligatoria", None)
             st.session_state["job_scrittura_coda"] = list(coda_scrittura)
             totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura) or 1)))
             completati = max(0, totale - len(coda_scrittura))
@@ -7149,6 +7183,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state[CHIAVE_SELETTORE_EDITOR] = sezione_iniziale
                     st.session_state[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
                     st.session_state["job_scrittura_ultima_completata"] = sezione_iniziale
+                    if sezione_prefazione(sezione_iniziale):
+                        st.session_state.pop("job_scrittura_prefazione_obbligatoria", None)
                     st.session_state["job_scrittura_coda"] = coda_scrittura[1:]
                     st.session_state["job_scrittura_avvio_protetto_rimanenti"] = avvio_protetto - 1
                     st.session_state["job_scrittura_prossimo_avvio"] = time.time() + 1.0
