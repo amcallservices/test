@@ -4149,7 +4149,13 @@ def applica_snapshot_progetto(snapshot):
     if not isinstance(snapshot, dict):
         return False
 
-    sidebar = dict(snapshot.get("sidebar", {}) or {})
+    # La sidebar non viene più ricostruita da un dizionario generico: la
+    # memoria centrale ripristina prima le esatte chiavi dei widget. Questo
+    # avviene prima del rendering della sidebar, quindi Streamlit visualizza
+    # l'ultima scelta dell'utente anziché i valori iniziali della nuova pagina.
+    sidebar, campi_sidebar_ripristinati, campi_sidebar_totali = (
+        memoria_core.ripristina_sidebar_integrale(st.session_state, snapshot)
+    )
     contenuti = {
         str(nome): str(testo)
         for nome, testo in (snapshot.get("contenuti", {}) or {}).items()
@@ -4179,14 +4185,6 @@ def applica_snapshot_progetto(snapshot):
         "fonti": dict(fonti),
         "immagini": dict(immagini),
     })
-
-    # La sidebar viene ricostruita integralmente, anche per i campi non
-    # presenti nel CSV: nessun valore della bozza precedente resta in pagina.
-    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = {
-        nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO
-    }
-    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
-        st.session_state[chiave] = sidebar.get(nome, "")
 
     # Elimina soltanto le vecchie textarea, non i dati: l'indice e ogni
     # sezione verranno ridisegnati con valori nuovi dalla memoria unica.
@@ -4226,10 +4224,24 @@ def applica_snapshot_progetto(snapshot):
             if chiave == "registro_fonti_web" else valore_fonte
         )
 
+    riepilogo_sidebar = (
+        f"Sidebar: {campi_sidebar_ripristinati}/{campi_sidebar_totali} campi recuperati."
+    )
     if snapshot.get("_origine_importazione_csv"):
-        st.session_state["autosave_stato"] = "✓ CSV importato integralmente: sidebar, indice, sezioni, fonti e immagini sono stati ripristinati."
+        st.session_state["autosave_stato"] = (
+            "✓ CSV importato: " + riepilogo_sidebar + " Indice, sezioni, fonti e immagini sono stati ripristinati."
+        )
+    elif campi_sidebar_ripristinati == campi_sidebar_totali:
+        st.session_state["autosave_stato"] = (
+            "✓ Ultima stesura ripristinata integralmente: " + riepilogo_sidebar
+            + " Indice, sezioni, fonti e immagini sono disponibili."
+        )
     else:
-        st.session_state["autosave_stato"] = "✓ Ultima stesura ripristinata integralmente: sidebar, indice, sezioni, fonti e immagini."
+        st.session_state["autosave_stato"] = (
+            "⚠ Ultima stesura recuperata con una sidebar parziale ("
+            + riepilogo_sidebar
+            + "). I dati disponibili restano visibili; salva di nuovo il progetto per creare una fotografia completa."
+        )
     return True
 
 
@@ -4260,17 +4272,27 @@ def prepara_ripristino_ultima_stesura():
 
 
 def salva_progetto_corrente(sidebar, sezioni):
-    """Crea una fotografia leggera di sidebar, indice e testi e la invia al cloud."""
+    """Crea e conferma nel cloud una fotografia completa del progetto aperto.
+
+    Sidebar, indice, testi, fonti e immagini vengono catturati nello stesso
+    istante. Il logout usa questa funzione e si chiude soltanto dopo l'esito
+    positivo, quindi non può lasciare una sidebar più vecchia del manoscritto.
+    """
     if st.session_state.get("admin_test_mode"):
         # Il collaudo usa le stesse funzioni dell'app, ma è una sandbox: non
         # deve poter sostituire il progetto reale salvato dall'amministratore.
         st.session_state["autosave_stato"] = "🧪 Collaudo: dati mantenuti solo nella pagina di prova; il progetto reale non viene modificato."
         return True
-    # La sidebar è parte essenziale del progetto quanto le sezioni. Uniamo la
-    # memoria persistente ai valori del rerun corrente e salviamo sempre tutti
-    # i campi, anche quando sono vuoti per scelta dell'utente.
-    sidebar_completa = sidebar_memorizzata_corrente()
-    sidebar_completa.update({nome: sidebar.get(nome, "") for nome in CAMPI_SALVATAGGIO_PROGETTO})
+    # La sidebar è parte essenziale del progetto quanto le sezioni. La
+    # fotografia conserva sia i nomi editoriali sia le chiavi reali dei
+    # widget, comprese le scelte volutamente vuote. In una nuova sessione non
+    # dovremo quindi inferire né perdere alcun valore inserito dall'utente.
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        if chiave not in st.session_state and nome in (sidebar or {}):
+            st.session_state[chiave] = sidebar.get(nome, "")
+    fotografia_sidebar = memoria_core.fotografia_sidebar_integrale(st.session_state)
+    sidebar_completa = dict(fotografia_sidebar["valori"])
+    sidebar_widget_values = dict(fotografia_sidebar["widget"])
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar_completa)
     progetto = memoria_progetto_unica()
     progetto["sidebar"] = dict(sidebar_completa)
@@ -4314,7 +4336,11 @@ def salva_progetto_corrente(sidebar, sezioni):
     immagini = immagini_da_snapshot_cloud(immagini)
     progetto["immagini"] = dict(immagini)
     snapshot = {
+        "snapshot_version": 2,
         "sidebar": sidebar_completa,
+        "sidebar_widget_values": sidebar_widget_values,
+        "sidebar_fields": list(fotografia_sidebar["campi"]),
+        "sidebar_schema_version": fotografia_sidebar["versione"],
         "indice_raw": indice_corrente,
         "indice_backup": indice_corrente,
         "contenuti": contenuti,

@@ -48,6 +48,12 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "provider_ia": "provider_ia",
 }
 
+# Una fotografia della sidebar contiene sia i nomi editoriali usati dal CSV
+# sia le chiavi tecniche dei widget Streamlit. La seconda copia evita che un
+# ripristino debba "indovinare" come ricostruire menu, campi liberi e scelte
+# personali dopo un logout o una nuova sessione.
+VERSIONE_FOTOGRAFIA_SIDEBAR = 2
+
 
 def memoria_progetto_unica(stato: MutableMapping[str, Any]) -> dict[str, Any]:
     """Restituisce la fotografia editoriale unica, riparando dati parziali."""
@@ -62,17 +68,69 @@ def memoria_progetto_unica(stato: MutableMapping[str, Any]) -> dict[str, Any]:
     return progetto
 
 
-def sidebar_memorizzata_corrente(stato: MutableMapping[str, Any]) -> dict[str, Any]:
-    """Restituisce tutti i campi editoriali, anche dopo un rerun."""
+def fotografia_sidebar_integrale(stato: MutableMapping[str, Any]) -> dict[str, Any]:
+    """Cattura tutte le scelte della sidebar in forma ripristinabile.
+
+    I valori del widget del rerun corrente hanno sempre priorità: sono gli
+    ultimi inseriti dall'utente. La memoria unica copre invece i campi non
+    ancora ridisegnati in una pagina appena ricaricata.
+    """
     progetto = memoria_progetto_unica(stato)
     memoria = dict(progetto.get("sidebar", {}) or {})
     memoria.update(dict(stato.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {}))
+    widget = {}
     for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
         if chiave in stato:
-            memoria[nome] = stato.get(chiave, "")
+            valore = stato.get(chiave, "")
+        else:
+            valore = memoria.get(nome, "")
+        valore = "" if valore is None else valore
+        memoria[nome] = valore
+        widget[chiave] = valore
     stato[CHIAVE_MEMORIA_SIDEBAR] = dict(memoria)
     progetto["sidebar"] = dict(memoria)
-    return memoria
+    return {
+        "versione": VERSIONE_FOTOGRAFIA_SIDEBAR,
+        "valori": dict(memoria),
+        "widget": widget,
+        "campi": list(CAMPI_SALVATAGGIO_PROGETTO),
+    }
+
+
+def sidebar_memorizzata_corrente(stato: MutableMapping[str, Any]) -> dict[str, Any]:
+    """Restituisce tutti i campi editoriali, anche dopo un rerun."""
+    return dict(fotografia_sidebar_integrale(stato)["valori"])
+
+
+def ripristina_sidebar_integrale(
+    stato: MutableMapping[str, Any], snapshot: MutableMapping[str, Any]
+) -> tuple[dict[str, Any], int, int]:
+    """Reidrata ogni widget della sidebar prima che Streamlit lo disegni.
+
+    Supporta anche salvataggi precedenti, che contenevano solo ``sidebar``.
+    I campi assenti vengono volutamente svuotati: una nuova sessione non deve
+    mischiare valori di una bozza precedente con quella appena recuperata.
+    """
+    sorgente_editoriale = dict(snapshot.get("sidebar", {}) or {})
+    sorgente_widget = dict(snapshot.get("sidebar_widget_values", {}) or {})
+    sidebar = {}
+    presenti = 0
+    for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
+        if chiave in sorgente_widget:
+            valore = sorgente_widget.get(chiave, "")
+            presenti += 1
+        elif nome in sorgente_editoriale:
+            valore = sorgente_editoriale.get(nome, "")
+            presenti += 1
+        else:
+            valore = ""
+        valore = "" if valore is None else valore
+        sidebar[nome] = valore
+        stato[chiave] = valore
+    stato[CHIAVE_MEMORIA_SIDEBAR] = dict(sidebar)
+    progetto = memoria_progetto_unica(stato)
+    progetto["sidebar"] = dict(sidebar)
+    return sidebar, presenti, len(CAMPI_SALVATAGGIO_PROGETTO)
 
 
 def chiave_widget_sezione(stato: MutableMapping[str, Any], sezione: str, chiave_sezione: Callable[[str], str]) -> str:
