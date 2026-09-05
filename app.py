@@ -2292,14 +2292,20 @@ def conta_sezioni_indice(indice):
     return sum(1 for riga in (indice or "").splitlines() if re.search(regex, riga.strip()))
 
 
-def capitoli_eccessivamente_frammentati(indice, massimo_sottocapitoli):
-    """Individua capitoli spezzati in micro-voci anziché argomenti completi."""
-    if not massimo_sottocapitoli:
-        return []
+def superamenti_budget_editoriale(indice, massimo_parti, massimo_capitoli, massimo_sottocapitoli):
+    """Rileva un indice troppo esteso o spezzato rispetto al profilo scelto."""
     righe = [riga.strip() for riga in normalizza_indice_generato(indice).splitlines() if riga.strip()]
     regex_capitolo = r"(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+"
     regex_limite = r"(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\s+"
-    rilevati = []
+    superamenti = []
+    parti = [riga for riga in righe if re.match(regex_limite, riga)]
+    capitoli = [riga for riga in righe if re.match(regex_capitolo, riga)]
+    if massimo_parti and len(parti) > massimo_parti:
+        superamenti.append(f"{len(parti)} Parti invece di massimo {massimo_parti}")
+    if massimo_capitoli and len(capitoli) > massimo_capitoli:
+        superamenti.append(f"{len(capitoli)} Capitoli invece di massimo {massimo_capitoli}")
+    if not massimo_sottocapitoli:
+        return superamenti
     for posizione, capitolo in enumerate(righe):
         if not re.match(regex_capitolo, capitolo):
             continue
@@ -2316,8 +2322,10 @@ def capitoli_eccessivamente_frammentati(indice, massimo_sottocapitoli):
             if re.match(r"^\d+\.\d+\s+", riga)
         ]
         if len(sottocapitoli) > massimo_sottocapitoli:
-            rilevati.append((capitolo, len(sottocapitoli)))
-    return rilevati
+            superamenti.append(
+                f"{capitolo} con {len(sottocapitoli)} sottocapitoli invece di massimo {massimo_sottocapitoli}"
+            )
+    return superamenti
 
 
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
@@ -2458,6 +2466,7 @@ INDICE DA CORREGGERE
 def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
                               budget_strutturale="", profilo_lunghezza="Standard KDP",
+                              massimo_parti_editoriali=None, massimo_capitoli_editoriali=None,
                               massimo_sottocapitoli=None, aggiorna_stato=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
@@ -2499,16 +2508,15 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             corrente, genere, titolo, trama, obiettivo, minimo_parti=minimo_parti, minimo_capitoli=minimo_capitoli
         )
         stima_capacita = stima_budget_parole_indice(corrente, profilo_lunghezza)
-        capitoli_frammentati = capitoli_eccessivamente_frammentati(
-            corrente, massimo_sottocapitoli
+        superamenti_budget = superamenti_budget_editoriale(
+            corrente, massimo_parti_editoriali, massimo_capitoli_editoriali,
+            massimo_sottocapitoli,
         )
-        frammentazione_eccessiva = bool(capitoli_frammentati)
-        if frammentazione_eccessiva:
-            dettagli = "; ".join(
-                f"{capitolo} ({numero})" for capitolo, numero in capitoli_frammentati[:3]
-            )
+        budget_editoriale_superato = bool(superamenti_budget)
+        if budget_editoriale_superato:
             problemi.append(
-                f"indice troppo dettagliato: capitoli oltre {massimo_sottocapitoli} sottocapitoli ({dettagli})"
+                "indice troppo esteso o dettagliato per il profilo: "
+                + "; ".join(superamenti_budget[:4])
             )
         sezioni_generate = conta_sezioni_indice(corrente)
         if massimo_sezioni and sezioni_generate > massimo_sezioni:
@@ -2554,7 +2562,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
             )
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica and not (
-            frammentazione_eccessiva and tentativo < massimo_tentativi - 1
+            budget_editoriale_superato and tentativo < massimo_tentativi - 1
         ):
             esito = f"Indice approvato: {voto_editoriale}/10 nel controllo strutturale ed editoriale automatico."
             if problemi:
@@ -2594,17 +2602,20 @@ Prima di rispondere conta le voci; se sono oltre il massimo, continua ad accorpa
 INDICE DA COMPRIMERE
 {corrente}
 """
-        elif frammentazione_eccessiva:
-            # Gli esempi, le varianti, gli errori comuni e le verifiche non
-            # meritano automaticamente una voce propria: chiediamo una sola
-            # compressione per restituire capitoli più leggibili e sostanziosi.
+        elif budget_editoriale_superato:
+            # Il budget protegge il lettore da indici chilometrici: Parti,
+            # Capitoli e sottocapitoli devono restare proporzionati insieme.
             revisione = prompt + f"""
 
-COMPRESSIONE DEL DETTAGLIO DELL'INDICE — TENTATIVO {tentativo + 1}
-Alcuni capitoli sono spezzati in troppi micro-sottocapitoli. Riscrivi l'intero indice con argomenti più ampi e completi:
-ogni Capitolo può avere al massimo {massimo_sottocapitoli} sottocapitoli. Accorpa nello stesso sottocapitolo esempi,
-varianti, errori comuni, strumenti, verifiche e casi che sviluppano il medesimo tema. Mantieni separati soltanto passaggi
-che cambiano davvero competenza, scena, decisione, problema o risultato per il lettore.
+COMPRESSIONE DEL BUDGET EDITORIALE — TENTATIVO {tentativo + 1}
+L'indice supera il budget del profilo. Riscrivi l'intera struttura rispettando contemporaneamente:
+- massimo {massimo_parti_editoriali} Parti;
+- massimo {massimo_capitoli_editoriali} Capitoli;
+- massimo {massimo_sottocapitoli} sottocapitoli per Capitolo.
+
+Accorpa nello stesso sottocapitolo esempi, varianti, errori comuni, strumenti, verifiche e casi che sviluppano il medesimo
+tema. Mantieni separate soltanto competenze, scene, decisioni, problemi o risultati veramente diversi. Preferisci titoli
+ampi e concreti a molte micro-voci.
 
 Non aggiungere nuove voci per inseguire la stima delle pagine; non eliminare invece passaggi indispensabili al brief.
 Non superare il massimo complessivo già indicato e non trasformare titoli diversi in duplicati generici.
@@ -5120,11 +5131,14 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "Standard KDP": (0, 0),
         "Approfondito": (0, 0),
     }[val_lunghezza]
-    massimo_sottocapitoli_per_capitolo = {
-        "Compatto": 3,
-        "Standard KDP": 4,
-        "Approfondito": 5,
+    budget_editoriale_indice = {
+        "Compatto": {"parti": 3, "capitoli": 10, "sottocapitoli": 3},
+        "Standard KDP": {"parti": 4, "capitoli": 15, "sottocapitoli": 4},
+        "Approfondito": {"parti": 5, "capitoli": 20, "sottocapitoli": 5},
     }[val_lunghezza]
+    massimo_parti_editoriali = budget_editoriale_indice["parti"]
+    massimo_capitoli_editoriali = budget_editoriale_indice["capitoli"]
+    massimo_sottocapitoli_per_capitolo = budget_editoriale_indice["sottocapitoli"]
     specifica_editoriale = costruisci_specifica_editoriale(
         val_titolo, val_genere, val_stile, val_narrativa, val_pov, val_goal, val_trama, val_risultato, val_approfondimenti
     )
@@ -6165,6 +6179,8 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                 minimo_capitoli=minimi_struttura_indice[1],
                 budget_strutturale=budget_struttura_indice,
                 profilo_lunghezza=val_lunghezza,
+                massimo_parti_editoriali=massimo_parti_editoriali,
+                massimo_capitoli_editoriali=massimo_capitoli_editoriali,
                 massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
             )
             if not indice_test:
@@ -7089,7 +7105,8 @@ funzione distinta e ogni Capitolo un obiettivo autonomo. Crea un sottocapitolo s
 apre un argomento davvero diverso: non creare voci separate per esempio, variante, errore comune,
 strumento, checklist, verifica o caso studio se possono essere sviluppati bene nella medesima sezione.
 Ogni voce deve quindi contenere un argomento completo e concreto, non un singolo passaggio minimo.
-Per questo profilo non superare {massimo_sottocapitoli_per_capitolo} sottocapitoli per Capitolo.
+Per questo profilo non superare {massimo_parti_editoriali} Parti, {massimo_capitoli_editoriali} Capitoli e
+{massimo_sottocapitoli_per_capitolo} sottocapitoli per Capitolo.
 Mantieni separati solo passaggi che cambiano realmente competenza, scena, decisione, problema o risultato.
 Distribuisci gli argomenti dell'obiettivo e della trama senza anticipare tutto nell'introduzione.
 Per strumenti o software soggetti ad aggiornamento, separa principi stabili, funzioni da verificare
@@ -7160,6 +7177,8 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                     minimo_capitoli=minimi_struttura_indice[1],
                     budget_strutturale=budget_struttura_indice,
                     profilo_lunghezza=val_lunghezza,
+                    massimo_parti_editoriali=massimo_parti_editoriali,
+                    massimo_capitoli_editoriali=massimo_capitoli_editoriali,
                     massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
                     aggiorna_stato=aggiorna_avanzamento_indice,
                 )
@@ -7272,6 +7291,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             minimo_capitoli=minimi_struttura_indice[1],
                             budget_strutturale=budget_struttura_indice,
                             profilo_lunghezza=val_lunghezza,
+                            massimo_parti_editoriali=massimo_parti_editoriali,
+                            massimo_capitoli_editoriali=massimo_capitoli_editoriali,
                             massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
                         )
                         if proposta:
