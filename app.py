@@ -7250,6 +7250,47 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             totale = max(1, int(st.session_state.get("job_scrittura_totale", len(coda_scrittura) or 1)))
             completati = max(0, totale - len(coda_scrittura))
 
+            # Comandi sempre disponibili nel corpo normale della pagina, non
+            # nel fragment che si aggiorna ogni secondo. In questo modo il
+            # clic non può scomparire fra due rerun automatici. Una richiesta
+            # arrivata mentre l'AI sta rispondendo viene elaborata al termine
+            # sicuro della risposta, prima che parta qualsiasi altra sezione.
+            if st.session_state.get("job_scrittura_attivo") and coda_scrittura:
+                st.caption(
+                    "Controlli della stesura: Pausa ferma la coda dopo la sezione eventualmente già in corso; "
+                    "Stop definitivo conserva il creato e non avvia altre richieste AI."
+                )
+                comando_pausa, comando_stop = st.columns(2)
+                with comando_pausa:
+                    if st.button(
+                        "⏸ METTI IN PAUSA", use_container_width=True,
+                        key="pausa_scrittura_sempre_visibile",
+                    ):
+                        st.session_state["job_scrittura_attivo"] = False
+                        st.session_state["job_scrittura_pausa"] = True
+                        st.session_state["job_scrittura_in_attesa"] = True
+                        st.session_state["apri_tab_scrittura_da_pausa"] = True
+                        salva_stesura_generata_in_cloud(
+                            sezioni_intero_libro, "stesura messa in pausa"
+                        )
+                        st.rerun()
+                with comando_stop:
+                    if st.button(
+                        "⏹ STOP DEFINITIVO", use_container_width=True,
+                        key="stop_scrittura_sempre_visibile",
+                    ):
+                        st.session_state["job_scrittura_attivo"] = False
+                        st.session_state["job_scrittura_pausa"] = False
+                        st.session_state["job_scrittura_in_attesa"] = False
+                        st.session_state["job_scrittura_fermato"] = True
+                        st.session_state["job_scrittura_interrotte"] = list(coda_scrittura)
+                        st.session_state["job_scrittura_coda"] = []
+                        st.session_state.pop("job_scrittura_checkpoint_richiesto", None)
+                        salva_stesura_generata_in_cloud(
+                            sezioni_intero_libro, "stesura interrotta definitivamente"
+                        )
+                        st.rerun()
+
             # Avvio protetto: le prime voci sono salvate dal normale ciclo
             # dell'app, non dal fragment. Questo elimina il caso in cui il
             # timer ricaricava la prima sezione prima che editor, anteprima e
@@ -7374,30 +7415,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 st.info(f"Pronto a iniziare dalla sezione: {sezione_corrente}.")
                             st.caption(
                                 f"La prossima sezione partirà automaticamente: {sezione_corrente}. "
-                                "Puoi fermare la coda prima dell'avvio."
+                                "Usa i comandi sempre visibili sopra per metterla in pausa o fermarla."
                             )
-                            pausa, stop = st.columns(2)
-                            with pausa:
-                                if st.button("⏸ PAUSA", use_container_width=True, key="pausa_scrittura_libro"):
-                                    st.session_state["job_scrittura_attivo"] = False
-                                    st.session_state["job_scrittura_pausa"] = True
-                                    st.session_state["apri_tab_scrittura_da_pausa"] = True
-                                    salva_stesura_generata_in_cloud(
-                                        sezioni_intero_libro, "stesura messa in pausa"
-                                    )
-                                    st.rerun(scope="app")
-                            with stop:
-                                if st.button("⏹ STOP DEFINITIVO", use_container_width=True, key="stop_scrittura_libro"):
-                                    st.session_state["job_scrittura_attivo"] = False
-                                    st.session_state["job_scrittura_pausa"] = False
-                                    st.session_state["job_scrittura_in_attesa"] = False
-                                    st.session_state["job_scrittura_fermato"] = True
-                                    st.session_state["job_scrittura_interrotte"] = list(coda_attuale)
-                                    st.session_state["job_scrittura_coda"] = []
-                                    salva_stesura_generata_in_cloud(
-                                        sezioni_intero_libro, "stesura interrotta dall'utente"
-                                    )
-                                    st.rerun(scope="app")
                             return
 
                         if richiede_checkpoint_personale(sezione_corrente):
