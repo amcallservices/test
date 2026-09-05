@@ -43,6 +43,7 @@ from project_csv import (
     importa_fotografia_csv,
     imposta_limite_lettura_csv_progetto,
 )
+import project_memory as memoria_core
 from commercial_layer import (
     AI_REQUEST_CREDITS,
     CREDIT_COSTS,
@@ -2875,6 +2876,74 @@ def sidebar_memorizzata_corrente():
     st.session_state[CHIAVE_MEMORIA_SIDEBAR] = dict(memoria)
     progetto["sidebar"] = dict(memoria)
     return memoria
+
+
+# ======================================================================================================================
+# ADATTATORI DEL MODULO project_memory
+# ======================================================================================================================
+# Mantengono invariati i nomi usati dall'interfaccia e dalle versioni salvate,
+# mentre la logica effettiva vive ora nel modulo dedicato. È una separazione
+# intenzionalmente non distruttiva: nessun widget, CSV o progetto esistente
+# cambia chiave o formato durante la migrazione.
+def memoria_progetto_unica():
+    return memoria_core.memoria_progetto_unica(st.session_state)
+
+
+def sidebar_memorizzata_corrente():
+    return memoria_core.sidebar_memorizzata_corrente(st.session_state)
+
+
+def chiave_widget_sezione(sezione):
+    return memoria_core.chiave_widget_sezione(st.session_state, sezione, chiave_sezione)
+
+
+def leggi_sezione_memorizzata(sezione):
+    return memoria_core.leggi_sezione_memorizzata(
+        st.session_state, sezione, chiave_sezione, chiave_sezione_precedente
+    )
+
+
+def scrivi_sezione_memorizzata(sezione, contenuto):
+    return memoria_core.scrivi_sezione_memorizzata(
+        st.session_state, sezione, contenuto, chiave_sezione
+    )
+
+
+def scrivi_sezione_stesura_completa(sezione, contenuto):
+    return memoria_core.scrivi_sezione_stesura_completa(
+        st.session_state, sezione, contenuto, chiave_sezione
+    )
+
+
+def contenuto_memorizzato_puro(sezione):
+    return memoria_core.contenuto_memorizzato_puro(
+        st.session_state, sezione, chiave_sezione_precedente
+    )
+
+
+def elenco_sezioni_progetto(sezioni_base):
+    return memoria_core.elenco_sezioni_progetto(
+        st.session_state, sezioni_base, sezione_dismessa
+    )
+
+
+def sincronizza_modifica_manuale(sezione, chiave_widget=None):
+    chiave_da_leggere = chiave_widget or chiave_widget_sezione(sezione)
+    return memoria_core.sincronizza_modifica_manuale(
+        st.session_state, sezione, chiave_da_leggere, chiave_sezione
+    )
+
+
+def prepara_sezione_editor_selezionata():
+    return memoria_core.prepara_sezione_editor_selezionata(
+        st.session_state, chiave_sezione, chiave_sezione_precedente
+    )
+
+
+def reidrata_sezioni_memorizzate(sezioni):
+    return memoria_core.reidrata_sezioni_memorizzate(
+        st.session_state, sezioni, chiave_sezione, chiave_sezione_precedente
+    )
 
 
 def esporta_progetto_editoriale_csv():
