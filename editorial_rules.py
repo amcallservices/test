@@ -1,1 +1,165 @@
-IiIiUmVnb2xlIGVkaXRvcmlhbGkgcHVyZSBkaSBTY3JpdHRvcmUgU2l0ZS4KClF1ZXN0byBtb2R1bG8gbm9uIGNvbnRpZW5lIGludGVyZmFjY2lhIFN0cmVhbWxpdCBuw6kgY2hpYW1hdGUgQUk6IHJhY2NvZ2xpZSBsZQpyZWdvbGUgcml1dGlsaXp6YWJpbGkgcGVyIGx1bmdoZXp6YSwgcmljb25vc2NpbWVudG8gZGVsbGUgc2V6aW9uaSBlIGNvbnRyb2xsaQp0ZWNuaWNpIGRlaSB0ZXN0aS4gVGVuZXJsZSBxdWkgcmlkdWNlIGlsIHJpc2NoaW8gY2hlIHVuIGludGVydmVudG8gc3VsIGxheW91dAptb2RpZmljaGkgaW52b2xvbnRhcmlhbWVudGUgbGEgcXVhbGl0w6AgZWRpdG9yaWFsZS4KIiIiCgpmcm9tIF9fZnV0dXJlX18gaW1wb3J0IGFubm90YXRpb25zCgppbXBvcnQgaGFzaGxpYgppbXBvcnQgbWF0aAppbXBvcnQgcmUKZnJvbSBjb2xsZWN0aW9ucy5hYmMgaW1wb3J0IENhbGxhYmxlLCBJdGVyYWJsZSwgTWFwcGluZwpmcm9tIHR5cGluZyBpbXBvcnQgQW55CgoKUFJPRklMSV9MVU5HSEVaWkFfU1RFU1VSQSA9IHsKICAgICJDb21wYXR0byI6IHsKICAgICAgICAicGFyb2xlIjogIjQ4MC01NjAgcGFyb2xlIiwKICAgICAgICAibWluX3Bhcm9sZSI6IDQ4MCwKICAgICAgICAibWF4X3Bhcm9sZSI6IDU2MCwKICAgICAgICAibWF4X2NvbXBsZXRpb25fdG9rZW5zIjogMTMyNSwKICAgICAgICAiZGVzY3JpemlvbmUiOiAidGVzdG8gZXNzZW56aWFsZSBtYSBjb21wbGV0bywgcGVuc2F0byBwZXIgYWxtZW5vIDEwMCBwYWdpbmUiLAogICAgICAgICJtYXhfc2V6aW9uaSI6IDUwLAogICAgICAgICJwYWdpbmVfbWluaW1lIjogMTAwLAogICAgfSwKICAgICJTdGFuZGFyZCBLRFAiOiB7CiAgICAgICAgInBhcm9sZSI6ICI2MjAtNzAwIHBhcm9sZSIsCiAgICAgICAgIm1pbl9wYXJvbGUiOiA2MjAsCiAgICAgICAgIm1heF9wYXJvbGUiOiA3MDAsCiAgICAgICAgIm1heF9jb21wbGV0aW9uX3Rva2VucyI6IDE2NzUsCiAgICAgICAgImRlc2NyaXppb25lIjogInRyYXR0YXppb25lIGVxdWlsaWJyYXRhLCBwZW5zYXRhIHBlciBhbG1lbm8gMjAwIHBhZ2luZSIsCiAgICAgICAgIm1heF9zZXppb25pIjogODAsCiAgICAgICAgInBhZ2luZV9taW5pbWUiOiAyMDAsCiAgICB9LAogICAgIkFwcHJvZm9uZGl0byI6IHsKICAgICAgICAicGFyb2xlIjogIjcwMC04MDAgcGFyb2xlIiwKICAgICAgICAibWluX3Bhcm9sZSI6IDcwMCwKICAgICAgICAibWF4X3Bhcm9sZSI6IDgwMCwKICAgICAgICAibWF4X2NvbXBsZXRpb25fdG9rZW5zIjogMTkwMCwKICAgICAgICAiZGVzY3JpemlvbmUiOiAidHJhdHRhemlvbmUgYW1waWEgZSBhcHByb2ZvbmRpdGEsIHBlbnNhdGEgcGVyIGFsbWVubyAzMDAgcGFnaW5lIiwKICAgICAgICAibWF4X3NlemlvbmkiOiAxMTAsCiAgICAgICAgInBhZ2luZV9taW5pbWUiOiAzMDAsCiAgICB9LAp9CgoKZGVmIHZpbmNvbG9fcGFyb2xlX2Nvbl90b2xsZXJhbnphKHByb2ZpbG9fbHVuZ2hlenphOiBzdHIpIC0+IHR1cGxlW2ludCwgaW50XToKICAgICIiIlJlc3RpdHVpc2NlIGkgbGltaXRpIGVkaXRvcmlhbGkgY29uIGxhIHRvbGxlcmFuemEgbWFzc2ltYSBkZWwgNSUuIiIiCiAgICBwcm9maWxvID0gUFJPRklMSV9MVU5HSEVaWkFfU1RFU1VSQS5nZXQoCiAgICAgICAgcHJvZmlsb19sdW5naGV6emEsIFBST0ZJTElfTFVOR0hFWlpBX1NURVNVUkFbIlN0YW5kYXJkIEtEUCJdCiAgICApCiAgICByZXR1cm4gbWF0aC5jZWlsKHByb2ZpbG9bIm1pbl9wYXJvbGUiXSAqIDAuOTUpLCBtYXRoLmZsb29yKHByb2ZpbG9bIm1heF9wYXJvbGUiXSAqIDEuMDUpCgoKZGVmIGNsYXNzaWZpY2Ffc2V6aW9uZShzZXppb25lOiBzdHIsIGlzX3ByZWZhemlvbmU6IENhbGxhYmxlW1tzdHJdLCBib29sXSkgLT4gc3RyOgogICAgIiIiQ2xhc3NpZmljYSB1bmEgdm9jZSBkZWxsJ2luZGljZSBzZW56YSBkaXBlbmRlcmUgZGFsbGEgbGluZ3VhIGRlbGwnYXBwLiIiIgogICAgcHVsaXRhID0gc3RyKHNlemlvbmUgb3IgIiIpLnN0cmlwKCkKICAgIGlmIGlzX3ByZWZhemlvbmUocHVsaXRhKToKICAgICAgICByZXR1cm4gInByZWZhemlvbmUiCiAgICBpZiByZS5tYXRjaChyIig/aSleKHBhcnRlfHBhcnR8cGFydGllfHRlaWx8cGFydGVhfNGH0LDRgdGC0Yx82KfZhNis2LLYoXzpg6jliIYpXGIiLCBwdWxpdGEpOgogICAgICAgIHJldHVybiAicGFydGUiCiAgICBpZiByZS5tYXRjaChyIig/aSleKGNhcGl0b2xvfGNoYXB0ZXJ8a2FwaXRlbHxjYXDDrXR1bG98Y2hhcGl0cmV8Y2FwaXRvbHVsfNCz0LvQsNCy0LB82KfZhNmB2LXZhHznq6DoioIpXHMrXGQrIiwgcHVsaXRhKToKICAgICAgICByZXR1cm4gImNhcGl0b2xvIgogICAgaWYgcmUubWF0Y2gociJeXGQrXC5cZCtccysiLCBwdWxpdGEpOgogICAgICAgIHJldHVybiAic290dG9jYXBpdG9sbyIKICAgIHJldHVybiAiZnJvbnRlc3BpemlvIgoKCmRlZiBjaGlhdmVfc2V6aW9uZShzZXppb25lOiBzdHIpIC0+IHN0cjoKICAgICIiIklkZW50aWZpY2F0aXZvIHN0YWJpbGU6IDEuMSBlIDExIG5vbiBwb3Nzb25vIGNvbGxpZGVyZS4iIiIKICAgIGRpZ2VzdCA9IGhhc2hsaWIuc2hhMjU2KHN0cihzZXppb25lKS5lbmNvZGUoInV0Zi04IikpLmhleGRpZ2VzdCgpWzoyMF0KICAgIHJldHVybiBmInR4dF97ZGlnZXN0fSIKCgpkZWYgY2hpYXZlX3NlemlvbmVfcHJlY2VkZW50ZShzZXppb25lOiBzdHIpIC0+IHN0cjoKICAgICIiIkNvbXBhdGliaWxpdMOgIHBlciB0ZXN0aSBjcmVhdGkgcHJpbWEgZGVsbGUgY2hpYXZpIHVuaXZvY2hlLiIiIgogICAgcmV0dXJuIGYidHh0X3tzdHIoc2V6aW9uZSkucmVwbGFjZSgnICcsICdfJykucmVwbGFjZSgnLicsICcnKX0iCgoKZGVmIG1pbmltb19wYXJvbGVfcGVyX3NlemlvbmVfZWRpdG9yaWFsZSgKICAgIHNlemlvbmU6IHN0ciwgZ2VuZXJlOiBzdHIsIGNsYXNzaWZpY2F0b3JlOiBDYWxsYWJsZVtbc3RyXSwgc3RyXQopIC0+IGludDoKICAgICIiIlNvZ2xpYSB1bmljYSB1c2F0YSBkYSB0dXR0aSBpIGNvbnRyb2xsaSBwcmltYSBkZWxsJ2VzcG9ydGF6aW9uZS4iIiIKICAgIG1pbmltaSA9IHsKICAgICAgICAicHJlZmF6aW9uZSI6IDEwMCwKICAgICAgICAicGFydGUiOiAzNSwKICAgICAgICAiY2FwaXRvbG8iOiA5MCBpZiBnZW5lcmUgPT0gIlJpY2V0dGFyaW8iIGVsc2UgMTIwLAogICAgICAgICJzb3R0b2NhcGl0b2xvIjogMTIwLAogICAgICAgICJmcm9udGVzcGl6aW8iOiA0MCwKICAgIH0KICAgIHJldHVybiBtaW5pbWkuZ2V0KGNsYXNzaWZpY2F0b3JlKHNlemlvbmUpLCA0MCkKCgpkZWYgbW90aXZvX2NoaXVzdXJhX3RlY25pY2EodGVzdG86IHN0cikgLT4gc3RyOgogICAgIiIiUmVzdGl0dWlzY2UgaWwgbW90aXZvIGRpIHVuIGZpbmFsZSBwYWxlc2VtZW50ZSBpbmNvbXBsZXRvLiIiIgogICAgcGFyb2xlX3Nvc3Blc2UgPSB7CiAgICAgICAgImEiLCAiYWQiLCAiYWwiLCAiYWxsYSIsICJhbGxlIiwgImFsbG8iLCAiY2hlIiwgImNvbiIsICJkYSIsICJkYWwiLCAiZGFsbGEiLAogICAgICAgICJkZWxsZSIsICJkZWxsbyIsICJkaSIsICJlZCIsICJlIiwgImZyYSIsICJnbGkiLCAiaWwiLCAiaW4iLCAibGEiLCAibGUiLCAibG8iLAogICAgICAgICJuZWwiLCAibmVsbGEiLCAibmVsbGUiLCAibmVsbG8iLCAibyIsICJwZXIiLCAic3VsIiwgInN1bGxhIiwgInN1bGxlIiwgInN1bGxvIiwKICAgICAgICAidHJhIiwgInVuIiwgInVuYSIsICJ1bm8iLCAid2l0aCIsICJhbmQiLCAib3IiLCAib2YiLCAidG8iLCAiZm9yIiwgInRoZSIsCiAgICB9CiAgICBmaW5hbGUgPSBzdHIodGVzdG8gb3IgIiIpLnJzdHJpcCgiIFx0XHJcblwiJ8K74oCdKV19IikKICAgIHVsdGltYV9yaWdhID0gbmV4dCgoci5zdHJpcCgpIGZvciByIGluIHJldmVyc2VkKHN0cih0ZXN0byBvciAiIikuc3BsaXRsaW5lcygpKSBpZiByLnN0cmlwKCkpLCAiIikKICAgIHVsdGltYV9wYXJvbGEgPSByZS5maW5kYWxsKHIiW0EtWmEtesOALcOWw5gtw7bDuC3Dv10rIiwgZmluYWxlLmxvd2VyKCkpCiAgICBlbGVuY29fc2ludGV0aWNvID0gYm9vbChyZS5tYXRjaChyIl4oPzpbLeKAoipdfFxkK1suKV0pXHMqIiwgdWx0aW1hX3JpZ2EpKQogICAgaWYgZmluYWxlLmVuZHN3aXRoKCgiLCIsICI7IiwgIjoiLCAi4oCUIiwgIuKAkyIsICItIiwgIuKApiIpKToKICAgICAgICByZXR1cm4gImlsIHRlc3RvIHRlcm1pbmEgY29uIHVuYSBwdW50ZWdnaWF0dXJhIHNvc3Blc2EiCiAgICBpZiBub3QgZWxlbmNvX3NpbnRldGljbyBhbmQgKG5vdCBmaW5hbGUgb3IgZmluYWxlWy0xXSBub3QgaW4gIi4hPyIpOgogICAgICAgIHJldHVybiAibCd1bHRpbWEgZnJhc2Ugbm9uIHJpc3VsdGEgY2hpdXNhIgogICAgaWYgdWx0aW1hX3Bhcm9sYSBhbmQgdWx0aW1hX3Bhcm9sYVstMV0gaW4gcGFyb2xlX3Nvc3Blc2U6CiAgICAgICAgcmV0dXJuICJsJ3VsdGltYSBmcmFzZSBzZW1icmEgdGVybWluYXJlIGNvbiB1bmEgcGFyb2xhIGRpIGNvbGxlZ2FtZW50byIKICAgIHJldHVybiAiIgoKCmRlZiBzdGF0aV9zZXppb25pX2VkaXRvcmlhbGkoCiAgICBzZXppb25pOiBJdGVyYWJsZVtzdHJdLAogICAgZ2VuZXJlOiBzdHIsCiAgICBjb250ZW51dGk6IE1hcHBpbmdbc3RyLCBBbnldLAogICAgbGVnZ2lfc2V6aW9uZTogQ2FsbGFibGVbW3N0cl0sIHN0cl0sCiAgICBwdWxpc2NpX3Rlc3RvOiBDYWxsYWJsZVtbc3RyXSwgc3RyXSwKICAgIGNsYXNzaWZpY2F0b3JlOiBDYWxsYWJsZVtbc3RyXSwgc3RyXSwKKSAtPiBsaXN0W2RpY3Rbc3RyLCBzdHJdXToKICAgICIiIkRpc3Rpbmd1ZSBzZXppb25pIG1hbmNhbnRpLCBkZWJvbGkgZSBjb21wbGV0ZSB1c2FuZG8gdW5hIGZvbnRlIHN0YWJpbGUuIiIiCiAgICByaXN1bHRhdGkgPSBbXQogICAgZm9yIHNlemlvbmUgaW4gc2V6aW9uaToKICAgICAgICB0ZXN0byA9IGNvbnRlbnV0aS5nZXQoc2V6aW9uZSkgb3IgbGVnZ2lfc2V6aW9uZShzZXppb25lKQogICAgICAgIHRlc3RvID0gcHVsaXNjaV90ZXN0byh0ZXN0bykuc3RyaXAoKQogICAgICAgIG1pbmltbyA9IG1pbmltb19wYXJvbGVfcGVyX3NlemlvbmVfZWRpdG9yaWFsZShzZXppb25lLCBnZW5lcmUsIGNsYXNzaWZpY2F0b3JlKQogICAgICAgIHBhcm9sZSA9IGxlbih0ZXN0by5zcGxpdCgpKQogICAgICAgIGlmIG5vdCB0ZXN0bzoKICAgICAgICAgICAgc3RhdG8sIG1vdGl2byA9ICJNQU5DQU5URSIsICJuZXNzdW4gY29udGVudXRvIGdlbmVyYXRvIgogICAgICAgIGVsaWYgdGVzdG8uc3RhcnRzd2l0aCgiRVJST1JFOiIpIG9yIHBhcm9sZSA8IG1pbmltbzoKICAgICAgICAgICAgc3RhdG8sIG1vdGl2byA9ICJERUJPTEUiLCBmIntwYXJvbGV9IHBhcm9sZTogc2Vydm9ubyBhbG1lbm8ge21pbmltb30gcGFyb2xlIgogICAgICAgIGVsaWYgbW90aXZvX2NoaXVzdXJhX3RlY25pY2EodGVzdG8pOgogICAgICAgICAgICBzdGF0bywgbW90aXZvID0gIkRFQk9MRSIsIG1vdGl2b19jaGl1c3VyYV90ZWNuaWNhKHRlc3RvKQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIHN0YXRvLCBtb3Rpdm8gPSAiQ09NUExFVEEiLCBmIntwYXJvbGV9IHBhcm9sZSIKICAgICAgICByaXN1bHRhdGkuYXBwZW5kKHsiU2V6aW9uZSI6IHNlemlvbmUsICJTdGF0byI6IHN0YXRvLCAiRGV0dGFnbGlvIjogbW90aXZvfSkKICAgIHJldHVybiByaXN1bHRhdGkKCgpkZWYgY29udHJvbGxvX2NvbXBsZXRlenphX3Rlc3RpX2dyYXR1aXRvKAogICAgc2V6aW9uaTogSXRlcmFibGVbc3RyXSwKICAgIGNvbnRlbnV0aTogTWFwcGluZ1tzdHIsIEFueV0sCiAgICBsZWdnaV9zZXppb25lOiBDYWxsYWJsZVtbc3RyXSwgc3RyXSwKICAgIHB1bGlzY2lfdGVzdG86IENhbGxhYmxlW1tzdHJdLCBzdHJdLAopIC0+IGxpc3RbZGljdFtzdHIsIHN0cl1dOgogICAgIiIiQ29udHJvbGxvIGxvY2FsZTogaW5kaXZpZHVhIGFzc2VuemUgbyBpbnRlcnJ1emlvbmkgc2VuemEgY2hpYW1hcmUgbCdBSS4iIiIKICAgIHJpc3VsdGF0aSA9IFtdCiAgICBmb3Igc2V6aW9uZSBpbiBzZXppb25pOgogICAgICAgIHRlc3RvID0gcHVsaXNjaV90ZXN0byhjb250ZW51dGkuZ2V0KHNlemlvbmUpIG9yIGxlZ2dpX3NlemlvbmUoc2V6aW9uZSkpLnN0cmlwKCkKICAgICAgICBpZiBub3QgdGVzdG86CiAgICAgICAgICAgIHN0YXRvLCBkZXR0YWdsaW8gPSAiTUFOQ0FOVEUiLCAibmVzc3VuIHRlc3RvIHByZXNlbnRlIgogICAgICAgIGVsaWYgdGVzdG8uc3RhcnRzd2l0aCgiRVJST1JFOiIpOgogICAgICAgICAgICBzdGF0bywgZGV0dGFnbGlvID0gIkRBIFJJVkVERVJFIiwgImxhIGdlbmVyYXppb25lIHByZWNlZGVudGUgaGEgcmVzdGl0dWl0byB1biBlcnJvcmUiCiAgICAgICAgZWxpZiBsZW4odGVzdG8uc3BsaXQoKSkgPCAxMjoKICAgICAgICAgICAgc3RhdG8sIGRldHRhZ2xpbyA9ICJUUk9QUE8gQlJFVkUiLCAibWVubyBkaSAxMiBwYXJvbGU6IHZlcmlmaWNhIGNoZSBsYSBzZXppb25lIHNpYSBzdGF0YSByZWFsbWVudGUgY29tcGxldGF0YSIKICAgICAgICBlbGlmIG1vdGl2b19jaGl1c3VyYV90ZWNuaWNhKHRlc3RvKToKICAgICAgICAgICAgc3RhdG8sIGRldHRhZ2xpbyA9ICJJTlRFUlJPVFRBIiwgbW90aXZvX2NoaXVzdXJhX3RlY25pY2EodGVzdG8pCiAgICAgICAgZWxzZToKICAgICAgICAgICAgc3RhdG8sIGRldHRhZ2xpbyA9ICJDT01QTEVUQSIsIGYie2xlbih0ZXN0by5zcGxpdCgpKX0gcGFyb2xlIOKAlCBuZXNzdW5hIGludGVycnV6aW9uZSB0ZWNuaWNhIHJpbGV2YXRhIgogICAgICAgIHJpc3VsdGF0aS5hcHBlbmQoeyJTZXppb25lIjogc2V6aW9uZSwgIkVzaXRvIjogc3RhdG8sICJEZXR0YWdsaW8iOiBkZXR0YWdsaW99KQogICAgcmV0dXJuIHJpc3VsdGF0aQo=
+"""Regole editoriali pure di Scrittore Site.
+
+Questo modulo non contiene interfaccia Streamlit né chiamate AI: raccoglie le
+regole riutilizzabili per lunghezza, riconoscimento delle sezioni e controlli
+tecnici dei testi. Tenerle qui riduce il rischio che un intervento sul layout
+modifichi involontariamente la qualità editoriale.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import math
+import re
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any
+
+
+PROFILI_LUNGHEZZA_STESURA = {
+    "Compatto": {
+        "parole": "480-560 parole",
+        "min_parole": 480,
+        "max_parole": 560,
+        "max_completion_tokens": 1325,
+        "descrizione": "testo essenziale ma completo, pensato per almeno 100 pagine",
+        "max_sezioni": 50,
+        "pagine_minime": 100,
+    },
+    "Standard KDP": {
+        "parole": "620-700 parole",
+        "min_parole": 620,
+        "max_parole": 700,
+        "max_completion_tokens": 1675,
+        "descrizione": "trattazione equilibrata, pensata per almeno 200 pagine",
+        "max_sezioni": 80,
+        "pagine_minime": 200,
+    },
+    "Approfondito": {
+        "parole": "700-800 parole",
+        "min_parole": 700,
+        "max_parole": 800,
+        "max_completion_tokens": 1900,
+        "descrizione": "trattazione ampia e approfondita, pensata per almeno 300 pagine",
+        "max_sezioni": 110,
+        "pagine_minime": 300,
+    },
+}
+
+
+def vincolo_parole_con_tolleranza(profilo_lunghezza: str) -> tuple[int, int]:
+    """Restituisce i limiti editoriali con la tolleranza massima del 5%."""
+    profilo = PROFILI_LUNGHEZZA_STESURA.get(
+        profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
+    )
+    return math.ceil(profilo["min_parole"] * 0.95), math.floor(profilo["max_parole"] * 1.05)
+
+
+def classifica_sezione(sezione: str, is_prefazione: Callable[[str], bool]) -> str:
+    """Classifica una voce dell'indice senza dipendere dalla lingua dell'app."""
+    pulita = str(sezione or "").strip()
+    if is_prefazione(pulita):
+        return "prefazione"
+    if re.match(r"(?i)^(parte|part|partie|teil|partea|часть|الجزء|部分)\b", pulita):
+        return "parte"
+    if re.match(r"(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+", pulita):
+        return "capitolo"
+    if re.match(r"^\d+\.\d+\s+", pulita):
+        return "sottocapitolo"
+    return "frontespizio"
+
+
+def chiave_sezione(sezione: str) -> str:
+    """Identificativo stabile: 1.1 e 11 non possono collidere."""
+    digest = hashlib.sha256(str(sezione).encode("utf-8")).hexdigest()[:20]
+    return f"txt_{digest}"
+
+
+def chiave_sezione_precedente(sezione: str) -> str:
+    """Compatibilità per testi creati prima delle chiavi univoche."""
+    return f"txt_{str(sezione).replace(' ', '_').replace('.', '')}"
+
+
+def minimo_parole_per_sezione_editoriale(
+    sezione: str, genere: str, classificatore: Callable[[str], str]
+) -> int:
+    """Soglia unica usata da tutti i controlli prima dell'esportazione."""
+    minimi = {
+        "prefazione": 100,
+        "parte": 35,
+        "capitolo": 90 if genere == "Ricettario" else 120,
+        "sottocapitolo": 120,
+        "frontespizio": 40,
+    }
+    return minimi.get(classificatore(sezione), 40)
+
+
+def motivo_chiusura_tecnica(testo: str) -> str:
+    """Restituisce il motivo di un finale palesemente incompleto."""
+    parole_sospese = {
+        "a", "ad", "al", "alla", "alle", "allo", "che", "con", "da", "dal", "dalla",
+        "delle", "dello", "di", "ed", "e", "fra", "gli", "il", "in", "la", "le", "lo",
+        "nel", "nella", "nelle", "nello", "o", "per", "sul", "sulla", "sulle", "sullo",
+        "tra", "un", "una", "uno", "with", "and", "or", "of", "to", "for", "the",
+    }
+    finale = str(testo or "").rstrip(" \t\r\n\"'»”)]}")
+    ultima_riga = next((r.strip() for r in reversed(str(testo or "").splitlines()) if r.strip()), "")
+    ultima_parola = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", finale.lower())
+    elenco_sintetico = bool(re.match(r"^(?:[-•*]|\d+[.)])\s*", ultima_riga))
+    if finale.endswith((",", ";", ":", "—", "–", "-", "…")):
+        return "il testo termina con una punteggiatura sospesa"
+    if not elenco_sintetico and (not finale or finale[-1] not in ".!?"):
+        return "l'ultima frase non risulta chiusa"
+    if ultima_parola and ultima_parola[-1] in parole_sospese:
+        return "l'ultima frase sembra terminare con una parola di collegamento"
+    return ""
+
+
+def stati_sezioni_editoriali(
+    sezioni: Iterable[str],
+    genere: str,
+    contenuti: Mapping[str, Any],
+    leggi_sezione: Callable[[str], str],
+    pulisci_testo: Callable[[str], str],
+    classificatore: Callable[[str], str],
+) -> list[dict[str, str]]:
+    """Distingue sezioni mancanti, deboli e complete usando una fonte stabile."""
+    risultati = []
+    for sezione in sezioni:
+        testo = contenuti.get(sezione) or leggi_sezione(sezione)
+        testo = pulisci_testo(testo).strip()
+        minimo = minimo_parole_per_sezione_editoriale(sezione, genere, classificatore)
+        parole = len(testo.split())
+        if not testo:
+            stato, motivo = "MANCANTE", "nessun contenuto generato"
+        elif testo.startswith("ERRORE:") or parole < minimo:
+            stato, motivo = "DEBOLE", f"{parole} parole: servono almeno {minimo} parole"
+        elif motivo_chiusura_tecnica(testo):
+            stato, motivo = "DEBOLE", motivo_chiusura_tecnica(testo)
+        else:
+            stato, motivo = "COMPLETA", f"{parole} parole"
+        risultati.append({"Sezione": sezione, "Stato": stato, "Dettaglio": motivo})
+    return risultati
+
+
+def controllo_completezza_testi_gratuito(
+    sezioni: Iterable[str],
+    contenuti: Mapping[str, Any],
+    leggi_sezione: Callable[[str], str],
+    pulisci_testo: Callable[[str], str],
+) -> list[dict[str, str]]:
+    """Controllo locale: individua assenze o interruzioni senza chiamare l'AI."""
+    risultati = []
+    for sezione in sezioni:
+        testo = pulisci_testo(contenuti.get(sezione) or leggi_sezione(sezione)).strip()
+        if not testo:
+            stato, dettaglio = "MANCANTE", "nessun testo presente"
+        elif testo.startswith("ERRORE:"):
+            stato, dettaglio = "DA RIVEDERE", "la generazione precedente ha restituito un errore"
+        elif len(testo.split()) < 12:
+            stato, dettaglio = "TROPPO BREVE", "meno di 12 parole: verifica che la sezione sia stata realmente completata"
+        elif motivo_chiusura_tecnica(testo):
+            stato, dettaglio = "INTERROTTA", motivo_chiusura_tecnica(testo)
+        else:
+            stato, dettaglio = "COMPLETA", f"{len(testo.split())} parole — nessuna interruzione tecnica rilevata"
+        risultati.append({"Sezione": sezione, "Esito": stato, "Dettaglio": dettaglio})
+    return risultati
