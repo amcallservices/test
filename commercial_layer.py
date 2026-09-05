@@ -1876,6 +1876,28 @@ def _render_referral_sidebar(user: dict[str, Any]) -> None:
             terza.metric(testo["pending"], riepilogo["pending"])
 
 
+def _salva_snapshot_prima_del_logout(user: dict[str, Any]) -> tuple[bool, str]:
+    """Conferma il salvataggio dell'ultima fotografia prima di cancellare la sessione browser."""
+    snapshot = st.session_state.get("commercial_logout_snapshot")
+    proprietario = str(st.session_state.get("commercial_logout_snapshot_owner", ""))
+    user_id = str(user.get("id", ""))
+
+    # Una fotografia di un account precedente non deve mai essere scritta su
+    # quello corrente. Senza una fotografia non c'è nulla da proteggere.
+    if not isinstance(snapshot, dict) or not snapshot or proprietario != user_id:
+        return True, ""
+
+    try:
+        if salva_progetto_automatico(snapshot):
+            return True, ""
+    except Exception:
+        pass
+    return False, (
+        "Non è stato possibile salvare l’ultima stesura nel tuo account. "
+        "L’uscita è stata annullata: attendi un momento e riprova, così il lavoro non va perso."
+    )
+
+
 def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
     is_admin = _is_admin(user)
@@ -2066,13 +2088,22 @@ def _commerce_sidebar() -> None:
                 st.write(movements or "Nessun movimento ancora.")
 
         if _mode() != "demo" and st.button("Esci", key="commercial_logout", use_container_width=True):
-            # Chiudendo l'account svuotiamo anche la memoria locale del libro.
-            # Il salvataggio cloud non viene toccato e potrà essere richiamato
-            # volontariamente dal pulsante di ripristino al prossimo accesso.
+            # Prima di svuotare la memoria locale chiediamo sempre al cloud di
+            # confermare l'ultima fotografia pronta. Se il cloud non risponde,
+            # l'utente resta dentro: è preferibile bloccare l'uscita piuttosto
+            # che far sparire anche una sola sezione già scritta.
+            salvataggio_ok, messaggio_errore = _salva_snapshot_prima_del_logout(user)
+            if not salvataggio_ok:
+                st.error(messaggio_errore)
+                return
+            # Chiudendo l'account svuotiamo anche la memoria locale del libro,
+            # ma il cloud ora ha confermato la fotografia appena preparata.
             _cancella_cookie_sessione()
             for chiave in list(st.session_state.keys()):
                 if not chiave.startswith("commercial_"):
                     del st.session_state[chiave]
+            st.session_state.pop("commercial_logout_snapshot", None)
+            st.session_state.pop("commercial_logout_snapshot_owner", None)
             st.session_state.pop("commercial_user", None)
             st.session_state.pop("commercial_user_context", None)
             st.session_state.pop("commercial_show_auth", None)

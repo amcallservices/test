@@ -4108,6 +4108,18 @@ def salva_progetto_corrente(sidebar, sezioni):
             "firma_ricerca_preliminare": st.session_state.get("firma_ricerca_preliminare", ""),
         },
     }
+    # Copia pronta per il logout: la sidebar commerciale viene eseguita prima
+    # dell'editor, perciò non può ricostruire da sola il manoscritto. Qui
+    # custodiamo una fotografia già completa, associata all'account corrente,
+    # che il comando Esci potrà inviare al cloud prima di svuotare la pagina.
+    proprietario_snapshot = str(
+        (st.session_state.get("commercial_user_context") or {}).get("id", "")
+    )
+    if proprietario_snapshot:
+        st.session_state["commercial_logout_snapshot"] = json.loads(
+            json.dumps(snapshot, ensure_ascii=False)
+        )
+        st.session_state["commercial_logout_snapshot_owner"] = proprietario_snapshot
     progetto["fonti"] = dict(snapshot["fonti"])
     serializzato = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     firma = hashlib.sha256(serializzato.encode("utf-8")).hexdigest()
@@ -5578,6 +5590,10 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             st.session_state["messaggio_aggiornamento_pagina"] = "Collaudo chiuso: la sessione precedente è stata ripristinata."
         else:
             elimina_progetto_automatico()
+            # Il reset è l'unica scelta esplicita che elimina anche la copia
+            # di sicurezza preparata per l'uscita.
+            st.session_state.pop("commercial_logout_snapshot", None)
+            st.session_state.pop("commercial_logout_snapshot_owner", None)
             # Chiave commerciale: non viene rimossa dal ciclo qui sotto e blocca
             # ogni ripristino automatico di una fotografia precedente.
             st.session_state["commercial_project_reset_requested"] = True
