@@ -1159,6 +1159,13 @@ def _landing_page() -> None:
             color:#fff !important; font-size:1.08rem; font-weight:800; text-decoration:none !important;
             box-shadow:0 6px 14px rgba(23,74,115,.16); transition:background .18s ease, transform .18s ease}
           .ss-community-button:hover {background:#102f4c; color:#fff !important; transform:translateY(-1px)}
+          /* Anteprima hero: è una presentazione visiva fissa, non apre una
+             lightbox e non sottrae spazio ai pulsanti di accesso. */
+          [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:nth-child(2) [data-testid="stImage"] img {
+            pointer-events:none !important; cursor:default !important; user-select:none !important;
+            border-radius:18px !important; border:1px solid rgba(22,137,232,.26) !important;
+            box-shadow:0 20px 42px rgba(11,59,103,.20) !important;
+          }
           .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
             max-width:900px; margin:.35rem auto 1.25rem; padding:.5rem; border:1px solid rgba(191,219,240,.9); border-radius:16px;
             background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}
@@ -1342,6 +1349,7 @@ def _landing_page() -> None:
         base_dir = Path(__file__).resolve().parent
         preview_image = next(
             (candidate for candidate in (
+                base_dir / "assets" / "home-editor-desktop-mobile-writing-v2.png",
                 base_dir / "home-editor-preview.png",
                 base_dir / "download.png",
                 base_dir / "assets" / "home-editor-preview.png",
