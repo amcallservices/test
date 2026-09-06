@@ -1373,9 +1373,46 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 }
 [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
 [data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
-[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid #2c405b; }
-[data-testid="stTabs"] button[role="tab"] { border-radius: 9px 9px 0 0; padding: .65rem .9rem; color: #b7c8df; }
-[data-testid="stTabs"] button[aria-selected="true"] { color: #ffffff; background: #162a44; }
+/* Menu principale 0–5: sei passi grandi, distinguibili e facilmente
+   selezionabili. Gli stessi pulsanti Streamlit restano invariati: cambia
+   soltanto la presentazione grafica e quindi non cambia il flusso di lavoro. */
+[data-testid="stTabs"] { margin: 1.1rem 0 1.35rem; }
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    display:flex; align-items:stretch; gap:.48rem; padding:.5rem;
+    border:1px solid #2d4c6d; border-radius:16px; background:rgba(7,19,34,.72);
+    box-shadow:0 10px 24px rgba(0,0,0,.16);
+}
+[data-testid="stTabs"] button[role="tab"] {
+    position:relative; flex:1 1 138px; min-height:4.3rem; margin:0 !important;
+    border:1px solid #294966 !important; border-top:3px solid #4b7da2 !important;
+    border-radius:12px !important; padding:.72rem .8rem !important;
+    background:linear-gradient(145deg,#10243b,#0d1e33) !important;
+    color:#c9d9eb !important; font-size:.92rem !important; font-weight:780 !important;
+    line-height:1.28 !important; white-space:normal !important; text-align:center !important;
+    transition:transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+[data-testid="stTabs"] button[role="tab"]:hover {
+    transform:translateY(-2px); border-color:#5da9e8 !important;
+    background:linear-gradient(145deg,#17395b,#123251) !important; color:#fff !important;
+    box-shadow:0 8px 16px rgba(0,0,0,.2) !important;
+}
+[data-testid="stTabs"] button[role="tab"]:focus-visible { outline:3px solid #7fc5ff !important; outline-offset:2px !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(1) { border-top-color:#62b6ff !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(2) { border-top-color:#c997ff !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(3) { border-top-color:#ffaf57 !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(4) { border-top-color:#73d6ff !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(5) { border-top-color:#f2ce72 !important; }
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(6) { border-top-color:#7fdea8 !important; }
+[data-testid="stTabs"] button[aria-selected="true"] {
+    transform:translateY(-3px); border-color:#62b6ff !important; border-top-color:#d7efff !important;
+    background:linear-gradient(135deg,#1675bc,#2399e8) !important; color:#fff !important;
+    box-shadow:0 10px 22px rgba(29,145,225,.35) !important;
+}
+[data-testid="stTabs"] button[aria-selected="true"]::after {
+    content:"✓"; position:absolute; right:.55rem; bottom:.38rem;
+    width:1.05rem; height:1.05rem; display:grid; place-items:center;
+    border-radius:50%; background:#e8f8ff; color:#0879c6; font-size:.72rem; font-weight:900;
+}
 .ss-workspace-header {
     display:flex; align-items:center; justify-content:space-between; gap:1rem;
     padding:1.05rem 1.25rem; margin:0 0 1.15rem; border-radius:16px;
@@ -1476,16 +1513,19 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
         padding: .4rem 0 !important; background: #0f1d31 !important;
     }
 
-    /* Le tab non vanno a capo né vengono tagliate: scorrono orizzontalmente. */
+    /* Il menu 0–5 rimane completo su telefono: grandi tessere scorrevoli,
+       senza testi tagliati né passaggi a capo difficili da toccare. */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important;
-        gap: .3rem !important; -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: thin !important;
+        overflow-x:auto !important; overflow-y:hidden !important; flex-wrap:nowrap !important;
+        gap:.45rem !important; padding:.42rem !important; border-radius:14px !important;
+        -webkit-overflow-scrolling:touch !important; scrollbar-width:thin !important;
     }
     [data-testid="stTabs"] button[role="tab"] {
-        flex: 0 0 auto !important; white-space: nowrap !important;
-        padding: .6rem .72rem !important; font-size: .84rem !important;
+        flex:0 0 min(74vw, 270px) !important; min-height:4.15rem !important;
+        white-space:normal !important; padding:.64rem .76rem !important;
+        font-size:.91rem !important; text-align:left !important;
     }
+    [data-testid="stTabs"] button[aria-selected="true"]::after { right:.65rem !important; bottom:.34rem !important; }
 
     /* Editor, controlli e anteprima mantengono una dimensione leggibile e
        l'anteprima scorre senza creare una pagina eccessivamente lunga. */
@@ -1536,9 +1576,10 @@ if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
     .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#087cc7,#28a8ed) !important; color:#ffffff !important; border-color:#087cc7 !important; }
     .st-key-avvia_chat_sidebar_guidata .stButton>button, .st-key-avvia_chat_sidebar_guidata button { background:linear-gradient(135deg,#15803d,#22a75a) !important; color:#ffffff !important; border-color:#52d486 !important; }
     .st-key-avvia_chat_sidebar_guidata .stButton>button:hover, .st-key-avvia_chat_sidebar_guidata button:hover { background:linear-gradient(135deg,#126b33,#178747) !important; border-color:#86efac !important; }
-    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom-color:#a8cce7 !important; }
-    [data-testid="stTabs"] button[role="tab"] { color:#2a587e !important; }
-    [data-testid="stTabs"] button[aria-selected="true"] { color:#0b3f6b !important; background:#cfeaff !important; }
+    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-color:#9bc9e6 !important; background:rgba(236,248,255,.86) !important; }
+    [data-testid="stTabs"] button[role="tab"] { color:#24577f !important; border-color:#a9d0e9 !important; background:linear-gradient(145deg,#ffffff,#eaf7ff) !important; }
+    [data-testid="stTabs"] button[role="tab"]:hover { color:#103f68 !important; border-color:#4b9ddb !important; background:linear-gradient(145deg,#f5fcff,#d9f0ff) !important; }
+    [data-testid="stTabs"] button[aria-selected="true"] { color:#ffffff !important; border-color:#2389d1 !important; background:linear-gradient(135deg,#087cc7,#28a8ed) !important; }
     .ss-workspace-header { border-color:#9fcbe8 !important; background:linear-gradient(135deg,#ffffff,#dff2ff) !important; box-shadow:0 12px 30px rgba(38,114,166,.16) !important; }
     .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#142b43 !important; }
     .ss-workspace-subtitle { color:#476b88 !important; }
