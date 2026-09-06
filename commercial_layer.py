@@ -2148,21 +2148,6 @@ def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
     is_admin = _is_admin(user)
     with st.sidebar:
-        # Primo comando della sidebar: cambia soltanto la resa grafica. Il
-        # tema scelto resta nella sessione e l'app lo applica al rerun, senza
-        # alterare crediti, account, progetto o dati dell'editor.
-        tema_corrente = st.session_state.get("commercial_ui_theme", "Scuro")
-        etichetta_tema = "☀️ ATTIVA TEMA CHIARO" if tema_corrente != "Chiaro" else "🌙 TORNA AL TEMA SCURO"
-        if st.button(
-            etichetta_tema,
-            key="commercial_toggle_ui_theme",
-            use_container_width=True,
-            help="Cambia solo l'aspetto visivo dell'app. Il tema scuro è quello originale.",
-        ):
-            st.session_state["commercial_ui_theme"] = "Scuro" if tema_corrente == "Chiaro" else "Chiaro"
-            st.rerun()
-        st.caption(f"Tema attivo: {st.session_state.get('commercial_ui_theme', 'Scuro')}")
-        st.divider()
         st.markdown("### 💳 Crediti")
         if _mode() == "demo":
             st.caption("Modalità dimostrativa: saldo valido solo per questa sessione.")

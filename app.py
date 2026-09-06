@@ -1378,13 +1378,14 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
    soltanto la presentazione grafica e quindi non cambia il flusso di lavoro. */
 [data-testid="stTabs"] { margin: 1.1rem 0 1.35rem; }
 .ss-operational-menu-heading {
-    display:flex; align-items:center; gap:.85rem; margin:1.35rem 0 .45rem;
-    padding:.9rem 1.05rem; border-left:5px solid #45b3ff; border-radius:12px;
-    background:linear-gradient(90deg,rgba(24,82,125,.52),rgba(13,36,61,.08));
+    display:flex; align-items:center; gap:1rem; margin:1.45rem 0 .25rem;
+    padding:1.05rem 1.2rem; border:2px solid #3d9fde; border-left:7px solid #65c6ff; border-radius:17px;
+    background:linear-gradient(135deg,#123f64,#0d2948 64%,#11283d); box-shadow:0 14px 30px rgba(7,42,71,.32);
 }
-.ss-operational-menu-heading span { font-size:1.7rem; line-height:1; }
-.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.55rem; font-weight:850; letter-spacing:-.02em; }
-.ss-operational-menu-heading p { margin:.16rem 0 0; color:#bcd8ee; font-size:.88rem; }
+.ss-operational-menu-heading span { font-size:1.9rem; line-height:1; }
+.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.68rem; font-weight:900; letter-spacing:-.025em; }
+.ss-operational-menu-heading p { margin:.18rem 0 0; color:#cce8fb; font-size:.93rem; font-weight:650; }
+.ss-operational-menu-heading .ss-menu-range { margin-left:auto; padding:.44rem .66rem; border:1px solid #87d2ff; border-radius:999px; color:#e9f8ff; background:rgba(9,31,52,.52); font-size:.84rem; font-weight:850; white-space:nowrap; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     display:flex; align-items:stretch; gap:.62rem; padding:.68rem;
     overflow-x:auto; overflow-y:hidden; border:1px solid #2d4c6d; border-radius:19px;
@@ -1438,6 +1439,8 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-chip.credit { color:#ffe3a1; }
 .ss-project-panel { margin:.08rem 0 .58rem; padding:.55rem .62rem; border:1px solid #2c4563; border-radius:12px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 7px 18px rgba(0,0,0,.12); }
 .ss-project-title { margin:0 0 .42rem; color:#fff; font-size:1.05rem; font-weight:850; letter-spacing:-.02em; }
+.ss-project-caption { margin:.16rem .12rem 0; color:#8fa8c0; font-size:.68rem; line-height:1.28; }
+.ss-project-caption strong { color:#bfd8ec; font-weight:750; }
 /* Il percorso in cinque riquadri è ora nel Centro operativo, subito sotto.
    Qui sarebbe duplicato: il Centro del progetto resta un riepilogo compatto. */
 .ss-project-journey { display:none; }
@@ -1536,10 +1539,11 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
         font-size:1.08rem !important; text-align:left !important;
     }
     [data-testid="stTabs"] button[aria-selected="true"]::after { right:.82rem !important; bottom:.7rem !important; }
-    .ss-operational-menu-heading { margin:1rem 0 .4rem !important; padding:.76rem .82rem !important; gap:.62rem !important; }
-    .ss-operational-menu-heading span { font-size:1.42rem !important; }
-    .ss-operational-menu-heading h2 { font-size:1.3rem !important; }
-    .ss-operational-menu-heading p { font-size:.8rem !important; line-height:1.35 !important; }
+    .ss-operational-menu-heading { margin:1rem 0 .25rem !important; padding:.86rem .88rem !important; gap:.7rem !important; }
+    .ss-operational-menu-heading span { font-size:1.5rem !important; }
+    .ss-operational-menu-heading h2 { font-size:1.32rem !important; }
+    .ss-operational-menu-heading p { font-size:.79rem !important; line-height:1.35 !important; }
+    .ss-operational-menu-heading .ss-menu-range { padding:.34rem .48rem !important; font-size:.74rem !important; }
 
     /* Editor, controlli e anteprima mantengono una dimensione leggibile e
        l'anteprima scorre senza creare una pagina eccessivamente lunga. */
@@ -1555,6 +1559,7 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-workspace-chip { font-size: .7rem !important; padding: .36rem .5rem !important; }
     .ss-project-panel { margin:.08rem 0 .62rem !important; padding:.66rem .62rem !important; border-radius:12px !important; }
     .ss-project-title { font-size:1.1rem !important; margin-bottom:.5rem !important; }
+    .ss-project-caption { font-size:.65rem !important; line-height:1.25 !important; }
     .ss-project-journey { grid-template-columns:1fr !important; gap:.3rem !important; margin-bottom:.5rem !important; }
     .ss-project-step { padding:.45rem .52rem !important; font-size:.76rem !important; }
     .ss-project-metrics { grid-template-columns:1fr 1fr !important; gap:.35rem !important; margin-bottom:.5rem !important; }
@@ -1564,52 +1569,6 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
 }
 </style>
 """, unsafe_allow_html=True)
-
-# Tema chiaro opzionale: il tema scuro predefinito resta esattamente quello
-# storico. Questa sovrascrittura è soltanto estetica e non modifica widget,
-# crediti, dati della sidebar o funzioni dell'editor.
-if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
-    st.markdown("""
-    <style>
-    /* Tema chiaro azzurrino: sostituisce integralmente solo i colori della UI. */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], section.main {
-      background:radial-gradient(circle at 7% 4%, #d8f0ff 0%, transparent 31%),radial-gradient(circle at 96% 17%, #c8e8ff 0%, transparent 27%),linear-gradient(135deg,#eaf7ff 0%,#f6fbff 48%,#dfefff 100%) !important;
-      color:#142b43 !important;
-    }
-    [data-testid="stAppViewBlockContainer"], section.main > div.block-container { background:transparent !important; }
-    section[data-testid="stSidebar"] { background:linear-gradient(180deg,#e9f6ff 0%,#d6ecff 100%) !important; border-right:1px solid #9dcaeb !important; }
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3,
-    [data-testid="stMain"] .stMarkdown, [data-testid="stMain"] label, [data-testid="stMain"] p, [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3 { color:#142b43 !important; }
-    section[data-testid="stSidebar"] .stTextInput input, section[data-testid="stSidebar"] .stTextArea textarea,
-    [data-testid="stMain"] .stTextInput input, [data-testid="stMain"] .stTextArea textarea,
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div { background:#ffffff !important; color:#142b43 !important; border-color:#9fc6e4 !important; }
-    [data-testid="stMain"] [data-testid="stAlert"], section[data-testid="stSidebar"] [data-testid="stAlert"],
-    [data-testid="stExpander"], [data-testid="stDataFrame"] { background:rgba(255,255,255,.84) !important; border-color:#b8d7ed !important; color:#142b43 !important; }
-    .stButton>button { background:#ffffff !important; color:#16466f !important; border-color:#8dbde1 !important; box-shadow:0 3px 9px rgba(38,114,166,.10) !important; }
-    .stButton>button:hover { background:#dcefff !important; color:#0b365d !important; border-color:#1976e9 !important; }
-    .stButton>button[kind="primary"], .stButton>button[data-testid="baseButton-primary"] { background:linear-gradient(135deg,#087cc7,#28a8ed) !important; color:#ffffff !important; border-color:#087cc7 !important; }
-    .st-key-avvia_chat_sidebar_guidata .stButton>button, .st-key-avvia_chat_sidebar_guidata button { background:linear-gradient(135deg,#15803d,#22a75a) !important; color:#ffffff !important; border-color:#52d486 !important; }
-    .st-key-avvia_chat_sidebar_guidata .stButton>button:hover, .st-key-avvia_chat_sidebar_guidata button:hover { background:linear-gradient(135deg,#126b33,#178747) !important; border-color:#86efac !important; }
-    [data-testid="stTabs"] [data-baseweb="tab-list"] { border-color:#9bc9e6 !important; background:rgba(236,248,255,.86) !important; }
-    [data-testid="stTabs"] button[role="tab"] { color:#24577f !important; border-color:#a9d0e9 !important; background:linear-gradient(145deg,#ffffff,#eaf7ff) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(1) { background:linear-gradient(145deg,#f2fbff,#d8f1ff) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(2) { background:linear-gradient(145deg,#faf4ff,#eadbff) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(3) { background:linear-gradient(145deg,#fff9ef,#ffe8c9) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(4) { background:linear-gradient(145deg,#effcff,#d4f2fa) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(5) { background:linear-gradient(145deg,#fffdf0,#fff1bd) !important; }
-    [data-testid="stTabs"] button[role="tab"]:nth-of-type(6) { background:linear-gradient(145deg,#f2fff6,#d6f5e0) !important; }
-    [data-testid="stTabs"] button[role="tab"]:hover { color:#103f68 !important; border-color:#4b9ddb !important; background:linear-gradient(145deg,#f5fcff,#d9f0ff) !important; }
-    [data-testid="stTabs"] button[aria-selected="true"] { color:#ffffff !important; border-color:#2389d1 !important; background:linear-gradient(135deg,#087cc7,#28a8ed) !important; }
-    .ss-operational-menu-heading { border-left-color:#168fd9 !important; background:linear-gradient(90deg,#d7f0ff,#f5fbff) !important; }
-    .ss-operational-menu-heading h2 { color:#123f64 !important; }
-    .ss-operational-menu-heading p { color:#416d8d !important; }
-    .ss-workspace-header { border-color:#9fcbe8 !important; background:linear-gradient(135deg,#ffffff,#dff2ff) !important; box-shadow:0 12px 30px rgba(38,114,166,.16) !important; }
-    .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#142b43 !important; }
-    .ss-workspace-subtitle { color:#476b88 !important; }
-    .ss-workspace-chip { color:#174f7a !important; background:#eff9ff !important; border-color:#a6cce7 !important; }
-    .ss-section-card { background:rgba(255,255,255,.88) !important; border-color:#b5d6ed !important; box-shadow:0 8px 20px rgba(38,114,166,.08) !important; }
-    </style>
-    """, unsafe_allow_html=True)
 
 # ======================================================================================================================
 # 4. GESTIONE EXPORT PDF (CHIRURGIA: FIX TITOLI LUNGHI E MARGINI)
@@ -4346,19 +4305,34 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
             min(100, int(stato["sezioni_scritte"] / stato["sezioni_previste"] * 100)),
             text=f"{etichette['in_corso']}: {dettaglio}",
         )
-    st.caption(f"**{etichette['prossimo']}:** {prossimo}")
+
+    # Le didascalie mantengono tutti i dettagli utili, ma restano visivamente
+    # secondarie rispetto al Centro operativo e ai suoi pulsanti principali.
+    def mostra_didascalia_centro(contenuto):
+        st.markdown(
+            f"<p class='ss-project-caption'>{contenuto}</p>",
+            unsafe_allow_html=True,
+        )
+
+    mostra_didascalia_centro(
+        f"<strong>{html.escape(etichette['prossimo'])}:</strong> {html.escape(prossimo)}"
+    )
     if stato["errore"]:
-        st.caption(f"**{etichette['dettaglio']}:** {stato['errore']}")
+        mostra_didascalia_centro(
+            f"<strong>{html.escape(etichette['dettaglio'])}:</strong> {html.escape(stato['errore'])}"
+        )
     elif stato["ultimo_indice"] and not stato["indice_pronto"]:
-        st.caption(f"**{etichette['dettaglio']}:** {stato['ultimo_indice']}")
+        mostra_didascalia_centro(
+            f"<strong>{html.escape(etichette['dettaglio'])}:</strong> {html.escape(stato['ultimo_indice'])}"
+        )
     if (
         stato["indice_pronto"]
         and stato["sezioni_previste"]
         and stato["sezioni_scritte"] >= stato["sezioni_previste"]
         and not stato["job_attivo"]
     ):
-        st.caption("🛡️ " + nota_originalita_facoltativa(lingua))
-    st.caption(etichette["nota"])
+        mostra_didascalia_centro("🛡️ " + html.escape(nota_originalita_facoltativa(lingua)))
+    mostra_didascalia_centro(html.escape(etichette["nota"]))
 
 
 def applica_snapshot_progetto(snapshot):
@@ -5706,6 +5680,17 @@ if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
 
 with st.sidebar:
+    # Il cervello è la prima scelta operativa: resta in alto anche quando la
+    # sidebar è lunga, così ogni costo e ogni funzione mostrano subito il
+    # motore che verrà effettivamente usato. La lingua corrente già salvata
+    # serve soltanto a localizzare l'etichetta prima del relativo selettore.
+    lingua_sidebar_precedente = str(st.session_state.get("editor_language") or "Italiano")
+    provider_ia = st.selectbox(
+        testo_ui("cervello", lingua_sidebar_precedente),
+        ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
+        key="provider_ia",
+        help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
+    )
     lingua_scelta = st.selectbox(testo_ui("lingua"), [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or testo_ui("seleziona"))
     lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
@@ -5723,12 +5708,6 @@ with st.sidebar:
     st.caption(intestazioni_sidebar[0])
     st.title(L["side_tit"])
     st.markdown(f"#### 1 · {intestazioni_sidebar[1]}")
-    provider_ia = st.selectbox(
-        testo_ui("cervello", lingua_sel),
-        ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
-        key="provider_ia",
-        help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
-    )
     tariffari_sidebar = {
         "Italiano": {
             "gpt_info": "GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.",
@@ -7512,6 +7491,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         f"""<section class='ss-operational-menu-heading'>
           <span>🧭</span><div><h2>{html.escape(titolo_menu_operativo)}</h2>
           <p>{html.escape(descrizione_menu_operativo)}</p></div>
+          <span class='ss-menu-range'>0 — 5</span>
         </section>""",
         unsafe_allow_html=True,
     )
@@ -7542,6 +7522,29 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             const schede = Array.from(lista.querySelectorAll('[role="tab"]'));
             if (schede.length < 6) return false;
             const mobile = window.parent.innerWidth <= 768;
+            const intestazione = documento.querySelector('.ss-operational-menu-heading');
+            if (intestazione) {
+              imposta(intestazione.style, 'display', 'flex');
+              imposta(intestazione.style, 'align-items', 'center');
+              imposta(intestazione.style, 'gap', mobile ? '11px' : '15px');
+              imposta(intestazione.style, 'padding', mobile ? '14px 15px' : '18px 21px');
+              imposta(intestazione.style, 'margin', '24px 0 5px');
+              imposta(intestazione.style, 'border', '2px solid #49abe8');
+              imposta(intestazione.style, 'border-left', '8px solid #76d0ff');
+              imposta(intestazione.style, 'border-radius', '18px');
+              imposta(intestazione.style, 'background', 'linear-gradient(135deg, #123f64, #0d2948)');
+              imposta(intestazione.style, 'box-shadow', '0 15px 31px rgba(6, 38, 65, .34)');
+              const titolo = intestazione.querySelector('h2');
+              const testo = intestazione.querySelector('p');
+              const intervallo = intestazione.querySelector('.ss-menu-range');
+              if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '21px' : '27px'); }
+              if (testo) { imposta(testo.style, 'color', '#d3efff'); imposta(testo.style, 'font-size', mobile ? '13px' : '15px'); }
+              if (intervallo) {
+                imposta(intervallo.style, 'margin-left', 'auto'); imposta(intervallo.style, 'padding', '7px 10px');
+                imposta(intervallo.style, 'border', '1px solid #97dcff'); imposta(intervallo.style, 'border-radius', '999px');
+                imposta(intervallo.style, 'background', '#0b2b47'); imposta(intervallo.style, 'color', '#effaff');
+              }
+            }
 
             imposta(lista.style, 'display', 'flex');
             imposta(lista.style, 'align-items', 'stretch');
@@ -7551,10 +7554,10 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'overflow-y', 'hidden');
             imposta(lista.style, 'width', '100%');
             imposta(lista.style, 'box-sizing', 'border-box');
-            imposta(lista.style, 'border', '2px solid #3976a4');
+            imposta(lista.style, 'border', '2px solid #49abe8');
             imposta(lista.style, 'border-radius', '22px');
-            imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49)');
-            imposta(lista.style, 'box-shadow', '0 15px 30px rgba(3, 15, 27, .28)');
+            imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49 64%, #0c233b)');
+            imposta(lista.style, 'box-shadow', '0 17px 34px rgba(3, 15, 27, .3)');
 
             schede.slice(0, 6).forEach(function (scheda, indice) {
               const scelto = scheda.getAttribute('aria-selected') === 'true';
