@@ -1078,6 +1078,20 @@ HOME_PERSONALIZATION_COPY = {
     "中文": ("保留你个人声音的图书", "个性化你的图书", "可按需添加作者声音、案例、重点和边界。Scrittore Site 会将其保存在项目中，用于研究、目录和写作，但不会照搬到手稿中。", "可选引导暂停", "在各部分或结论前可暂停写作、补充细节并继续。这些回答不消耗积分。"),
 }
 
+# Struttura sintetica della home: le funzioni restano tutte disponibili,
+# ma la prima lettura accompagna l'utente con pochi passaggi chiari.
+HOME_COMPACT_COPY = {
+    "Italiano": {"core": ("Tutto il necessario, senza complicazioni", "Quattro passaggi chiari dall'idea al manoscritto."), "cards": (("1", "Imposta il progetto", "Lingua, titolo, genere, pubblico e obiettivo."), ("2", "Crea l'indice", "Fonti, struttura professionale e correzioni mirate."), ("3", "Scrivi e migliora", "Una sezione, un capitolo o tutto il libro: decidi tu."), ("4", "Controlla ed esporta", "Anteprima, verifiche, Word, PDF, KDP e CSV.")), "steps": (("1", "Definisci", "Compila il brief guidato."), ("2", "Scrivi", "Genera, leggi e modifica."), ("3", "Conserva", "Salva ed esporta quando vuoi.")), "details": "Tutte le funzioni e i dettagli", "optional": "Personalizzazione e pause guidate (opzionali)"},
+    "English": {"core": ("Everything you need, without complexity", "Four clear steps from idea to manuscript."), "cards": (("1", "Set up your project", "Language, title, genre, audience and goal."), ("2", "Build the outline", "Sources, professional structure and targeted improvements."), ("3", "Write and improve", "One section, a chapter or the whole book: you decide."), ("4", "Review and export", "Preview, checks, Word, PDF, KDP and CSV.")), "steps": (("1", "Define", "Complete the guided brief."), ("2", "Write", "Generate, read and edit."), ("3", "Keep", "Save and export when you choose.")), "details": "All features and details", "optional": "Personalization and guided pauses (optional)"},
+    "Español": {"core": ("Todo lo necesario, sin complicaciones", "Cuatro pasos claros de la idea al manuscrito."), "cards": (("1", "Configura el proyecto", "Idioma, título, género, público y objetivo."), ("2", "Crea el índice", "Fuentes, estructura profesional y mejoras específicas."), ("3", "Escribe y mejora", "Una sección, un capítulo o todo el libro: tú decides."), ("4", "Revisa y exporta", "Vista previa, controles, Word, PDF, KDP y CSV.")), "steps": (("1", "Define", "Completa el briefing guiado."), ("2", "Escribe", "Genera, lee y edita."), ("3", "Conserva", "Guarda y exporta cuando quieras.")), "details": "Todas las funciones y detalles", "optional": "Personalización y pausas guiadas (opcionales)"},
+    "Français": {"core": ("Tout l'essentiel, sans complexité", "Quatre étapes claires de l'idée au manuscrit."), "cards": (("1", "Configurez le projet", "Langue, titre, genre, public et objectif."), ("2", "Créez le plan", "Sources, structure professionnelle et améliorations ciblées."), ("3", "Écrivez et améliorez", "Une section, un chapitre ou tout le livre : vous décidez."), ("4", "Vérifiez et exportez", "Aperçu, contrôles, Word, PDF, KDP et CSV.")), "steps": (("1", "Définissez", "Remplissez le brief guidé."), ("2", "Écrivez", "Générez, lisez et modifiez."), ("3", "Conservez", "Sauvegardez et exportez quand vous voulez.")), "details": "Toutes les fonctions et les détails", "optional": "Personnalisation et pauses guidées (facultatives)"},
+    "Deutsch": {"core": ("Alles Wesentliche, ohne Komplexität", "Vier klare Schritte von der Idee zum Manuskript."), "cards": (("1", "Projekt einrichten", "Sprache, Titel, Genre, Zielgruppe und Ziel."), ("2", "Gliederung erstellen", "Quellen, professionelle Struktur und gezielte Verbesserungen."), ("3", "Schreiben und verbessern", "Abschnitt, Kapitel oder ganzes Buch: Sie entscheiden."), ("4", "Prüfen und exportieren", "Vorschau, Prüfungen, Word, PDF, KDP und CSV.")), "steps": (("1", "Definieren", "Geführtes Briefing ausfüllen."), ("2", "Schreiben", "Erstellen, lesen und bearbeiten."), ("3", "Bewahren", "Speichern und exportieren, wenn Sie möchten.")), "details": "Alle Funktionen und Details", "optional": "Personalisierung und geführte Pausen (optional)"},
+    "Română": {"core": ("Tot ce ai nevoie, fără complicații", "Patru pași clari de la idee la manuscris."), "cards": (("1", "Configurează proiectul", "Limbă, titlu, gen, public și obiectiv."), ("2", "Creează cuprinsul", "Surse, structură profesională și îmbunătățiri precise."), ("3", "Scrie și îmbunătățește", "O secțiune, un capitol sau cartea întreagă: tu decizi."), ("4", "Verifică și exportă", "Previzualizare, controale, Word, PDF, KDP și CSV.")), "steps": (("1", "Definește", "Completează brief-ul ghidat."), ("2", "Scrie", "Generează, citește și editează."), ("3", "Păstrează", "Salvează și exportă când vrei.")), "details": "Toate funcțiile și detaliile", "optional": "Personalizare și pauze ghidate (opționale)"},
+    "Русский": {"core": ("Всё необходимое — без сложности", "Четыре понятных шага от идеи до рукописи."), "cards": (("1", "Настройте проект", "Язык, название, жанр, аудитория и цель."), ("2", "Создайте план", "Источники, профессиональная структура и точечные улучшения."), ("3", "Пишите и улучшайте", "Раздел, глава или вся книга — решаете вы."), ("4", "Проверьте и экспортируйте", "Предпросмотр, проверки, Word, PDF, KDP и CSV.")), "steps": (("1", "Определите", "Заполните понятный бриф."), ("2", "Пишите", "Создавайте, читайте и редактируйте."), ("3", "Сохраните", "Сохраняйте и экспортируйте, когда хотите.")), "details": "Все функции и подробности", "optional": "Персонализация и управляемые паузы (необязательно)"},
+    "العربية": {"core": ("كل ما تحتاجه، بلا تعقيد", "أربع خطوات واضحة من الفكرة إلى المخطوطة."), "cards": (("1", "أعِدّ المشروع", "اللغة والعنوان والنوع والجمهور والهدف."), ("2", "أنشئ الفهرس", "مصادر وبنية احترافية وتحسينات محددة."), ("3", "اكتب وحسّن", "قسم أو فصل أو الكتاب كاملاً: القرار لك."), ("4", "راجع وصدّر", "معاينة وفحوص وWord وPDF وKDP وCSV.")), "steps": (("1", "حدّد", "أكمل الموجز الإرشادي."), ("2", "اكتب", "أنشئ واقرأ وعدّل."), ("3", "احفظ", "احفظ وصدّر متى شئت.")), "details": "كل الوظائف والتفاصيل", "optional": "تخصيص وتوقفات موجهة (اختيارية)"},
+    "中文": {"core": ("所需功能，一目了然", "从想法到书稿，只需四个清晰步骤。"), "cards": (("1", "设置项目", "语言、标题、类型、读者和目标。"), ("2", "创建目录", "资料来源、专业结构和针对性优化。"), ("3", "写作并改进", "一个小节、一章或整本书，由你决定。"), ("4", "检查并导出", "预览、检查、Word、PDF、KDP 和 CSV。")), "steps": (("1", "定义", "填写引导式简报。"), ("2", "写作", "生成、阅读和编辑。"), ("3", "保存", "按需保存并导出。")), "details": "全部功能与详细说明", "optional": "个性化与引导暂停（可选）"},
+}
+
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
@@ -1171,13 +1185,13 @@ def _landing_page() -> None:
             background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}
           .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
             font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
-          .ss-languages-hero {max-width:1120px; margin:.65rem auto 1.35rem; padding:1.2rem 1.8rem; text-align:center;
+          .ss-languages-hero {max-width:1120px; margin:.5rem auto 1rem; padding:.85rem 1.25rem; text-align:center;
             border:1px solid #0284c7; border-radius:20px; background:linear-gradient(135deg,#0369a1 0%,#0ea5e9 56%,#38bdf8 100%);
             box-shadow:0 15px 32px rgba(2,132,199,.28)}
-          .ss-languages-hero b {display:block; color:#fff; font-size:clamp(1.28rem,2vw,1.7rem); margin-bottom:.48rem; font-weight:900; letter-spacing:-.02em}
-          .ss-languages-hero span {display:block; max-width:920px; margin:0 auto; color:#effaff; line-height:1.55; font-size:1rem; font-weight:600}
-          .ss-section {max-width:1080px; margin:3.15rem auto .55rem; text-align:center}
-          .ss-section h2 {font-size:clamp(1.72rem,2.4vw,2.18rem); margin-bottom:.25rem; color:#102a43; letter-spacing:-.035em}
+          .ss-languages-hero b {display:block; color:#fff; font-size:clamp(1.12rem,1.7vw,1.45rem); margin-bottom:.25rem; font-weight:900; letter-spacing:-.02em}
+          .ss-languages-hero span {display:block; max-width:920px; margin:0 auto; color:#effaff; line-height:1.45; font-size:.9rem; font-weight:600}
+          .ss-section {max-width:1080px; margin:1.9rem auto .4rem; text-align:center}
+          .ss-section h2 {font-size:clamp(1.45rem,2vw,1.85rem); margin-bottom:.2rem; color:#102a43; letter-spacing:-.035em}
           .ss-card {background:linear-gradient(155deg,#fff,#f7fbff); border:1px solid #d3e4f2;
             border-radius:16px; padding:1.15rem 1rem; min-height:112px; box-shadow:0 9px 20px rgba(20,77,120,.055)}
           .ss-card {text-align:center}
@@ -1194,11 +1208,11 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
-          .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:1.15rem 0 2.7rem}
-          .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1.25rem 1.12rem;min-height:210px;box-shadow:0 10px 24px rgba(20,77,120,.08);text-align:center}
+          .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.8rem 0 1.4rem}
+          .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1rem .9rem;min-height:174px;box-shadow:0 8px 18px rgba(20,77,120,.07);text-align:center}
           .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
-          .ss-priority-icon {font-size:1.72rem;margin-bottom:.75rem}.ss-priority b {display:block;color:#102a43;font-size:1.12rem;margin-bottom:.45rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.43;font-size:.93rem}
-          .ss-priority-tag {display:inline-block;margin-top:.72rem;padding:.22rem .48rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.7rem}
+          .ss-priority-icon {font-size:1.45rem;margin-bottom:.42rem}.ss-priority b {display:block;color:#102a43;font-size:1rem;margin-bottom:.32rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.38;font-size:.86rem}
+          .ss-priority-tag {display:inline-block;margin-top:.55rem;padding:.2rem .44rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.68rem}
           /* Il primo blocco della home diventa un percorso numerato, senza
              aggiungere passaggi o cambiare le funzioni presentate. */
           #ss-percorso .ss-priority-grid {counter-reset:ss-home-step}
@@ -1244,15 +1258,21 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          .ss-benefits {max-width:1160px; margin:1.15rem auto 2.7rem; padding:.55rem .25rem; background:rgba(255,255,255,.92); border:1px solid #d3e4f2; border-radius:17px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 12px 28px rgba(20,77,120,.08)}
-          .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0; text-align:center}
-          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
-          .ss-ai-grid {max-width:1040px; margin:1rem auto 1.8rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px}
-          .ss-ai-card {background:linear-gradient(145deg,#fff,#f4f9fd); border:1px solid #c8ddeb; border-radius:16px; padding:1.3rem 1.2rem; text-align:center; box-shadow:0 10px 24px rgba(20,77,120,.07)}
+          .ss-benefits {max-width:1160px; margin:.8rem auto 1.35rem; padding:.35rem .2rem; background:rgba(255,255,255,.92); border:1px solid #d3e4f2; border-radius:17px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 8px 18px rgba(20,77,120,.07)}
+          .ss-benefit {min-height:92px; padding:.9rem 1rem; color:#486581; font-size:.92rem; line-height:1.4; border-right:1px solid #d9e5f0; text-align:center}
+          .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
+          .ss-ai-grid {max-width:1040px; margin:.75rem auto 1.15rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+          .ss-ai-card {background:linear-gradient(145deg,#fff,#f4f9fd); border:1px solid #c8ddeb; border-radius:16px; padding:1rem; text-align:center; box-shadow:0 8px 18px rgba(20,77,120,.06)}
           .ss-ai-card h3 {margin:0 0 .5rem; color:#102a43; font-size:1.22rem}.ss-ai-card p {margin:.45rem 0; color:#486581; line-height:1.43}
-          .ss-ai-card .ss-ai-cost {padding:.75rem; border-radius:10px; background:#eaf4fc; color:#1269ae; font-weight:800; font-size:.9rem}.ss-ai-note {max-width:890px; margin:-.8rem auto 1.65rem; color:#486581; font-size:.88rem; text-align:center}
+          .ss-ai-card .ss-ai-cost {padding:.62rem; border-radius:10px; background:#eaf4fc; color:#1269ae; font-weight:800; font-size:.86rem}.ss-ai-note {max-width:890px; margin:-.35rem auto 1rem; color:#486581; font-size:.84rem; text-align:center}
+          .ss-compact-steps {max-width:960px; margin:.75rem auto 1.2rem; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+          .ss-compact-step {display:flex; align-items:center; gap:.7rem; text-align:left; padding:.8rem .9rem; border:1px solid #c8ddeb; border-radius:14px; background:rgba(255,255,255,.9); color:#486581; font-size:.86rem; line-height:1.35}
+          .ss-compact-step b {display:block; color:#102a43; font-size:.95rem}.ss-compact-number {flex:0 0 1.8rem; height:1.8rem; border-radius:50%; display:grid; place-items:center; background:#1689e8; color:#fff; font-weight:900}
+          .ss-home-detail-caption {max-width:850px; margin:.1rem auto .7rem; text-align:center; color:#486581; font-size:.88rem}
+          [data-testid="stExpander"] .ss-section {margin:1.1rem auto .3rem}
+          [data-testid="stExpander"] .ss-priority-grid {margin:.65rem 0 1rem}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:2.35rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:1.5rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid,.ss-compact-steps{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -1300,6 +1320,7 @@ def _landing_page() -> None:
     C = HOME_BODY_COPY[home_language]
     A = HOME_AI_ENGINES_COPY[home_language]
     P = HOME_PERSONALIZATION_COPY[home_language]
+    K = HOME_COMPACT_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
@@ -1380,16 +1401,31 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
 
-    # Il corpo della home è localizzato integralmente, inclusi funzioni,
-    # salvataggio, import/export, crediti e FAQ. La scelta lingua non cambia
-    # né il libro né i dati dell'account.
-    # La FAQ viene mostrata una sola volta, in fondo alla home.
-    corpo_home_senza_faq = C["body"].rsplit("<div class='ss-section'><h2>", 1)[0]
-    st.markdown(f"<div id='ss-percorso' dir='{direzione_home}'>{corpo_home_senza_faq}</div>", unsafe_allow_html=True)
+    # Home essenziale: mostra subito il percorso; le spiegazioni complete sono
+    # raccolte in tendine, senza eliminare alcuna funzione del software.
+    cards_html = "".join(
+        f"<div class='ss-priority'><div class='ss-priority-icon'>{icon}</div><b>{title}</b>"
+        f"<p>{text}</p><span class='ss-priority-tag'>{number}</span></div>"
+        for icon, (number, title, text) in zip(("🧭", "🧠", "✍️", "🔎"), K["cards"])
+    )
+    steps_html = "".join(
+        f"<div class='ss-compact-step'><span class='ss-compact-number'>{number}</span>"
+        f"<span><b>{title}</b>{text}</span></div>"
+        for number, title, text in K["steps"]
+    )
     st.markdown(
-        f"<div id='ss-funzioni' dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
+        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{K['core'][0]}</h2>"
+        f"<p class='ss-muted'>{K['core'][1]}</p></div><div class='ss-priority-grid' dir='{direzione_home}'>"
+        f"{cards_html}</div><div class='ss-compact-steps' dir='{direzione_home}'>{steps_html}</div>",
         unsafe_allow_html=True,
     )
+    st.markdown(
+        f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{N[1]}</h2>"
+        f"<p class='ss-home-detail-caption'>{K['details']}</p></div>",
+        unsafe_allow_html=True,
+    )
+    with st.expander(f"⌄ {K['details']}", expanded=False):
+        st.markdown(f"<div dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>", unsafe_allow_html=True)
     st.markdown(
         f"""<div id='ss-cervelli' class='ss-section' dir='{direzione_home}'><h2>{A[0]}</h2><p class='ss-muted'>{A[1]}</p></div>
         <div class='ss-ai-grid' dir='{direzione_home}'>
@@ -1398,14 +1434,12 @@ def _landing_page() -> None:
         </div><p class='ss-ai-note' dir='{direzione_home}'>{A[8]}</p>""",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        f"""<div class='ss-section' dir='{direzione_home}'><h2>{P[0]}</h2></div>
-        <div class='ss-priority-grid' dir='{direzione_home}'>
-          <div class='ss-feature-group'><h3>✍️ {P[1]}</h3><p>{P[2]}</p></div>
-          <div class='ss-feature-group'><h3>⏸ {P[3]}</h3><p>{P[4]}</p></div>
-        </div>""",
-        unsafe_allow_html=True,
-    )
+    with st.expander(f"✦ {K['optional']}", expanded=False):
+        st.markdown(
+            f"""<div dir='{direzione_home}'><div class='ss-feature-group'><h3>✍️ {P[1]}</h3><p>{P[2]}</p></div>
+            <div class='ss-feature-group'><h3>⏸ {P[3]}</h3><p>{P[4]}</p></div></div>""",
+            unsafe_allow_html=True,
+        )
     st.markdown(
         f"<div id='ss-crediti' class='ss-section'><h2>{C['packages']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
         unsafe_allow_html=True,
