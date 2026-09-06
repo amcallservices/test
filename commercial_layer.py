@@ -1143,15 +1143,15 @@ def _landing_page() -> None:
         """
         <style>
           .stApp, [data-testid="stAppViewContainer"] {background:radial-gradient(circle at 8% 13%,rgba(147,197,253,.47),transparent 28%),radial-gradient(circle at 90% 8%,rgba(186,230,253,.62),transparent 30%),radial-gradient(circle at 76% 78%,rgba(219,234,254,.8),transparent 36%),linear-gradient(135deg,#edf7ff 0%,#f8fcff 47%,#e2f2ff 100%) !important; color:#102a43}
-          section.main > div.block-container {max-width:1500px !important; padding:1.05rem 2.4rem 3.5rem !important}
-          .ss-hero-copy {padding:2.45rem .7rem .65rem 1.3rem; color:#102a43}
+          section.main > div.block-container {max-width:1380px !important; padding:1.05rem 2.4rem 4.4rem !important}
+          .ss-hero-copy {padding:2.15rem .9rem .9rem 1.35rem; color:#102a43}
           .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
-          .ss-title {font-family:Georgia,serif; font-size:clamp(6.2rem,9.6vw,10.2rem); margin:0; color:#cf3345; line-height:.8; letter-spacing:-.09em; text-shadow:0 2px 0 rgba(255,255,255,.8)}
-          .ss-title-line {width:68px; height:5px; background:#1689e8; border-radius:99px; margin:1.65rem 0}
-          .ss-headline {font-family:Georgia,serif; font-size:clamp(2.2rem,3.45vw,3.55rem); font-weight:800; line-height:1.08; color:#102a43; margin:0 0 1.2rem; letter-spacing:-.035em}
-          .ss-subtitle {font-size:1.17rem; max-width:555px; margin:0; color:#486581; line-height:1.58}
+          .ss-title {font-family:Georgia,serif; font-size:clamp(4.65rem,7.3vw,7.8rem); margin:0; color:#cf3345; line-height:.86; letter-spacing:-.075em; text-shadow:0 2px 0 rgba(255,255,255,.8)}
+          .ss-title-line {width:58px; height:5px; background:#1689e8; border-radius:99px; margin:1.28rem 0}
+          .ss-headline {font-family:Georgia,serif; font-size:clamp(2rem,3.05vw,3.1rem); font-weight:800; line-height:1.1; color:#102a43; margin:0 0 1rem; letter-spacing:-.035em}
+          .ss-subtitle {font-size:1.08rem; max-width:555px; margin:0; color:#486581; line-height:1.6}
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
           .ss-community-button {display:flex; align-items:center; justify-content:center; min-height:3.35rem; width:100%;
@@ -1160,23 +1160,23 @@ def _landing_page() -> None:
             box-shadow:0 6px 14px rgba(23,74,115,.16); transition:background .18s ease, transform .18s ease}
           .ss-community-button:hover {background:#102f4c; color:#fff !important; transform:translateY(-1px)}
           .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
-            max-width:880px; margin:.35rem auto 1rem; padding:.42rem; border:1px solid rgba(191,219,240,.9); border-radius:999px;
-            background:rgba(255,255,255,.86); box-shadow:0 7px 18px rgba(20,77,120,.10); backdrop-filter:blur(10px)}
+            max-width:900px; margin:.35rem auto 1.25rem; padding:.5rem; border:1px solid rgba(191,219,240,.9); border-radius:16px;
+            background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}
           .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
             font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
-          .ss-languages-hero {max-width:1120px; margin:1rem auto 1.85rem; padding:1.35rem 1.8rem; text-align:center;
+          .ss-languages-hero {max-width:1120px; margin:.65rem auto 1.35rem; padding:1.2rem 1.8rem; text-align:center;
             border:1px solid #0284c7; border-radius:20px; background:linear-gradient(135deg,#0369a1 0%,#0ea5e9 56%,#38bdf8 100%);
             box-shadow:0 15px 32px rgba(2,132,199,.28)}
           .ss-languages-hero b {display:block; color:#fff; font-size:clamp(1.28rem,2vw,1.7rem); margin-bottom:.48rem; font-weight:900; letter-spacing:-.02em}
           .ss-languages-hero span {display:block; max-width:920px; margin:0 auto; color:#effaff; line-height:1.55; font-size:1rem; font-weight:600}
-          .ss-section {max-width:1080px; margin:1.35rem auto .45rem; text-align:center}
-          .ss-section h2 {font-size:2rem; margin-bottom:.16rem; color:#102a43}
-          .ss-card {background:#fff; border:1px solid #d9e5f0;
-            border-radius:13px; padding:1.05rem .95rem; min-height:112px; box-shadow:none}
+          .ss-section {max-width:1080px; margin:3.15rem auto .55rem; text-align:center}
+          .ss-section h2 {font-size:clamp(1.72rem,2.4vw,2.18rem); margin-bottom:.25rem; color:#102a43; letter-spacing:-.035em}
+          .ss-card {background:linear-gradient(155deg,#fff,#f7fbff); border:1px solid #d3e4f2;
+            border-radius:16px; padding:1.15rem 1rem; min-height:112px; box-shadow:0 9px 20px rgba(20,77,120,.055)}
           .ss-card {text-align:center}
           .ss-card h3 {margin:0 0 .34rem; color:#1269ae; font-size:1rem}
           .ss-card p {margin:0; font-size:.9rem; line-height:1.35}
-          .ss-package-card {min-height:225px; padding:1.2rem .8rem}.ss-package-card p {margin:.32rem 0; line-height:1.42}
+          .ss-package-card {min-height:226px; padding:1.2rem .95rem}.ss-package-card p {margin:.32rem 0; line-height:1.42}
           .ss-package-engine {display:block; margin-top:.58rem; padding-top:.52rem; border-top:1px solid #d9e5f0; color:#174a73; font-size:.78rem; line-height:1.45}
           .ss-price {font-size:1.35rem; font-weight:800; color:#1269ae; margin:.15rem 0}
           .ss-muted {color:#486581; text-align:center; margin:.1rem auto .75rem; max-width:720px; font-size:.94rem}
@@ -1187,7 +1187,7 @@ def _landing_page() -> None:
             min-height:100px; box-shadow:none}
           .ss-feature strong {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-feature p {margin:0; color:#486581; font-size:.9rem; line-height:1.38}
-          .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:1.1rem 0 2.25rem}
+          .ss-priority-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:1.15rem 0 2.7rem}
           .ss-priority {position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff,#f2f8fd);border:1px solid #c8ddeb;border-radius:16px;padding:1.25rem 1.12rem;min-height:210px;box-shadow:0 10px 24px rgba(20,77,120,.08);text-align:center}
           .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
           .ss-priority-icon {font-size:1.72rem;margin-bottom:.75rem}.ss-priority b {display:block;color:#102a43;font-size:1.12rem;margin-bottom:.45rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.43;font-size:.93rem}
@@ -1237,15 +1237,15 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          .ss-benefits {max-width:1160px; margin:.7rem auto 2.25rem; padding:.55rem .25rem; background:#fff; border:1px solid #d9e5f0; border-radius:14px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 10px 26px rgba(20,77,120,.07)}
+          .ss-benefits {max-width:1160px; margin:1.15rem auto 2.7rem; padding:.55rem .25rem; background:rgba(255,255,255,.92); border:1px solid #d3e4f2; border-radius:17px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 12px 28px rgba(20,77,120,.08)}
           .ss-benefit {min-height:122px; padding:1.25rem 1.45rem; color:#486581; font-size:1.04rem; line-height:1.48; border-right:1px solid #d9e5f0; text-align:center}
           .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1.2rem; margin-bottom:.42rem}
-          .ss-ai-grid {max-width:1040px; margin:.9rem auto 1.7rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+          .ss-ai-grid {max-width:1040px; margin:1rem auto 1.8rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px}
           .ss-ai-card {background:linear-gradient(145deg,#fff,#f4f9fd); border:1px solid #c8ddeb; border-radius:16px; padding:1.3rem 1.2rem; text-align:center; box-shadow:0 10px 24px rgba(20,77,120,.07)}
           .ss-ai-card h3 {margin:0 0 .5rem; color:#102a43; font-size:1.22rem}.ss-ai-card p {margin:.45rem 0; color:#486581; line-height:1.43}
           .ss-ai-card .ss-ai-cost {padding:.75rem; border-radius:10px; background:#eaf4fc; color:#1269ae; font-weight:800; font-size:.9rem}.ss-ai-note {max-width:890px; margin:-.8rem auto 1.65rem; color:#486581; font-size:.88rem; text-align:center}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:2.35rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -1379,15 +1379,15 @@ def _landing_page() -> None:
     corpo_home_senza_faq = C["body"].rsplit("<div class='ss-section'><h2>", 1)[0]
     st.markdown(f"<div id='ss-percorso' dir='{direzione_home}'>{corpo_home_senza_faq}</div>", unsafe_allow_html=True)
     st.markdown(
+        f"<div id='ss-funzioni' dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
         f"""<div id='ss-cervelli' class='ss-section' dir='{direzione_home}'><h2>{A[0]}</h2><p class='ss-muted'>{A[1]}</p></div>
         <div class='ss-ai-grid' dir='{direzione_home}'>
           <div class='ss-ai-card'><h3>🧠 {A[2]}</h3><p>{A[3]}</p><p class='ss-ai-cost'>{A[4]}</p></div>
           <div class='ss-ai-card'><h3>⚡ {A[5]}</h3><p>{A[6]}</p><p class='ss-ai-cost'>{A[7]}</p></div>
         </div><p class='ss-ai-note' dir='{direzione_home}'>{A[8]}</p>""",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div id='ss-funzioni' dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>",
         unsafe_allow_html=True,
     )
     st.markdown(
