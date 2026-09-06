@@ -1426,7 +1426,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background:linear-gradient(135deg,#123f64,#0d2948 64%,#11283d); box-shadow:0 14px 30px rgba(7,42,71,.32);
 }
 .ss-operational-menu-heading span { font-size:1.9rem; line-height:1; }
-.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.68rem; font-weight:900; letter-spacing:-.025em; }
+.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.92rem; font-weight:900; letter-spacing:-.025em; }
 .ss-operational-menu-heading p { margin:.18rem 0 0; color:#cce8fb; font-size:.93rem; font-weight:650; }
 .ss-operational-menu-heading .ss-menu-range { margin-left:auto; padding:.44rem .66rem; border:1px solid #87d2ff; border-radius:999px; color:#e9f8ff; background:rgba(9,31,52,.52); font-size:.84rem; font-weight:850; white-space:nowrap; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
@@ -1483,7 +1483,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
 .ss-project-panel { margin:.08rem 0 .58rem; padding:.55rem .62rem; border:1px solid #2c4563; border-radius:12px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 7px 18px rgba(0,0,0,.12); }
-.ss-project-title { margin:0 0 .42rem; color:#fff; font-size:1.05rem; font-weight:850; letter-spacing:-.02em; }
+.ss-project-title { margin:0 0 .34rem; color:#fff; font-size:.92rem; font-weight:850; letter-spacing:-.02em; }
 .ss-project-caption { margin:.16rem .12rem 0; color:#8fa8c0; font-size:.68rem; line-height:1.28; }
 .ss-project-caption strong { color:#bfd8ec; font-weight:750; }
 /* Il percorso in cinque riquadri è ora nel Centro operativo, subito sotto.
@@ -1588,7 +1588,7 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     [data-testid="stTabs"] button[aria-selected="true"]::after { right:.82rem !important; bottom:.7rem !important; }
     .ss-operational-menu-heading { margin:1rem 0 .25rem !important; padding:.86rem .88rem !important; gap:.7rem !important; }
     .ss-operational-menu-heading span { font-size:1.5rem !important; }
-    .ss-operational-menu-heading h2 { font-size:1.32rem !important; }
+    .ss-operational-menu-heading h2 { font-size:1.45rem !important; }
     .ss-operational-menu-heading p { font-size:.79rem !important; line-height:1.35 !important; }
     .ss-operational-menu-heading .ss-menu-range { padding:.34rem .48rem !important; font-size:.74rem !important; }
 
@@ -1605,7 +1605,7 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-workspace-meta { gap: .35rem !important; }
     .ss-workspace-chip { font-size: .7rem !important; padding: .36rem .5rem !important; }
     .ss-project-panel { margin:.08rem 0 .62rem !important; padding:.66rem .62rem !important; border-radius:12px !important; }
-    .ss-project-title { font-size:1.1rem !important; margin-bottom:.5rem !important; }
+    .ss-project-title { font-size:.98rem !important; margin-bottom:.38rem !important; }
     .ss-project-caption { font-size:.65rem !important; line-height:1.25 !important; }
     .ss-project-journey { grid-template-columns:1fr !important; gap:.3rem !important; margin-bottom:.5rem !important; }
     .ss-project-step { padding:.45rem .52rem !important; font-size:.76rem !important; }
@@ -7482,51 +7482,51 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 包含所有功能及 GPT 计费。**DeepSeek V4 Pro** 不使用 GPT 即可进行带可见记录的来源研究、目录、已上传来源分析、写作和编辑检查：写作/测验/示例每 3 次操作消耗 1 积分；目录约 2 积分；一致性检查和 10 道食谱约 4 积分。网页版权检查和图片需要 GPT。",
     }
     percorso_rapido = {
-        "Italiano": """### ⚡ Percorso rapido in 4 passaggi
-**1. Configura** — compila la sidebar e scegli il Cervello AI.  
-**2. Progetta** — cerca le fonti se servono e genera l'indice; controllalo prima di scrivere.  
-**3. Scrivi e salva** — genera una sezione o l'intero libro; le sezioni AI sono protette, mentre le modifiche manuali richiedono **SALVA SESSIONE**.  
-**4. Controlla ed esporta** — usa Anteprima, completezza, controllo finale e poi Word, PDF o CSV.""",
-        "English": """### ⚡ Quick 4-step path
-**1. Configure** — complete the sidebar and choose the AI engine.  
-**2. Plan** — search sources when needed and generate the index; review it before writing.  
-**3. Write and save** — generate one section or the full book; AI sections are protected, while manual edits require **SAVE SESSION**.  
-**4. Review and export** — use Preview, completeness check, final review, then Word, PDF or CSV.""",
-        "Español": """### ⚡ Ruta rápida en 4 pasos
-**1. Configura** — completa la barra lateral y elige el motor de IA.  
-**2. Planifica** — busca fuentes si hace falta y genera el índice; revísalo antes de escribir.  
-**3. Escribe y guarda** — genera una sección o todo el libro; las secciones IA están protegidas y los cambios manuales requieren **GUARDAR SESIÓN**.  
-**4. Revisa y exporta** — usa Vista previa, control de completitud, control final y luego Word, PDF o CSV.""",
-        "Français": """### ⚡ Parcours rapide en 4 étapes
-**1. Configurez** — remplissez la barre latérale et choisissez le moteur IA.  
-**2. Planifiez** — recherchez des sources si nécessaire et générez l’index; vérifiez-le avant la rédaction.  
-**3. Rédigez et enregistrez** — générez une section ou le livre entier; les sections IA sont protégées, les modifications manuelles demandent **ENREGISTRER LA SESSION**.  
-**4. Vérifiez et exportez** — utilisez l’aperçu, le contrôle de complétude, le contrôle final puis Word, PDF ou CSV.""",
-        "Deutsch": """### ⚡ Schneller Ablauf in 4 Schritten
-**1. Konfigurieren** — Seitenleiste ausfüllen und KI-Engine wählen.  
-**2. Planen** — bei Bedarf Quellen suchen und Inhaltsverzeichnis erzeugen; vor dem Schreiben prüfen.  
-**3. Schreiben und speichern** — einen Abschnitt oder das ganze Buch erzeugen; KI-Abschnitte sind geschützt, manuelle Änderungen brauchen **SITZUNG SPEICHERN**.  
-**4. Prüfen und exportieren** — Vorschau, Vollständigkeitsprüfung und Endkontrolle nutzen, dann Word, PDF oder CSV.""",
-        "Română": """### ⚡ Parcurs rapid în 4 pași
-**1. Configurează** — completează bara laterală și alege motorul IA.  
-**2. Planifică** — caută surse când este nevoie și generează cuprinsul; verifică-l înainte de scriere.  
-**3. Scrie și salvează** — generează o secțiune sau cartea completă; secțiunile IA sunt protejate, iar modificările manuale cer **SALVEAZĂ SESIUNEA**.  
-**4. Verifică și exportă** — folosește previzualizarea, controlul de completitudine și controlul final, apoi Word, PDF sau CSV.""",
-        "Русский": """### ⚡ Быстрый путь из 4 шагов
-**1. Настройте** — заполните боковую панель и выберите ИИ-движок.  
-**2. Спланируйте** — при необходимости найдите источники и создайте оглавление; проверьте его перед написанием.  
-**3. Пишите и сохраняйте** — создайте раздел или всю книгу; ИИ-разделы защищены, ручные правки требуют **СОХРАНИТЬ СЕССИЮ**.  
-**4. Проверьте и экспортируйте** — используйте предпросмотр, проверку полноты, финальный контроль, затем Word, PDF или CSV.""",
-        "العربية": """### ⚡ مسار سريع من 4 خطوات
-**1. الإعداد** — أكمل الشريط الجانبي واختر محرك الذكاء الاصطناعي.  
-**2. التخطيط** — ابحث عن المصادر عند الحاجة وأنشئ الفهرس ثم راجعه قبل الكتابة.  
-**3. الكتابة والحفظ** — أنشئ قسماً أو الكتاب كاملاً؛ أقسام الذكاء الاصطناعي محمية بينما تتطلب التعديلات اليدوية **حفظ الجلسة**.  
-**4. المراجعة والتصدير** — استخدم المعاينة وفحص الاكتمال والتحكم النهائي ثم Word أو PDF أو CSV.""",
-        "中文": """### ⚡ 四步快速流程
-**1. 配置** — 填写侧边栏并选择 AI 引擎。  
-**2. 规划** — 需要时搜索来源并生成目录；写作前先检查目录。  
-**3. 写作并保存** — 生成单个部分或整本书；AI 生成内容受保护，手动修改需要点击 **保存会话**。  
-**4. 检查并导出** — 使用预览、完整性检查和最终检查，然后导出 Word、PDF 或 CSV。""",
+        "Italiano": """### ⭐ Percorso consigliato: fatti aiutare dalla Chat guidata
+- **1. Apri la Chat guidata qui sotto** — racconta in poche parole il libro che vuoi creare. La chat ti fa solo le domande utili e prepara i campi della sidebar; è facoltativa, ma è il modo più semplice per iniziare.
+- **2. Controlla e applica la scheda** — leggi le proposte, correggi ciò che vuoi e usa il pulsante per compilare automaticamente la sidebar. Scegli poi il Cervello AI.
+- **3. Crea indice e manoscritto** — genera l'indice, controllalo e scrivi una sezione o tutto il libro. Le sezioni IA sono protette; dopo modifiche manuali premi **SALVA SESSIONE**.
+- **4. Controlla ed esporta** — usa Anteprima, completezza e controllo finale; poi esporta in Word, PDF o CSV.""",
+        "English": """### ⭐ Recommended path: start with Guided chat
+- **1. Open Guided chat below** — describe the book you want in a few words. It asks only useful questions and prepares the sidebar fields; it is optional, but the easiest way to start.
+- **2. Review and apply the brief** — check the proposals, change anything you want, then use the button to complete the sidebar automatically. Choose the AI engine afterwards.
+- **3. Create the index and manuscript** — generate and review the index, then write one section or the full book. AI sections are protected; after manual changes press **SAVE SESSION**.
+- **4. Review and export** — use Preview, completeness and final review, then export Word, PDF or CSV.""",
+        "Español": """### ⭐ Ruta recomendada: empieza con el Chat guiado
+- **1. Abre el Chat guiado de abajo** — describe en pocas palabras el libro que quieres crear. Solo hará preguntas útiles y preparará los campos de la barra lateral; es opcional, pero es la forma más fácil de empezar.
+- **2. Revisa y aplica la ficha** — comprueba las propuestas, cambia lo que quieras y usa el botón para completar automáticamente la barra lateral. Después elige el motor de IA.
+- **3. Crea el índice y el manuscrito** — genera y revisa el índice y escribe una sección o todo el libro. Las secciones IA están protegidas; tras cambios manuales pulsa **GUARDAR SESIÓN**.
+- **4. Revisa y exporta** — usa Vista previa, completitud y control final; después exporta Word, PDF o CSV.""",
+        "Français": """### ⭐ Parcours recommandé : commencez avec le Chat guidé
+- **1. Ouvrez le Chat guidé ci-dessous** — décrivez en quelques mots le livre à créer. Il ne pose que les questions utiles et prépare les champs de la barre latérale ; c’est facultatif, mais le moyen le plus simple de commencer.
+- **2. Vérifiez et appliquez la fiche** — relisez les propositions, modifiez ce que vous voulez puis utilisez le bouton pour remplir automatiquement la barre latérale. Choisissez ensuite le moteur IA.
+- **3. Créez l’index et le manuscrit** — générez et vérifiez l’index, puis rédigez une section ou le livre entier. Les sections IA sont protégées ; après une modification manuelle, appuyez sur **ENREGISTRER LA SESSION**.
+- **4. Vérifiez et exportez** — utilisez l’aperçu, la complétude et le contrôle final, puis exportez Word, PDF ou CSV.""",
+        "Deutsch": """### ⭐ Empfohlener Weg: mit dem geführten Chat starten
+- **1. Öffnen Sie unten den geführten Chat** — beschreiben Sie Ihr Buch in wenigen Worten. Er stellt nur hilfreiche Fragen und bereitet die Felder der Seitenleiste vor; er ist optional, aber der einfachste Einstieg.
+- **2. Prüfen und übernehmen Sie die Angaben** — kontrollieren Sie die Vorschläge, ändern Sie nach Wunsch und füllen Sie die Seitenleiste automatisch per Schaltfläche aus. Wählen Sie danach die KI-Engine.
+- **3. Inhaltsverzeichnis und Manuskript erstellen** — Inhaltsverzeichnis erzeugen und prüfen, dann einen Abschnitt oder das ganze Buch schreiben. KI-Abschnitte sind geschützt; nach manuellen Änderungen **SITZUNG SPEICHERN** drücken.
+- **4. Prüfen und exportieren** — Vorschau, Vollständigkeit und Endkontrolle verwenden, danach Word, PDF oder CSV exportieren.""",
+        "Română": """### ⭐ Parcurs recomandat: începe cu Chatul ghidat
+- **1. Deschide Chatul ghidat de mai jos** — descrie în câteva cuvinte cartea dorită. Pune doar întrebări utile și pregătește câmpurile barei laterale; este opțional, dar cel mai simplu mod de a începe.
+- **2. Verifică și aplică fișa** — citește propunerile, modifică ce dorești și folosește butonul pentru a completa automat bara laterală. Apoi alege motorul IA.
+- **3. Creează cuprinsul și manuscrisul** — generează și verifică cuprinsul, apoi scrie o secțiune sau cartea completă. Secțiunile IA sunt protejate; după modificări manuale apasă **SALVEAZĂ SESIUNEA**.
+- **4. Verifică și exportă** — folosește previzualizarea, completitudinea și controlul final, apoi exportă Word, PDF sau CSV.""",
+        "Русский": """### ⭐ Рекомендуемый путь: начните с управляемого чата
+- **1. Откройте управляемый чат ниже** — кратко опишите будущую книгу. Он задаст только полезные вопросы и подготовит поля боковой панели; это необязательно, но это самый простой старт.
+- **2. Проверьте и примените карточку** — просмотрите предложения, измените нужное и нажмите кнопку, чтобы автоматически заполнить боковую панель. Затем выберите ИИ-движок.
+- **3. Создайте оглавление и рукопись** — создайте и проверьте оглавление, затем напишите раздел или всю книгу. ИИ-разделы защищены; после ручных правок нажмите **СОХРАНИТЬ СЕССИЮ**.
+- **4. Проверьте и экспортируйте** — используйте предпросмотр, полноту и финальный контроль, затем экспортируйте Word, PDF или CSV.""",
+        "العربية": """### ⭐ المسار الموصى به: ابدأ بالدردشة الموجّهة
+- **1. افتح الدردشة الموجّهة أدناه** — صف الكتاب الذي تريد إنشاءه بكلمات قليلة. ستطرح أسئلة مفيدة فقط وتعد حقول الشريط الجانبي؛ هي اختيارية لكنها أسهل طريقة للبدء.
+- **2. راجع البطاقة وطبّقها** — راجع الاقتراحات وعدّل ما تريد، ثم استخدم الزر لملء الشريط الجانبي تلقائياً. اختر بعد ذلك محرك الذكاء الاصطناعي.
+- **3. أنشئ الفهرس والمخطوطة** — أنشئ الفهرس وراجعه ثم اكتب قسماً أو الكتاب كاملاً. أقسام الذكاء الاصطناعي محمية؛ بعد التعديلات اليدوية اضغط **حفظ الجلسة**.
+- **4. راجع وصدّر** — استخدم المعاينة وفحص الاكتمال والتحكم النهائي ثم صدّر Word أو PDF أو CSV.""",
+        "中文": """### ⭐ 推荐流程：从引导式聊天开始
+- **1. 打开下方的引导式聊天** — 用几句话描述你想创作的图书。它只会提出有用的问题，并准备侧边栏字段；这是一项可选功能，但也是最简单的开始方式。
+- **2. 检查并应用资料卡** — 查看建议，按需修改，然后使用按钮自动填写侧边栏。随后选择 AI 引擎。
+- **3. 创建目录和手稿** — 生成并检查目录，然后写一个部分或整本书。AI 内容受保护；手动修改后请点击 **保存会话**。
+- **4. 检查并导出** — 使用预览、完整性和最终检查，然后导出 Word、PDF 或 CSV。""",
     }
     titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
     if st.session_state.get("admin_test_run_requested") and st.session_state.get("admin_test_mode"):
@@ -7587,7 +7587,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(intestazione.style, 'display', 'flex');
               imposta(intestazione.style, 'align-items', 'center');
               imposta(intestazione.style, 'gap', mobile ? '11px' : '15px');
-              imposta(intestazione.style, 'padding', mobile ? '14px 15px' : '18px 21px');
+              imposta(intestazione.style, 'padding', mobile ? '15px 16px' : '20px 23px');
               imposta(intestazione.style, 'margin', '24px 0 5px');
               imposta(intestazione.style, 'border', '2px solid #49abe8');
               imposta(intestazione.style, 'border-left', '8px solid #76d0ff');
@@ -7597,7 +7597,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               const titolo = intestazione.querySelector('h2');
               const testo = intestazione.querySelector('p');
               const intervallo = intestazione.querySelector('.ss-menu-range');
-              if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '21px' : '27px'); }
+              if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '23px' : '31px'); }
               if (testo) { imposta(testo.style, 'color', '#d3efff'); imposta(testo.style, 'font-size', mobile ? '13px' : '15px'); }
               if (intervallo) {
                 imposta(intervallo.style, 'margin-left', 'auto'); imposta(intervallo.style, 'padding', '7px 10px');
@@ -7697,15 +7697,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
         chat_subito = {
-            "Italiano": ("🤖 Preferisci essere guidato?", "La chat guidata prepara con te i campi della sidebar. È facoltativa: puoi sempre compilare tutto anche da solo.", "💬 APRI LA CHAT GUIDATA"),
-            "English": ("🤖 Would you like guidance?", "Guided chat helps you prepare the sidebar fields. It is optional: you can always complete everything yourself.", "💬 OPEN GUIDED CHAT"),
-            "Español": ("🤖 ¿Prefieres recibir ayuda?", "El chat guiado prepara contigo los campos de la barra lateral. Es opcional: siempre puedes completarlos por tu cuenta.", "💬 ABRIR CHAT GUIADO"),
-            "Français": ("🤖 Vous préférez être guidé ?", "Le chat guidé prépare avec vous les champs de la barre latérale. Il est facultatif : vous pouvez toujours tout remplir vous-même.", "💬 OUVRIR LE CHAT GUIDÉ"),
-            "Deutsch": ("🤖 Möchten Sie Unterstützung?", "Der geführte Chat bereitet mit Ihnen die Felder der Seitenleiste vor. Er ist optional: Sie können alles selbst ausfüllen.", "💬 GEFÜHRTEN CHAT ÖFFNEN"),
-            "Română": ("🤖 Preferi să fii ghidat?", "Chatul ghidat pregătește cu tine câmpurile barei laterale. Este opțional: le poți completa oricând și singur.", "💬 DESCHIDE CHATUL GHIDAT"),
-            "Русский": ("🤖 Хотите помощь?", "Управляемый чат поможет подготовить поля боковой панели. Это необязательно: всё можно заполнить самостоятельно.", "💬 ОТКРЫТЬ УПРАВЛЯЕМЫЙ ЧАТ"),
-            "العربية": ("🤖 هل تفضّل المساعدة؟", "تساعدك الدردشة الموجّهة في إعداد حقول الشريط الجانبي. هي اختيارية: يمكنك دائماً إكمالها بنفسك.", "💬 افتح الدردشة الموجّهة"),
-            "中文": ("🤖 想要引导帮助吗？", "引导式聊天会协助你准备侧边栏字段。这是可选功能：你随时可以自行填写。", "💬 打开引导式聊天"),
+            "Italiano": ("🤖 Chat guidata — il modo più semplice per iniziare", "Raccontale la tua idea: ti accompagna fino alla scheda pronta e può compilare automaticamente i campi della sidebar. È facoltativa.", "💬 APRI LA CHAT GUIDATA"),
+            "English": ("🤖 Guided chat — the easiest way to begin", "Tell it your idea: it guides you to a ready brief and can automatically complete the sidebar fields. It is optional.", "💬 OPEN GUIDED CHAT"),
+            "Español": ("🤖 Chat guiado — la forma más fácil de empezar", "Cuéntale tu idea: te guía hasta una ficha lista y puede completar automáticamente los campos de la barra lateral. Es opcional.", "💬 ABRIR CHAT GUIADO"),
+            "Français": ("🤖 Chat guidé — la manière la plus simple de commencer", "Expliquez votre idée : il vous accompagne jusqu’à une fiche prête et peut remplir automatiquement les champs de la barre latérale. C’est facultatif.", "💬 OUVRIR LE CHAT GUIDÉ"),
+            "Deutsch": ("🤖 Geführter Chat — der einfachste Einstieg", "Beschreiben Sie Ihre Idee: der Chat begleitet Sie bis zu einem fertigen Brief und kann die Felder der Seitenleiste automatisch ausfüllen. Er ist optional.", "💬 GEFÜHRTEN CHAT ÖFFNEN"),
+            "Română": ("🤖 Chat ghidat — cel mai simplu mod de a începe", "Spune-i ideea ta: te conduce până la o fișă gata și poate completa automat câmpurile barei laterale. Este opțional.", "💬 DESCHIDE CHATUL GHIDAT"),
+            "Русский": ("🤖 Управляемый чат — самый простой старт", "Расскажите ему свою идею: он доведёт вас до готовой карточки и может автоматически заполнить поля боковой панели. Это необязательно.", "💬 ОТКРЫТЬ УПРАВЛЯЕМЫЙ ЧАТ"),
+            "العربية": ("🤖 الدردشة الموجّهة — أسهل طريقة للبدء", "أخبرها بفكرتك: ترشدك حتى تصبح البطاقة جاهزة ويمكنها ملء حقول الشريط الجانبي تلقائياً. وهي اختيارية.", "💬 افتح الدردشة الموجّهة"),
+            "中文": ("🤖 引导式聊天——最简单的开始方式", "告诉它你的想法：它会带你完成资料卡，并可自动填写侧边栏字段。这是可选功能。", "💬 打开引导式聊天"),
         }
         titolo_chat_subito, testo_chat_subito, pulsante_chat_subito = chat_subito.get(
             lingua_sel, chat_subito["Italiano"]
