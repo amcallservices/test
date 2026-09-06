@@ -5728,7 +5728,13 @@ if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
 
 with st.sidebar:
-    # La lingua è sempre il primo comando: traduce subito crediti, menu e
+    # Il marchio identifica subito l'editor; sotto restano lingua, cervello e
+    # tutti i comandi nella stessa sequenza funzionale già usata dall'utente.
+    logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo.png")
+    if os.path.isfile(logo_sidebar):
+        st.image(logo_sidebar, use_container_width=True)
+
+    # La lingua è il primo comando operativo: traduce subito crediti, menu e
     # configurazione, senza modificare i dati già salvati nel progetto.
     lingua_sidebar_precedente = str(st.session_state.get("editor_language") or "Italiano")
     lingua_scelta = st.selectbox(

@@ -1092,6 +1092,20 @@ HOME_COMPACT_COPY = {
     "中文": {"core": ("所需功能，一目了然", "从想法到书稿，只需四个清晰步骤。"), "cards": (("1", "设置项目", "语言、标题、类型、读者和目标。"), ("2", "创建目录", "资料来源、专业结构和针对性优化。"), ("3", "写作并改进", "一个小节、一章或整本书，由你决定。"), ("4", "检查并导出", "预览、检查、Word、PDF、KDP 和 CSV。")), "steps": (("1", "定义", "填写引导式简报。"), ("2", "写作", "生成、阅读和编辑。"), ("3", "保存", "按需保存并导出。")), "details": "全部功能与详细说明", "optional": "个性化与引导暂停（可选）"},
 }
 
+# Vantaggi esplicitati con misura: non sostituisce le capacità di una chat,
+# ma chiarisce il valore del flusso editoriale integrato di Scrittore Site.
+HOME_ADVANTAGES_COPY = {
+    "Italiano": ("I vantaggi di Scrittore Site", "Una classica chat AI può aiutare a scrivere. Scrittore Site trasforma quell'aiuto in un progetto editoriale ordinato e controllabile.", (("🧭", "Un percorso, non una pagina vuota", "Brief, fonti, indice, stesura e revisione restano collegati nello stesso progetto."), ("💾", "Memoria e recupero del lavoro", "Sidebar, indice e testi possono essere salvati, riaperti ed esportati in un CSV completo."), ("🔎", "Controlli editoriali nel punto giusto", "Coerenza, completezza, ripetizioni e qualità vengono verificati prima dell'esportazione."), ("📚", "Un risultato pronto da lavorare", "Anteprima, lettore vocale, Word, PDF e formattazione KDP aiutano a passare dalla bozza al manoscritto."))),
+    "English": ("Why choose Scrittore Site", "A standard AI chat can help you write. Scrittore Site turns that help into an organized, controllable editorial project.", (("🧭", "A workflow, not a blank page", "Brief, sources, outline, writing and review remain connected in one project."), ("💾", "Memory and project recovery", "Sidebar, outline and text can be saved, reopened and exported in a complete CSV."), ("🔎", "Editorial checks at the right time", "Consistency, completeness, repetition and quality are checked before export."), ("📚", "A manuscript ready to work on", "Preview, voice reader, Word, PDF and KDP formatting help move from draft to manuscript."))),
+    "Español": ("Las ventajas de Scrittore Site", "Una chat de IA clásica puede ayudarte a escribir. Scrittore Site convierte esa ayuda en un proyecto editorial ordenado y controlable.", (("🧭", "Un recorrido, no una página vacía", "Briefing, fuentes, índice, redacción y revisión permanecen conectados en un mismo proyecto."), ("💾", "Memoria y recuperación", "Barra lateral, índice y textos se pueden guardar, reabrir y exportar en un CSV completo."), ("🔎", "Controles editoriales en el momento adecuado", "Coherencia, integridad, repeticiones y calidad se comprueban antes de exportar."), ("📚", "Un manuscrito listo para trabajar", "Vista previa, lector de voz, Word, PDF y formato KDP ayudan a pasar del borrador al manuscrito."))),
+    "Français": ("Les avantages de Scrittore Site", "Une conversation IA classique peut aider à écrire. Scrittore Site transforme cette aide en projet éditorial ordonné et contrôlable.", (("🧭", "Un parcours, pas une page vide", "Brief, sources, plan, rédaction et révision restent liés dans un même projet."), ("💾", "Mémoire et reprise du projet", "Barre latérale, plan et textes peuvent être enregistrés, rouverts et exportés dans un CSV complet."), ("🔎", "Des contrôles éditoriaux au bon moment", "Cohérence, complétude, répétitions et qualité sont vérifiées avant l'export."), ("📚", "Un manuscrit prêt à être travaillé", "Aperçu, lecteur vocal, Word, PDF et mise en forme KDP aident à passer du brouillon au manuscrit."))),
+    "Deutsch": ("Die Vorteile von Scrittore Site", "Ein gewöhnlicher KI-Chat kann beim Schreiben helfen. Scrittore Site macht daraus ein geordnetes, kontrollierbares Redaktionsprojekt.", (("🧭", "Ein Ablauf statt einer leeren Seite", "Briefing, Quellen, Gliederung, Schreiben und Überarbeitung bleiben in einem Projekt verbunden."), ("💾", "Speichern und Wiederaufnehmen", "Seitenleiste, Gliederung und Texte können gespeichert, erneut geöffnet und als vollständige CSV exportiert werden."), ("🔎", "Redaktionelle Kontrolle zum richtigen Zeitpunkt", "Kohärenz, Vollständigkeit, Wiederholungen und Qualität werden vor dem Export geprüft."), ("📚", "Ein Manuskript zur Weiterarbeit", "Vorschau, Sprachleser, Word, PDF und KDP-Formatierung führen vom Entwurf zum Manuskript."))),
+    "Română": ("Avantajele Scrittore Site", "O conversație AI obișnuită te poate ajuta să scrii. Scrittore Site transformă acel ajutor într-un proiect editorial ordonat și controlabil.", (("🧭", "Un parcurs, nu o pagină goală", "Brief-ul, sursele, cuprinsul, scrierea și revizia rămân legate în același proiect."), ("💾", "Memorie și reluarea proiectului", "Bara laterală, cuprinsul și textele pot fi salvate, redeschise și exportate într-un CSV complet."), ("🔎", "Controale editoriale la momentul potrivit", "Coerența, completitudinea, repetițiile și calitatea sunt verificate înainte de export."), ("📚", "Un manuscris gata de lucru", "Previzualizarea, cititorul vocal, Word, PDF și formatarea KDP ajută trecerea de la schiță la manuscris."))),
+    "Русский": ("Преимущества Scrittore Site", "Обычный чат с ИИ может помочь писать. Scrittore Site превращает эту помощь в упорядоченный и контролируемый редакционный проект.", (("🧭", "Маршрут вместо пустой страницы", "Бриф, источники, план, текст и редактура остаются связанными в одном проекте."), ("💾", "Память и восстановление проекта", "Панель, план и тексты можно сохранить, открыть снова и экспортировать в полном CSV."), ("🔎", "Редакторские проверки вовремя", "Связность, полнота, повторы и качество проверяются перед экспортом."), ("📚", "Рукопись, готовая к работе", "Предпросмотр, голосовое чтение, Word, PDF и форматирование KDP помогают перейти от черновика к рукописи."))),
+    "العربية": ("مزايا Scrittore Site", "يمكن لمحادثة ذكاء اصطناعي عادية أن تساعدك في الكتابة. يحوّل Scrittore Site هذه المساعدة إلى مشروع تحريري منظم وقابل للتحكم.", (("🧭", "مسار لا صفحة فارغة", "يبقى الموجز والمصادر والفهرس والكتابة والمراجعة مترابطين في مشروع واحد."), ("💾", "ذاكرة واستعادة للمشروع", "يمكن حفظ الشريط الجانبي والفهرس والنصوص وإعادة فتحها وتصديرها في CSV كامل."), ("🔎", "فحوص تحريرية في الوقت المناسب", "يتم التحقق من الاتساق والاكتمال والتكرار والجودة قبل التصدير."), ("📚", "مخطوطة جاهزة للعمل", "المعاينة والقارئ الصوتي وWord وPDF وتنسيق KDP تساعدك على الانتقال من المسودة إلى المخطوطة."))),
+    "中文": ("Scrittore Site 的优势", "普通 AI 聊天可以协助写作。Scrittore Site 则将这种协助变成有序、可掌控的编辑项目。", (("🧭", "完整流程，而非空白页面", "简报、资料、目录、写作和审阅都在同一个项目中保持关联。"), ("💾", "记忆与项目恢复", "侧边栏、目录和文本可保存、重新打开并导出为完整 CSV。"), ("🔎", "适时的编辑检查", "导出前可检查连贯性、完整性、重复和质量。"), ("📚", "可继续打磨的书稿", "预览、语音阅读、Word、PDF 与 KDP 排版帮助你从草稿走向书稿。"))),
+}
+
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
@@ -1156,9 +1170,9 @@ def _landing_page() -> None:
     st.markdown(
         """
         <style>
-          .stApp, [data-testid="stAppViewContainer"] {background:radial-gradient(circle at 8% 13%,rgba(147,197,253,.47),transparent 28%),radial-gradient(circle at 90% 8%,rgba(186,230,253,.62),transparent 30%),radial-gradient(circle at 76% 78%,rgba(219,234,254,.8),transparent 36%),linear-gradient(135deg,#edf7ff 0%,#f8fcff 47%,#e2f2ff 100%) !important; color:#102a43}
-          section.main > div.block-container {max-width:1380px !important; padding:.28rem 2.4rem 4.4rem !important}
-          [data-testid="stHorizontalBlock"]:has([data-testid="stSelectbox"]) {margin-top:0 !important; margin-bottom:.15rem !important}
+          .stApp, [data-testid="stAppViewContainer"] {background:radial-gradient(circle at 86% 8%,rgba(15,107,185,.5),transparent 27%),radial-gradient(circle at 13% 69%,rgba(13,83,145,.35),transparent 31%),linear-gradient(135deg,#030b15 0%,#071a2d 48%,#092540 100%) !important; color:#e7f2ff}
+          section.main > div.block-container {max-width:1380px !important; padding:0 2.4rem 4.4rem !important}
+          [data-testid="stHorizontalBlock"]:has([data-testid="stSelectbox"]) {margin-top:-.72rem !important; margin-bottom:.1rem !important}
           [data-testid="stHorizontalBlock"]:has([data-testid="stSelectbox"]) [data-testid="stSelectbox"] {margin-top:0 !important}
           .ss-hero-copy {padding:2.15rem .9rem .9rem 1.35rem; color:#102a43}
           .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
@@ -1271,10 +1285,14 @@ def _landing_page() -> None:
           .ss-compact-step {display:flex; align-items:center; gap:.7rem; text-align:left; padding:.8rem .9rem; border:1px solid #c8ddeb; border-radius:14px; background:rgba(255,255,255,.9); color:#486581; font-size:.86rem; line-height:1.35}
           .ss-compact-step b {display:block; color:#102a43; font-size:.95rem}.ss-compact-number {flex:0 0 1.8rem; height:1.8rem; border-radius:50%; display:grid; place-items:center; background:#1689e8; color:#fff; font-weight:900}
           .ss-home-detail-caption {max-width:850px; margin:.1rem auto .7rem; text-align:center; color:#486581; font-size:.88rem}
+          .ss-advantages-intro {max-width:850px; margin:.25rem auto .8rem; text-align:center; color:#b9d4e8; line-height:1.48}
+          .ss-advantages {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:.45rem 0 .25rem}
+          .ss-advantage {display:flex; gap:.75rem; padding:.85rem; border:1px solid rgba(125,211,252,.24); border-radius:13px; background:rgba(7,37,63,.72); color:#b9d4e8; line-height:1.4}
+          .ss-advantage > span {font-size:1.35rem; line-height:1.2}.ss-advantage b {display:block; color:#f4faff; margin-bottom:.18rem}.ss-advantage p {margin:0; font-size:.87rem}
           [data-testid="stExpander"] .ss-section {margin:1.1rem auto .3rem}
           [data-testid="stExpander"] .ss-priority-grid {margin:.65rem 0 1rem}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:.28rem 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:1.5rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid,.ss-compact-steps{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
+          @media (max-width:760px) {section.main > div.block-container {padding:0 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:1.5rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid,.ss-compact-steps,.ss-advantages{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -1302,9 +1320,30 @@ def _landing_page() -> None:
           button[aria-label="Manage app"], a[aria-label="Manage app"] {display:none !important}
           [data-testid="stExpander"] {max-width:860px; margin:.5rem auto; background:#fff !important;
             border:1px solid #d9e5f0 !important; border-radius:12px !important; overflow:hidden}
+          /* Tema della home: riprende il blu notte dell'anteprima con contrasto
+             alto per testi, schede e controlli, senza influire sull'area privata. */
+          .ss-hero-copy {color:#e7f2ff !important}.ss-kicker {color:#7dd3fc !important}
+          .ss-version {background:rgba(12,46,76,.82) !important;border-color:rgba(125,211,252,.38) !important;color:#ccecff !important}
+          .ss-title {color:#61d4ff !important;text-shadow:0 2px 16px rgba(56,189,248,.3) !important}
+          .ss-headline,.ss-section h2 {color:#f8fbff !important}.ss-subtitle,.ss-muted,.ss-home-detail-caption {color:#b7d3eb !important}
+          .ss-bonus {background:rgba(7,70,80,.84) !important;border-color:rgba(45,212,191,.55) !important;color:#d5fff5 !important}
+          .ss-community-button {background:#123e64 !important;box-shadow:0 7px 16px rgba(0,0,0,.3) !important}.ss-community-button:hover {background:#195b8a !important}
+          .ss-quick-nav {background:rgba(5,22,39,.82) !important;border-color:rgba(125,211,252,.3) !important;box-shadow:0 9px 21px rgba(0,0,0,.27) !important}
+          .ss-quick-nav a {color:#d9efff !important}.ss-quick-nav a:hover {background:rgba(14,116,185,.35) !important;color:#fff !important}
+          .ss-languages-hero {background:linear-gradient(135deg,#063153,#0872a8 56%,#1599d1 100%) !important;border-color:#35b9ef !important}
+          .ss-card,.ss-priority,.ss-ai-card,.ss-feature-group,.ss-compact-step,.ss-step,.ss-trust {background:linear-gradient(145deg,rgba(10,42,70,.95),rgba(8,27,48,.96)) !important;border-color:rgba(125,211,252,.27) !important;box-shadow:0 9px 20px rgba(0,0,0,.22) !important;color:#c9deef !important}
+          .ss-card h3,.ss-priority b,.ss-feature-group h3,.ss-feature strong,.ss-compact-step b,.ss-benefit b,.ss-ai-card h3 {color:#f4faff !important}
+          .ss-card p,.ss-priority p,.ss-feature-group p,.ss-feature p,.ss-ai-card p,.ss-benefit {color:#b9d4e8 !important}
+          .ss-priority-tag,.ss-ai-card .ss-ai-cost {background:rgba(16,121,181,.25) !important;color:#9ce4ff !important;border:1px solid rgba(125,211,252,.2)}
+          .ss-benefits {background:rgba(6,27,47,.88) !important;border-color:rgba(125,211,252,.27) !important;box-shadow:0 10px 22px rgba(0,0,0,.22) !important}
+          .ss-benefit {border-color:rgba(125,211,252,.2) !important}.ss-package-engine {border-color:rgba(125,211,252,.2) !important;color:#b9dff4 !important}
+          .ss-price {color:#7dd3fc !important}.ss-credit-note {background:rgba(8,63,94,.78) !important;border-color:rgba(56,189,248,.35) !important;color:#d5efff !important}
+          [data-testid="stSelectbox"] label {color:#cdeaff !important}[data-testid="stSelectbox"] [data-baseweb="select"] > div {background:#0a2945 !important;border-color:#2a6e9c !important;color:#eaf6ff !important}
+          [data-testid="stExpander"] {background:rgba(6,27,47,.92) !important;border-color:rgba(125,211,252,.27) !important}
           [data-testid="stExpander"] details, [data-testid="stExpander"] summary,
-          [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#fff !important; color:#102a43 !important}
-          [data-testid="stExpander"] summary:hover {background:#f5f9fd !important}
+          [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:transparent !important;color:#e5f3ff !important}
+          [data-testid="stExpander"] summary:hover {background:rgba(14,116,185,.18) !important}
+          [data-testid="stExpander"] [data-testid="stMarkdownContainer"] {color:#c9deef !important}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1323,6 +1362,7 @@ def _landing_page() -> None:
     A = HOME_AI_ENGINES_COPY[home_language]
     P = HOME_PERSONALIZATION_COPY[home_language]
     K = HOME_COMPACT_COPY[home_language]
+    V = HOME_ADVANTAGES_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
@@ -1339,13 +1379,23 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
 
+    base_dir = Path(__file__).resolve().parent
+    public_logo = base_dir / "assets" / "scrittore-site-logo.png"
     hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
     with hero_copy:
         st.markdown(
             f"""<div class='ss-hero-copy'>
               <div class='ss-kicker'>{H['presenta']}</div>
               <div class='ss-version'>{C['version']}: {COMMERCIAL_VERSION}</div>
-              <h1 class='ss-title' style='color:#cf3345 !important'>Scrittore Site</h1>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+        if public_logo.is_file():
+            st.image(str(public_logo), width=280)
+        else:
+            st.markdown("<h1 class='ss-title'>Scrittore Site</h1>", unsafe_allow_html=True)
+        st.markdown(
+            f"""<div class='ss-hero-copy ss-hero-copy-tail'>
               <div class='ss-title-line'></div>
               <div class='ss-headline'>{H['headline']}</div>
               <p class='ss-subtitle'>{H['subtitle']}</p>
@@ -1369,7 +1419,6 @@ def _landing_page() -> None:
             unsafe_allow_html=True,
         )
     with hero_visual:
-        base_dir = Path(__file__).resolve().parent
         preview_image = next(
             (candidate for candidate in (
                 base_dir / "assets" / "home-editor-desktop-mobile-writing-v2.png",
@@ -1421,6 +1470,16 @@ def _landing_page() -> None:
         f"{cards_html}</div><div class='ss-compact-steps' dir='{direzione_home}'>{steps_html}</div>",
         unsafe_allow_html=True,
     )
+    advantages_html = "".join(
+        f"<div class='ss-advantage'><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></div>"
+        for icon, title, text in V[2]
+    )
+    with st.expander(f"✦ {V[0]}", expanded=False):
+        st.markdown(
+            f"<div class='ss-advantages-intro' dir='{direzione_home}'>{V[1]}</div>"
+            f"<div class='ss-advantages' dir='{direzione_home}'>{advantages_html}</div>",
+            unsafe_allow_html=True,
+        )
     st.markdown(
         f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{N[1]}</h2>"
         f"<p class='ss-home-detail-caption'>{K['details']}</p></div>",
