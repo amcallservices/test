@@ -7479,6 +7479,85 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
 
+    # Stile diretto e indipendente dal tema per le sei schede principali.
+    # Interviene esclusivamente sul menu che Streamlit ha già creato: ogni
+    # tessera resta il medesimo pulsante, con le stesse funzioni e scorciatoie.
+    components.html(
+        """
+        <script>
+        (function () {
+          const documento = window.parent.document;
+          const colori = [
+            ['#154f7c', '#0c2e4b'], ['#58318a', '#331c56'], ['#9a5415', '#5d300b'],
+            ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
+          ];
+
+          function imposta(stile, nome, valore) {
+            stile.setProperty(nome, valore, 'important');
+          }
+
+          function disegnaMenu() {
+            const lista = documento.querySelector('[data-testid="stTabs"] [role="tablist"]')
+              || documento.querySelector('[data-testid="stTabs"] [data-baseweb="tab-list"]')
+              || documento.querySelector('[role="tablist"]');
+            if (!lista) return false;
+            const schede = Array.from(lista.querySelectorAll('[role="tab"]'));
+            if (schede.length < 6) return false;
+            const mobile = window.parent.innerWidth <= 768;
+
+            imposta(lista.style, 'display', 'flex');
+            imposta(lista.style, 'align-items', 'stretch');
+            imposta(lista.style, 'gap', mobile ? '12px' : '14px');
+            imposta(lista.style, 'padding', mobile ? '12px' : '15px');
+            imposta(lista.style, 'overflow-x', 'auto');
+            imposta(lista.style, 'overflow-y', 'hidden');
+            imposta(lista.style, 'border', '2px solid #3976a4');
+            imposta(lista.style, 'border-radius', '22px');
+            imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49)');
+            imposta(lista.style, 'box-shadow', '0 15px 30px rgba(3, 15, 27, .28)');
+
+            schede.slice(0, 6).forEach(function (scheda, indice) {
+              const scelto = scheda.getAttribute('aria-selected') === 'true';
+              const colore = colori[indice];
+              imposta(scheda.style, 'box-sizing', 'border-box');
+              imposta(scheda.style, 'flex', mobile ? '0 0 min(84vw, 350px)' : '0 0 220px');
+              imposta(scheda.style, 'min-height', mobile ? '132px' : '116px');
+              imposta(scheda.style, 'padding', mobile ? '22px 20px' : '20px 17px');
+              imposta(scheda.style, 'margin', '0');
+              imposta(scheda.style, 'border-radius', '18px');
+              imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
+              imposta(scheda.style, 'border-top', scelto ? '7px solid #ffffff' : '7px solid ' + colore[0]);
+              imposta(scheda.style, 'background', scelto
+                ? 'linear-gradient(135deg, #1688da, #36b4f4)'
+                : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
+              imposta(scheda.style, 'color', '#ffffff');
+              imposta(scheda.style, 'font-size', mobile ? '19px' : '18px');
+              imposta(scheda.style, 'font-weight', '800');
+              imposta(scheda.style, 'line-height', '1.35');
+              imposta(scheda.style, 'white-space', 'normal');
+              imposta(scheda.style, 'text-align', mobile ? 'left' : 'center');
+              imposta(scheda.style, 'justify-content', 'center');
+              imposta(scheda.style, 'box-shadow', scelto
+                ? '0 12px 25px rgba(45, 170, 243, .55)'
+                : '0 8px 17px rgba(0, 0, 0, .23)');
+            });
+            return true;
+          }
+
+          let tentativi = 0;
+          const attiva = function () {
+            if (!disegnaMenu() && tentativi++ < 12) window.setTimeout(attiva, 180);
+          };
+          attiva();
+          documento.addEventListener('click', function (evento) {
+            if (evento.target.closest('[role="tab"]')) window.setTimeout(disegnaMenu, 60);
+          }, { once: false });
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
     # Una correzione preparata dal controllo finale o una stesura in corso
     # deve arrivare davvero all'editor. Streamlit non espone un'API Python per
     # attivare una tab: il piccolo script seleziona la terza scheda, che è
