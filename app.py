@@ -1347,6 +1347,17 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background: linear-gradient(135deg, #126b33, #178747) !important;
     border-color: #86efac !important;
 }
+.st-key-avvia_chat_sidebar_subito .stButton>button,
+.st-key-avvia_chat_sidebar_subito button {
+    background: linear-gradient(135deg, #15803d, #22a75a) !important;
+    border-color: #52d486 !important;
+    color: #ffffff !important;
+}
+.st-key-avvia_chat_sidebar_subito .stButton>button:hover,
+.st-key-avvia_chat_sidebar_subito button:hover {
+    background: linear-gradient(135deg, #126b33, #178747) !important;
+    border-color: #86efac !important;
+}
 /* Il reset è l'unico comando distruttivo del progetto: deve distinguersi
    chiaramente da salvataggio, aggiornamento e normali azioni editoriali. */
 .st-key-reset_progetto_distruttivo .stButton>button,
@@ -1389,7 +1400,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-project-step.current { color:#fff; border-color:#3ea7fa; background:linear-gradient(135deg,#165a91,#187fc8); box-shadow:0 6px 15px rgba(33,150,243,.18); }.ss-project-step.current span { background:#fff; color:#1477c1; }
 .ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.62rem; margin:.15rem 0 .95rem; }
 .ss-project-metric { min-width:0; padding:.78rem .82rem; border-radius:12px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.75rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.25rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.55rem; letter-spacing:-.04em; }
-.ss-next-action { display:flex; gap:.75rem; align-items:flex-start; padding:.88rem 1rem; border-radius:12px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 2rem; width:2rem; height:2rem; display:grid; place-items:center; border-radius:9px; background:#2a9ded; font-size:1.08rem; }.ss-next-action small { display:block; color:#a7d4f6; font-weight:800; margin-bottom:.16rem; }.ss-next-action strong { display:block; font-size:1rem; line-height:1.38; }
+.ss-next-action { display:flex; gap:.75rem; align-items:flex-start; padding:.88rem 1rem; border-radius:12px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 2rem; width:2rem; height:2rem; display:grid; place-items:center; border-radius:9px; background:#2a9ded; font-size:1.08rem; }.ss-next-action small { display:block; color:#a7d4f6; font-weight:800; margin-bottom:.16rem; }.ss-next-action strong { display:block; font-size:1rem; line-height:1.38; }.ss-next-action p { margin:.38rem 0 0; color:#d7ecfc; font-size:.88rem; line-height:1.45; }.ss-next-action p b { color:#fff; }
 .ss-next-action.pause { background:#4e4217; border-color:#a98629; }.ss-next-action.pause .ss-next-icon { background:#d8a621; color:#1c1708; }.ss-next-action.complete { background:#103d2e; border-color:#2c8d61; }.ss-next-action.complete .ss-next-icon { background:#28ad70; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
@@ -3527,6 +3538,12 @@ def avvia_chat_sidebar_guidata():
     st.session_state["chat_sidebar_input_nonce"] = 0
 
 
+def avvia_chat_sidebar_da_guida():
+    """Apre la chat esistente e chiede solo lo scorrimento al suo pannello."""
+    avvia_chat_sidebar_guidata()
+    st.session_state["chat_sidebar_scroll_request"] = True
+
+
 def reimposta_chat_sidebar_guidata():
     for chiave in list(st.session_state):
         if chiave.startswith("chat_sidebar_"):
@@ -4067,6 +4084,74 @@ PASSI_PERCORSO_PROGETTO = {
     "中文": ("想法", "目录", "写作", "检查", "导出"),
 }
 
+# Istruzioni concrete accanto al Centro del progetto. Descrivono soltanto
+# pulsanti e schede già esistenti: non attivano alcuna funzione in autonomia.
+ISTRUZIONI_PROSSIMO_PASSO = {
+    "Italiano": {
+        "brief": "Apri la sidebar a sinistra; su telefono tocca ☰. Completa i campi obbligatori del libro.",
+        "indice": "Apri la scheda 1. Indice e premi «Genera indice professionale».",
+        "scrittura": "Apri la scheda 2. Scrittura & Quiz e premi «Scrivi tutto il libro», oppure «Scrivi contenuto» per una sola sezione.",
+        "pausa": "Resta nella scheda 2. Scrittura & Quiz e premi «Riprendi generazione» quando vuoi continuare. Il testo già creato resta salvato.",
+        "controllo": "Apri la scheda 4. Importa / Esporta / Copyright, esegui «Controlla completezza del manoscritto», poi scarica Word o PDF.",
+    },
+    "English": {
+        "brief": "Open the sidebar on the left; on a phone tap ☰. Complete the required book fields.",
+        "indice": "Open tab 1. Outline and select “Generate professional outline”.",
+        "scrittura": "Open tab 2. Writing & Quiz and select “Write the whole book”, or “Write content” for one section.",
+        "pausa": "Stay in tab 2. Writing & Quiz and select “Resume generation” when you want to continue. Existing text stays saved.",
+        "controllo": "Open tab 4. Import / Export / Copyright, run “Check manuscript completeness”, then download Word or PDF.",
+    },
+    "Español": {
+        "brief": "Abre la barra lateral a la izquierda; en el teléfono toca ☰. Completa los campos obligatorios del libro.",
+        "indice": "Abre la pestaña 1. Índice y pulsa «Generar índice profesional».",
+        "scrittura": "Abre la pestaña 2. Escritura y Quiz y pulsa «Escribir todo el libro» o «Escribir contenido» para una sección.",
+        "pausa": "Quédate en la pestaña 2. Escritura y Quiz y pulsa «Reanudar generación» cuando quieras continuar. El texto creado queda guardado.",
+        "controllo": "Abre la pestaña 4. Importar / Exportar / Copyright, ejecuta «Comprobar la integridad del manuscrito» y descarga Word o PDF.",
+    },
+    "Français": {
+        "brief": "Ouvrez la barre latérale à gauche ; sur téléphone, touchez ☰. Complétez les champs obligatoires du livre.",
+        "indice": "Ouvrez l’onglet 1. Plan et choisissez « Générer le plan professionnel ».",
+        "scrittura": "Ouvrez l’onglet 2. Écriture & Quiz et choisissez « Écrire tout le livre » ou « Écrire le contenu » pour une section.",
+        "pausa": "Restez dans l’onglet 2. Écriture & Quiz et choisissez « Reprendre la génération » pour continuer. Le texte créé reste enregistré.",
+        "controllo": "Ouvrez l’onglet 4. Importer / Exporter / Copyright, lancez « Vérifier la complétude du manuscrit », puis téléchargez Word ou PDF.",
+    },
+    "Deutsch": {
+        "brief": "Öffnen Sie die Seitenleiste links; auf dem Telefon tippen Sie auf ☰. Füllen Sie die Pflichtfelder des Buchs aus.",
+        "indice": "Öffnen Sie Tab 1. Gliederung und wählen Sie « Professionelle Gliederung erstellen ».",
+        "scrittura": "Öffnen Sie Tab 2. Schreiben & Quiz und wählen Sie « Ganzes Buch schreiben » oder « Inhalt schreiben » für einen Abschnitt.",
+        "pausa": "Bleiben Sie in Tab 2. Schreiben & Quiz und wählen Sie « Generierung fortsetzen », wenn Sie weiterarbeiten möchten. Bereits erstellter Text bleibt gespeichert.",
+        "controllo": "Öffnen Sie Tab 4. Importieren / Exportieren / Copyright, führen Sie « Manuskriptvollständigkeit prüfen » aus und laden Sie dann Word oder PDF herunter.",
+    },
+    "Română": {
+        "brief": "Deschide bara laterală din stânga; pe telefon atinge ☰. Completează câmpurile obligatorii ale cărții.",
+        "indice": "Deschide fila 1. Cuprins și apasă « Generează cuprinsul profesional ».",
+        "scrittura": "Deschide fila 2. Scriere & Quiz și apasă « Scrie toată cartea » sau « Scrie conținut » pentru o secțiune.",
+        "pausa": "Rămâi în fila 2. Scriere & Quiz și apasă « Reia generarea » când vrei să continui. Textul creat rămâne salvat.",
+        "controllo": "Deschide fila 4. Import / Export / Copyright, rulează « Verifică integritatea manuscrisului », apoi descarcă Word sau PDF.",
+    },
+    "Русский": {
+        "brief": "Откройте боковую панель слева; на телефоне нажмите ☰. Заполните обязательные поля книги.",
+        "indice": "Откройте вкладку 1. План и нажмите « Создать профессиональное оглавление ».",
+        "scrittura": "Откройте вкладку 2. Написание и Quiz и нажмите « Написать всю книгу » или « Написать содержание » для одного раздела.",
+        "pausa": "Оставайтесь на вкладке 2. Написание и Quiz и нажмите « Продолжить генерацию », когда захотите продолжить. Созданный текст сохранён.",
+        "controllo": "Откройте вкладку 4. Импорт / Экспорт / Copyright, запустите « Проверить полноту рукописи », затем скачайте Word или PDF.",
+    },
+    "العربية": {
+        "brief": "افتح الشريط الجانبي على اليسار؛ على الهاتف اضغط ☰. أكمل حقول الكتاب الإلزامية.",
+        "indice": "افتح التبويب 1. الفهرس واضغط «إنشاء الفهرس الاحترافي».",
+        "scrittura": "افتح التبويب 2. الكتابة والاختبار واضغط «اكتب الكتاب كاملاً» أو «اكتب المحتوى» لقسم واحد.",
+        "pausa": "ابقَ في التبويب 2. الكتابة والاختبار واضغط «استئناف التوليد» عندما تريد المتابعة. النص الذي تم إنشاؤه يبقى محفوظاً.",
+        "controllo": "افتح التبويب 4. استيراد / تصدير / حقوق النشر، نفّذ «فحص اكتمال المخطوطة» ثم نزّل Word أو PDF.",
+    },
+    "中文": {
+        "brief": "打开左侧边栏；手机上请点击 ☰。完成图书的必填字段。",
+        "indice": "打开第 1 个标签“目录”，点击“生成专业目录”。",
+        "scrittura": "打开第 2 个标签“写作与测验”，点击“写完整本书”；如只写一节，点击“撰写内容”。",
+        "pausa": "停留在第 2 个标签“写作与测验”，准备继续时点击“继续生成”。已生成的文本会被保存。",
+        "controllo": "打开第 4 个标签“导入 / 导出 / 版权”，运行“检查手稿完整性”，然后下载 Word 或 PDF。",
+    },
+}
+
 
 def riepilogo_operativo_progetto(campi_obbligatori=None):
     """Legge lo stato reale del progetto senza alterare sessione o memoria."""
@@ -4128,7 +4213,7 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
     direzione = "rtl" if lingua == "العربية" else "ltr"
 
     if stato["job_attivo"]:
-        fase_attiva, stato_visuale, icona = 3, "", "✍️"
+        fase_attiva, stato_visuale, icona, guida_chiave = 3, "", "✍️", "scrittura"
         sezione_corrente = stato["coda"][0] if stato["coda"] else stato["ultima_sezione"]
         dettaglio = (
             f"{stato['sezioni_scritte']}/{stato['sezioni_previste']} · {sezione_corrente}"
@@ -4136,31 +4221,33 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         )
         messaggio, prossimo = f"{etichette['in_corso']} — {dettaglio}", etichette["in_corso"]
     elif stato["job_pausa"]:
-        fase_attiva, stato_visuale, icona = 3, "pause", "⏸"
+        fase_attiva, stato_visuale, icona, guida_chiave = 3, "pause", "⏸", "pausa"
         dettagli_pausa = stato["coda"][0] if stato["coda"] else etichette["nessun"]
         messaggio, prossimo = f"{etichette['in_pausa']} — {dettagli_pausa}", etichette["continua"]
     elif stato["job_fermato"]:
-        fase_attiva, stato_visuale, icona = 3, "pause", "⏹"
+        fase_attiva, stato_visuale, icona, guida_chiave = 3, "pause", "⏹", "pausa"
         messaggio, prossimo = etichette["fermato"], etichette["continua"]
     elif not stato["brief_pronto"]:
-        fase_attiva, stato_visuale, icona = 1, "", "🧭"
+        fase_attiva, stato_visuale, icona, guida_chiave = 1, "", "🧭", "brief"
         messaggio, prossimo = etichette["configura"], etichette["configura"]
     elif not stato["indice_pronto"]:
-        fase_attiva, stato_visuale, icona = 2, "", "🧠"
+        fase_attiva, stato_visuale, icona, guida_chiave = 2, "", "🧠", "indice"
         messaggio, prossimo = etichette["crea_indice"], etichette["crea_indice"]
     elif stato["sezioni_previste"] and stato["sezioni_scritte"] < stato["sezioni_previste"]:
-        fase_attiva, stato_visuale, icona = 3, "", "✍️"
+        fase_attiva, stato_visuale, icona, guida_chiave = 3, "", "✍️", "scrittura"
         messaggio, prossimo = (
             f"{etichette['manoscritto']}: {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
             etichette["continua"],
         )
     else:
-        fase_attiva, stato_visuale, icona = 4, "complete", "✓"
+        fase_attiva, stato_visuale, icona, guida_chiave = 4, "complete", "✓", "controllo"
         messaggio, prossimo = (
             f"{etichette['manoscritto']} ✓ — {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
             etichette["controlla"],
         )
 
+    istruzioni = ISTRUZIONI_PROSSIMO_PASSO.get(lingua, ISTRUZIONI_PROSSIMO_PASSO["English"])
+    istruzione_operativa = istruzioni[guida_chiave]
     percorso_html = "".join(
         (
             f"<div class='ss-project-step {'done' if numero < fase_attiva else 'current' if numero == fase_attiva else ''}'>"
@@ -4184,7 +4271,8 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
           <div class='ss-project-journey'>{percorso_html}</div>
           <div class='ss-project-metrics'>{metriche_html}</div>
           <div class='ss-next-action {stato_visuale}'><span class='ss-next-icon'>{icona}</span>
-            <div><small>{html.escape(etichette['prossimo'])}</small><strong>{html.escape(messaggio)}</strong></div>
+            <div><small>{html.escape(etichette['prossimo'])}</small><strong>{html.escape(messaggio)}</strong>
+            <p>{html.escape(istruzione_operativa)}</p></div>
           </div>
         </section>""",
         unsafe_allow_html=True,
@@ -7378,6 +7466,27 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     with tabs[0]:
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
+        chat_subito = {
+            "Italiano": ("🤖 Preferisci essere guidato?", "La chat guidata prepara con te i campi della sidebar. È facoltativa: puoi sempre compilare tutto anche da solo.", "💬 APRI LA CHAT GUIDATA"),
+            "English": ("🤖 Would you like guidance?", "Guided chat helps you prepare the sidebar fields. It is optional: you can always complete everything yourself.", "💬 OPEN GUIDED CHAT"),
+            "Español": ("🤖 ¿Prefieres recibir ayuda?", "El chat guiado prepara contigo los campos de la barra lateral. Es opcional: siempre puedes completarlos por tu cuenta.", "💬 ABRIR CHAT GUIADO"),
+            "Français": ("🤖 Vous préférez être guidé ?", "Le chat guidé prépare avec vous les champs de la barre latérale. Il est facultatif : vous pouvez toujours tout remplir vous-même.", "💬 OUVRIR LE CHAT GUIDÉ"),
+            "Deutsch": ("🤖 Möchten Sie Unterstützung?", "Der geführte Chat bereitet mit Ihnen die Felder der Seitenleiste vor. Er ist optional: Sie können alles selbst ausfüllen.", "💬 GEFÜHRTEN CHAT ÖFFNEN"),
+            "Română": ("🤖 Preferi să fii ghidat?", "Chatul ghidat pregătește cu tine câmpurile barei laterale. Este opțional: le poți completa oricând și singur.", "💬 DESCHIDE CHATUL GHIDAT"),
+            "Русский": ("🤖 Хотите помощь?", "Управляемый чат поможет подготовить поля боковой панели. Это необязательно: всё можно заполнить самостоятельно.", "💬 ОТКРЫТЬ УПРАВЛЯЕМЫЙ ЧАТ"),
+            "العربية": ("🤖 هل تفضّل المساعدة؟", "تساعدك الدردشة الموجّهة في إعداد حقول الشريط الجانبي. هي اختيارية: يمكنك دائماً إكمالها بنفسك.", "💬 افتح الدردشة الموجّهة"),
+            "中文": ("🤖 想要引导帮助吗？", "引导式聊天会协助你准备侧边栏字段。这是可选功能：你随时可以自行填写。", "💬 打开引导式聊天"),
+        }
+        titolo_chat_subito, testo_chat_subito, pulsante_chat_subito = chat_subito.get(
+            lingua_sel, chat_subito["Italiano"]
+        )
+        st.success(f"**{titolo_chat_subito}**\n\n{testo_chat_subito}")
+        st.button(
+            pulsante_chat_subito,
+            key="avvia_chat_sidebar_subito",
+            on_click=avvia_chat_sidebar_da_guida,
+            use_container_width=True,
+        )
         guida_personalizzazione = {
             "Italiano": "✍️ **Personalizza il tuo libro** è facoltativo: conserva voce, casi, priorità e confini nel progetto. Puoi anche scegliere una pausa guidata prima delle Parti o della conclusione; la risposta viene aggiunta al brief senza consumare crediti.",
             "English": "✍️ **Personalize your book** is optional: it keeps your voice, cases, priorities and boundaries with the project. You may also choose a guided pause before Parts or the conclusion; your answer is added to the brief without using credits.",
@@ -7888,7 +7997,33 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
         # Alternativa facoltativa al copia/incolla: una conversazione interna
         # che usa il cervello già selezionato nella sidebar. L'avvio è gratuito;
         # si scala credito soltanto quando il cervello restituisce una risposta.
-        with st.expander(f"🟢 {etichette_chat['guidata']}", expanded=False):
+        with st.expander(
+            f"🟢 {etichette_chat['guidata']}",
+            expanded=bool(st.session_state.get("chat_sidebar_attiva")),
+        ):
+            if st.session_state.pop("chat_sidebar_scroll_request", False):
+                # Il comando in alto avvia subito la chat e porta l'utente al
+                # pannello aperto, senza aggiungere una seconda chat o azione.
+                components.html(
+                    """
+                    <script>
+                    setTimeout(function () {
+                      try {
+                        const pannelli = Array.from(
+                          window.parent.document.querySelectorAll('[data-testid="stExpander"]')
+                        ).filter(function (elemento) {
+                          return (elemento.innerText || '').toLowerCase().includes('chat');
+                        });
+                        const pannello = pannelli[pannelli.length - 1];
+                        if (pannello) {
+                          pannello.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      } catch (errore) {}
+                    }, 250);
+                    </script>
+                    """,
+                    height=0,
+                )
             usa_deepseek_chat = usa_deepseek_pro()
             costo_chat_visibile = (
                 "1/3 di credito (1 credito ogni 3 risposte)"
