@@ -5728,13 +5728,22 @@ if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
 
 with st.sidebar:
-    # Il cervello è la prima scelta operativa: resta in alto anche quando la
-    # sidebar è lunga, così ogni costo e ogni funzione mostrano subito il
-    # motore che verrà effettivamente usato. La lingua corrente già salvata
-    # serve soltanto a localizzare l'etichetta prima del relativo selettore.
+    # La lingua è sempre il primo comando: traduce subito crediti, menu e
+    # configurazione, senza modificare i dati già salvati nel progetto.
     lingua_sidebar_precedente = str(st.session_state.get("editor_language") or "Italiano")
+    lingua_scelta = st.selectbox(
+        testo_ui("lingua", lingua_sidebar_precedente),
+        [""] + list(TRADUZIONI.keys()),
+        key="editor_language",
+        format_func=lambda valore: valore or testo_ui("seleziona", lingua_sidebar_precedente),
+    )
+    lingua_sel = lingua_scelta or "Italiano"
+    L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
+
+    # Il cervello segue la lingua: etichetta, aiuto e tariffario vengono così
+    # mostrati immediatamente nella lingua appena scelta dall'utente.
     provider_ia = st.selectbox(
-        testo_ui("cervello", lingua_sidebar_precedente),
+        testo_ui("cervello", lingua_sel),
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
         key="provider_ia",
         help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
@@ -5742,9 +5751,6 @@ with st.sidebar:
     # Il contenitore viene riempito dopo la scelta della lingua, ma conserva
     # questa posizione: tariffario e cervello restano sempre uno sotto l'altro.
     tariffario_sotto_cervello = st.container()
-    lingua_scelta = st.selectbox(testo_ui("lingua"), [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or testo_ui("seleziona"))
-    lingua_sel = lingua_scelta or "Italiano"
-    L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
     intestazioni_sidebar = {
         "Italiano": ("Percorso: configura → indice → scrivi → controlla ed esporta", "Configura il progetto", "Fonti e ricerca (opzionale)", "Dettagli editoriali", "Sessione e memoria", "Salva per conservare anche le modifiche manuali; il ripristino è sempre volontario."),
         "English": ("Path: configure → outline → write → review and export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."),
