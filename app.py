@@ -1377,6 +1377,14 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
    selezionabili. Gli stessi pulsanti Streamlit restano invariati: cambia
    soltanto la presentazione grafica e quindi non cambia il flusso di lavoro. */
 [data-testid="stTabs"] { margin: 1.1rem 0 1.35rem; }
+.ss-operational-menu-heading {
+    display:flex; align-items:center; gap:.85rem; margin:1.35rem 0 .45rem;
+    padding:.9rem 1.05rem; border-left:5px solid #45b3ff; border-radius:12px;
+    background:linear-gradient(90deg,rgba(24,82,125,.52),rgba(13,36,61,.08));
+}
+.ss-operational-menu-heading span { font-size:1.7rem; line-height:1; }
+.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.55rem; font-weight:850; letter-spacing:-.02em; }
+.ss-operational-menu-heading p { margin:.16rem 0 0; color:#bcd8ee; font-size:.88rem; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     display:flex; align-items:stretch; gap:.62rem; padding:.68rem;
     overflow-x:auto; overflow-y:hidden; border:1px solid #2d4c6d; border-radius:19px;
@@ -1428,16 +1436,16 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
-.ss-project-panel { margin:.2rem 0 1.15rem; padding:1.15rem; border:1px solid #2c4563; border-radius:16px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 14px 34px rgba(0,0,0,.16); }
-.ss-project-title { margin:0 0 .95rem; color:#fff; font-size:1.55rem; font-weight:850; letter-spacing:-.02em; }
-.ss-project-journey { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.48rem; margin-bottom:1rem; }
-.ss-project-step { min-width:0; display:flex; align-items:center; gap:.48rem; padding:.65rem .6rem; border:1px solid #2b4968; border-radius:11px; background:#0d2037; color:#a8bed5; font-size:.78rem; font-weight:750; }
-.ss-project-step span { flex:0 0 1.5rem; width:1.5rem; height:1.5rem; display:grid; place-items:center; border-radius:50%; background:#29445f; color:#dcecff; font-size:.72rem; }
+.ss-project-panel { margin:.15rem 0 .85rem; padding:.8rem; border:1px solid #2c4563; border-radius:14px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 10px 25px rgba(0,0,0,.14); }
+.ss-project-title { margin:0 0 .65rem; color:#fff; font-size:1.25rem; font-weight:850; letter-spacing:-.02em; }
+.ss-project-journey { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.35rem; margin-bottom:.65rem; }
+.ss-project-step { min-width:0; display:flex; align-items:center; gap:.38rem; padding:.44rem .45rem; border:1px solid #2b4968; border-radius:9px; background:#0d2037; color:#a8bed5; font-size:.7rem; font-weight:750; }
+.ss-project-step span { flex:0 0 1.22rem; width:1.22rem; height:1.22rem; display:grid; place-items:center; border-radius:50%; background:#29445f; color:#dcecff; font-size:.63rem; }
 .ss-project-step.done { color:#b8f6c7; border-color:#357754; background:#102c24; }.ss-project-step.done span { background:#1f9d55; color:#fff; }
 .ss-project-step.current { color:#fff; border-color:#3ea7fa; background:linear-gradient(135deg,#165a91,#187fc8); box-shadow:0 6px 15px rgba(33,150,243,.18); }.ss-project-step.current span { background:#fff; color:#1477c1; }
-.ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.62rem; margin:.15rem 0 .95rem; }
-.ss-project-metric { min-width:0; padding:.78rem .82rem; border-radius:12px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.75rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.25rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.55rem; letter-spacing:-.04em; }
-.ss-next-action { display:flex; gap:.75rem; align-items:flex-start; padding:.88rem 1rem; border-radius:12px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 2rem; width:2rem; height:2rem; display:grid; place-items:center; border-radius:9px; background:#2a9ded; font-size:1.08rem; }.ss-next-action small { display:block; color:#a7d4f6; font-weight:800; margin-bottom:.16rem; }.ss-next-action strong { display:block; font-size:1rem; line-height:1.38; }.ss-next-action p { margin:.38rem 0 0; color:#d7ecfc; font-size:.88rem; line-height:1.45; }.ss-next-action p b { color:#fff; }
+.ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.42rem; margin:.1rem 0 .65rem; }
+.ss-project-metric { min-width:0; padding:.52rem .58rem; border-radius:10px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.67rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.16rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.22rem; letter-spacing:-.04em; }
+.ss-next-action { display:flex; gap:.55rem; align-items:flex-start; padding:.62rem .7rem; border-radius:10px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 1.62rem; width:1.62rem; height:1.62rem; display:grid; place-items:center; border-radius:8px; background:#2a9ded; font-size:.9rem; }.ss-next-action small { display:block; color:#a7d4f6; font-size:.73rem; font-weight:800; margin-bottom:.1rem; }.ss-next-action strong { display:block; font-size:.88rem; line-height:1.3; }.ss-next-action p { margin:.22rem 0 0; color:#d7ecfc; font-size:.77rem; line-height:1.35; }.ss-next-action p b { color:#fff; }
 .ss-next-action.pause { background:#4e4217; border-color:#a98629; }.ss-next-action.pause .ss-next-icon { background:#d8a621; color:#1c1708; }.ss-next-action.complete { background:#103d2e; border-color:#2c8d61; }.ss-next-action.complete .ss-next-icon { background:#28ad70; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
@@ -1526,6 +1534,10 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
         font-size:1.08rem !important; text-align:left !important;
     }
     [data-testid="stTabs"] button[aria-selected="true"]::after { right:.82rem !important; bottom:.7rem !important; }
+    .ss-operational-menu-heading { margin:1rem 0 .4rem !important; padding:.76rem .82rem !important; gap:.62rem !important; }
+    .ss-operational-menu-heading span { font-size:1.42rem !important; }
+    .ss-operational-menu-heading h2 { font-size:1.3rem !important; }
+    .ss-operational-menu-heading p { font-size:.8rem !important; line-height:1.35 !important; }
 
     /* Editor, controlli e anteprima mantengono una dimensione leggibile e
        l'anteprima scorre senza creare una pagina eccessivamente lunga. */
@@ -1539,13 +1551,13 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-workspace-title { font-size: 1.05rem !important; white-space: normal !important; }
     .ss-workspace-meta { gap: .35rem !important; }
     .ss-workspace-chip { font-size: .7rem !important; padding: .36rem .5rem !important; }
-    .ss-project-panel { margin:.1rem 0 .9rem !important; padding:.86rem .75rem !important; border-radius:13px !important; }
-    .ss-project-title { font-size:1.22rem !important; margin-bottom:.72rem !important; }
-    .ss-project-journey { grid-template-columns:1fr !important; gap:.38rem !important; margin-bottom:.75rem !important; }
-    .ss-project-step { padding:.58rem .65rem !important; font-size:.83rem !important; }
-    .ss-project-metrics { grid-template-columns:1fr 1fr !important; gap:.45rem !important; margin-bottom:.72rem !important; }
-    .ss-project-metric { padding:.66rem .7rem !important; }.ss-project-metric b { font-size:1.28rem !important; }
-    .ss-next-action { padding:.75rem .78rem !important; gap:.58rem !important; }.ss-next-action strong { font-size:.93rem !important; }
+    .ss-project-panel { margin:.08rem 0 .62rem !important; padding:.66rem .62rem !important; border-radius:12px !important; }
+    .ss-project-title { font-size:1.1rem !important; margin-bottom:.5rem !important; }
+    .ss-project-journey { grid-template-columns:1fr !important; gap:.3rem !important; margin-bottom:.5rem !important; }
+    .ss-project-step { padding:.45rem .52rem !important; font-size:.76rem !important; }
+    .ss-project-metrics { grid-template-columns:1fr 1fr !important; gap:.35rem !important; margin-bottom:.5rem !important; }
+    .ss-project-metric { padding:.5rem .54rem !important; }.ss-project-metric b { font-size:1.08rem !important; }
+    .ss-next-action { padding:.58rem .62rem !important; gap:.48rem !important; }.ss-next-action strong { font-size:.83rem !important; }
     .ss-section-card { padding: .35rem .7rem .75rem !important; border-radius: 11px !important; }
 }
 </style>
@@ -1586,6 +1598,9 @@ if st.session_state.get("commercial_ui_theme", "Scuro") == "Chiaro":
     [data-testid="stTabs"] button[role="tab"]:nth-of-type(6) { background:linear-gradient(145deg,#f2fff6,#d6f5e0) !important; }
     [data-testid="stTabs"] button[role="tab"]:hover { color:#103f68 !important; border-color:#4b9ddb !important; background:linear-gradient(145deg,#f5fcff,#d9f0ff) !important; }
     [data-testid="stTabs"] button[aria-selected="true"] { color:#ffffff !important; border-color:#2389d1 !important; background:linear-gradient(135deg,#087cc7,#28a8ed) !important; }
+    .ss-operational-menu-heading { border-left-color:#168fd9 !important; background:linear-gradient(90deg,#d7f0ff,#f5fbff) !important; }
+    .ss-operational-menu-heading h2 { color:#123f64 !important; }
+    .ss-operational-menu-heading p { color:#416d8d !important; }
     .ss-workspace-header { border-color:#9fcbe8 !important; background:linear-gradient(135deg,#ffffff,#dff2ff) !important; box-shadow:0 12px 30px rgba(38,114,166,.16) !important; }
     .ss-workspace-title, .ss-section-card h2, .ss-section-card h3 { color:#142b43 !important; }
     .ss-workspace-subtitle { color:#476b88 !important; }
@@ -7477,6 +7492,27 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         esegui_collaudo_automatico()
         st.rerun()
 
+    etichette_menu_operativo = {
+        "Italiano": ("Menu operativo", "Segui i passaggi del progetto, dall'idea all'esportazione."),
+        "English": ("Workspace menu", "Follow the project steps, from idea to export."),
+        "Español": ("Menú operativo", "Sigue los pasos del proyecto, desde la idea hasta la exportación."),
+        "Français": ("Menu de travail", "Suivez les étapes du projet, de l’idée à l’exportation."),
+        "Deutsch": ("Arbeitsmenü", "Folgen Sie den Projektschritten von der Idee bis zum Export."),
+        "Română": ("Meniu de lucru", "Urmează pașii proiectului, de la idee până la export."),
+        "Русский": ("Рабочее меню", "Следуйте этапам проекта — от идеи до экспорта."),
+        "العربية": ("قائمة العمل", "اتبع خطوات المشروع من الفكرة إلى التصدير."),
+        "中文": ("工作菜单", "从想法到导出，按步骤完成项目。"),
+    }
+    titolo_menu_operativo, descrizione_menu_operativo = etichette_menu_operativo.get(
+        lingua_sel, etichette_menu_operativo["Italiano"]
+    )
+    st.markdown(
+        f"""<section class='ss-operational-menu-heading'>
+          <span>🧭</span><div><h2>{html.escape(titolo_menu_operativo)}</h2>
+          <p>{html.escape(descrizione_menu_operativo)}</p></div>
+        </section>""",
+        unsafe_allow_html=True,
+    )
     tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
 
     # Stile diretto e indipendente dal tema per le sei schede principali.
@@ -7520,9 +7556,9 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               const scelto = scheda.getAttribute('aria-selected') === 'true';
               const colore = colori[indice];
               imposta(scheda.style, 'box-sizing', 'border-box');
-              imposta(scheda.style, 'flex', mobile ? '0 0 min(84vw, 350px)' : '0 0 220px');
-              imposta(scheda.style, 'min-height', mobile ? '132px' : '116px');
-              imposta(scheda.style, 'padding', mobile ? '22px 20px' : '20px 17px');
+              imposta(scheda.style, 'flex', mobile ? '0 0 min(76vw, 310px)' : '0 0 185px');
+              imposta(scheda.style, 'min-height', mobile ? '108px' : '94px');
+              imposta(scheda.style, 'padding', mobile ? '16px 17px' : '14px 13px');
               imposta(scheda.style, 'margin', '0');
               imposta(scheda.style, 'border-radius', '18px');
               imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
@@ -7531,7 +7567,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
                 ? 'linear-gradient(135deg, #1688da, #36b4f4)'
                 : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
               imposta(scheda.style, 'color', '#ffffff');
-              imposta(scheda.style, 'font-size', mobile ? '19px' : '18px');
+              imposta(scheda.style, 'font-size', mobile ? '17px' : '16px');
               imposta(scheda.style, 'font-weight', '800');
               imposta(scheda.style, 'line-height', '1.35');
               imposta(scheda.style, 'white-space', 'normal');
