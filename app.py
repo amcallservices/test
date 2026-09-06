@@ -1436,16 +1436,18 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
-.ss-project-panel { margin:.15rem 0 .85rem; padding:.8rem; border:1px solid #2c4563; border-radius:14px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 10px 25px rgba(0,0,0,.14); }
-.ss-project-title { margin:0 0 .65rem; color:#fff; font-size:1.25rem; font-weight:850; letter-spacing:-.02em; }
-.ss-project-journey { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.35rem; margin-bottom:.65rem; }
+.ss-project-panel { margin:.08rem 0 .58rem; padding:.55rem .62rem; border:1px solid #2c4563; border-radius:12px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 7px 18px rgba(0,0,0,.12); }
+.ss-project-title { margin:0 0 .42rem; color:#fff; font-size:1.05rem; font-weight:850; letter-spacing:-.02em; }
+/* Il percorso in cinque riquadri è ora nel Centro operativo, subito sotto.
+   Qui sarebbe duplicato: il Centro del progetto resta un riepilogo compatto. */
+.ss-project-journey { display:none; }
 .ss-project-step { min-width:0; display:flex; align-items:center; gap:.38rem; padding:.44rem .45rem; border:1px solid #2b4968; border-radius:9px; background:#0d2037; color:#a8bed5; font-size:.7rem; font-weight:750; }
 .ss-project-step span { flex:0 0 1.22rem; width:1.22rem; height:1.22rem; display:grid; place-items:center; border-radius:50%; background:#29445f; color:#dcecff; font-size:.63rem; }
 .ss-project-step.done { color:#b8f6c7; border-color:#357754; background:#102c24; }.ss-project-step.done span { background:#1f9d55; color:#fff; }
 .ss-project-step.current { color:#fff; border-color:#3ea7fa; background:linear-gradient(135deg,#165a91,#187fc8); box-shadow:0 6px 15px rgba(33,150,243,.18); }.ss-project-step.current span { background:#fff; color:#1477c1; }
-.ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.42rem; margin:.1rem 0 .65rem; }
-.ss-project-metric { min-width:0; padding:.52rem .58rem; border-radius:10px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.67rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.16rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.22rem; letter-spacing:-.04em; }
-.ss-next-action { display:flex; gap:.55rem; align-items:flex-start; padding:.62rem .7rem; border-radius:10px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 1.62rem; width:1.62rem; height:1.62rem; display:grid; place-items:center; border-radius:8px; background:#2a9ded; font-size:.9rem; }.ss-next-action small { display:block; color:#a7d4f6; font-size:.73rem; font-weight:800; margin-bottom:.1rem; }.ss-next-action strong { display:block; font-size:.88rem; line-height:1.3; }.ss-next-action p { margin:.22rem 0 0; color:#d7ecfc; font-size:.77rem; line-height:1.35; }.ss-next-action p b { color:#fff; }
+.ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.32rem; margin:.06rem 0 .42rem; }
+.ss-project-metric { min-width:0; padding:.4rem .45rem; border-radius:8px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.61rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.05rem; letter-spacing:-.04em; }
+.ss-next-action { display:flex; gap:.46rem; align-items:flex-start; padding:.48rem .55rem; border-radius:8px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 1.4rem; width:1.4rem; height:1.4rem; display:grid; place-items:center; border-radius:7px; background:#2a9ded; font-size:.8rem; }.ss-next-action small { display:block; color:#a7d4f6; font-size:.66rem; font-weight:800; margin-bottom:.05rem; }.ss-next-action strong { display:block; font-size:.79rem; line-height:1.22; }.ss-next-action p { margin:.15rem 0 0; color:#d7ecfc; font-size:.7rem; line-height:1.25; }.ss-next-action p b { color:#fff; }
 .ss-next-action.pause { background:#4e4217; border-color:#a98629; }.ss-next-action.pause .ss-next-icon { background:#d8a621; color:#1c1708; }.ss-next-action.complete { background:#103d2e; border-color:#2c8d61; }.ss-next-action.complete .ss-next-icon { background:#28ad70; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
@@ -7493,15 +7495,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.rerun()
 
     etichette_menu_operativo = {
-        "Italiano": ("Menu operativo", "Segui i passaggi del progetto, dall'idea all'esportazione."),
-        "English": ("Workspace menu", "Follow the project steps, from idea to export."),
-        "Español": ("Menú operativo", "Sigue los pasos del proyecto, desde la idea hasta la exportación."),
-        "Français": ("Menu de travail", "Suivez les étapes du projet, de l’idée à l’exportation."),
-        "Deutsch": ("Arbeitsmenü", "Folgen Sie den Projektschritten von der Idee bis zum Export."),
-        "Română": ("Meniu de lucru", "Urmează pașii proiectului, de la idee până la export."),
-        "Русский": ("Рабочее меню", "Следуйте этапам проекта — от идеи до экспорта."),
-        "العربية": ("قائمة العمل", "اتبع خطوات المشروع من الفكرة إلى التصدير."),
-        "中文": ("工作菜单", "从想法到导出，按步骤完成项目。"),
+        "Italiano": ("Centro operativo", "Le sezioni 0–5: segui il percorso dall'idea all'esportazione."),
+        "English": ("Operations center", "Sections 0–5: follow the project from idea to export."),
+        "Español": ("Centro operativo", "Secciones 0–5: sigue el proyecto desde la idea hasta la exportación."),
+        "Français": ("Centre opérationnel", "Sections 0–5 : suivez le projet de l’idée à l’exportation."),
+        "Deutsch": ("Arbeitszentrale", "Bereiche 0–5: Folgen Sie dem Projekt von der Idee bis zum Export."),
+        "Română": ("Centru operațional", "Secțiunile 0–5: urmează proiectul de la idee până la export."),
+        "Русский": ("Рабочий центр", "Разделы 0–5: следуйте проекту от идеи до экспорта."),
+        "العربية": ("مركز العمل", "الأقسام 0–5: اتبع المشروع من الفكرة إلى التصدير."),
+        "中文": ("操作中心", "第 0–5 节：从想法到导出，按步骤完成项目。"),
     }
     titolo_menu_operativo, descrizione_menu_operativo = etichette_menu_operativo.get(
         lingua_sel, etichette_menu_operativo["Italiano"]
@@ -7545,8 +7547,10 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'align-items', 'stretch');
             imposta(lista.style, 'gap', mobile ? '12px' : '14px');
             imposta(lista.style, 'padding', mobile ? '12px' : '15px');
-            imposta(lista.style, 'overflow-x', 'auto');
+            imposta(lista.style, 'overflow-x', mobile ? 'auto' : 'hidden');
             imposta(lista.style, 'overflow-y', 'hidden');
+            imposta(lista.style, 'width', '100%');
+            imposta(lista.style, 'box-sizing', 'border-box');
             imposta(lista.style, 'border', '2px solid #3976a4');
             imposta(lista.style, 'border-radius', '22px');
             imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49)');
@@ -7556,7 +7560,8 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               const scelto = scheda.getAttribute('aria-selected') === 'true';
               const colore = colori[indice];
               imposta(scheda.style, 'box-sizing', 'border-box');
-              imposta(scheda.style, 'flex', mobile ? '0 0 min(76vw, 310px)' : '0 0 185px');
+              imposta(scheda.style, 'flex', mobile ? '0 0 min(76vw, 310px)' : '1 1 0');
+              imposta(scheda.style, 'min-width', '0');
               imposta(scheda.style, 'min-height', mobile ? '108px' : '94px');
               imposta(scheda.style, 'padding', mobile ? '16px 17px' : '14px 13px');
               imposta(scheda.style, 'margin', '0');
