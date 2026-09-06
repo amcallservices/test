@@ -1199,6 +1199,7 @@ def _landing_page() -> None:
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"],
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] img,
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] figure {background:transparent !important}
+          [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] img {mix-blend-mode:screen !important}
           .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
             max-width:900px; margin:.35rem auto 1.25rem; padding:.5rem; border:1px solid rgba(191,219,240,.9); border-radius:16px;
             background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}

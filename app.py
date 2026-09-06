@@ -5735,6 +5735,7 @@ with st.sidebar:
         [data-testid="stSidebar"] [data-testid="stImage"],
         [data-testid="stSidebar"] [data-testid="stImage"] figure,
         [data-testid="stSidebar"] [data-testid="stImage"] img {background:transparent !important;}
+        [data-testid="stSidebar"] [data-testid="stImage"] img {mix-blend-mode:screen !important;}
         </style>""",
         unsafe_allow_html=True,
     )
