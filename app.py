@@ -5730,6 +5730,14 @@ if st.session_state.get("autosave_snapshot_da_ripristinare"):
 with st.sidebar:
     # Il marchio identifica subito l'editor; sotto restano lingua, cervello e
     # tutti i comandi nella stessa sequenza funzionale già usata dall'utente.
+    st.markdown(
+        """<style>
+        [data-testid="stSidebar"] [data-testid="stImage"],
+        [data-testid="stSidebar"] [data-testid="stImage"] figure,
+        [data-testid="stSidebar"] [data-testid="stImage"] img {background:transparent !important;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
     logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo.png")
     if os.path.isfile(logo_sidebar):
         st.image(logo_sidebar, use_container_width=True)

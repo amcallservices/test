@@ -1109,15 +1109,15 @@ HOME_ADVANTAGES_COPY = {
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
-    "Italiano": ("Percorso", "Funzioni", "Due cervelli", "Crediti", "FAQ", "Guide"),
-    "English": ("How it works", "Features", "Two engines", "Credits", "FAQ", "Guides"),
-    "Español": ("Cómo funciona", "Funciones", "Dos motores", "Créditos", "FAQ", "Guías"),
-    "Français": ("Parcours", "Fonctions", "Deux moteurs", "Crédits", "FAQ", "Guides"),
-    "Deutsch": ("Ablauf", "Funktionen", "Zwei Engines", "Credits", "FAQ", "Leitfäden"),
-    "Română": ("Parcurs", "Funcții", "Două motoare", "Credite", "FAQ", "Ghiduri"),
-    "Русский": ("Как это работает", "Функции", "Два движка", "Кредиты", "FAQ", "Руководства"),
-    "العربية": ("المسار", "الوظائف", "محركان", "الأرصدة", "الأسئلة", "الأدلة"),
-    "中文": ("使用流程", "功能", "双引擎", "积分", "常见问题", "指南"),
+    "Italiano": ("Percorso", "Funzioni", "Vantaggi", "Due cervelli", "Crediti", "FAQ", "Guide"),
+    "English": ("How it works", "Features", "Benefits", "Two engines", "Credits", "FAQ", "Guides"),
+    "Español": ("Cómo funciona", "Funciones", "Ventajas", "Dos motores", "Créditos", "FAQ", "Guías"),
+    "Français": ("Parcours", "Fonctions", "Avantages", "Deux moteurs", "Crédits", "FAQ", "Guides"),
+    "Deutsch": ("Ablauf", "Funktionen", "Vorteile", "Zwei Engines", "Credits", "FAQ", "Leitfäden"),
+    "Română": ("Parcurs", "Funcții", "Avantaje", "Două motoare", "Credite", "FAQ", "Ghiduri"),
+    "Русский": ("Как это работает", "Функции", "Преимущества", "Два движка", "Кредиты", "FAQ", "Руководства"),
+    "العربية": ("المسار", "الوظائف", "المزايا", "محركان", "الأرصدة", "الأسئلة", "الأدلة"),
+    "中文": ("使用流程", "功能", "优势", "双引擎", "积分", "常见问题", "指南"),
 }
 
 # Guide PDF della sola area riservata. Sono disponibili in entrambe le lingue
@@ -1196,6 +1196,9 @@ def _landing_page() -> None:
             border-radius:18px !important; border:1px solid rgba(22,137,232,.26) !important;
             box-shadow:0 20px 42px rgba(11,59,103,.20) !important;
           }
+          [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"],
+          [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] img,
+          [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] figure {background:transparent !important}
           .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
             max-width:900px; margin:.35rem auto 1.25rem; padding:.5rem; border:1px solid rgba(191,219,240,.9); border-radius:16px;
             background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}
@@ -1285,6 +1288,7 @@ def _landing_page() -> None:
           .ss-compact-step {display:flex; align-items:center; gap:.7rem; text-align:left; padding:.8rem .9rem; border:1px solid #c8ddeb; border-radius:14px; background:rgba(255,255,255,.9); color:#486581; font-size:.86rem; line-height:1.35}
           .ss-compact-step b {display:block; color:#102a43; font-size:.95rem}.ss-compact-number {flex:0 0 1.8rem; height:1.8rem; border-radius:50%; display:grid; place-items:center; background:#1689e8; color:#fff; font-weight:900}
           .ss-home-detail-caption {max-width:850px; margin:.1rem auto .7rem; text-align:center; color:#486581; font-size:.88rem}
+          .ss-anchor-target {height:.1rem; scroll-margin-top:4.5rem}
           .ss-advantages-intro {max-width:850px; margin:.25rem auto .8rem; text-align:center; color:#b9d4e8; line-height:1.48}
           .ss-advantages {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:.45rem 0 .25rem}
           .ss-advantage {display:flex; gap:.75rem; padding:.85rem; border:1px solid rgba(125,211,252,.24); border-radius:13px; background:rgba(7,37,63,.72); color:#b9d4e8; line-height:1.4}
@@ -1370,7 +1374,7 @@ def _landing_page() -> None:
     st.markdown(
         f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
         <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
-        <a href='#ss-cervelli'>{N[2]}</a><a href='#ss-crediti'>{N[3]}</a><a href='#ss-faq'>{N[4]}</a><a href='#ss-guide'>{N[5]}</a>
+        <a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a><a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a><a href='#ss-guide'>{N[6]}</a>
         </nav>""",
         unsafe_allow_html=True,
     )
@@ -1474,6 +1478,7 @@ def _landing_page() -> None:
         f"<div class='ss-advantage'><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></div>"
         for icon, title, text in V[2]
     )
+    st.markdown("<div id='ss-vantaggi' class='ss-anchor-target'></div>", unsafe_allow_html=True)
     with st.expander(f"✦ {V[0]}", expanded=False):
         st.markdown(
             f"<div class='ss-advantages-intro' dir='{direzione_home}'>{V[1]}</div>"
