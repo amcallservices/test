@@ -1251,6 +1251,21 @@ def _landing_page() -> None:
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
           [data-testid="stMain"] .stButton button[kind="secondary"] {background:#fff !important; color:#1269ae !important; border-color:#8ec5ee !important; box-shadow:none}
           .st-key-landing_signup .stButton button {min-height:3.75rem !important;font-size:1.14rem !important;border-radius:14px !important;box-shadow:0 10px 22px rgba(22,137,232,.26) !important}
+          /* Download guide: azzurro distinto dai pulsanti di accesso, con
+             contrasto alto e la stessa resa sia su desktop sia su mobile. */
+          .st-key-download_private_area_guide_it .stDownloadButton button,
+          .st-key-download_private_area_guide_en .stDownloadButton button {
+            min-height:3.45rem !important; border-radius:12px !important;
+            background:linear-gradient(135deg,#1696dc,#53c7f5) !important;
+            border:1px solid #0b80c1 !important; color:#fff !important;
+            box-shadow:0 8px 18px rgba(22,150,220,.24) !important;
+            font-weight:850 !important;
+          }
+          .st-key-download_private_area_guide_it .stDownloadButton button:hover,
+          .st-key-download_private_area_guide_en .stDownloadButton button:hover {
+            background:linear-gradient(135deg,#087fbe,#2caee0) !important;
+            border-color:#056a9e !important; transform:translateY(-1px) !important;
+          }
           /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
           [data-testid="stHeader"] {background:transparent !important}
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
