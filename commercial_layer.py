@@ -1081,16 +1081,46 @@ HOME_PERSONALIZATION_COPY = {
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
-    "Italiano": ("Percorso", "Funzioni", "Due cervelli", "Crediti", "FAQ"),
-    "English": ("How it works", "Features", "Two engines", "Credits", "FAQ"),
-    "Español": ("Cómo funciona", "Funciones", "Dos motores", "Créditos", "FAQ"),
-    "Français": ("Parcours", "Fonctions", "Deux moteurs", "Crédits", "FAQ"),
-    "Deutsch": ("Ablauf", "Funktionen", "Zwei Engines", "Credits", "FAQ"),
-    "Română": ("Parcurs", "Funcții", "Două motoare", "Credite", "FAQ"),
-    "Русский": ("Как это работает", "Функции", "Два движка", "Кредиты", "FAQ"),
-    "العربية": ("المسار", "الوظائف", "محركان", "الأرصدة", "الأسئلة"),
-    "中文": ("使用流程", "功能", "双引擎", "积分", "常见问题"),
+    "Italiano": ("Percorso", "Funzioni", "Due cervelli", "Crediti", "FAQ", "Guide"),
+    "English": ("How it works", "Features", "Two engines", "Credits", "FAQ", "Guides"),
+    "Español": ("Cómo funciona", "Funciones", "Dos motores", "Créditos", "FAQ", "Guías"),
+    "Français": ("Parcours", "Fonctions", "Deux moteurs", "Crédits", "FAQ", "Guides"),
+    "Deutsch": ("Ablauf", "Funktionen", "Zwei Engines", "Credits", "FAQ", "Leitfäden"),
+    "Română": ("Parcurs", "Funcții", "Două motoare", "Credite", "FAQ", "Ghiduri"),
+    "Русский": ("Как это работает", "Функции", "Два движка", "Кредиты", "FAQ", "Руководства"),
+    "العربية": ("المسار", "الوظائف", "محركان", "الأرصدة", "الأسئلة", "الأدلة"),
+    "中文": ("使用流程", "功能", "双引擎", "积分", "常见问题", "指南"),
 }
+
+# Guide PDF della sola area riservata. Sono disponibili in entrambe le lingue
+# indipendentemente dalla lingua scelta nella home, così ogni visitatore può
+# scaricare la versione che preferisce.
+HOME_GUIDES_COPY = {
+    "Italiano": ("Guide dell'area riservata", "Scarica gratuitamente la guida completa. Le due versioni sono separate: scegli quella nella lingua che preferisci.", "📄 Scarica la guida in italiano (PDF)", "📄 Download the English guide (PDF)"),
+    "English": ("Private Area Guides", "Download the complete guide for free. The two versions are separate: choose the language you prefer.", "📄 Download the Italian guide (PDF)", "📄 Download the English guide (PDF)"),
+    "Español": ("Guías del área privada", "Descarga gratis la guía completa. Las dos versiones son independientes: elige el idioma que prefieras.", "📄 Descargar la guía en italiano (PDF)", "📄 Descargar la guía en inglés (PDF)"),
+    "Français": ("Guides de l'espace privé", "Téléchargez gratuitement le guide complet. Les deux versions sont séparées : choisissez la langue de votre choix.", "📄 Télécharger le guide en italien (PDF)", "📄 Télécharger le guide en anglais (PDF)"),
+    "Deutsch": ("Leitfäden zum privaten Bereich", "Laden Sie den vollständigen Leitfaden kostenlos herunter. Beide Sprachversionen stehen getrennt bereit.", "📄 Italienischen Leitfaden herunterladen (PDF)", "📄 Englischen Leitfaden herunterladen (PDF)"),
+    "Română": ("Ghiduri pentru zona privată", "Descarcă gratuit ghidul complet. Cele două versiuni sunt separate: alege limba preferată.", "📄 Descarcă ghidul în italiană (PDF)", "📄 Descarcă ghidul în engleză (PDF)"),
+    "Русский": ("Руководства по личному кабинету", "Скачайте полное руководство бесплатно. Версии на двух языках доступны отдельно.", "📄 Скачать руководство на итальянском (PDF)", "📄 Скачать руководство на английском (PDF)"),
+    "العربية": ("أدلة المنطقة الخاصة", "نزّل الدليل الكامل مجاناً. النسختان منفصلتان، لذا اختر اللغة المناسبة لك.", "📄 تنزيل الدليل الإيطالي (PDF)", "📄 تنزيل الدليل الإنجليزي (PDF)"),
+    "中文": ("私密区域指南", "可免费下载完整指南。两个语言版本分别提供，请选择所需语言。", "📄 下载意大利语指南（PDF）", "📄 下载英语指南（PDF）"),
+}
+
+HOME_GUIDE_FILES = {
+    "italian": "scrittore-site-guida-area-riservata-italiano.pdf",
+    "english": "scrittore-site-private-area-guide-english.pdf",
+}
+
+
+@st.cache_data(show_spinner=False)
+def _read_public_guide(filename: str) -> bytes | None:
+    """Legge una guida inclusa nel deploy senza esporre percorsi del server."""
+    guide_path = Path(__file__).resolve().parent / "assets" / filename
+    try:
+        return guide_path.read_bytes()
+    except OSError:
+        return None
 
 # Messaggio visibile nella home pubblica: la lingua scelta dall'utente viene
 # usata dall'editor, dall'indice, dalla chat guidata e dalla stesura.
@@ -1248,7 +1278,7 @@ def _landing_page() -> None:
     st.markdown(
         f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
         <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
-        <a href='#ss-cervelli'>{N[2]}</a><a href='#ss-crediti'>{N[3]}</a><a href='#ss-faq'>{N[4]}</a>
+        <a href='#ss-cervelli'>{N[2]}</a><a href='#ss-crediti'>{N[3]}</a><a href='#ss-faq'>{N[4]}</a><a href='#ss-guide'>{N[5]}</a>
         </nav>""",
         unsafe_allow_html=True,
     )
@@ -1387,6 +1417,40 @@ def _landing_page() -> None:
     for posizione, (domanda, risposta) in enumerate(faq_items):
         with st.expander(domanda, expanded=False):
             st.write(risposta)
+
+    guide_title, guide_text, italian_guide_label, english_guide_label = HOME_GUIDES_COPY[home_language]
+    italian_guide = _read_public_guide(HOME_GUIDE_FILES["italian"])
+    english_guide = _read_public_guide(HOME_GUIDE_FILES["english"])
+    st.markdown(
+        f"<div id='ss-guide' class='ss-section' dir='{direzione_home}'><h2>{guide_title}</h2>"
+        f"<p class='ss-muted'>{guide_text}</p></div>",
+        unsafe_allow_html=True,
+    )
+    italian_column, english_column = st.columns(2, gap="medium")
+    with italian_column:
+        if italian_guide:
+            st.download_button(
+                italian_guide_label,
+                data=italian_guide,
+                file_name="Guida-area-riservata-Scrittore-Site-Italiano.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="download_private_area_guide_it",
+            )
+        else:
+            st.info("La guida in italiano sarà disponibile a breve.")
+    with english_column:
+        if english_guide:
+            st.download_button(
+                english_guide_label,
+                data=english_guide,
+                file_name="Scrittore-Site-Private-Area-Guide-English.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="download_private_area_guide_en",
+            )
+        else:
+            st.info("The English guide will be available soon.")
     return
 
     st.markdown("<div class='ss-section'><h2>Da un’idea a un libro: un esempio concreto</h2><p class='ss-muted'>La stessa idea passa dalla sidebar all’indice, poi diventa un manoscritto controllabile e modificabile.</p></div>", unsafe_allow_html=True)
