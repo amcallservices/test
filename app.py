@@ -1305,10 +1305,29 @@ section[data-testid="stSidebar"] > div:first-child {
     width: 370px !important; min-width: 370px !important; display: block !important;
     padding: 1rem .9rem 2rem !important;
 }
-section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
     color: #ffffff !important;
+}
+/* La sidebar diventa una sequenza di blocchi leggibili: i titoli numerati
+   separano configurazione, fonti, dettagli e memoria senza cambiare i campi
+   né rendere obbligatoria alcuna informazione aggiuntiva. */
+section[data-testid="stSidebar"] h4 {
+    display:flex !important; align-items:center !important; min-height:2.45rem !important;
+    margin:1.05rem 0 .58rem !important; padding:.56rem .68rem !important;
+    border:1px solid #345a7d !important; border-left:4px solid #58b8ff !important;
+    border-radius:10px !important; background:linear-gradient(135deg,#162f4d,#10243d) !important;
+    color:#eaf6ff !important; font-size:.92rem !important; font-weight:850 !important;
+    box-shadow:0 5px 14px rgba(0,0,0,.14) !important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] {
+    margin:.5rem 0 !important; border:1px solid #2d506f !important;
+    border-radius:10px !important; overflow:hidden !important; background:#10243b !important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    min-height:2.55rem !important; padding:.48rem .62rem !important;
+    background:#132a44 !important; color:#eaf6ff !important; font-weight:750 !important;
 }
 section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
     font-size: .83rem !important; font-weight: 700 !important; letter-spacing: .01em;
@@ -1371,6 +1390,30 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background: linear-gradient(135deg, #901b23, #b91c2b) !important;
     border-color: #fecdd3 !important;
 }
+/* Comandi di scrittura: il colore comunica subito il tipo di azione. I
+   pulsanti e il loro comportamento restano identici su desktop e mobile. */
+[class*="st-key-scrivi_tutto_libro"] .stButton>button,
+[class*="st-key-scrivi_tutto_libro"] button {
+    min-height:3.55rem !important; background:linear-gradient(135deg,#0c78c8,#2da9ee) !important;
+    border-color:#75cdfb !important; box-shadow:0 10px 22px rgba(27,145,225,.26) !important;
+    font-size:1.04rem !important;
+}
+[class*="st-key-scrivi_sezione_"] .stButton>button,
+[class*="st-key-scrivi_sezione_"] button {
+    background:linear-gradient(135deg,#137449,#1fa866) !important; border-color:#68d99a !important;
+}
+[class*="st-key-rigenera_sezione_"] .stButton>button,
+[class*="st-key-rigenera_sezione_"] button {
+    background:linear-gradient(135deg,#7650ae,#9a6fe1) !important; border-color:#c3a3ff !important;
+}
+[class*="st-key-pausa_scrittura_"] .stButton>button,
+[class*="st-key-pausa_scrittura_"] button {
+    background:linear-gradient(135deg,#9b7010,#c9931c) !important; border-color:#f4d475 !important;
+}
+[class*="st-key-stop_scrittura_"] .stButton>button,
+[class*="st-key-stop_scrittura_"] button {
+    background:linear-gradient(135deg,#a52d36,#d4515b) !important; border-color:#ff9ba3 !important;
+}
 [data-testid="stAppViewContainer"] { background: radial-gradient(circle at 60% -20%, #1b3454 0%, #0b1423 42%, #08111e 100%) !important; }
 [data-testid="stMainBlockContainer"] { max-width: 1540px !important; padding-top: 1.35rem !important; }
 /* Menu principale 0–5: sei passi grandi, distinguibili e facilmente
@@ -1423,10 +1466,10 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     border-radius:50%; background:#e8f8ff; color:#0879c6; font-size:.86rem; font-weight:900;
 }
 .ss-workspace-header {
-    display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:1.05rem 1.25rem; margin:0 0 1.15rem; border-radius:16px;
+    position:sticky; top:.5rem; z-index:110; display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:.82rem 1.05rem; margin:0 0 1.15rem; border-radius:16px;
     border:1px solid #314a68; background:linear-gradient(135deg, rgba(22,42,68,.96), rgba(12,27,47,.96));
-    box-shadow:0 14px 36px rgba(0,0,0,.20);
+    box-shadow:0 12px 28px rgba(0,0,0,.28); backdrop-filter:blur(12px);
 }
 .ss-workspace-brand { display:flex; align-items:center; gap:.9rem; min-width:0; }
 .ss-workspace-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#e7bd69; color:#17253a; font-size:1.3rem; }
@@ -1435,6 +1478,8 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-meta { display:flex; gap:.55rem; flex-wrap:wrap; justify-content:flex-end; }
 .ss-workspace-chip { color:#e8f3ff; background:#12243b; border:1px solid #3a5878; padding:.42rem .65rem; border-radius:999px; font-size:.78rem; font-weight:700; }
 .ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
+.ss-workspace-chip.writing { color:#caedff; border-color:#358bc2; background:#103653; }
+.ss-workspace-chip.pause { color:#ffebae; border-color:#9f7c28; background:#3b3114; }
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
 .ss-project-panel { margin:.08rem 0 .58rem; padding:.55rem .62rem; border:1px solid #2c4563; border-radius:12px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 7px 18px rgba(0,0,0,.12); }
@@ -1454,6 +1499,8 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-next-action.pause { background:#4e4217; border-color:#a98629; }.ss-next-action.pause .ss-next-icon { background:#d8a621; color:#1c1708; }.ss-next-action.complete { background:#103d2e; border-color:#2c8d61; }.ss-next-action.complete .ss-next-icon { background:#28ad70; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
+.ss-editor-actions-heading { display:flex; align-items:center; gap:.55rem; margin:1rem 0 .5rem; padding:.6rem .75rem; border:1px solid #345d80; border-radius:10px; background:linear-gradient(135deg,#102b45,#0c2036); color:#e8f5ff; font-size:.86rem; font-weight:850; }
+.ss-editor-actions-heading span { display:grid; place-items:center; width:1.55rem; height:1.55rem; border-radius:7px; background:#168bd6; }
 .preview-box {
     background-color: #fffdf7 !important; padding: min(6vw,80px); border: 1px solid #d8c9a8;
     border-radius: 12px; height: 900px; overflow-y: scroll;
@@ -1566,6 +1613,7 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-project-metric { padding:.5rem .54rem !important; }.ss-project-metric b { font-size:1.08rem !important; }
     .ss-next-action { padding:.58rem .62rem !important; gap:.48rem !important; }.ss-next-action strong { font-size:.83rem !important; }
     .ss-section-card { padding: .35rem .7rem .75rem !important; border-radius: 11px !important; }
+    .ss-editor-actions-heading { margin:.82rem 0 .42rem !important; padding:.56rem .64rem !important; font-size:.82rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -5691,6 +5739,9 @@ with st.sidebar:
         key="provider_ia",
         help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
+    # Il contenitore viene riempito dopo la scelta della lingua, ma conserva
+    # questa posizione: tariffario e cervello restano sempre uno sotto l'altro.
+    tariffario_sotto_cervello = st.container()
     lingua_scelta = st.selectbox(testo_ui("lingua"), [""] + list(TRADUZIONI.keys()), key="editor_language", format_func=lambda valore: valore or testo_ui("seleziona"))
     lingua_sel = lingua_scelta or "Italiano"
     L = TRADUZIONI.get(lingua_sel, TRADUZIONI["Italiano"])
@@ -5793,10 +5844,11 @@ with st.sidebar:
         ]
     tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
     motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
-    st.info(tariffario[f"{motore_tariffario}_info"])
-    with st.expander(tariffario[f"{motore_tariffario}_title"], expanded=False):
-        for voce_tariffario in tariffario[motore_tariffario]:
-            st.write(f"• {voce_tariffario}")
+    with tariffario_sotto_cervello:
+        st.info(tariffario[f"{motore_tariffario}_info"])
+        with st.expander(tariffario[f"{motore_tariffario}_title"], expanded=False):
+            for voce_tariffario in tariffario[motore_tariffario]:
+                st.write(f"• {voce_tariffario}")
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
@@ -6780,8 +6832,16 @@ sezioni_con_testo_workspace = sum(
     1 for contenuto in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).values()
     if str(contenuto).strip()
 )
-stato_workspace = "Progetto pronto" if sidebar_pronta else "Completa la configurazione"
-classe_stato_workspace = "ok" if sidebar_pronta else ""
+if st.session_state.get("job_scrittura_attivo"):
+    stato_workspace, classe_stato_workspace = "Stesura in corso", "writing"
+elif st.session_state.get("job_scrittura_pausa"):
+    stato_workspace, classe_stato_workspace = "Stesura in pausa", "pause"
+elif sidebar_pronta and st.session_state.get("indice_raw", "").strip():
+    stato_workspace, classe_stato_workspace = "Indice pronto", "ok"
+elif sidebar_pronta:
+    stato_workspace, classe_stato_workspace = "Progetto pronto", "ok"
+else:
+    stato_workspace, classe_stato_workspace = "Completa la configurazione", ""
 st.markdown(
     f'''<div class="ss-workspace-header">
         <div class="ss-workspace-brand">
@@ -9346,6 +9406,23 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             messaggio_correzione_finale = st.session_state.pop("messaggio_correzione_finale", "")
             if messaggio_correzione_finale:
                 st.info(messaggio_correzione_finale)
+            etichette_azioni_editor = {
+                "Italiano": "Azioni per la sezione selezionata",
+                "English": "Actions for the selected section",
+                "Español": "Acciones para la sección seleccionada",
+                "Français": "Actions pour la section sélectionnée",
+                "Deutsch": "Aktionen für den ausgewählten Abschnitt",
+                "Română": "Acțiuni pentru secțiunea selectată",
+                "Русский": "Действия для выбранного раздела",
+                "العربية": "إجراءات القسم المحدد",
+                "中文": "所选章节的操作",
+            }
+            st.markdown(
+                "<div class='ss-editor-actions-heading'><span>✍️</span>"
+                + html.escape(etichette_azioni_editor.get(lingua_sel, etichette_azioni_editor["Italiano"]))
+                + "</div>",
+                unsafe_allow_html=True,
+            )
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
