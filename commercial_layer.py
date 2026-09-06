@@ -1109,15 +1109,15 @@ HOME_ADVANTAGES_COPY = {
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
-    "Italiano": ("Percorso", "Funzioni", "Vantaggi", "Due cervelli", "Crediti", "FAQ", "Guide"),
-    "English": ("How it works", "Features", "Benefits", "Two engines", "Credits", "FAQ", "Guides"),
-    "Español": ("Cómo funciona", "Funciones", "Ventajas", "Dos motores", "Créditos", "FAQ", "Guías"),
-    "Français": ("Parcours", "Fonctions", "Avantages", "Deux moteurs", "Crédits", "FAQ", "Guides"),
-    "Deutsch": ("Ablauf", "Funktionen", "Vorteile", "Zwei Engines", "Credits", "FAQ", "Leitfäden"),
-    "Română": ("Parcurs", "Funcții", "Avantaje", "Două motoare", "Credite", "FAQ", "Ghiduri"),
-    "Русский": ("Как это работает", "Функции", "Преимущества", "Два движка", "Кредиты", "FAQ", "Руководства"),
-    "العربية": ("المسار", "الوظائف", "المزايا", "محركان", "الأرصدة", "الأسئلة", "الأدلة"),
-    "中文": ("使用流程", "功能", "优势", "双引擎", "积分", "常见问题", "指南"),
+    "Italiano": ("Percorso", "Funzioni", "Vantaggi", "Due cervelli", "Crediti", "FAQ", "Guide", "Instagram"),
+    "English": ("How it works", "Features", "Benefits", "Two engines", "Credits", "FAQ", "Guides", "Instagram"),
+    "Español": ("Cómo funciona", "Funciones", "Ventajas", "Dos motores", "Créditos", "FAQ", "Guías", "Instagram"),
+    "Français": ("Parcours", "Fonctions", "Avantages", "Deux moteurs", "Crédits", "FAQ", "Guides", "Instagram"),
+    "Deutsch": ("Ablauf", "Funktionen", "Vorteile", "Zwei Engines", "Credits", "FAQ", "Leitfäden", "Instagram"),
+    "Română": ("Parcurs", "Funcții", "Avantaje", "Două motoare", "Credite", "FAQ", "Ghiduri", "Instagram"),
+    "Русский": ("Как это работает", "Функции", "Преимущества", "Два движка", "Кредиты", "FAQ", "Руководства", "Instagram"),
+    "العربية": ("المسار", "الوظائف", "المزايا", "محركان", "الأرصدة", "الأسئلة", "الأدلة", "Instagram"),
+    "中文": ("使用流程", "功能", "优势", "双引擎", "积分", "常见问题", "指南", "Instagram"),
 }
 
 # Guide PDF della sola area riservata. Sono disponibili in entrambe le lingue
@@ -1184,11 +1184,6 @@ def _landing_page() -> None:
           .ss-subtitle {font-size:1.08rem; max-width:555px; margin:0; color:#486581; line-height:1.6}
           .ss-bonus {display:inline-block; margin:1.3rem 0 .85rem; padding:.62rem .9rem; border-radius:9px;
             font-size:1rem; font-weight:850; color:#9a3412; background:#ffedd5; border:1px solid #fdba74}
-          .ss-community-button {display:flex; align-items:center; justify-content:center; min-height:3.35rem; width:100%;
-            margin-top:.75rem; padding:.7rem 1rem; box-sizing:border-box; border-radius:11px; background:#174a73;
-            color:#fff !important; font-size:1.08rem; font-weight:800; text-decoration:none !important;
-            box-shadow:0 6px 14px rgba(23,74,115,.16); transition:background .18s ease, transform .18s ease}
-          .ss-community-button:hover {background:#102f4c; color:#fff !important; transform:translateY(-1px)}
           /* Anteprima hero: è una presentazione visiva fissa, non apre una
              lightbox e non sottrae spazio ai pulsanti di accesso. */
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:nth-child(2) [data-testid="stImage"] img {
@@ -1203,8 +1198,9 @@ def _landing_page() -> None:
           .ss-quick-nav {position:sticky; top:.65rem; z-index:20; display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap;
             max-width:900px; margin:.35rem auto 1.25rem; padding:.5rem; border:1px solid rgba(191,219,240,.9); border-radius:16px;
             background:rgba(255,255,255,.9); box-shadow:0 9px 21px rgba(20,77,120,.11); backdrop-filter:blur(10px)}
-          .ss-quick-nav a {padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
+          .ss-quick-nav a {display:inline-flex; align-items:center; gap:.32rem; padding:.36rem .64rem; border-radius:999px; color:#174a73 !important; text-decoration:none !important;
             font-size:.82rem; font-weight:800}.ss-quick-nav a:hover {background:#e0f2fe; color:#1269ae !important}
+          .ss-instagram-link svg {width:.95rem; height:.95rem; flex:0 0 auto}.ss-instagram-link:hover {color:#e1306c !important}
           .ss-languages-hero {max-width:1120px; margin:.5rem auto 1rem; padding:.85rem 1.25rem; text-align:center;
             border:1px solid #0284c7; border-radius:20px; background:linear-gradient(135deg,#0369a1 0%,#0ea5e9 56%,#38bdf8 100%);
             box-shadow:0 15px 32px rgba(2,132,199,.28)}
@@ -1332,7 +1328,6 @@ def _landing_page() -> None:
           .ss-title {color:#61d4ff !important;text-shadow:0 2px 16px rgba(56,189,248,.3) !important}
           .ss-headline,.ss-section h2 {color:#f8fbff !important}.ss-subtitle,.ss-muted,.ss-home-detail-caption {color:#b7d3eb !important}
           .ss-bonus {background:rgba(7,70,80,.84) !important;border-color:rgba(45,212,191,.55) !important;color:#d5fff5 !important}
-          .ss-community-button {background:#123e64 !important;box-shadow:0 7px 16px rgba(0,0,0,.3) !important}.ss-community-button:hover {background:#195b8a !important}
           .ss-quick-nav {background:rgba(5,22,39,.82) !important;border-color:rgba(125,211,252,.3) !important;box-shadow:0 9px 21px rgba(0,0,0,.27) !important}
           .ss-quick-nav a {color:#d9efff !important}.ss-quick-nav a:hover {background:rgba(14,116,185,.35) !important;color:#fff !important}
           .ss-languages-hero {background:linear-gradient(135deg,#063153,#0872a8 56%,#1599d1 100%) !important;border-color:#35b9ef !important}
@@ -1376,6 +1371,8 @@ def _landing_page() -> None:
         f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
         <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
         <a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a><a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a><a href='#ss-guide'>{N[6]}</a>
+        <a class='ss-instagram-link' href='https://www.instagram.com/scrittore.site/' target='_blank' rel='noopener noreferrer' aria-label='Instagram Scrittore Site'><svg viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='5'></rect><circle cx='12' cy='12' r='4'></circle><circle cx='17.5' cy='6.5' r='.7' fill='currentColor' stroke='none'></circle></svg>{N[7]}</a>
+        <a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>
         </nav>""",
         unsafe_allow_html=True,
     )
@@ -1419,10 +1416,6 @@ def _landing_page() -> None:
                 st.session_state["commercial_show_auth"] = True
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
-        st.markdown(
-            f"<a class='ss-community-button' href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>{C['community']}</a>",
-            unsafe_allow_html=True,
-        )
     with hero_visual:
         preview_image = next(
             (candidate for candidate in (
