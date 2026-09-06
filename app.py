@@ -1380,6 +1380,17 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-workspace-chip.ok { color:#a6efb7; border-color:#397c53; background:#102d23; }
 .ss-workspace-chip.ai { color:#bcdcff; }
 .ss-workspace-chip.credit { color:#ffe3a1; }
+.ss-project-panel { margin:.2rem 0 1.15rem; padding:1.15rem; border:1px solid #2c4563; border-radius:16px; background:linear-gradient(145deg,rgba(15,32,53,.92),rgba(10,23,40,.90)); box-shadow:0 14px 34px rgba(0,0,0,.16); }
+.ss-project-title { margin:0 0 .95rem; color:#fff; font-size:1.55rem; font-weight:850; letter-spacing:-.02em; }
+.ss-project-journey { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.48rem; margin-bottom:1rem; }
+.ss-project-step { min-width:0; display:flex; align-items:center; gap:.48rem; padding:.65rem .6rem; border:1px solid #2b4968; border-radius:11px; background:#0d2037; color:#a8bed5; font-size:.78rem; font-weight:750; }
+.ss-project-step span { flex:0 0 1.5rem; width:1.5rem; height:1.5rem; display:grid; place-items:center; border-radius:50%; background:#29445f; color:#dcecff; font-size:.72rem; }
+.ss-project-step.done { color:#b8f6c7; border-color:#357754; background:#102c24; }.ss-project-step.done span { background:#1f9d55; color:#fff; }
+.ss-project-step.current { color:#fff; border-color:#3ea7fa; background:linear-gradient(135deg,#165a91,#187fc8); box-shadow:0 6px 15px rgba(33,150,243,.18); }.ss-project-step.current span { background:#fff; color:#1477c1; }
+.ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.62rem; margin:.15rem 0 .95rem; }
+.ss-project-metric { min-width:0; padding:.78rem .82rem; border-radius:12px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.75rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.25rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.55rem; letter-spacing:-.04em; }
+.ss-next-action { display:flex; gap:.75rem; align-items:flex-start; padding:.88rem 1rem; border-radius:12px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 2rem; width:2rem; height:2rem; display:grid; place-items:center; border-radius:9px; background:#2a9ded; font-size:1.08rem; }.ss-next-action small { display:block; color:#a7d4f6; font-weight:800; margin-bottom:.16rem; }.ss-next-action strong { display:block; font-size:1rem; line-height:1.38; }
+.ss-next-action.pause { background:#4e4217; border-color:#a98629; }.ss-next-action.pause .ss-next-icon { background:#d8a621; color:#1c1708; }.ss-next-action.complete { background:#103d2e; border-color:#2c8d61; }.ss-next-action.complete .ss-next-icon { background:#28ad70; }
 .ss-section-card { background:rgba(14,29,48,.72); border:1px solid #2c4563; border-radius:14px; padding:.45rem 1rem 1rem; }
 .ss-section-card h2, .ss-section-card h3 { color:#fff !important; }
 .preview-box {
@@ -1477,6 +1488,13 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-workspace-title { font-size: 1.05rem !important; white-space: normal !important; }
     .ss-workspace-meta { gap: .35rem !important; }
     .ss-workspace-chip { font-size: .7rem !important; padding: .36rem .5rem !important; }
+    .ss-project-panel { margin:.1rem 0 .9rem !important; padding:.86rem .75rem !important; border-radius:13px !important; }
+    .ss-project-title { font-size:1.22rem !important; margin-bottom:.72rem !important; }
+    .ss-project-journey { grid-template-columns:1fr !important; gap:.38rem !important; margin-bottom:.75rem !important; }
+    .ss-project-step { padding:.58rem .65rem !important; font-size:.83rem !important; }
+    .ss-project-metrics { grid-template-columns:1fr 1fr !important; gap:.45rem !important; margin-bottom:.72rem !important; }
+    .ss-project-metric { padding:.66rem .7rem !important; }.ss-project-metric b { font-size:1.28rem !important; }
+    .ss-next-action { padding:.75rem .78rem !important; gap:.58rem !important; }.ss-next-action strong { font-size:.93rem !important; }
     .ss-section-card { padding: .35rem .7rem .75rem !important; border-radius: 11px !important; }
 }
 </style>
@@ -4035,6 +4053,21 @@ def etichette_centro_progetto(lingua):
     return testi.get(lingua, testi["English"])
 
 
+# Il percorso è puramente visivo: riassume le funzioni già disponibili nelle
+# tab, senza spostare l'utente né modificare i dati del progetto.
+PASSI_PERCORSO_PROGETTO = {
+    "Italiano": ("Idea", "Indice", "Scrittura", "Controllo", "Esporta"),
+    "English": ("Idea", "Outline", "Writing", "Review", "Export"),
+    "Español": ("Idea", "Índice", "Escritura", "Revisión", "Exportar"),
+    "Français": ("Idée", "Plan", "Écriture", "Contrôle", "Exporter"),
+    "Deutsch": ("Idee", "Gliederung", "Schreiben", "Prüfen", "Export"),
+    "Română": ("Idee", "Cuprins", "Scriere", "Verificare", "Export"),
+    "Русский": ("Идея", "План", "Написание", "Проверка", "Экспорт"),
+    "العربية": ("الفكرة", "الفهرس", "الكتابة", "المراجعة", "التصدير"),
+    "中文": ("想法", "目录", "写作", "检查", "导出"),
+}
+
+
 def riepilogo_operativo_progetto(campi_obbligatori=None):
     """Legge lo stato reale del progetto senza alterare sessione o memoria."""
     sezioni = elenco_sezioni_progetto(st.session_state.get("lista_capitoli", []))
@@ -4084,57 +4117,83 @@ def riepilogo_operativo_progetto(campi_obbligatori=None):
 
 
 def mostra_centro_progetto(lingua, campi_obbligatori=None):
-    """Rende visibile il punto esatto in cui si trova il progetto editoriale."""
+    """Rende il punto del progetto come un percorso semplice e non interattivo.
+
+    La vista legge soltanto lo stato già presente: non sostituisce tab,
+    pulsanti, salvataggi o controlli e non avvia alcuna operazione.
+    """
     etichette = etichette_centro_progetto(lingua)
     stato = riepilogo_operativo_progetto(campi_obbligatori)
-    st.markdown(f"### {etichette['titolo']}")
-    col_brief, col_indice, col_testo, col_fonti = st.columns(4)
-    col_brief.metric(etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}")
-    col_indice.metric(etichette["indice"], "✓" if stato["indice_pronto"] else "—")
-    col_testo.metric(
-        etichette["manoscritto"],
-        f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}" if stato["sezioni_previste"] else "0",
-    )
-    col_fonti.metric(etichette["fonti"], stato["fonti"])
+    passi = PASSI_PERCORSO_PROGETTO.get(lingua, PASSI_PERCORSO_PROGETTO["English"])
+    direzione = "rtl" if lingua == "العربية" else "ltr"
 
     if stato["job_attivo"]:
+        fase_attiva, stato_visuale, icona = 3, "", "✍️"
         sezione_corrente = stato["coda"][0] if stato["coda"] else stato["ultima_sezione"]
         dettaglio = (
             f"{stato['sezioni_scritte']}/{stato['sezioni_previste']} · {sezione_corrente}"
             if stato["sezioni_previste"] else sezione_corrente
         )
-        st.info(f"**{etichette['stato']}: {etichette['in_corso']}** — {dettaglio}")
-        if stato["sezioni_previste"]:
-            st.progress(
-                min(100, int(stato["sezioni_scritte"] / stato["sezioni_previste"] * 100)),
-                text=f"{etichette['in_corso']}: {dettaglio}",
-            )
-        prossimo = etichette["in_corso"]
+        messaggio, prossimo = f"{etichette['in_corso']} — {dettaglio}", etichette["in_corso"]
     elif stato["job_pausa"]:
+        fase_attiva, stato_visuale, icona = 3, "pause", "⏸"
         dettagli_pausa = stato["coda"][0] if stato["coda"] else etichette["nessun"]
-        st.warning(f"**{etichette['stato']}: {etichette['in_pausa']}** — {dettagli_pausa}")
-        prossimo = etichette["continua"]
+        messaggio, prossimo = f"{etichette['in_pausa']} — {dettagli_pausa}", etichette["continua"]
     elif stato["job_fermato"]:
-        st.warning(f"**{etichette['stato']}: {etichette['fermato']}**")
-        prossimo = etichette["continua"]
+        fase_attiva, stato_visuale, icona = 3, "pause", "⏹"
+        messaggio, prossimo = etichette["fermato"], etichette["continua"]
     elif not stato["brief_pronto"]:
-        st.info(f"**{etichette['stato']}:** {etichette['configura']}")
-        prossimo = etichette["configura"]
+        fase_attiva, stato_visuale, icona = 1, "", "🧭"
+        messaggio, prossimo = etichette["configura"], etichette["configura"]
     elif not stato["indice_pronto"]:
-        st.info(f"**{etichette['stato']}:** {etichette['crea_indice']}")
-        prossimo = etichette["crea_indice"]
+        fase_attiva, stato_visuale, icona = 2, "", "🧠"
+        messaggio, prossimo = etichette["crea_indice"], etichette["crea_indice"]
     elif stato["sezioni_previste"] and stato["sezioni_scritte"] < stato["sezioni_previste"]:
-        st.info(
-            f"**{etichette['stato']}: {etichette['manoscritto']}** — "
-            f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}"
+        fase_attiva, stato_visuale, icona = 3, "", "✍️"
+        messaggio, prossimo = (
+            f"{etichette['manoscritto']}: {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
+            etichette["continua"],
         )
-        prossimo = etichette["continua"]
     else:
-        st.success(
-            f"**{etichette['stato']}: {etichette['manoscritto']} ✓** — "
-            f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}"
+        fase_attiva, stato_visuale, icona = 4, "complete", "✓"
+        messaggio, prossimo = (
+            f"{etichette['manoscritto']} ✓ — {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
+            etichette["controlla"],
         )
-        prossimo = etichette["controlla"]
+
+    percorso_html = "".join(
+        (
+            f"<div class='ss-project-step {'done' if numero < fase_attiva else 'current' if numero == fase_attiva else ''}'>"
+            f"<span>{'✓' if numero < fase_attiva else numero}</span><b>{html.escape(passo)}</b></div>"
+        )
+        for numero, passo in enumerate(passi, start=1)
+    )
+    dati_metriche = (
+        (etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}"),
+        (etichette["indice"], "✓" if stato["indice_pronto"] else "—"),
+        (etichette["manoscritto"], f"{stato['sezioni_scritte']}/{stato['sezioni_previste']}" if stato["sezioni_previste"] else "0"),
+        (etichette["fonti"], str(stato["fonti"])),
+    )
+    metriche_html = "".join(
+        f"<div class='ss-project-metric'><span>{html.escape(etichetta)}</span><b>{html.escape(valore)}</b></div>"
+        for etichetta, valore in dati_metriche
+    )
+    st.markdown(
+        f"""<section class='ss-project-panel' dir='{direzione}'>
+          <h2 class='ss-project-title'>{html.escape(etichette['titolo'])}</h2>
+          <div class='ss-project-journey'>{percorso_html}</div>
+          <div class='ss-project-metrics'>{metriche_html}</div>
+          <div class='ss-next-action {stato_visuale}'><span class='ss-next-icon'>{icona}</span>
+            <div><small>{html.escape(etichette['prossimo'])}</small><strong>{html.escape(messaggio)}</strong></div>
+          </div>
+        </section>""",
+        unsafe_allow_html=True,
+    )
+    if stato["job_attivo"] and stato["sezioni_previste"]:
+        st.progress(
+            min(100, int(stato["sezioni_scritte"] / stato["sezioni_previste"] * 100)),
+            text=f"{etichette['in_corso']}: {dettaglio}",
+        )
     st.caption(f"**{etichette['prossimo']}:** {prossimo}")
     if stato["errore"]:
         st.caption(f"**{etichette['dettaglio']}:** {stato['errore']}")

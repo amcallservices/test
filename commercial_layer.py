@@ -1192,6 +1192,12 @@ def _landing_page() -> None:
           .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
           .ss-priority-icon {font-size:1.72rem;margin-bottom:.75rem}.ss-priority b {display:block;color:#102a43;font-size:1.12rem;margin-bottom:.45rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.43;font-size:.93rem}
           .ss-priority-tag {display:inline-block;margin-top:.72rem;padding:.22rem .48rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.7rem}
+          /* Il primo blocco della home diventa un percorso numerato, senza
+             aggiungere passaggi o cambiare le funzioni presentate. */
+          #ss-percorso .ss-priority-grid {counter-reset:ss-home-step}
+          #ss-percorso .ss-priority {counter-increment:ss-home-step;padding-top:2.95rem}
+          #ss-percorso .ss-priority:before {content:counter(ss-home-step);position:absolute;top:.78rem;left:.82rem;width:1.72rem;height:1.72rem;display:grid;place-items:center;border-radius:50%;background:#1689e8;color:#fff;font-size:.82rem;font-weight:900;box-shadow:0 4px 10px rgba(22,137,232,.24)}
+          #ss-percorso .ss-priority:nth-child(4):before {background:#16a36a;box-shadow:0 4px 10px rgba(22,163,106,.22)}
           .ss-feature-group {background:rgba(255,255,255,.64);border:1px solid #d9e5f0;border-radius:14px;padding:1.1rem 1.05rem;height:100%;text-align:center}
           .ss-feature-group h3 {margin:0 0 .42rem;color:#1269ae;font-size:1.06rem}.ss-feature-group p {margin:.42rem 0;color:#486581;font-size:.9rem;line-height:1.38}
           .ss-language-wrap {max-width:1500px; margin:0 auto -2.3rem; display:flex; justify-content:flex-end}
@@ -1239,11 +1245,12 @@ def _landing_page() -> None:
           .ss-ai-card h3 {margin:0 0 .5rem; color:#102a43; font-size:1.22rem}.ss-ai-card p {margin:.45rem 0; color:#486581; line-height:1.43}
           .ss-ai-card .ss-ai-cost {padding:.75rem; border-radius:10px; background:#eaf4fc; color:#1269ae; font-weight:800; font-size:.9rem}.ss-ai-note {max-width:890px; margin:-.8rem auto 1.65rem; color:#486581; font-size:.88rem; text-align:center}
           @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px}}
+          @media (max-width:760px) {section.main > div.block-container {padding:1rem 1rem 2.5rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
           [data-testid="stMain"] .stButton button[kind="secondary"] {background:#fff !important; color:#1269ae !important; border-color:#8ec5ee !important; box-shadow:none}
+          .st-key-landing_signup .stButton button {min-height:3.75rem !important;font-size:1.14rem !important;border-radius:14px !important;box-shadow:0 10px 22px rgba(22,137,232,.26) !important}
           /* Home pubblica: nasconde i comandi tecnici di Streamlit. */
           [data-testid="stHeader"] {background:transparent !important}
           [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"],
