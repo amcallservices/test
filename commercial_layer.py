@@ -55,6 +55,9 @@ CREDIT_COSTS = {
     "audit_fatti_capitolo": 2,
     "controllo_coerenza_iniziale": 10,
     "controllo_coerenza_blocco_modificato": 1,
+    # Controllo facoltativo in due fasi: prima consulta le linee guida KDP
+    # ufficiali aggiornate, poi verifica il manoscritto senza alterarlo.
+    "controllo_conformita_kdp": 10,
     "report_sintattico": 1,
     "metadati_kdp": 1,
     "immagine_capitolo": 5,
@@ -104,6 +107,7 @@ def _unita_deepseek(reason: str, amount: int) -> int:
         "audit_fatti": 1,
         "audit_editoriale": 1,
         "controllo_coerenza": amount,
+        "controllo_conformita_kdp": amount,
         "report_sintattico": 1,
         "metadati_kdp": 1,
         "verifica_originalita_copyright_web": 1,  # non usata con DeepSeek

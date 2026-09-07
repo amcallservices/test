@@ -1813,6 +1813,8 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
         return "circa 3⅓"
     if "coerenza" in azione:
         return "circa 3⅓ (primo controllo); poi 1 credito ogni 3 blocchi"
+    if "conformita_kdp" in azione:
+        return "circa 3⅓"
     if "voto_indice" in azione:
         return "1 credito"
     if any(parola in azione for parola in ("report_sintattico", "metadati", "controlla_fatti")):
@@ -1843,7 +1845,7 @@ def tutela_azione_preventivo(azione_id):
         return "Non modifica le sezioni già scritte, le immagini o le fonti caricate dall'utente."
     if "fonti" in azione:
         return "Aggiorna solo il registro delle fonti; indice, testi e immagini restano invariati."
-    if "copyright" in azione or "controlla_fatti" in azione or "coerenza" in azione:
+    if "copyright" in azione or "controlla_fatti" in azione or "coerenza" in azione or "conformita_kdp" in azione:
         return "È un controllo: non modifica automaticamente il manoscritto."
     if "immagine" in azione:
         return "Genera o aggiorna solo l'immagine richiesta; il testo del manoscritto resta invariato."
@@ -3973,6 +3975,9 @@ def esporta_progetto_editoriale_csv():
         "contenuti": contenuti,
         "fonti": fonti,
         "immagini": st.session_state.get("immagini_capitoli", {}) or {},
+        "controlli": {
+            "conformita_kdp": st.session_state.get("report_conformita_kdp", {}) or {},
+        },
     }
     return esporta_fotografia_csv(fotografia)
 
@@ -4411,6 +4416,7 @@ def applica_snapshot_progetto(snapshot):
         indice = "\n".join(contenuti.keys())
     fonti = dict(snapshot.get("fonti", {}) or {})
     immagini = immagini_da_snapshot_cloud(snapshot.get("immagini_capitoli", {}) or {})
+    controlli = dict(snapshot.get("controlli", {}) or {})
     ha_dati_ripristinabili = bool(
         indice.strip()
         or contenuti
@@ -4459,6 +4465,11 @@ def applica_snapshot_progetto(snapshot):
         ) + 1
         sync_capitoli()
     st.session_state["immagini_capitoli"] = immagini
+    report_conformita_kdp = controlli.get("conformita_kdp", {})
+    if isinstance(report_conformita_kdp, dict) and report_conformita_kdp:
+        st.session_state["report_conformita_kdp"] = dict(report_conformita_kdp)
+    else:
+        st.session_state.pop("report_conformita_kdp", None)
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
@@ -4604,6 +4615,9 @@ def salva_progetto_corrente(sidebar, sezioni):
         "indice_backup": indice_corrente,
         "contenuti": contenuti,
         "immagini_capitoli": immagini_per_snapshot_cloud(immagini),
+        "controlli": {
+            "conformita_kdp": st.session_state.get("report_conformita_kdp", {}) or {},
+        },
         # Conserviamo il dossier già elaborato: dopo logout o refresh l'AI può
         # continuare a usarlo senza richiedere nuovamente i file originali.
         "fonti": {
@@ -6523,6 +6537,160 @@ def blocchi_per_audit_manoscritto(contenuti, limite_caratteri=18000):
     if corrente.strip():
         blocchi.append(corrente)
     return blocchi
+
+
+URL_LINEE_GUIDA_KDP_CONTENUTI = "https://kdp.amazon.com/it_IT/help/topic/G200672390"
+
+
+def firma_controllo_conformita_kdp(contenuti, titolo, genere, argomento, lingua):
+    """Rende riconoscibile la versione del manoscritto verificata da KDP."""
+    parti = [titolo, genere, argomento, lingua]
+    parti.extend(f"{sezione}\n{contenuto}" for sezione, contenuto in contenuti.items())
+    return hashlib.sha256("\n\u241e\n".join(str(parte or "") for parte in parti).encode("utf-8")).hexdigest()
+
+
+def controllo_conformita_kdp_manoscritto(contenuti, *, titolo, genere, argomento, lingua, avanzamento=None):
+    """Legge prima le regole KDP aggiornate, poi controlla il manoscritto."""
+    blocchi = blocchi_per_audit_manoscritto(contenuti)
+    if not blocchi:
+        return {"errore": "Servono una o più sezioni già scritte per eseguire il controllo KDP."}
+
+    def aggiorna(percentuale, testo):
+        if avanzamento:
+            avanzamento(max(0, min(100, int(percentuale))), testo)
+
+    riferimento = addebita_azione_diretta(
+        "controllo_conformita_kdp", amount=CREDIT_COSTS["controllo_conformita_kdp"]
+    )
+    risposta_linee = None
+    try:
+        aggiorna(5, "Fase 1 di 2: lettura delle linee guida KDP ufficiali...")
+        istruzioni_linee = f"""Consulta esclusivamente la pagina ufficiale KDP tramite la ricerca web integrata:
+{URL_LINEE_GUIDA_KDP_CONTENUTI}
+
+Prepara una CHECKLIST INTERNA aggiornata per controllare un manoscritto in lingua {lingua}. Considera solo criteri verificabili in manoscritto, titolo o descrizione del progetto: contenuti illeciti o lesivi di diritti, contenuti offensivi non ammessi, dichiarazione di testo/immagini/traduzioni generati dall'IA, aspettative ed esperienza del cliente, dominio pubblico e attribuzione di traduzioni.
+
+Non copiare lunghi brani, non inventare regole e non dichiarare che una pubblicazione è garantita. Restituisci:
+FONTE UFFICIALE:
+DATA DEL CONTROLLO:
+CHECKLIST KDP:
+LIMITI DEL CONTROLLO:"""
+        if usa_deepseek_pro():
+            client_kdp = client_deepseek.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0)
+            risposta_linee = client_kdp.responses.create(
+                model=MODELLO_DEEPSEEK_PRO,
+                tools=[{"type": "web_search"}],
+                tool_choice={"type": "web_search"},
+                instructions="Usa la ricerca web integrata prima di rispondere e basa la checklist solo sulla pagina KDP ufficiale richiesta.",
+                input=istruzioni_linee,
+            )
+            modello_linee = MODELLO_DEEPSEEK_PRO
+        else:
+            client_kdp = client_openai.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0)
+            risposta_linee = client_kdp.responses.create(
+                model=MODELLO_ANALISI_FONTI,
+                tools=[{"type": "web_search_preview"}],
+                input=istruzioni_linee,
+            )
+            modello_linee = MODELLO_ANALISI_FONTI
+        checklist_kdp = (getattr(risposta_linee, "output_text", "") or "").strip()
+        if not checklist_kdp:
+            raise RuntimeError("La pagina KDP non ha restituito una checklist utilizzabile.")
+
+        esiti_blocchi = []
+        totale = len(blocchi)
+        for numero, blocco in enumerate(blocchi, start=1):
+            aggiorna(10 + int(numero / max(1, totale) * 70), f"Fase 2 di 2: analisi KDP del blocco {numero}/{totale}...")
+            esito = chiedi_gpt(
+                f"""Sei un revisore editoriale prudente. Analizza il blocco {numero}/{totale} di un manoscritto in lingua {lingua}, esclusivamente rispetto alla checklist KDP aggiornata qui sotto.
+
+CHECKLIST KDP APPENA CONSULTATA
+{checklist_kdp}
+
+PROGETTO
+Titolo: {titolo}
+Genere: {genere}
+Argomento: {argomento}
+
+BLOCCO DEL MANOSCRITTO
+{blocco}
+
+Non effettuare ricerche ulteriori, non riscrivere il testo e non emettere pareri legali. Segnala solo elementi osservabili; se non emerge alcun rischio concreto, scrivi "NESSUN RISCHIO CONCRETO OSSERVATO". Restituisci:
+SEZIONI ESAMINATE:
+RISCHI O ATTENZIONI:
+MOTIVO RISPETTO ALLA CHECKLIST:
+AZIONE CONSIGLIATA:""",
+                "Sei un revisore di conformità editoriale. Sii preciso, prudente e non inventare violazioni.",
+                addebita=False,
+                amount=0,
+                model=MODELLO_EDITORIALE,
+                reason="controllo_conformita_kdp",
+            )
+            if not esito or esito.startswith("ERRORE:"):
+                raise RuntimeError("L'analisi di una parte del manoscritto non è stata completata.")
+            esiti_blocchi.append(f"BLOCCO {numero}\n{esito}")
+
+        aggiorna(88, "Preparazione del report KDP finale...")
+        esiti_uniti = "\n\n".join(esiti_blocchi)
+        sintesi = chiedi_gpt(
+            f"""Prepara un unico report di conformità KDP per un manoscritto in lingua {lingua}. Usa soltanto la checklist e gli esiti qui sotto; non inventare problemi, non modificare il libro e non promettere l'approvazione KDP.
+
+CHECKLIST KDP
+{checklist_kdp}
+
+ESITI DEI BLOCCHI
+{esiti_uniti}
+
+Restituisci esattamente:
+ESITO GENERALE: usa soltanto "PRONTO DA VERIFICARE", "ATTENZIONE" oppure "RISCHIO ELEVATO".
+SINTESI:
+DICHIARAZIONI KDP DA VALUTARE:
+SEZIONI O ELEMENTI DA RIVEDERE:
+AZIONI CONSIGLIATE:
+LIMITI DEL CONTROLLO:
+
+Se non risultano criticità, chiarisci che il controllo automatico non sostituisce la revisione finale dell'utente né una decisione di Amazon.""",
+            "Sei un revisore editoriale prudente. Restituisci solo il report richiesto, senza ragionamento interno.",
+            addebita=False,
+            amount=0,
+            model=MODELLO_EDITORIALE,
+            reason="controllo_conformita_kdp",
+        )
+        if not sintesi or sintesi.startswith("ERRORE:"):
+            raise RuntimeError("Il report finale KDP non è stato completato.")
+        registra_esito_chiamata_ai(
+            risposta_linee,
+            riferimento=riferimento,
+            reason="controllo_conformita_kdp",
+            amount=CREDIT_COSTS["controllo_conformita_kdp"],
+            model=modello_linee,
+        )
+        aggiorna(100, "Controllo KDP concluso.")
+        return {
+            "versione": 1,
+            "eseguito_il": datetime.datetime.now().isoformat(timespec="seconds"),
+            "lingua": lingua,
+            "fonte": URL_LINEE_GUIDA_KDP_CONTENUTI,
+            "sezioni_analizzate": sum(1 for testo in contenuti.values() if str(testo or "").strip()),
+            "firma_manoscritto": firma_controllo_conformita_kdp(
+                contenuti, titolo, genere, argomento, lingua
+            ),
+            "checklist": checklist_kdp,
+            "report": sintesi,
+        }
+    except Exception as errore:
+        refund_credits(riferimento, reason="controllo_conformita_kdp_fallito", amount=CREDIT_COSTS["controllo_conformita_kdp"])
+        registra_esito_chiamata_ai(
+            risposta_linee,
+            riferimento=riferimento,
+            reason="controllo_conformita_kdp",
+            amount=CREDIT_COSTS["controllo_conformita_kdp"],
+            model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+            riuscita=False,
+            rimborsata=True,
+            errore=type(errore).__name__,
+        )
+        return {"errore": f"Controllo KDP non completato: {errore}"}
 
 
 def chiedi_audit_editoriale(prompt, *, addebita=True):
@@ -10110,6 +10278,93 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 else:
                     st.success(
                         f"Controllo completato: {len(report_completezza)} sezione/i presenti e senza interruzioni tecniche rilevate."
+                    )
+        with st.expander(
+            "📘 Controllo conformità KDP del manoscritto (facoltativo)",
+            expanded=bool(st.session_state.get("report_conformita_kdp")),
+        ):
+            st.caption(
+                "Prima consulta le Linee guida per i contenuti KDP aggiornate, poi analizza il manoscritto già scritto rispetto alla checklist ricavata. "
+                "Non modifica testi, indice o metadati e non garantisce l'approvazione da parte di Amazon."
+            )
+            st.link_button(
+                "Apri le linee guida KDP consultate",
+                URL_LINEE_GUIDA_KDP_CONTENUTI,
+                use_container_width=True,
+            )
+            ha_testi_kdp = any(str(testo or "").strip() for testo in contenuti_export.values())
+            if pulsante_con_preventivo(
+                "controllo_conformita_kdp",
+                "📘 CONTROLLA CONFORMITÀ KDP",
+                CREDIT_COSTS["controllo_conformita_kdp"],
+                "Esegue due fasi separate: legge la pagina ufficiale KDP aggiornata, poi controlla tutte le sezioni già scritte. Il report evidenzia rischi, dichiarazioni da valutare e azioni consigliate; non modifica il manoscritto.",
+                use_container_width=True,
+                disabled=not ha_testi_kdp,
+            ):
+                barra_kdp = st.progress(0, text="Preparazione del controllo KDP...")
+                stato_kdp = st.empty()
+
+                def mostra_avanzamento_kdp(percentuale, testo):
+                    barra_kdp.progress(percentuale, text=testo)
+                    stato_kdp.caption(testo)
+
+                with st.spinner("Controllo KDP del manoscritto in corso..."):
+                    report_kdp = controllo_conformita_kdp_manoscritto(
+                        contenuti_export,
+                        titolo=val_titolo,
+                        genere=val_genere,
+                        argomento=val_trama,
+                        lingua=lingua_sel,
+                        avanzamento=mostra_avanzamento_kdp,
+                    )
+                if report_kdp.get("errore"):
+                    stato_kdp.error(report_kdp["errore"])
+                else:
+                    st.session_state["report_conformita_kdp"] = report_kdp
+                    try:
+                        salva_progetto_corrente(
+                            sidebar_memorizzata_corrente(), sezioni_controllo_finale
+                        )
+                    except Exception:
+                        pass
+                    barra_kdp.progress(100, text="Controllo KDP completato.")
+                    stato_kdp.success("Report KDP salvato nel progetto. Puoi rieseguirlo quando il manoscritto cambia.")
+
+            report_kdp = st.session_state.get("report_conformita_kdp", {}) or {}
+            if isinstance(report_kdp, dict) and report_kdp.get("report"):
+                esito_kdp = str(report_kdp.get("report", ""))
+                firma_kdp_attuale = firma_controllo_conformita_kdp(
+                    contenuti_export, val_titolo, val_genere, val_trama, lingua_sel
+                )
+                if report_kdp.get("firma_manoscritto") != firma_kdp_attuale:
+                    st.warning(
+                        "Il manoscritto è cambiato dopo questo controllo: rieseguilo prima "
+                        "di usare il report per decidere la pubblicazione."
+                    )
+                if "RISCHIO ELEVATO" in esito_kdp.upper():
+                    st.error("Il controllo KDP ha rilevato elementi da esaminare con priorità prima della pubblicazione.")
+                elif "ATTENZIONE" in esito_kdp.upper():
+                    st.warning("Il controllo KDP indica elementi da verificare prima della pubblicazione.")
+                else:
+                    st.success("Controllo KDP completato: resta comunque necessaria la verifica finale dell'utente su KDP.")
+                st.caption(
+                    f"Ultimo controllo: {report_kdp.get('eseguito_il', 'data non disponibile')} · "
+                    f"Sezioni analizzate: {report_kdp.get('sezioni_analizzate', 0)}"
+                )
+                st.text_area(
+                    "Report conformità KDP",
+                    value=esito_kdp,
+                    height=360,
+                    disabled=True,
+                    key="output_report_conformita_kdp",
+                )
+                with st.expander("Checklist KDP consultata", expanded=False):
+                    st.text_area(
+                        "Checklist aggiornata dalla fonte ufficiale",
+                        value=str(report_kdp.get("checklist", "")),
+                        height=280,
+                        disabled=True,
+                        key="output_checklist_conformita_kdp",
                     )
         st.divider()
         esito_finale_export = controllo_finale_pre_export(
