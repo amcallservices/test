@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import uuid
 import json
+import datetime as dt
 from pathlib import Path
 from typing import Any
 
@@ -57,7 +58,7 @@ CREDIT_COSTS = {
     "controllo_coerenza_blocco_modificato": 1,
     # Controllo facoltativo in due fasi: prima consulta le linee guida KDP
     # ufficiali aggiornate, poi verifica il manoscritto senza alterarlo.
-    "controllo_conformita_kdp": 10,
+    "controllo_conformita_kdp": 18,
     "report_sintattico": 1,
     "metadati_kdp": 1,
     "immagine_capitolo": 5,
@@ -1973,20 +1974,75 @@ def _dettaglio_utilizzo(usage: Any) -> dict[str, int]:
     }
 
 
-def _stima_costo_ai_usd(provider: str, model: str, token: dict[str, int]) -> float:
-    """Stima trasparente basata sul listino API, senza mai influire sui crediti."""
+PREZZI_API_VERSIONE = "2026-09-07"
+
+
+def _fascia_deepseek_v4_pro(orario: dt.datetime | None = None) -> tuple[str, tuple[float, float, float]]:
+    """Restituisce la fascia ufficiale DeepSeek V4 Pro nell'orario UTC.
+
+    DeepSeek applica la fascia di punta dal lunedì al venerdì, 01:00–04:00 e
+    06:00–10:00 UTC. Tutti gli altri momenti rientrano nella fascia ridotta.
+    I valori sono input cache miss, cache hit e output per un milione di token.
+    """
+    istante = orario or dt.datetime.now(dt.timezone.utc)
+    if istante.tzinfo is None:
+        istante = istante.replace(tzinfo=dt.timezone.utc)
+    utc = istante.astimezone(dt.timezone.utc)
+    ora_punta = utc.weekday() < 5 and (1 <= utc.hour < 4 or 6 <= utc.hour < 10)
+    if ora_punta:
+        return "DeepSeek V4 Pro · punta UTC", (1.32, 0.044, 3.96)
+    return "DeepSeek V4 Pro · ridotta UTC", (0.66, 0.022, 1.98)
+
+
+def conteggio_ricerche_web(risposta: Any) -> int:
+    """Conta in modo prudente le chiamate web effettivamente restituite dal provider."""
+    def valore(oggetto: Any, nome: str, predefinito=None):
+        return oggetto.get(nome, predefinito) if isinstance(oggetto, dict) else getattr(oggetto, nome, predefinito)
+
+    elementi = list(valore(risposta, "output", []) or [])
+    for scelta in list(valore(risposta, "choices", []) or []):
+        messaggio = valore(scelta, "message", None)
+        elementi.extend(list(valore(messaggio, "tool_calls", []) or []))
+    totale = 0
+    for elemento in elementi:
+        tipo = f"{valore(elemento, 'type', '')} {valore(elemento, 'name', '')}".casefold()
+        if "web_search" in tipo or "web search" in tipo:
+            totale += 1
+    return totale
+
+
+def _costo_api_calcolato_usd(
+    provider: str,
+    model: str,
+    token: dict[str, int],
+    *,
+    web_search_calls: int = 0,
+    orario: dt.datetime | None = None,
+) -> tuple[float, str, str]:
+    """Calcola il costo API con il listino vigente, senza influire sui crediti."""
     modello = str(model or "").casefold()
     input_tokens = max(0, int(token.get("input_tokens", 0)))
     output_tokens = max(0, int(token.get("output_tokens", 0)))
     cached = min(input_tokens, max(0, int(token.get("cached_input_tokens", 0))))
     if str(provider).casefold().startswith("deepseek") or "deepseek" in modello:
-        prezzo_input, prezzo_cache, prezzo_output = 0.435, 0.003625, 0.87
+        fascia, (prezzo_input, prezzo_cache, prezzo_output) = _fascia_deepseek_v4_pro(orario)
+        versione = f"deepseek-v4-pro-{PREZZI_API_VERSIONE}"
     elif "mini" in modello:
         prezzo_input, prezzo_cache, prezzo_output = 0.75, 0.075, 4.50
+        fascia, versione = "GPT-5.4 mini", f"openai-gpt-5.4-mini-{PREZZI_API_VERSIONE}"
     else:
         prezzo_input, prezzo_cache, prezzo_output = 2.50, 0.25, 15.00
-    costo = ((input_tokens - cached) * prezzo_input + cached * prezzo_cache + output_tokens * prezzo_output) / 1_000_000
-    return round(max(0.0, costo), 8)
+        fascia, versione = "GPT-5.4", f"openai-gpt-5.4-{PREZZI_API_VERSIONE}"
+        # Oltre 272.000 token di input GPT-5.4 passa al listino long-context
+        # ufficiale per l'intera richiesta: input/cache ×2 e output ×1,5.
+        if input_tokens > 272_000:
+            prezzo_input, prezzo_cache, prezzo_output = 5.00, 0.50, 22.50
+            fascia = "GPT-5.4 · long context"
+    costo_token = ((input_tokens - cached) * prezzo_input + cached * prezzo_cache + output_tokens * prezzo_output) / 1_000_000
+    # OpenAI addebita $0,01 per ricerca web; i token dei risultati sono già
+    # inclusi nell'uso restituito dalla risposta e vengono quindi conteggiati sopra.
+    costo_ricerche = 0.01 * max(0, int(web_search_calls or 0)) if "openai" in versione else 0.0
+    return round(max(0.0, costo_token + costo_ricerche), 8), fascia, versione
 
 
 def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, int]:
@@ -2014,6 +2070,7 @@ def registra_utilizzo_ai(
     model: str,
     usage: Any = None,
     credits_requested: int = 0,
+    web_search_calls: int = 0,
     success: bool = True,
     refunded: bool = False,
     error_code: str = "",
@@ -2031,6 +2088,13 @@ def registra_utilizzo_ai(
     try:
         dettaglio = _dettaglio_utilizzo(usage)
         provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
+        costo_calcolato, fascia_prezzo, versione_prezzo = _costo_api_calcolato_usd(
+            provider,
+            model,
+            dettaglio,
+            web_search_calls=web_search_calls,
+            orario=dt.datetime.now(dt.timezone.utc),
+        )
         addebito = dettaglio_addebito_ai(str(reference or ""), credits_requested)
         if refunded or not success:
             addebito["credits_charged"] = 0
@@ -2047,11 +2111,23 @@ def registra_utilizzo_ai(
             "credits_requested": max(0, int(credits_requested or 0)),
             "credits_charged": addebito["credits_charged"],
             "deepseek_units": addebito["deepseek_units"],
-            "estimated_cost_usd": _stima_costo_ai_usd(provider, model, dettaglio),
+            "estimated_cost_usd": costo_calcolato,
+            "web_search_calls": max(0, int(web_search_calls or 0)),
+            "pricing_band": fascia_prezzo,
+            "pricing_version": versione_prezzo,
             "success": bool(success),
             "error_code": str(error_code or "")[:160],
         }
-        _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload)
+        try:
+            _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload)
+        except Exception:
+            # Il passaggio al nuovo monitoraggio richiede una migrazione
+            # Supabase. Finché non viene eseguita, conserviamo almeno token,
+            # crediti e costo ricalcolato senza interrompere l'app.
+            payload_compatibile = dict(payload)
+            for campo in ("web_search_calls", "pricing_band", "pricing_version"):
+                payload_compatibile.pop(campo, None)
+            _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload_compatibile)
     except Exception:
         # Il registro non deve mai compromettere un testo, un addebito o un
         # salvataggio. L'assenza della tabella viene segnalata solo nel pannello
@@ -2413,23 +2489,43 @@ def _commerce_sidebar() -> None:
                     except Exception as error:
                         st.error(str(error))
 
-            with st.expander("📊 Consumi AI e costi stimati", expanded=False):
+            with st.expander("📊 Consumi AI e costi API calcolati", expanded=False):
                 st.caption(
-                    "Registro tecnico riservato: token, modello, operazione, crediti e costo API stimato. "
-                    "Non contiene prompt né contenuti dei libri."
+                    "Registro tecnico riservato: token, modello, operazione, crediti e costo API calcolato "
+                    "con il listino ufficiale attivo. Non contiene prompt né contenuti dei libri."
+                )
+                campi_monitoraggio_nuovo = (
+                    "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                    "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,"
+                    "web_search_calls,pricing_band,pricing_version,success"
+                )
+                campi_monitoraggio_compatibili = (
+                    "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                    "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,success"
                 )
                 try:
                     utilizzi = _supabase(
                         "GET",
                         "rest/v1/writer_ai_usage_events",
                         params={
-                            "select": "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,success",
+                            "select": campi_monitoraggio_nuovo,
                             "order": "created_at.desc",
                             "limit": "500",
                         },
                     ) or []
                 except Exception:
-                    utilizzi = None
+                    try:
+                        utilizzi = _supabase(
+                            "GET",
+                            "rest/v1/writer_ai_usage_events",
+                            params={
+                                "select": campi_monitoraggio_compatibili,
+                                "order": "created_at.desc",
+                                "limit": "500",
+                            },
+                        ) or []
+                    except Exception:
+                        utilizzi = None
                 if utilizzi is None:
                     st.info(
                         "Il registro sarà attivo dopo l'esecuzione della migrazione "
@@ -2451,7 +2547,7 @@ def _commerce_sidebar() -> None:
                     c1.metric("Chiamate registrate", len(utilizzi))
                     c2.metric("Crediti addebitati", crediti_addebitati)
                     c3.metric("Unità DeepSeek", unita_deepseek)
-                    c4.metric("Costo API stimato", f"${costo_totale:.4f}")
+                    c4.metric("Costo API calcolato", f"${costo_totale:.4f}")
                     st.caption(
                         f"Preventivi: {preventivi_totali} crediti · Token elaborati: "
                         f"{token_totali:,}".replace(",", ".") +
@@ -2468,7 +2564,9 @@ def _commerce_sidebar() -> None:
                                 "Preventivo": int(voce.get("credits_requested", 0) or 0),
                                 "Addebitati": int(voce.get("credits_charged", 0) or 0),
                                 "Unità DS": int(voce.get("deepseek_units", 0) or 0),
-                                "Costo $": round(float(voce.get("estimated_cost_usd", 0) or 0), 6),
+                                "Ricerche web": int(voce.get("web_search_calls", 0) or 0),
+                                "Fascia prezzo": voce.get("pricing_band", "storico"),
+                                "Costo API $": round(float(voce.get("estimated_cost_usd", 0) or 0), 6),
                                 "Esito": "OK" if voce.get("success") else "Non riuscita",
                             }
                             for voce in utilizzi

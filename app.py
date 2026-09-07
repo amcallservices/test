@@ -52,6 +52,7 @@ from commercial_layer import (
     bootstrap_commercial_test,
     charge_credits,
     completa_logout_sicuro,
+    conteggio_ricerche_web,
     annulla_logout_sicuro,
     logout_sicuro_richiesto,
     mostra_crediti_esauriti,
@@ -1711,6 +1712,7 @@ def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazion
             model=model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
             usage=getattr(risposta, "usage", None) if risposta is not None else None,
             credits_requested=amount,
+            web_search_calls=conteggio_ricerche_web(risposta),
             success=riuscita,
             refunded=rimborsata,
             error_code=str(errore or "")[:160],
@@ -1814,7 +1816,7 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     if "coerenza" in azione:
         return "circa 3⅓ (primo controllo); poi 1 credito ogni 3 blocchi"
     if "conformita_kdp" in azione:
-        return "circa 3⅓"
+        return "6"
     if "voto_indice" in azione:
         return "1 credito"
     if any(parola in azione for parola in ("report_sintattico", "metadati", "controlla_fatti")):
@@ -5879,11 +5881,23 @@ with st.sidebar:
         ]
     tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
     motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
+    costo_kdp_tariffario = {
+        "Italiano": "Controllo conformità KDP: 18 crediti con GPT · 6 crediti con DeepSeek.",
+        "English": "KDP compliance check: 18 credits with GPT · 6 credits with DeepSeek.",
+        "Español": "Control de conformidad KDP: 18 créditos con GPT · 6 créditos con DeepSeek.",
+        "Français": "Contrôle de conformité KDP : 18 crédits avec GPT · 6 crédits avec DeepSeek.",
+        "Deutsch": "KDP-Konformitätsprüfung: 18 Credits mit GPT · 6 Credits mit DeepSeek.",
+        "Română": "Control de conformitate KDP: 18 credite cu GPT · 6 credite cu DeepSeek.",
+        "Русский": "Проверка соответствия KDP: 18 кредитов с GPT · 6 кредитов с DeepSeek.",
+        "العربية": "فحص توافق KDP: 18 رصيدًا مع GPT · 6 أرصدة مع DeepSeek.",
+        "中文": "KDP 合规检查：GPT 为 18 积分 · DeepSeek 为 6 积分。",
+    }
     with tariffario_sotto_cervello:
         st.info(tariffario[f"{motore_tariffario}_info"])
         with st.expander(tariffario[f"{motore_tariffario}_title"], expanded=False):
             for voce_tariffario in tariffario[motore_tariffario]:
                 st.write(f"• {voce_tariffario}")
+            st.caption(costo_kdp_tariffario.get(lingua_sel, costo_kdp_tariffario["Italiano"]))
     val_titolo = st.text_input(L["lbl_tit"], key="book_title")
     val_autore = st.text_input(L["lbl_auth"], key="book_author")
     
