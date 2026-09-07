@@ -589,6 +589,25 @@ def richiede_revisione_copyright(esito):
     return any(indicatore in testo for indicatore in indicatori) and "nessuna corrispondenza evidente" not in testo
 
 
+def firma_manoscritto_originalita(sezioni):
+    """Rende valido un esito copyright solo per la versione realmente controllata."""
+    parti = [f"{titolo}\n{testo}" for titolo, testo in list(sezioni or []) if str(testo or "").strip()]
+    return hashlib.sha256("\n\u241e\n".join(parti).encode("utf-8")).hexdigest()
+
+
+def esito_copyright_web_concluso(esito):
+    """Distingue un report web utilizzabile da un errore o da una verifica incompleta."""
+    testo = str(esito or "").strip().casefold()
+    if not testo:
+        return False
+    esiti_non_conclusi = (
+        "non è riuscita", "non ha prodotto un esito", "servono sezioni",
+        "disponibile solo con il cervello gpt", "verifica non completata",
+        "nessun credito è stato addebitato",
+    )
+    return not any(indicatore in testo for indicatore in esiti_non_conclusi)
+
+
 def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
     """Analizza tutto il manoscritto: mini su ogni lotto, completo solo sui dubbi."""
     if usa_deepseek_pro():
@@ -4868,7 +4887,28 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
     report_completezza = list(st.session_state.get("report_completezza_manoscritto", []) or [])
     completezza_non_superata = [voce for voce in report_completezza if voce.get("Esito") != "COMPLETA"]
     report_locale = st.session_state.get("report_originalita_fonti")
-    report_web = str(st.session_state.get("report_originalita_web_completa", "") or st.session_state.get("report_originalita_web", "") or "").strip()
+    firma_corrente = firma_manoscritto_originalita(
+        [(sezione, contenuti.get(sezione, "")) for sezione in sezioni]
+    )
+    locale_valido = (
+        isinstance(report_locale, dict)
+        and report_locale.get("eseguito")
+        and report_locale.get("firma_manoscritto") == firma_corrente
+    )
+    report_web_completo = str(st.session_state.get("report_originalita_web_completa", "") or "").strip()
+    report_web_rapido = str(st.session_state.get("report_originalita_web", "") or "").strip()
+    if report_web_completo:
+        report_web = report_web_completo
+        firma_web = st.session_state.get("report_originalita_web_completa_firma", "")
+    else:
+        report_web = report_web_rapido
+        firma_web = st.session_state.get("report_originalita_web_firma", "")
+    web_valido = (
+        bool(report_web)
+        and firma_web == firma_corrente
+        and esito_copyright_web_concluso(report_web)
+    )
+    web_con_rischi = web_valido and richiede_revisione_copyright(report_web)
     ha_indice = bool(str(st.session_state.get("indice_raw", "") or "").strip())
     ha_testi = bool(sezioni) and any(str(contenuti.get(sezione, "") or "").strip() for sezione in sezioni)
 
@@ -4894,13 +4934,12 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
         else:
             st.success(f"**{et_frasi}**\n\n✓")
     with col_d:
-        if isinstance(report_locale, dict) and report_locale.get("eseguito"):
-            if report_locale.get("trovate"):
-                st.error(f"**{et_originalita}**\n\n✕")
-            elif report_web and richiede_revisione_copyright(report_web):
-                st.warning(f"**{et_originalita}**\n\n⚠")
-            else:
-                st.success(f"**{et_originalita}**\n\n✓")
+        if locale_valido and report_locale.get("trovate"):
+            st.error(f"**{et_originalita}**\n\n✕")
+        elif web_con_rischi:
+            st.warning(f"**{et_originalita}**\n\n⚠")
+        elif (locale_valido and not report_locale.get("trovate")) or web_valido:
+            st.success(f"**{et_originalita}**\n\n✓")
         else:
             st.info(f"**{et_originalita}**\n\n• {et_da_verificare}")
 
@@ -4915,9 +4954,9 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
         for voce in completezza_non_superata
         if voce.get("Sezione")
     )
-    if isinstance(report_locale, dict) and report_locale.get("trovate"):
+    if locale_valido and report_locale.get("trovate"):
         azioni.append(report_locale.get("messaggio", "Controlla le somiglianze segnalate dalle fonti caricate."))
-    if report_web and richiede_revisione_copyright(report_web):
+    if web_con_rischi:
         azioni.append("Il controllo web segnala elementi da rivedere: apri il dettaglio copyright e rielabora solo le sezioni indicate.")
     azioni = list(dict.fromkeys(azione for azione in azioni if str(azione).strip()))
     if azioni:
@@ -4936,7 +4975,10 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
         if isinstance(report_locale, dict):
             st.write(report_locale.get("messaggio", "Nessun dettaglio disponibile."))
         if report_web:
-            st.caption("Esito web disponibile nella sezione Controllo originalità e copyright.")
+            if not web_valido:
+                st.caption("Il report web è di una versione precedente del manoscritto o non si è concluso: riesegui il controllo.")
+            else:
+                st.caption("Esito web disponibile nella sezione Controllo originalità e copyright.")
 
 
 def suggerimento_editoriale_contestuale(sezione, sezioni, obiettivo_libro, argomento):
@@ -10084,8 +10126,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             ),
         ):
             st.caption(
-                "Il controllo locale confronta gratuitamente il manoscritto con i PDF/DOCX caricati. La verifica web opzionale analizza campioni del testo e le fonti web registrate dalla ricerca. "
-                "Nessuno dei due sostituisce una certificazione legale o un servizio antiplagio completo."
+                "Il controllo locale confronta gratuitamente il manoscritto solo con il testo dei PDF/DOCX caricati: non consulta fonti web. "
+                "Le verifiche copyright web sono strumenti separati e usano il registro delle fonti online. Nessuno dei controlli sostituisce una certificazione legale o un servizio antiplagio completo."
             )
             testo_per_controllo = "\n\n".join(
                 leggi_sezione_memorizzata(sezione) for sezione in opzioni_editor
@@ -10095,11 +10137,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 (sezione, leggi_sezione_memorizzata(sezione)) for sezione in opzioni_editor
                 if leggi_sezione_memorizzata(sezione).strip()
             ]
-            if st.button("🔎 CONTROLLO ORIGINALITÀ LOCALE", use_container_width=True, key="controllo_originalita_fonti"):
-                st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
+            firma_originalita_corrente = firma_manoscritto_originalita(sezioni_complete_copyright)
+            if st.button(
+                "🔎 CONTROLLO ORIGINALITÀ LOCALE — PDF/DOCX CARICATI",
+                help="Confronta gratuitamente il manoscritto solo con il testo dei PDF/DOCX caricati nella sidebar. Non consulta fonti web.",
+                use_container_width=True,
+                key="controllo_originalita_fonti",
+            ):
+                report_locale_corrente = controllo_originalita_fonti(
                     testo_per_controllo, st.session_state.get("conoscenza_extra", ""),
                     sezioni=sezioni_complete_copyright,
                 )
+                report_locale_corrente["firma_manoscritto"] = firma_originalita_corrente
+                st.session_state["report_originalita_fonti"] = report_locale_corrente
             report_originalita = st.session_state.get("report_originalita_fonti")
             if report_originalita:
                 if not report_originalita.get("eseguito"):
@@ -10122,9 +10172,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     use_container_width=True, disabled=usa_deepseek_pro(),
                 ):
                     with st.spinner("Verifica web delle possibili somiglianze in corso..."):
-                        st.session_state["report_originalita_web"] = verifica_originalita_web_con_ai(
+                        report_web_rapido = verifica_originalita_web_con_ai(
                             testo_per_controllo, registro_web
                         )
+                    st.session_state["report_originalita_web"] = report_web_rapido
+                    if esito_copyright_web_concluso(report_web_rapido):
+                        st.session_state["report_originalita_web_firma"] = firma_originalita_corrente
+                    else:
+                        st.session_state.pop("report_originalita_web_firma", None)
                 blocchi_completi = prepara_blocchi_verifica_web_completa(sezioni_complete_copyright)
                 costo_verifica_completa = max(1, math.ceil(len(blocchi_completi) / 8))
                 costo_massimo_verifica_completa = (
@@ -10154,6 +10209,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         )
                     st.session_state["report_originalita_web_completa"] = report_completo
                     st.session_state["report_originalita_web_completa_lotti"] = lotti_effettivi
+                    if esito_copyright_web_concluso(report_completo):
+                        st.session_state["report_originalita_web_completa_firma"] = firma_originalita_corrente
+                    else:
+                        st.session_state.pop("report_originalita_web_completa_firma", None)
                     stato_copyright.success("Verifica completa conclusa.")
             else:
                 st.info("La verifica web sarà disponibile dopo la generazione dell'indice: la ricerca preliminare creerà qui il registro delle fonti consultate.")
@@ -10217,12 +10276,18 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         if leggi_sezione_memorizzata(titolo).strip()
                     ]
                     nuovo_testo_controllo = "\n\n".join(testo for _, testo in nuove_sezioni_copyright)
-                    st.session_state["report_originalita_fonti"] = controllo_originalita_fonti(
+                    nuovo_report_locale = controllo_originalita_fonti(
                         nuovo_testo_controllo, st.session_state.get("conoscenza_extra", ""),
                         sezioni=nuove_sezioni_copyright,
                     )
+                    nuovo_report_locale["firma_manoscritto"] = firma_manoscritto_originalita(
+                        nuove_sezioni_copyright
+                    )
+                    st.session_state["report_originalita_fonti"] = nuovo_report_locale
                     st.session_state.pop("report_originalita_web", None)
+                    st.session_state.pop("report_originalita_web_firma", None)
                     st.session_state.pop("report_originalita_web_completa", None)
+                    st.session_state.pop("report_originalita_web_completa_firma", None)
                     esito = (
                         f"Rielaborate {len(rielaborate)} sezione/i usando le sequenze segnalate come vincoli di esclusione. "
                         "Il controllo locale è stato aggiornato automaticamente; per il controllo web esegui una nuova verifica sulla versione aggiornata."
