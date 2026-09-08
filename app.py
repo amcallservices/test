@@ -3555,6 +3555,10 @@ OPZIONI_CHAT_GUIDATA = {
 def _valore_scelta_chat_guidata(campo, valore):
     """Normalizza solo le selezioni tecniche; i testi editoriali restano liberi."""
     valore = re.sub(r"\s+", " ", str(valore or "")).strip()
+    # I modelli possono evidenziare una scelta con Markdown. La formattazione
+    # non deve impedire alla chat di trasferire una scheda corretta nella sidebar.
+    valore = re.sub(r"^(?:\*{1,3}|_{1,3}|`)+\s*", "", valore)
+    valore = re.sub(r"\s*(?:\*{1,3}|_{1,3}|`)+$", "", valore).strip()
     if campo == "lunghezza":
         valore_basso = valore.casefold()
         if valore_basso.startswith("compatto"):
@@ -3575,20 +3579,36 @@ def _valore_scelta_chat_guidata(campo, valore):
             return "conclusione"
         return ""
     opzioni = OPZIONI_CHAT_GUIDATA.get(campo)
-    if opzioni is not None and valore not in opzioni:
-        return ""
-    if campo == "lingua" and valore not in TRADUZIONI:
-        return ""
+    if opzioni is not None:
+        opzione_esatta = next(
+            (opzione for opzione in opzioni if opzione.casefold() == valore.casefold()),
+            "",
+        )
+        if not opzione_esatta:
+            return ""
+        return opzione_esatta
+    if campo == "lingua":
+        lingua_esatta = next(
+            (lingua for lingua in TRADUZIONI if lingua.casefold() == valore.casefold()),
+            "",
+        )
+        if not lingua_esatta:
+            return ""
+        return lingua_esatta
     return valore
 
 
 def estrai_scheda_chat_guidata(testo):
-    """Legge soltanto la scheda finale con etichette note, mai testo libero."""
+    """Legge la scheda finale anche se l'IA usa punti elenco o grassetto."""
     testo = str(testo or "").replace("\r\n", "\n")
     risultati = {}
     corrispondenze = []
     for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items():
-        espressione = rf"(?im)^\s*{re.escape(etichetta)}\s*(?:\([^\n)]*\))?\s*:\s*"
+        espressione = (
+            rf"(?im)^\s*(?:[-•]\s+)?(?:\*{{1,3}}|_{{1,3}})?\s*"
+            rf"{re.escape(etichetta)}\s*(?:\*{{1,3}}|_{{1,3}})?"
+            rf"\s*(?:\([^\n)]*\))?\s*(?:\*{{1,3}}|_{{1,3}})?\s*:\s*"
+        )
         for match in re.finditer(espressione, testo):
             corrispondenze.append((match.start(), match.end(), campo))
     corrispondenze.sort(key=lambda dato: dato[0])
@@ -3601,6 +3621,15 @@ def estrai_scheda_chat_guidata(testo):
         valore = _valore_scelta_chat_guidata(campo, valore)
         if valore:
             risultati[campo] = valore
+    return risultati
+
+
+def estrai_scheda_chat_guidata_da_cronologia(messaggi):
+    """Ricompone una scheda anche se la chat l'ha completata in più risposte."""
+    risultati = {}
+    for messaggio in list(messaggi or []):
+        if messaggio.get("role") == "assistant":
+            risultati.update(estrai_scheda_chat_guidata(messaggio.get("content", "")))
     return risultati
 
 
@@ -8538,12 +8567,33 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                     placeholder="Descrivi l'idea del libro oppure rispondi alla domanda della chat.",
                     height=90,
                 )
-                if st.button(
+                ha_messaggi_utente_chat = any(
+                    messaggio.get("role") == "user" for messaggio in messaggi_chat
+                )
+                prepara_scheda_chat = st.button(
+                    "✨ PREPARA LA SCHEDA PER LA SIDEBAR",
+                    key=f"prepara_scheda_chat_sidebar_{nonce_chat}",
+                    help=(
+                        "Usa tutta la conversazione già svolta per creare ora i campi "
+                        "da inserire nella sidebar."
+                    ),
+                    disabled=not ha_messaggi_utente_chat,
+                    use_container_width=True,
+                )
+                if not ha_messaggi_utente_chat:
+                    st.caption("Descrivi prima l'idea del libro: poi potrai chiedere alla chat di preparare la scheda.")
+                invia_messaggio_chat = st.button(
                     f"➤ INVIA — risposta IA: {costo_chat_visibile}",
                     key=f"invia_chat_sidebar_{nonce_chat}",
                     use_container_width=True,
-                ):
-                    testo_utente_chat = str(testo_utente_chat or "").strip()
+                )
+                if invia_messaggio_chat or prepara_scheda_chat:
+                    testo_utente_chat = (
+                        "Prepara ora la scheda finale completa per la sidebar usando tutta la conversazione. "
+                        "Non fare altre domande."
+                        if prepara_scheda_chat else
+                        str(testo_utente_chat or "").strip()
+                    )
                     if not testo_utente_chat:
                         st.warning("Scrivi prima un messaggio per la chat.")
                     else:
@@ -8558,7 +8608,7 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             if voce.get("role") == "user"
                         )
                         ultimo_messaggio_chat = testo_utente_chat.casefold()
-                        conferma_chat = bool(re.search(
+                        conferma_chat = prepara_scheda_chat or bool(re.search(
                             r"\b(confermo|conferma|procedi|prosegui|vai|ok|okay|yes|si|sì|continue|go ahead|continúa|continuez|weiter|продолж|افعل|继续)\b",
                             ultimo_messaggio_chat,
                         ))
@@ -8619,7 +8669,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                         else:
                             messaggi_chat.append({"role": "assistant", "content": risposta_chat})
                             st.session_state["chat_sidebar_messaggi"] = messaggi_chat
-                            scheda_estratta = estrai_scheda_chat_guidata(risposta_chat)
+                            scheda_estratta = estrai_scheda_chat_guidata_da_cronologia(messaggi_chat)
                             if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_estratta):
                                 # Il provider viene sempre preso dalla scelta corrente, non dalla risposta IA.
                                 scheda_estratta["provider_ia"] = cervello_chat
@@ -8627,6 +8677,12 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                             st.session_state["chat_sidebar_input_nonce"] = nonce_chat + 1
                             st.rerun()
 
+                scheda_da_cronologia = estrai_scheda_chat_guidata_da_cronologia(
+                    st.session_state.get("chat_sidebar_messaggi", [])
+                )
+                if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_da_cronologia):
+                    scheda_da_cronologia["provider_ia"] = cervello_chat
+                    st.session_state["chat_sidebar_scheda_pronta"] = scheda_da_cronologia
                 scheda_chat_pronta = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
                 if scheda_chat_pronta:
                     st.success("La scheda è pronta. Puoi applicarla alla sidebar senza copiare i singoli campi.")
