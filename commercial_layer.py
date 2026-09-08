@@ -889,6 +889,7 @@ def _apri_progetto_pulito_dopo_accesso() -> None:
     # Un reset di una sessione precedente non deve impedire il ripristino
     # manuale dell'utente dopo un nuovo accesso.
     st.session_state.pop("commercial_project_reset_requested", None)
+    st.session_state.pop("commercial_project_reset_completed", None)
     st.session_state["commercial_editor_avvio_pulito"] = True
 
 
@@ -2342,6 +2343,7 @@ def completa_logout_sicuro() -> None:
         "commercial_user_context",
         "commercial_show_auth",
         "commercial_project_reset_requested",
+        "commercial_project_reset_completed",
     ):
         st.session_state.pop(chiave, None)
     st.rerun()

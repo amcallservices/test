@@ -4571,6 +4571,7 @@ def svuota_memoria_progetto_dopo_reset():
     ):
         st.session_state.pop(chiave, None)
     st.session_state["commercial_project_reset_requested"] = True
+    st.session_state["commercial_project_reset_completed"] = True
     # Ricrea subito l'ossatura di un progetto nuovo nello stesso rerun. Non
     # lasciamo chiavi dei widget non inizializzate tra reset e pagina visibile.
     nuovo_id_sessione = uuid.uuid4().hex
@@ -4607,6 +4608,7 @@ def prepara_ripristino_ultima_stesura():
     if not snapshot:
         return False
     st.session_state.pop("commercial_project_reset_requested", None)
+    st.session_state.pop("commercial_project_reset_completed", None)
     st.session_state["autosave_snapshot_da_ripristinare"] = snapshot
     return True
 
@@ -4739,6 +4741,7 @@ def salva_progetto_corrente(sidebar, sezioni):
     momento = datetime.datetime.now().strftime("%H:%M")
     if salva_progetto_automatico(snapshot):
         st.session_state.pop("commercial_project_reset_requested", None)
+        st.session_state.pop("commercial_project_reset_completed", None)
         st.session_state["autosave_firma"] = firma
         st.session_state["autosave_firma_cloud"] = firma
         st.session_state["autosave_stato"] = f"✓ Sessione salvata nel tuo account alle {momento}."
@@ -5847,7 +5850,10 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # flag esiste soltanto nel rerun immediatamente successivo a quel pulsante.
 # Dopo RESET la pulizia avviene qui, prima che la sidebar renda i widget: in
 # questo modo nessun valore precedente può restare visibile o riapparire.
-if st.session_state.get("commercial_project_reset_requested"):
+if (
+    st.session_state.get("commercial_project_reset_requested")
+    and not st.session_state.get("commercial_project_reset_completed")
+):
     svuota_memoria_progetto_dopo_reset()
 if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
@@ -10241,6 +10247,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     # sidebar: Streamlit può così aggiornare ogni widget senza
                     # perdere campi o testi.
                     st.session_state.pop("commercial_project_reset_requested", None)
+                    st.session_state.pop("commercial_project_reset_completed", None)
                     st.session_state["autosave_snapshot_da_ripristinare"] = snapshot_csv
                     st.rerun()
                 except ValueError as exc:
