@@ -8617,6 +8617,12 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             ultimo_messaggio_chat,
                         ))
                         istruzione_chiusura_chat = (
+                            "MODALITÀ CONCLUSIVA ATTIVATA DAL PULSANTE: produci ADESSO la scheda finale completa. "
+                            "Non porre domande, non chiedere conferme e non offrire alternative. Se la scelta di "
+                            "personalizzazione non è esplicita nella conversazione, applica automaticamente l'opzione D "
+                            "(personalizzazione editoriale coerente proposta da te, senza inventare fatti personali). "
+                            "La tua intera risposta deve contenere soltanto le etichette della scheda finale e i rispettivi valori."
+                            if prepara_scheda_chat else
                             "L'ultimo messaggio contiene una conferma o richiesta di procedere: produci ADESSO la scheda finale completa. Non porre domande, non chiedere conferme e non offrire alternative."
                             if conferma_chat else
                             "L'utente non ha ancora dato una conferma conclusiva: segui il protocollo sotto e chiedi soltanto il prossimo dato davvero necessario."
@@ -8625,6 +8631,15 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             "L'utente ti ha chiesto di scegliere autonomamente: usa immaginazione editoriale coerente con tutta la conversazione e compila tutti i campi descrittivi. Puoi inventare soltanto impostazioni narrative, esempi generici, tono, obiettivo, pubblico plausibile e priorità editoriali; non attribuire mai all'autore esperienze, testimonianze, risultati, biografia, fonti o fatti reali non dichiarati. Produci subito la scheda finale."
                             if autonomia_creativa_chat else
                             "Se l'utente non ti chiede di scegliere autonomamente, non inventare informazioni personali o fatti non dichiarati."
+                        )
+                        fase_personalizzazione_chat = (
+                            "2. Il pulsante «Prepara la scheda per la sidebar» è stato premuto. Questo annulla "
+                            "qualsiasi ulteriore fase di domande: considera scelta l'opzione D se non esiste già "
+                            "una scelta esplicita e restituisci immediatamente la scheda finale completa."
+                            if prepara_scheda_chat else
+                            "2. Dopo la prima descrizione concreta del libro, poni obbligatoriamente la domanda A/B/C/D "
+                            "sulla personalizzazione prevista dal prompt principale. Non redigere la scheda e non "
+                            "discutere altri argomenti prima di aver ricevuto una scelta."
                         )
                         istruzioni_chat_interattiva = f"""{prompt_chat_sidebar}
 
@@ -8637,7 +8652,7 @@ SEGNALI DELL'ULTIMO MESSAGGIO
 
 PROTOCOLLO DI GUIDA OBBLIGATORIO
 1. Leggi tutta la cronologia e memorizza ogni dato già espresso. Non chiedere mai di nuovo titolo, argomento, pubblico, obiettivo o preferenze che sono già chiari.
-2. Dopo la prima descrizione concreta del libro, poni obbligatoriamente la domanda A/B/C/D sulla personalizzazione prevista dal prompt principale. Non redigere la scheda e non discutere altri argomenti prima di aver ricevuto una scelta.
+{fase_personalizzazione_chat}
 3. Se l'utente sceglie A, prepara subito la scheda senza campi personali. Se sceglie B o C, chiedi in un unico messaggio solo i dettagli personali indispensabili; alla risposta successiva prepara la scheda senza aprire altri giri.
 4. Se l'utente sceglie D, risponde “non so”, “fai tu”, “confermo”, “ok”, “procedi”, “vai” o con una formula equivalente dopo la domanda sulla personalizzazione, costruisci subito tu una personalizzazione editoriale coerente. Puoi proporre tono, priorità, esempi generici e confini; non inventare mai esperienze personali, testimonianze, biografia, risultati o fatti reali dell'autore.
 5. Puoi porre al massimo un chiarimento editoriale aggiuntivo, e solo se senza quel dato non è possibile dedurre argomento, lettore plausibile oppure obiettivo. Offri fino a tre scelte concrete. Alla risposta successiva completa obbligatoriamente la scheda.
@@ -8674,6 +8689,18 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                                 # Il provider viene sempre preso dalla scelta corrente, non dalla risposta IA.
                                 scheda_estratta["provider_ia"] = cervello_chat
                                 st.session_state["chat_sidebar_scheda_pronta"] = scheda_estratta
+                                st.session_state.pop("chat_sidebar_esito_scheda", None)
+                            elif prepara_scheda_chat:
+                                mancanti = sorted(
+                                    CAMPI_CHAT_GUIDATA_OBBLIGATORI - set(scheda_estratta)
+                                )
+                                st.session_state["chat_sidebar_esito_scheda"] = (
+                                    "La chat non ha ancora restituito una scheda trasferibile. "
+                                    "Campi non riconosciuti: "
+                                    + ", ".join(campo.replace("_", " ") for campo in mancanti)
+                                    + ". Puoi premere di nuovo «Prepara la scheda per la sidebar»: "
+                                    "la conversazione resta conservata."
+                                )
                             st.session_state["chat_sidebar_input_nonce"] = nonce_chat + 1
                             st.rerun()
 
@@ -8684,6 +8711,9 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                     scheda_da_cronologia["provider_ia"] = cervello_chat
                     st.session_state["chat_sidebar_scheda_pronta"] = scheda_da_cronologia
                 scheda_chat_pronta = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
+                esito_scheda_chat = str(st.session_state.get("chat_sidebar_esito_scheda", "") or "").strip()
+                if esito_scheda_chat and not scheda_chat_pronta:
+                    st.warning(esito_scheda_chat)
                 if scheda_chat_pronta:
                     st.success("La scheda è pronta. Puoi applicarla alla sidebar senza copiare i singoli campi.")
                     with st.expander("Vedi i dati che verranno applicati", expanded=False):
