@@ -732,22 +732,28 @@ def salva_progetto_automatico(snapshot: dict[str, Any]) -> bool:
 
 
 def elimina_progetto_automatico() -> bool:
-    """Rimuove integralmente la bozza cloud prima di azzerare la pagina.
+    """Rimuove e verifica l'assenza della bozza cloud dell'utente corrente.
 
-    Restituisce ``False`` se il cloud non conferma la cancellazione: in quel
-    caso l'app mantiene visibile il progetto, invece di mostrare un reset che
-    al login successivo farebbe ricomparire dati precedenti.
+    Il reset locale può iniziare soltanto dopo una seconda lettura che conferma
+    l'assenza della fotografia remota: così un ritardo o una risposta anomala
+    del servizio non fa ricomparire sidebar, indice o manoscritto al riavvio.
     """
     user = st.session_state.get("commercial_user_context") or {}
     if _mode() == "demo" or not _supabase_ready() or not user.get("id"):
         return _mode() == "demo"
     try:
+        filtro_utente = f"eq.{user['id']}"
         _supabase(
             "DELETE",
             "rest/v1/writer_project_autosaves",
-            params={"user_id": f"eq.{user['id']}"},
+            params={"user_id": filtro_utente},
         )
-        return True
+        residui = _supabase(
+            "GET",
+            "rest/v1/writer_project_autosaves",
+            params={"select": "user_id", "user_id": filtro_utente, "limit": "1"},
+        )
+        return not bool(residui)
     except Exception:
         return False
 

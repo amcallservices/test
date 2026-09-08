@@ -4551,6 +4551,40 @@ def applica_snapshot_progetto(snapshot):
     return True
 
 
+def svuota_memoria_progetto_dopo_reset():
+    """Azzera il progetto prima di ricreare i widget della pagina.
+
+    Il comando viene eseguito all'inizio del rerun successivo al reset: nessun
+    widget Streamlit già renderizzato può quindi reinserire un valore vecchio.
+    Account, sessione e crediti restano disponibili; ogni fotografia che può
+    contenere dati del libro viene invece rimossa esplicitamente.
+    """
+    for chiave in list(st.session_state.keys()):
+        if not str(chiave).startswith("commercial_"):
+            st.session_state.pop(chiave, None)
+    for chiave in (
+        "commercial_logout_snapshot",
+        "commercial_logout_snapshot_owner",
+        "commercial_logout_sidebar_snapshot",
+        "commercial_logout_requested_for",
+        "commercial_logout_error",
+    ):
+        st.session_state.pop(chiave, None)
+    st.session_state["commercial_project_reset_requested"] = True
+    # Ricrea subito l'ossatura di un progetto nuovo nello stesso rerun. Non
+    # lasciamo chiavi dei widget non inizializzate tra reset e pagina visibile.
+    nuovo_id_sessione = uuid.uuid4().hex
+    st.session_state.update({
+        "memoria_blindata": True,
+        "id_sessione_utente": nuovo_id_sessione,
+        "tmp_dir": os.path.join(tempfile.gettempdir(), "ebook_creator_sessions", nuovo_id_sessione),
+        "indice_raw": "",
+        "lista_capitoli": [],
+        "conoscenza_extra": "",
+        "immagini_capitoli": {},
+    })
+
+
 def ripristina_progetto_salvato():
     """Ripristina l'ultima bozza una sola volta, oppure una bozza richiesta dal pulsante manuale."""
     # RESET PROGETTO ha priorità assoluta: anche se una vecchia riga cloud non
@@ -5811,6 +5845,10 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # Il progetto cloud non viene più caricato automaticamente: l'utente sceglie
 # esplicitamente quando recuperarlo con “RIAGGIORNA ALL'ULTIMA STESURA”. Il
 # flag esiste soltanto nel rerun immediatamente successivo a quel pulsante.
+# Dopo RESET la pulizia avviene qui, prima che la sidebar renda i widget: in
+# questo modo nessun valore precedente può restare visibile o riapparire.
+if st.session_state.get("commercial_project_reset_requested"):
+    svuota_memoria_progetto_dopo_reset()
 if st.session_state.get("autosave_snapshot_da_ripristinare"):
     ripristina_progetto_salvato()
 
@@ -6310,16 +6348,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             reset_eseguito = True
         else:
             # Reset significa eliminazione integrale: prima il cloud, poi la
-            # memoria della pagina. Se il cloud non conferma, non svuotiamo la
-            # UI e non rischiamo che la bozza ricompaia al login successivo.
+            # memoria della pagina nel rerun successivo, prima dei widget.
+            # Se il cloud non conferma, non svuotiamo la UI e non rischiamo
+            # che sidebar, indice o manoscritto ricompaiano al login.
             if elimina_progetto_automatico():
-                st.session_state.pop("commercial_logout_snapshot", None)
-                st.session_state.pop("commercial_logout_snapshot_owner", None)
-                st.session_state.pop("commercial_logout_requested_for", None)
                 st.session_state["commercial_project_reset_requested"] = True
-                for key in list(st.session_state.keys()):
-                    if not key.startswith("commercial_"):
-                        del st.session_state[key]
                 reset_eseguito = True
             else:
                 st.error(
@@ -7968,6 +8001,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         )
 
     with tabs[0]:
+        avviso_reset_nuovo_progetto = {
+            "Italiano": "⚠️ Prima di iniziare un nuovo progetto, premi **RESET PROGETTO** nella sidebar per cancellare la cache salvata del progetto precedente.",
+            "English": "⚠️ Before starting a new project, press **RESET PROJECT** in the sidebar to clear the saved cache from the previous project.",
+            "Español": "⚠️ Antes de iniciar un proyecto nuevo, pulsa **RESETEAR PROYECTO** en la barra lateral para borrar la caché guardada del proyecto anterior.",
+            "Français": "⚠️ Avant de commencer un nouveau projet, appuyez sur **RÉINITIALISER LE PROJET** dans la barre latérale pour effacer le cache enregistré du projet précédent.",
+            "Deutsch": "⚠️ Bevor Sie ein neues Projekt beginnen, drücken Sie in der Seitenleiste **PROJEKT ZURÜCKSETZEN**, um den gespeicherten Cache des vorherigen Projekts zu löschen.",
+            "Română": "⚠️ Înainte de a începe un proiect nou, apasă **RESETARE PROIECT** în bara laterală pentru a șterge memoria cache salvată a proiectului anterior.",
+            "Русский": "⚠️ Перед началом нового проекта нажмите **СБРОСИТЬ ПРОЕКТ** на боковой панели, чтобы очистить сохранённый кэш предыдущего проекта.",
+            "العربية": "⚠️ قبل بدء مشروع جديد، اضغط **إعادة تعيين المشروع** في الشريط الجانبي لمسح ذاكرة التخزين المؤقت المحفوظة للمشروع السابق.",
+            "中文": "⚠️ 开始新项目之前，请点击侧边栏中的 **重置项目**，清除上一个项目保存的缓存。",
+        }
+        st.warning(avviso_reset_nuovo_progetto.get(lingua_sel, avviso_reset_nuovo_progetto["Italiano"]))
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
         chat_subito = {
