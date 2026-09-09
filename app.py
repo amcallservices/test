@@ -3835,7 +3835,9 @@ Il prompt deve trasferire alla Chat guidata solo le evidenze e le ipotesi pruden
     return chiedi_gpt(
         _cronologia_chat_nicchia(cronologia), istruzioni + f"\nLingua selezionata: {lingua}.",
         addebita=True, amount=CREDIT_COSTS["chat_nicchia_prompt_finale"],
-        max_completion_tokens=1800, model=MODELLO_EDITORIALE,
+        # Il prompt deve poter riportare evidenze, cautele e istruzioni senza
+        # interrompersi a metà; il tariffario resta invariato.
+        max_completion_tokens=2600, model=MODELLO_EDITORIALE,
         reason="chat_nicchia_prompt_finale", timeout_seconds=90,
     )
 
@@ -9022,8 +9024,10 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                         "Prima di discutere o valutare la nicchia, raccogli obbligatoriamente: marketplace Amazon, lingua del libro e idea/lettore/problema. "
                         "Se uno di questi tre elementi manca, chiedi solo quello mancante e non svolgere analisi generiche. Quando sono tutti chiari, ragiona con lucidità sull'idea editoriale, fai al massimo una domanda utile alla volta e non creare mai indice, capitoli, testo del libro o campi della sidebar. "
                         "Ricorda che l'analisi documentata avverrà solo quando l'utente premerà il relativo pulsante.",
-                        addebita=True, amount=CREDIT_COSTS["chat_nicchia_dialogo"], max_completion_tokens=700,
-                        model=MODELLO_EDITORIALE, reason="chat_nicchia_dialogo", timeout_seconds=75,
+                        # Anche il dialogo può contenere una sintesi articolata
+                        # prima della ricerca; evitiamo finali troncati.
+                        addebita=True, amount=CREDIT_COSTS["chat_nicchia_dialogo"], max_completion_tokens=1400,
+                        model=MODELLO_EDITORIALE, reason="chat_nicchia_dialogo", timeout_seconds=90,
                     )
                     if str(risposta_nicchia or "").startswith("ERRORE:"):
                         st.error(testi_nicchia["errore"])
