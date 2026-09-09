@@ -1160,6 +1160,20 @@ HOME_ADVANTAGES_COPY = {
     "中文": ("Scrittore Site 的优势", "普通 AI 聊天可以协助写作。Scrittore Site 则将这种协助变成有序、可掌控的编辑项目。", (("🧭", "完整流程，而非空白页面", "简报、资料、目录、写作和审阅都在同一个项目中保持关联。"), ("💾", "记忆与项目恢复", "侧边栏、目录和文本可保存、重新打开并导出为完整 CSV。"), ("🔎", "适时的编辑检查", "导出前可检查连贯性、完整性、重复和质量。"), ("📚", "可继续打磨的书稿", "预览、语音阅读、Word、PDF 与 KDP 排版帮助你从草稿走向书稿。"))),
 }
 
+# Specifica breve e autonoma: chiarisce il vantaggio della memoria editoriale
+# senza promettere un controllo automatico assoluto o allungare la home.
+HOME_EDITORIAL_MEMORY_COPY = {
+    "Italiano": ("🧠", "Memoria editoriale integrata", "Brief, indice e sezioni già create guidano ogni nuova parte del libro per mantenere coerenza e ridurre le ripetizioni."),
+    "English": ("🧠", "Integrated editorial memory", "The brief, outline and written sections guide each new part of the book to maintain consistency and reduce repetition."),
+    "Español": ("🧠", "Memoria editorial integrada", "El brief, el índice y las secciones ya creadas guían cada nueva parte del libro para mantener la coherencia y reducir las repeticiones."),
+    "Français": ("🧠", "Mémoire éditoriale intégrée", "Le brief, le plan et les sections déjà rédigées guident chaque nouvelle partie du livre afin de préserver la cohérence et de réduire les répétitions."),
+    "Deutsch": ("🧠", "Integriertes Redaktionsgedächtnis", "Briefing, Gliederung und bereits geschriebene Abschnitte leiten jeden neuen Teil des Buches an, damit es stimmig bleibt und Wiederholungen reduziert werden."),
+    "Română": ("🧠", "Memorie editorială integrată", "Brief-ul, cuprinsul și secțiunile deja scrise ghidează fiecare parte nouă a cărții pentru a păstra coerența și a reduce repetițiile."),
+    "Русский": ("🧠", "Встроенная редакторская память", "Бриф, план и уже написанные разделы направляют каждую новую часть книги, сохраняя связность и уменьшая повторы."),
+    "العربية": ("🧠", "ذاكرة تحريرية مدمجة", "يوجّه الملخص والفهرس والأقسام المكتوبة مسبقاً كل جزء جديد من الكتاب للحفاظ على الاتساق وتقليل التكرار."),
+    "中文": ("🧠", "集成编辑记忆", "简报、目录和已写好的章节会引导书中的每个新部分，以保持连贯并减少重复。"),
+}
+
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
@@ -1419,6 +1433,7 @@ def _landing_page() -> None:
     Q = HOME_NICHE_FEATURE[home_language]
     J = HOME_IDEA_TO_BOOK_COPY[home_language]
     V = HOME_ADVANTAGES_COPY[home_language]
+    M = HOME_EDITORIAL_MEMORY_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
@@ -1526,7 +1541,7 @@ def _landing_page() -> None:
     )
     advantages_html = "".join(
         f"<div class='ss-advantage'><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></div>"
-        for icon, title, text in V[2]
+        for icon, title, text in (*V[2], M)
     )
     st.markdown("<div id='ss-vantaggi' class='ss-anchor-target'></div>", unsafe_allow_html=True)
     with st.expander(f"✦ {V[0]}", expanded=False):
