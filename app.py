@@ -61,6 +61,10 @@ from project_sources import (
     firma_ricerca_preliminare as firma_ricerca_preliminare_core,
     separa_mappa_e_registro_fonti_web as separa_mappa_e_registro_fonti_web_core,
 )
+from project_text import (
+    dividi_blocchi_lettura as dividi_blocchi_lettura_core,
+    pulisci_testo_editoriale as pulisci_testo_editoriale_core,
+)
 import project_memory as memoria_core
 from commercial_layer import (
     AI_REQUEST_CREDITS,
@@ -2057,51 +2061,13 @@ def audit_fatti_capitolo(capitolo, contenuti, lingua):
         return f"Controllo fatti del capitolo non disponibile: {e}"
 
 def pulisci_testo_editoriale(testo):
-    """Rimuove fonti tecniche dal testo destinato ad anteprima ed esportazione."""
-    if not testo:
-        return ""
-    testo = str(testo)
-    # Rimuove Markdown e segni di formattazione tecnica: l'editor impagina il testo in modo nativo.
-    testo = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", testo)
-    testo = testo.replace("**", "").replace("__", "")
-    testo = re.sub(r"(?m)^\s*>\s?", "", testo)
-    testo = re.sub(r"(?is)(?:^|\n)\s{0,3}(?:#+\s*)?(?:fonti verificate|fonti consultate|riferimenti bibliografici|sources|references)\s*:?.*$", "", testo)
-    testo = re.sub(r"\[([^\]]+)\]\(https?://[^)]+\)", r"\1", testo)
-    testo = re.sub(r"https?://[^\s)\]>]+", "", testo)
-    # Elimina le attribuzioni residue prodotte dai modelli, incluse fonti senza URL
-    # completo come "(esempio.net)" o domini nazionali. Le parentesi tecniche normali
-    # restano invece intatte.
-    testo = re.sub(
-        r"\s*\([^\n()]{0,180}(?:\b[a-z0-9-]+\.)+(?:com|org|net|gov|edu|io|co\.uk|it|fr|de|es|ai|info|biz|co)[^\n()]*\)",
-        "", testo, flags=re.I
-    )
-    testo = re.sub(r"(?im)^\s*\[?(?:informazione|fatto|esempio|fonte)[^\n]{0,120}(?:da verificare|verificato|ipotetico|di carattere generale)[^\n]*\]?\s*$", "", testo)
-    testo = re.sub(r"(?m)^\s*[-_*]{3,}\s*$", "", testo)
-    testo = re.sub(r"\n{3,}", "\n\n", testo)
-    return testo.strip()
+    """Compatibilità UI: la pulizia pura vive in project_text.py."""
+    return pulisci_testo_editoriale_core(testo)
 
 
 def dividi_blocchi_lettura(testo, limite=480):
-    """Divide il testo con la stessa logica del lettore browser.
-
-    I blocchi ricevono poi un riferimento nell'anteprima, così l'evidenziazione
-    resta sincronizzata con la frase effettivamente pronunciata.
-    """
-    normalizzato = re.sub(r"\s+", " ", str(testo or "")).strip()
-    if not normalizzato:
-        return []
-    frasi = re.findall(r"[^.!?…]+[.!?…]+|[^.!?…]+$", normalizzato) or [normalizzato]
-    blocchi, corrente = [], ""
-    for frase in frasi:
-        candidata = (corrente + " " + frase).strip()
-        if len(candidata) > limite and corrente:
-            blocchi.append(corrente)
-            corrente = frase.strip()
-        else:
-            corrente = candidata
-    if corrente:
-        blocchi.append(corrente)
-    return blocchi
+    """Compatibilità UI: la divisione pura vive in project_text.py."""
+    return dividi_blocchi_lettura_core(testo, limite)
 
 
 def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
