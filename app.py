@@ -1717,12 +1717,14 @@ def _client_e_modello_testuale(modello_richiesto=None):
 
 
 def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazione_testo", amount=0,
-                               model=None, riuscita=True, rimborsata=False, errore=""):
-    """Invia al registro amministrativo solo i dati tecnici della chiamata.
+                               model=None, riuscita=True, rimborsata=False, errore="",
+                               macro_operation_id="", riferimento_padre="", tipo_evento="api_call",
+                               durata_ms=0, retry_di=""):
+    """Registra un passaggio tecnico senza salvare prompt o contenuto editoriale.
 
-    Prompt e testo generato restano esclusivamente nella sessione/progetto
-    dell'utente: nel database dei costi finiscono soltanto token, modello,
-    operazione, crediti e risultato tecnico.
+    Le chiamate figlie ricevono la cartellina del lavoro principale tramite
+    ``riferimento_padre``: restano visibili nel costo totale, ma non possono
+    mai produrre un secondo addebito al lettore.
     """
     try:
         registra_utilizzo_ai(
@@ -1735,6 +1737,11 @@ def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazion
             success=riuscita,
             refunded=rimborsata,
             error_code=str(errore or "")[:160],
+            macro_operation_id=macro_operation_id,
+            parent_reference=riferimento_padre,
+            event_kind=tipo_evento,
+            duration_ms=durata_ms,
+            retry_of=retry_di,
         )
     except Exception:
         # Il monitoraggio non deve interferire con l'esito editoriale.
@@ -1742,15 +1749,16 @@ def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazion
 
 
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None,
-               model=None, reason="generazione_testo", timeout_seconds=None):
-    """Invia una richiesta testuale con timeout esplicito per i flussi editoriali.
+               model=None, reason="generazione_testo", timeout_seconds=None,
+               riferimento_padre="", macro_operation_id="", retry_di=""):
+    """Invia una richiesta testuale con addebito unico e tracciamento coerente.
 
-    La progettazione di indice usa il modello completo e può includere audit e
-    correzione. Senza un limite il client SDK può attendere dieci minuti e il
-    pulsante sembra bloccato. Il timeout ferma la sola richiesta in corso e
-    lascia intatti progetto, crediti e contenuti già salvati.
+    Quando ``riferimento_padre`` è presente, la richiesta è una fase interna
+    dell'azione già pagata: conserva il costo nella stessa cartellina, ma non
+    scala ulteriori crediti. Timeout, testo e salvataggi restano invariati.
     """
-    riferimento = None
+    riferimento = uuid.uuid4().hex
+    inizio = time.perf_counter()
     try:
         if addebita:
             riferimento = charge_credits(reason, amount=amount)
@@ -1785,6 +1793,11 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             reason=reason,
             amount=amount if addebita else 0,
             model=modello_effettivo,
+            macro_operation_id=macro_operation_id,
+            riferimento_padre=riferimento_padre,
+            tipo_evento="primary_request" if addebita else ("internal_step" if riferimento_padre else "unbilled_request"),
+            durata_ms=round((time.perf_counter() - inizio) * 1000),
+            retry_di=retry_di,
         )
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
@@ -1795,7 +1808,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         mostra_crediti_esauriti()
         st.stop()
     except Exception as e:
-        if riferimento:
+        if addebita and riferimento:
             refund_credits(riferimento, amount=amount)
         registra_esito_chiamata_ai(
             None,
@@ -1804,8 +1817,13 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             amount=amount if addebita else 0,
             model=model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
             riuscita=False,
-            rimborsata=bool(riferimento),
+            rimborsata=bool(addebita and riferimento),
             errore=type(e).__name__,
+            macro_operation_id=macro_operation_id,
+            riferimento_padre=riferimento_padre,
+            tipo_evento="primary_request" if addebita else ("internal_step" if riferimento_padre else "unbilled_request"),
+            durata_ms=round((time.perf_counter() - inizio) * 1000),
+            retry_di=retry_di,
         )
         return f"ERRORE: {str(e)}"
 
@@ -2740,10 +2758,12 @@ def criticita_indice_generato(indice, genere, titolo, trama, obiettivo, minimo_p
     return problemi
 
 
-def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, *, addebita=True):
-    """Usa esattamente lo stesso metro del pulsante 'Voto indice', evitando approvazioni incoerenti."""
+def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, *,
+                                     addebita=True, riferimento_padre=""):
+    """Usa il metro del Voto indice e conserva la cartellina della generazione, se presente."""
     risposta = valuta_indice_editoriale(
-        indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, "", addebita=addebita
+        indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, "",
+        addebita=addebita, riferimento_padre=riferimento_padre,
     ).strip()
     match = re.search(r"(?im)^\s*(?:voto\s+complessivo|voto)\s*:\s*(10|[0-9])\s*(?:/\s*10)?\b", risposta)
     voto = int(match.group(1)) if match else 0
@@ -2955,6 +2975,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     risposta_iniziale = chiedi_gpt(
         prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
         timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="genera_indice",
+        riferimento_padre=riferimento,
     )
     if not str(risposta_iniziale or "").strip() or str(risposta_iniziale).startswith("ERRORE:"):
         refund_credits(riferimento, reason="genera_indice_fallito", amount=CREDIT_COSTS["indice_generazione_editoriale"])
@@ -3029,7 +3050,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             voto_editoriale, difetti_editoriali = 0, "vincoli strutturali da correggere prima della valutazione editoriale"
         else:
             voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
-                corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov, addebita=False
+                corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
+                addebita=False, riferimento_padre=riferimento,
             )
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica and not (
             budget_editoriale_superato and tentativo < massimo_tentativi - 1
@@ -3118,6 +3140,7 @@ INDICE RIFIUTATO DA CORREGGERE
         risposta_revisione = chiedi_gpt(
             revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
             timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="correzione_indice",
+            riferimento_padre=riferimento,
         )
         avanza(92, "Correzione completata: validazione finale in corso...")
         if not str(risposta_revisione or "").strip() or str(risposta_revisione).startswith("ERRORE:"):
@@ -6728,8 +6751,9 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Mantieni paragrafi leggibili e sottotitoli brevi solo quando migliorano la consultazione; non usare formule generiche come "semplice", "intuitivo" o "fondamentale" senza spiegare concretamente il perché.
 """
 
-def valuta_indice_editoriale(indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti="", *, addebita=True):
-    """Valuta l'indice rispetto al brief compilato nella sidebar."""
+def valuta_indice_editoriale(indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua,
+                             approfondimenti="", *, addebita=True, riferimento_padre=""):
+    """Valuta l'indice rispetto al brief e, se serve, lo collega al lavoro principale."""
     prompt = f"""Valuta professionalmente il seguente indice editoriale in lingua {lingua}.
 
 DATI DEL BRIEF
@@ -6764,6 +6788,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
         amount=CREDIT_COSTS["voto_indice"],
         model=MODELLO_EDITORIALE,
         reason="voto_indice",
+        riferimento_padre=riferimento_padre,
     ))
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
@@ -6887,6 +6912,7 @@ AZIONE CONSIGLIATA:""",
                 amount=0,
                 model=MODELLO_EDITORIALE,
                 reason="controllo_conformita_kdp",
+                riferimento_padre=riferimento,
             )
             if not esito or esito.startswith("ERRORE:"):
                 raise RuntimeError("L'analisi di una parte del manoscritto non è stata completata.")
@@ -6917,6 +6943,7 @@ Se non risultano criticità, chiarisci che il controllo automatico non sostituis
             amount=0,
             model=MODELLO_EDITORIALE,
             reason="controllo_conformita_kdp",
+            riferimento_padre=riferimento,
         )
         if not sintesi or sintesi.startswith("ERRORE:"):
             raise RuntimeError("Il report finale KDP non è stato completato.")

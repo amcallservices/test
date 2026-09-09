@@ -4,9 +4,12 @@ from __future__ import annotations
 import os
 import uuid
 import json
+import hashlib
+import csv
 import datetime as dt
 from pathlib import Path
 from typing import Any
+from io import StringIO
 
 import requests
 import streamlit as st
@@ -1910,12 +1913,176 @@ def _demo_ledger(reason: str, delta: int, reference: str) -> None:
     ledger.append({"when": __import__("datetime").datetime.now().isoformat(timespec="seconds"), "reason": reason, "delta": delta, "reference": reference})
 
 
+def _impronta_monitoraggio(valore: str) -> str:
+    """Restituisce un identificativo tecnico non reversibile per i report."""
+    return hashlib.sha256(str(valore or "").encode("utf-8", "ignore")).hexdigest()[:20]
+
+
+def _contesto_progetto_monitoraggio(user: dict[str, Any]) -> dict[str, str]:
+    """Prepara identificativi tecnici senza salvare titolo, prompt o manoscritto."""
+    sessione = str(st.session_state.get("id_sessione_utente", "") or "")
+    titolo = str(st.session_state.get("book_title", "") or "").strip()
+    autore = str(st.session_state.get("book_author", "") or "").strip()
+    utente = str(user.get("id", "") or "")
+    progetto = "|".join((utente, titolo.casefold(), autore.casefold()))
+    return {
+        "session_fingerprint": _impronta_monitoraggio(sessione) if sessione else "",
+        "project_fingerprint": _impronta_monitoraggio(progetto) if titolo or autore else "",
+    }
+
+
+def _salva_contesto_addebito(
+    reference: str,
+    reason: str,
+    amount: int,
+    user: dict[str, Any],
+    *,
+    billing_status: str,
+    deepseek_units_estimated: int = 0,
+) -> None:
+    """Collega un addebito alla sua cartellina economica interna.
+
+    Il riferimento continua a essere quello già usato dal ledger. Il nuovo
+    macro_operation_id raggruppa invece tutte le chiamate API successive della
+    stessa azione senza introdurre un secondo addebito.
+    """
+    contesti = st.session_state.setdefault("commercial_ai_operation_contexts", {})
+    dati_progetto = _contesto_progetto_monitoraggio(user)
+    contesti[reference] = {
+        "macro_operation_id": uuid.uuid4().hex,
+        "operation_requested": str(reason or "ai_request")[:120],
+        "user_category": "admin" if _is_admin(user) else "customer",
+        "billing_status": billing_status,
+        "credits_requested": max(0, int(amount or 0)),
+        "deepseek_units_estimated": max(0, int(deepseek_units_estimated or 0)),
+        "session_fingerprint": dati_progetto["session_fingerprint"],
+        "project_fingerprint": dati_progetto["project_fingerprint"],
+    }
+    # Lo stato serve solo alla sessione attiva per completare il log: una
+    # protezione piccola evita crescita inutile durante elaborazioni molto lunghe.
+    if len(contesti) > 600:
+        for chiave in list(contesti)[:100]:
+            contesti.pop(chiave, None)
+
+
+def _contesto_addebito(reference: str | None) -> dict[str, Any]:
+    contesti = st.session_state.get("commercial_ai_operation_contexts", {}) or {}
+    valore = contesti.get(str(reference or ""), {})
+    return valore if isinstance(valore, dict) else {}
+
+
+def _segna_rimborso_monitoraggio(reference: str) -> None:
+    contesto = _contesto_addebito(reference)
+    if contesto:
+        contesto["billing_status"] = "refunded"
+    if _mode() == "demo" or not _supabase_ready():
+        return
+    try:
+        _supabase(
+            "PATCH",
+            "rest/v1/writer_ai_usage_events",
+            payload={
+                "billing_status": "refunded",
+                "credits_charged": 0,
+                "deepseek_units": 0,
+                "charged_value_eur": 0,
+                "success": False,
+                "error_code": "refunded",
+            },
+            params={"reference": f"eq.{reference}:billing"},
+        )
+    except Exception:
+        # Il rimborso del saldo resta la fonte primaria: una telemetria non
+        # disponibile non deve mai impedire il rimborso né la prosecuzione UI.
+        return
+
+
+def _registra_ancora_economica(reference: str) -> None:
+    """Registra l'unico addebito della cartellina, separandolo dalle API.
+
+    L'ancora ha token e costo API pari a zero; le sue chiamate figlie
+    conserveranno invece solo token e costi. In questo modo il pannello può
+    sommare l'intera cartellina senza addebitare due volte il lettore.
+    """
+    user = st.session_state.get("commercial_user_context") or {}
+    if not user or _mode() == "demo" or not _supabase_ready():
+        return
+    contesto = _contesto_addebito(reference)
+    if not contesto:
+        return
+    try:
+        dettaglio = dettaglio_addebito_ai(reference, int(contesto.get("credits_requested", 0) or 0))
+        provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
+        valore_eur = (
+            dettaglio["deepseek_units"] * 0.02
+            if provider.casefold().startswith("deepseek")
+            else dettaglio["credits_charged"] * 0.06
+        )
+        payload = {
+            "user_id": str(user.get("id", "") or ""),
+            "reference": f"{reference}:billing",
+            "provider": provider,
+            "model": "billing-anchor",
+            "operation": str(contesto.get("operation_requested", "ai_request"))[:120],
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cached_input_tokens": 0,
+            "reasoning_tokens": 0,
+            "credits_requested": int(contesto.get("credits_requested", 0) or 0),
+            "credits_charged": int(dettaglio["credits_charged"]),
+            "deepseek_units": int(dettaglio["deepseek_units"]),
+            "estimated_cost_usd": 0,
+            "web_search_calls": 0,
+            "pricing_band": "billing",
+            "pricing_version": PREZZI_API_VERSIONE,
+            "success": True,
+            "error_code": "",
+            "macro_operation_id": str(contesto.get("macro_operation_id", reference)),
+            "parent_reference": "",
+            "user_category": str(dettaglio["user_category"]),
+            "billing_status": str(dettaglio["billing_status"]),
+            "event_kind": "billing_anchor",
+            "session_fingerprint": str(contesto.get("session_fingerprint", "")),
+            "project_fingerprint": str(contesto.get("project_fingerprint", "")),
+            "deepseek_units_estimated": int(contesto.get("deepseek_units_estimated", 0) or 0),
+            "charged_value_eur": round(max(0.0, valore_eur), 6),
+            "input_cost_usd": 0,
+            "cached_input_cost_usd": 0,
+            "output_cost_usd": 0,
+            "web_cost_usd": 0,
+            "cost_currency": "USD",
+            "duration_ms": 0,
+            "retry_of": "",
+        }
+        try:
+            _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload)
+        except Exception:
+            compatibile = dict(payload)
+            for campo in (
+                "web_search_calls", "pricing_band", "pricing_version", "macro_operation_id",
+                "parent_reference", "user_category", "billing_status", "event_kind",
+                "session_fingerprint", "project_fingerprint", "deepseek_units_estimated",
+                "charged_value_eur", "input_cost_usd", "cached_input_cost_usd",
+                "output_cost_usd", "web_cost_usd", "cost_currency", "duration_ms", "retry_of",
+            ):
+                compatibile.pop(campo, None)
+            _supabase("POST", "rest/v1/writer_ai_usage_events", payload=compatibile)
+        contesto["billing_anchor_registered"] = True
+    except Exception:
+        return
+
+
 def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS) -> str:
-    """Addebito atomico prima della chiamata IA. Restituisce il riferimento rimborsabile."""
+    """Addebita prima dell'IA e apre la cartellina economica dell'azione.
+
+    Il comportamento del saldo non cambia: l'unica aggiunta è il contesto
+    tecnico che permetterà di associare le sotto-chiamate allo stesso lavoro.
+    """
     user = st.session_state["commercial_user_context"]
     reference = uuid.uuid4().hex
     if _is_admin(user):
-        # Nessun movimento e nessun consumo: l'amministratore dispone di crediti illimitati.
+        _salva_contesto_addebito(reference, reason, amount, user, billing_status="admin_exempt")
+        _registra_ancora_economica(reference)
         return reference
     if usa_deepseek():
         unita = _unita_deepseek(reason, amount)
@@ -1934,6 +2101,12 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
             }
             if addebito:
                 _demo_ledger(reason, -addebito, reference)
+            _salva_contesto_addebito(
+                reference, reason, amount, user,
+                billing_status="deepseek_units_consumed",
+                deepseek_units_estimated=unita,
+            )
+            _registra_ancora_economica(reference)
             return reference
 
         result = _supabase(
@@ -1946,6 +2119,12 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
         st.session_state.setdefault("commercial_deepseek_charges", {})[reference] = {
             "units": unita, "charged": int(result.get("charged", 0)),
         }
+        _salva_contesto_addebito(
+            reference, reason, amount, user,
+            billing_status="deepseek_units_consumed",
+            deepseek_units_estimated=unita,
+        )
+        _registra_ancora_economica(reference)
         return reference
 
     if _mode() == "demo" or not _supabase_ready():
@@ -1955,12 +2134,16 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
             raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
         st.session_state["commercial_demo_credits"] = balance - amount
         _demo_ledger(reason, -amount, reference)
+        _salva_contesto_addebito(reference, reason, amount, user, billing_status="charged")
+        _registra_ancora_economica(reference)
         return reference
 
     result = _supabase("POST", "rest/v1/rpc/spend_credits", payload={"p_user_id": user["id"], "p_credits": amount, "p_reason": reason, "p_reference": reference})
     if result is not True:
         st.session_state["commercial_credit_limit"] = True
         raise CommercialCreditError("Crediti insufficienti. Ricarica il saldo prima di avviare un'altra elaborazione.")
+    _salva_contesto_addebito(reference, reason, amount, user, billing_status="charged")
+    _registra_ancora_economica(reference)
     return reference
 
 
@@ -1969,6 +2152,7 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
     if not user:
         return
     if _is_admin(user):
+        _segna_rimborso_monitoraggio(reference)
         return
     movimento_deepseek = (st.session_state.get("commercial_deepseek_charges", {}) or {}).pop(reference, None)
     if movimento_deepseek:
@@ -1980,6 +2164,7 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
             if addebito:
                 st.session_state["commercial_demo_credits"] = _balance(user["id"]) + addebito
                 _demo_ledger(reason, addebito, reference)
+            _segna_rimborso_monitoraggio(reference)
             return
         _supabase(
             "POST", "rest/v1/rpc/refund_deepseek_units",
@@ -1988,12 +2173,15 @@ def refund_credits(reference: str, reason: str = "ai_request_failed", amount: in
                 "p_reason": reason, "p_reference": reference,
             },
         )
+        _segna_rimborso_monitoraggio(reference)
         return
     if _mode() == "demo" or not _supabase_ready():
         st.session_state["commercial_demo_credits"] = _balance(user["id"]) + amount
         _demo_ledger(reason, amount, reference)
+        _segna_rimborso_monitoraggio(reference)
         return
     _supabase("POST", "rest/v1/rpc/refund_credits", payload={"p_user_id": user["id"], "p_credits": amount, "p_reason": reason, "p_reference": reference})
+    _segna_rimborso_monitoraggio(reference)
 
 
 def _numero_utilizzo(usage: Any, *nomi: str) -> int:
@@ -2063,15 +2251,15 @@ def conteggio_ricerche_web(risposta: Any) -> int:
     return totale
 
 
-def _costo_api_calcolato_usd(
+def _dettaglio_costo_api_calcolato_usd(
     provider: str,
     model: str,
     token: dict[str, int],
     *,
     web_search_calls: int = 0,
     orario: dt.datetime | None = None,
-) -> tuple[float, str, str]:
-    """Calcola il costo API con il listino vigente, senza influire sui crediti."""
+) -> dict[str, Any]:
+    """Calcola e separa le componenti del costo API, senza toccare i crediti."""
     modello = str(model or "").casefold()
     input_tokens = max(0, int(token.get("input_tokens", 0)))
     output_tokens = max(0, int(token.get("output_tokens", 0)))
@@ -2090,18 +2278,50 @@ def _costo_api_calcolato_usd(
         if input_tokens > 272_000:
             prezzo_input, prezzo_cache, prezzo_output = 5.00, 0.50, 22.50
             fascia = "GPT-5.4 · long context"
-    costo_token = ((input_tokens - cached) * prezzo_input + cached * prezzo_cache + output_tokens * prezzo_output) / 1_000_000
+    costo_input = (input_tokens - cached) * prezzo_input / 1_000_000
+    costo_cache = cached * prezzo_cache / 1_000_000
+    costo_output = output_tokens * prezzo_output / 1_000_000
     # OpenAI addebita $0,01 per ricerca web; i token dei risultati sono già
     # inclusi nell'uso restituito dalla risposta e vengono quindi conteggiati sopra.
     costo_ricerche = 0.01 * max(0, int(web_search_calls or 0)) if "openai" in versione else 0.0
-    return round(max(0.0, costo_token + costo_ricerche), 8), fascia, versione
+    costo_totale = round(max(0.0, costo_input + costo_cache + costo_output + costo_ricerche), 8)
+    return {
+        "total_usd": costo_totale,
+        "input_usd": round(max(0.0, costo_input), 8),
+        "cached_input_usd": round(max(0.0, costo_cache), 8),
+        "output_usd": round(max(0.0, costo_output), 8),
+        "web_usd": round(max(0.0, costo_ricerche), 8),
+        "pricing_band": fascia,
+        "pricing_version": versione,
+    }
 
 
-def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, int]:
-    """Restituisce l'addebito effettivo, compresi i terzi DeepSeek accumulati."""
+def _costo_api_calcolato_usd(
+    provider: str,
+    model: str,
+    token: dict[str, int],
+    *,
+    web_search_calls: int = 0,
+    orario: dt.datetime | None = None,
+) -> tuple[float, str, str]:
+    """Compatibilità per i punti del software che richiedono il totale storico."""
+    dettaglio = _dettaglio_costo_api_calcolato_usd(
+        provider, model, token, web_search_calls=web_search_calls, orario=orario
+    )
+    return dettaglio["total_usd"], dettaglio["pricing_band"], dettaglio["pricing_version"]
+
+
+def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, Any]:
+    """Restituisce l'addebito effettivo e distingue amministratore, DS e rimborso."""
     user = st.session_state.get("commercial_user_context") or {}
+    contesto = _contesto_addebito(reference)
     if _is_admin(user):
-        return {"credits_charged": 0, "deepseek_units": 0}
+        return {
+            "credits_charged": 0,
+            "deepseek_units": 0,
+            "user_category": "admin",
+            "billing_status": "admin_exempt",
+        }
     movimenti = st.session_state.get("commercial_deepseek_charges", {}) or {}
     movimento = movimenti.get(reference)
     # Solo DeepSeek crea questo movimento. In precedenza il fallback vuoto
@@ -2111,8 +2331,15 @@ def dettaglio_addebito_ai(reference: str, amount: int) -> dict[str, int]:
         return {
             "credits_charged": max(0, int(movimento.get("charged", 0) or 0)),
             "deepseek_units": max(0, int(movimento.get("units", 0) or 0)),
+            "user_category": "customer",
+            "billing_status": str(contesto.get("billing_status", "deepseek_units_consumed")),
         }
-    return {"credits_charged": max(0, int(amount or 0)), "deepseek_units": 0}
+    return {
+        "credits_charged": max(0, int(amount or 0)),
+        "deepseek_units": 0,
+        "user_category": "customer",
+        "billing_status": str(contesto.get("billing_status", "charged" if amount else "internal_unbilled")),
+    }
 
 
 def registra_utilizzo_ai(
@@ -2126,6 +2353,11 @@ def registra_utilizzo_ai(
     success: bool = True,
     refunded: bool = False,
     error_code: str = "",
+    macro_operation_id: str = "",
+    parent_reference: str = "",
+    event_kind: str = "api_call",
+    duration_ms: int = 0,
+    retry_of: str = "",
 ) -> None:
     """Registra solo dati tecnici aggregati delle chiamate AI.
 
@@ -2138,21 +2370,44 @@ def registra_utilizzo_ai(
     if not user_id or _mode() == "demo" or not _supabase_ready():
         return
     try:
+        event_reference = str(reference or uuid.uuid4().hex)
+        billing_reference = str(parent_reference or event_reference)
+        contesto = _contesto_addebito(billing_reference)
         dettaglio = _dettaglio_utilizzo(usage)
         provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
-        costo_calcolato, fascia_prezzo, versione_prezzo = _costo_api_calcolato_usd(
+        costo = _dettaglio_costo_api_calcolato_usd(
             provider,
             model,
             dettaglio,
             web_search_calls=web_search_calls,
             orario=dt.datetime.now(dt.timezone.utc),
         )
-        addebito = dettaglio_addebito_ai(str(reference or ""), credits_requested)
+        # Una sotto-chiamata eredita la cartellina, ma non può mai registrare
+        # un secondo addebito: quello resta ancorato al riferimento principale.
+        addebito = dettaglio_addebito_ai(
+            billing_reference,
+            0 if parent_reference else credits_requested,
+        )
+        if contesto.get("billing_anchor_registered"):
+            addebito["credits_charged"] = 0
+            addebito["deepseek_units"] = 0
+            addebito["billing_status"] = "included_in_macro"
         if refunded or not success:
             addebito["credits_charged"] = 0
+            addebito["deepseek_units"] = 0
+            addebito["billing_status"] = "refunded" if refunded else "failed"
+        elif parent_reference:
+            addebito["credits_charged"] = 0
+            addebito["deepseek_units"] = 0
+            addebito["billing_status"] = "included_in_macro"
+        valore_addebito_eur = (
+            addebito["deepseek_units"] * 0.02
+            if provider.casefold().startswith("deepseek")
+            else addebito["credits_charged"] * 0.06
+        )
         payload = {
             "user_id": user_id,
-            "reference": str(reference or uuid.uuid4().hex),
+            "reference": event_reference,
             "provider": provider,
             "model": str(model or ""),
             "operation": str(operation or "ai_request")[:120],
@@ -2163,21 +2418,43 @@ def registra_utilizzo_ai(
             "credits_requested": max(0, int(credits_requested or 0)),
             "credits_charged": addebito["credits_charged"],
             "deepseek_units": addebito["deepseek_units"],
-            "estimated_cost_usd": costo_calcolato,
+            "estimated_cost_usd": costo["total_usd"],
             "web_search_calls": max(0, int(web_search_calls or 0)),
-            "pricing_band": fascia_prezzo,
-            "pricing_version": versione_prezzo,
+            "pricing_band": costo["pricing_band"],
+            "pricing_version": costo["pricing_version"],
             "success": bool(success),
             "error_code": str(error_code or "")[:160],
+            "macro_operation_id": str(macro_operation_id or contesto.get("macro_operation_id", event_reference)),
+            "parent_reference": str(parent_reference or ""),
+            "user_category": str(addebito["user_category"]),
+            "billing_status": str(addebito["billing_status"]),
+            "event_kind": str(event_kind or "api_call")[:40],
+            "session_fingerprint": str(contesto.get("session_fingerprint", "")),
+            "project_fingerprint": str(contesto.get("project_fingerprint", "")),
+            "deepseek_units_estimated": max(0, int(contesto.get("deepseek_units_estimated", 0) or 0)),
+            "charged_value_eur": round(max(0.0, valore_addebito_eur), 6),
+            "input_cost_usd": costo["input_usd"],
+            "cached_input_cost_usd": costo["cached_input_usd"],
+            "output_cost_usd": costo["output_usd"],
+            "web_cost_usd": costo["web_usd"],
+            "cost_currency": "USD",
+            "duration_ms": max(0, int(duration_ms or 0)),
+            "retry_of": str(retry_of or "")[:120],
         }
         try:
             _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload)
         except Exception:
-            # Il passaggio al nuovo monitoraggio richiede una migrazione
-            # Supabase. Finché non viene eseguita, conserviamo almeno token,
-            # crediti e costo ricalcolato senza interrompere l'app.
+            # Finché la migrazione non è installata conserviamo il registro
+            # storico minimo, senza interrompere mai l'elaborazione editoriale.
             payload_compatibile = dict(payload)
-            for campo in ("web_search_calls", "pricing_band", "pricing_version"):
+            for campo in (
+                "web_search_calls", "pricing_band", "pricing_version",
+                "macro_operation_id", "parent_reference", "user_category",
+                "billing_status", "event_kind", "session_fingerprint",
+                "project_fingerprint", "deepseek_units_estimated", "charged_value_eur",
+                "input_cost_usd", "cached_input_cost_usd", "output_cost_usd",
+                "web_cost_usd", "cost_currency", "duration_ms", "retry_of",
+            ):
                 payload_compatibile.pop(campo, None)
             _supabase("POST", "rest/v1/writer_ai_usage_events", payload=payload_compatibile)
     except Exception:
@@ -2542,90 +2819,193 @@ def _commerce_sidebar() -> None:
                     except Exception as error:
                         st.error(str(error))
 
-            with st.expander("📊 Consumi AI e costi API calcolati", expanded=False):
+            with st.expander("📊 Consumi AI, ricavi e margini", expanded=False):
                 st.caption(
-                    "Registro tecnico riservato: token, modello, operazione, crediti e costo API calcolato "
-                    "con il listino ufficiale attivo. Non contiene prompt né contenuti dei libri."
+                    "Registro tecnico riservato: non contiene prompt, testi o titoli. Ogni nuova azione conserva "
+                    "una cartellina anonima con costo, addebito e chiamate interne."
                 )
-                campi_monitoraggio_nuovo = (
-                    "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                campi_monitoraggio_economico = (
+                    "created_at,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
                     "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,"
-                    "web_search_calls,pricing_band,pricing_version,success"
+                    "web_search_calls,pricing_band,pricing_version,success,macro_operation_id,parent_reference,"
+                    "user_category,billing_status,event_kind,session_fingerprint,project_fingerprint,"
+                    "deepseek_units_estimated,charged_value_eur,input_cost_usd,cached_input_cost_usd,"
+                    "output_cost_usd,web_cost_usd,cost_currency,duration_ms,retry_of"
                 )
                 campi_monitoraggio_compatibili = (
-                    "created_at,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
-                    "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,success"
+                    "created_at,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                    "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,"
+                    "web_search_calls,pricing_band,pricing_version,success"
                 )
                 try:
                     utilizzi = _supabase(
                         "GET",
                         "rest/v1/writer_ai_usage_events",
-                        params={
-                            "select": campi_monitoraggio_nuovo,
-                            "order": "created_at.desc",
-                            "limit": "500",
-                        },
+                        params={"select": campi_monitoraggio_economico, "order": "created_at.desc", "limit": "2000"},
                     ) or []
+                    tracciamento_economico_attivo = True
                 except Exception:
                     try:
                         utilizzi = _supabase(
                             "GET",
                             "rest/v1/writer_ai_usage_events",
-                            params={
-                                "select": campi_monitoraggio_compatibili,
-                                "order": "created_at.desc",
-                                "limit": "500",
-                            },
+                            params={"select": campi_monitoraggio_compatibili, "order": "created_at.desc", "limit": "500"},
                         ) or []
+                        tracciamento_economico_attivo = False
                     except Exception:
                         utilizzi = None
+                        tracciamento_economico_attivo = False
                 if utilizzi is None:
                     st.info(
-                        "Il registro sarà attivo dopo l'esecuzione della migrazione "
-                        "commercial_ai_usage_migration.sql nel SQL Editor di Supabase."
+                        "Il registro sarà attivo dopo l'esecuzione delle migrazioni "
+                        "commercial_ai_usage_migration.sql e commercial_economic_tracking_migration.sql nel SQL Editor di Supabase."
                     )
                 elif not utilizzi:
                     st.caption("Nessuna chiamata AI registrata dopo l'attivazione del monitoraggio.")
                 else:
-                    costo_totale = sum(float(voce.get("estimated_cost_usd", 0) or 0) for voce in utilizzi)
-                    preventivi_totali = sum(int(voce.get("credits_requested", 0) or 0) for voce in utilizzi)
-                    crediti_addebitati = sum(int(voce.get("credits_charged", 0) or 0) for voce in utilizzi)
-                    unita_deepseek = sum(int(voce.get("deepseek_units", 0) or 0) for voce in utilizzi)
+                    def numero(voce, campo):
+                        try:
+                            return float(voce.get(campo, 0) or 0)
+                        except (TypeError, ValueError):
+                            return 0.0
+
+                    def valore_economico(voce):
+                        valore_salvato = numero(voce, "charged_value_eur")
+                        if valore_salvato:
+                            return valore_salvato
+                        if str(voce.get("provider", "")).casefold().startswith("deepseek"):
+                            return numero(voce, "deepseek_units") * 0.02
+                        return numero(voce, "credits_charged") * 0.06
+
+                    clienti = [voce for voce in utilizzi if voce.get("user_category") == "customer"]
+                    amministratore = [voce for voce in utilizzi if voce.get("user_category") == "admin"]
+                    storico_non_classificato = [
+                        voce for voce in utilizzi
+                        if voce.get("user_category", "legacy_unknown") not in {"customer", "admin"}
+                    ]
+                    base_economica = clienti if tracciamento_economico_attivo else []
+                    costo_clienti_usd = sum(numero(voce, "estimated_cost_usd") for voce in base_economica)
+                    ricavo_clienti_eur = sum(valore_economico(voce) for voce in base_economica)
+                    # Valore indicativo e dichiarato, modificabile tramite Secrets: non sostituisce il cambio contabile.
+                    cambio_usd_eur = float(os.getenv("USD_TO_EUR_REPORTING_RATE", "0.8614"))
+                    costo_clienti_eur = costo_clienti_usd * cambio_usd_eur
+                    margine_clienti_eur = ricavo_clienti_eur - costo_clienti_eur
+                    margine_percentuale = (margine_clienti_eur / ricavo_clienti_eur * 100) if ricavo_clienti_eur else 0.0
+                    macro_clienti = {
+                        str(voce.get("macro_operation_id", ""))
+                        for voce in base_economica if str(voce.get("macro_operation_id", ""))
+                    }
+                    preventivi_totali = sum(int(numero(voce, "credits_requested")) for voce in utilizzi)
+                    crediti_addebitati = sum(int(numero(voce, "credits_charged")) for voce in clienti)
+                    unita_deepseek = sum(int(numero(voce, "deepseek_units")) for voce in clienti)
                     token_totali = sum(
-                        int(voce.get("input_tokens", 0) or 0) + int(voce.get("output_tokens", 0) or 0)
+                        int(numero(voce, "input_tokens")) + int(numero(voce, "output_tokens"))
                         for voce in utilizzi
                     )
                     chiamate_ok = sum(1 for voce in utilizzi if voce.get("success"))
                     c1, c2, c3, c4 = st.columns(4)
                     c1.metric("Chiamate registrate", len(utilizzi))
-                    c2.metric("Crediti addebitati", crediti_addebitati)
-                    c3.metric("Unità DeepSeek", unita_deepseek)
-                    c4.metric("Costo API calcolato", f"${costo_totale:.4f}")
+                    c2.metric("Azioni utente tracciate", len(macro_clienti) if tracciamento_economico_attivo else "—")
+                    c3.metric("Ricavo utenti", f"€{ricavo_clienti_eur:.2f}" if tracciamento_economico_attivo else "—")
+                    c4.metric("Margine API stimato", f"€{margine_clienti_eur:.2f}" if tracciamento_economico_attivo else "—")
+                    if tracciamento_economico_attivo:
+                        st.caption(
+                            f"Solo utenti paganti: {crediti_addebitati} crediti · {unita_deepseek} unità DS "
+                            f"· costo API ${costo_clienti_usd:.4f} (~€{costo_clienti_eur:.2f}) "
+                            f"· margine {margine_percentuale:.1f}%. Account amministratore escluso dai ricavi."
+                        )
+                    else:
+                        st.warning(
+                            "Questo è storico senza classificazione amministratore/utente: i costi sono leggibili, "
+                            "ma ricavi e margini affidabili saranno disponibili dopo la nuova migrazione."
+                        )
                     st.caption(
-                        f"Preventivi: {preventivi_totali} crediti · Token elaborati: "
+                        f"Preventivi storici: {preventivi_totali} crediti · Token elaborati: "
                         f"{token_totali:,}".replace(",", ".") +
-                        f" · Esiti riusciti: {chiamate_ok}/{len(utilizzi)}. Mostrate le ultime 500 chiamate."
+                        f" · Esiti riusciti: {chiamate_ok}/{len(utilizzi)} · "
+                        f"Admin: {len(amministratore)} · Storico non classificato: {len(storico_non_classificato)}."
                     )
-                    st.dataframe(
-                        [
-                            {
-                                "Data": str(voce.get("created_at", ""))[:19].replace("T", " "),
-                                "Cervello": voce.get("provider", ""),
-                                "Operazione": voce.get("operation", ""),
-                                "Token input": int(voce.get("input_tokens", 0) or 0),
-                                "Token output": int(voce.get("output_tokens", 0) or 0),
-                                "Preventivo": int(voce.get("credits_requested", 0) or 0),
-                                "Addebitati": int(voce.get("credits_charged", 0) or 0),
-                                "Unità DS": int(voce.get("deepseek_units", 0) or 0),
-                                "Ricerche web": int(voce.get("web_search_calls", 0) or 0),
-                                "Fascia prezzo": voce.get("pricing_band", "storico"),
-                                "Costo API $": round(float(voce.get("estimated_cost_usd", 0) or 0), 6),
-                                "Esito": "OK" if voce.get("success") else "Non riuscita",
-                            }
-                            for voce in utilizzi
-                        ],
+                    if base_economica:
+                        def percentile(valori, quota):
+                            ordinati = sorted(float(valore) for valore in valori)
+                            if not ordinati:
+                                return 0.0
+                            posizione = (len(ordinati) - 1) * quota
+                            basso = int(posizione)
+                            alto = min(basso + 1, len(ordinati) - 1)
+                            return ordinati[basso] + (ordinati[alto] - ordinati[basso]) * (posizione - basso)
+
+                        per_funzione = {}
+                        for voce in base_economica:
+                            funzione = str(voce.get("operation", "ai_request") or "ai_request")
+                            per_funzione.setdefault(funzione, []).append(voce)
+                        sintesi_funzioni = []
+                        for funzione, eventi in per_funzione.items():
+                            costi = [numero(evento, "estimated_cost_usd") * cambio_usd_eur for evento in eventi]
+                            ricavo = sum(valore_economico(evento) for evento in eventi)
+                            costo = sum(costi)
+                            margine = ricavo - costo
+                            sintesi_funzioni.append({
+                                "Funzione": funzione,
+                                "Chiamate": len(eventi),
+                                "Costo API €": round(costo, 4),
+                                "Ricavo €": round(ricavo, 4),
+                                "Margine €": round(margine, 4),
+                                "Margine %": round((margine / ricavo * 100) if ricavo else 0.0, 1),
+                                "P90 costo €": round(percentile(costi, 0.90), 4),
+                                "P95 costo €": round(percentile(costi, 0.95), 4),
+                                "Costo massimo €": round(max(costi, default=0.0), 4),
+                            })
+                        sintesi_funzioni.sort(key=lambda riga: riga["Costo API €"], reverse=True)
+                        st.markdown("**Margine per funzione — solo attività cliente classificate**")
+                        st.dataframe(sintesi_funzioni, use_container_width=True, hide_index=True)
+                        anomalie = [
+                            riga for riga in sintesi_funzioni
+                            if riga["Ricavo €"] > 0 and (riga["Margine €"] < 0 or riga["Margine %"] < 20)
+                        ]
+                        if anomalie:
+                            st.warning(
+                                "Funzioni da controllare: il margine API è negativo oppure inferiore al 20%. "
+                                "È un avviso economico: non modifica mai da solo il tariffario."
+                            )
+                    tabella = [
+                        {
+                            "Data": str(voce.get("created_at", ""))[:19].replace("T", " "),
+                            "Tipo": {"customer": "Utente", "admin": "Amministratore"}.get(
+                                voce.get("user_category", ""), "Storico"
+                            ),
+                            "Stato addebito": voce.get("billing_status", "storico"),
+                            "Macro operazione": str(voce.get("macro_operation_id", ""))[:10] or "—",
+                            "Operazione": voce.get("operation", ""),
+                            "Passaggio": voce.get("event_kind", "api_call"),
+                            "Cervello": voce.get("provider", ""),
+                            "Token input": int(numero(voce, "input_tokens")),
+                            "Token output": int(numero(voce, "output_tokens")),
+                            "Preventivo": int(numero(voce, "credits_requested")),
+                            "Addebitati": int(numero(voce, "credits_charged")),
+                            "Unità DS": int(numero(voce, "deepseek_units")),
+                            "Valore addebito €": round(valore_economico(voce), 4),
+                            "Costo input $": round(numero(voce, "input_cost_usd"), 6),
+                            "Costo output $": round(numero(voce, "output_cost_usd"), 6),
+                            "Costo web $": round(numero(voce, "web_cost_usd"), 6),
+                            "Costo API $": round(numero(voce, "estimated_cost_usd"), 6),
+                            "Durata ms": int(numero(voce, "duration_ms")),
+                            "Esito": "OK" if voce.get("success") else "Non riuscita",
+                        }
+                        for voce in utilizzi
+                    ]
+                    st.dataframe(tabella, use_container_width=True, hide_index=True)
+                    buffer_csv = StringIO()
+                    scrittore_csv = csv.DictWriter(buffer_csv, fieldnames=list(tabella[0].keys()))
+                    scrittore_csv.writeheader()
+                    scrittore_csv.writerows(tabella)
+                    st.download_button(
+                        "⬇️ Scarica il registro economico (.csv)",
+                        data=buffer_csv.getvalue().encode("utf-8-sig"),
+                        file_name="scrittore-site-registro-economico.csv",
+                        mime="text/csv",
                         use_container_width=True,
-                        hide_index=True,
+                        key="commercial_download_economic_usage",
                     )
 
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
