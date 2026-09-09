@@ -43,6 +43,24 @@ from project_csv import (
     importa_fotografia_csv,
     imposta_limite_lettura_csv_progetto,
 )
+from project_checks import (
+    analizza_qualita_prosa as analizza_qualita_prosa_core,
+    blocchi_per_audit_manoscritto as blocchi_per_audit_manoscritto_core,
+    firma_controllo_conformita_kdp as firma_controllo_conformita_kdp_core,
+    mappa_capitoli_e_sottocapitoli as mappa_capitoli_e_sottocapitoli_core,
+)
+from project_documents import (
+    estrai_anteprima_manoscritto as estrai_anteprima_manoscritto_core,
+    formatta_manoscritto_kdp as formatta_manoscritto_kdp_core,
+    normalizza_immagine_caricata as normalizza_immagine_caricata_core,
+)
+from project_sources import (
+    conserva_solo_fonti_web_selezionate as conserva_solo_fonti_web_selezionate_core,
+    crea_scheda_fonti as crea_scheda_fonti_core,
+    firma_fonti_esterne as firma_fonti_esterne_core,
+    firma_ricerca_preliminare as firma_ricerca_preliminare_core,
+    separa_mappa_e_registro_fonti_web as separa_mappa_e_registro_fonti_web_core,
+)
 import project_memory as memoria_core
 from commercial_layer import (
     AI_REQUEST_CREDITS,
@@ -120,27 +138,13 @@ def estrai_testo_da_files(caricati):
 
 
 def firma_fonti_esterne(caricati):
-    """Riconosce i file caricati senza rileggerli a ogni aggiornamento della pagina."""
-    digest = hashlib.sha256()
-    for file in caricati or []:
-        contenuto = file.getvalue()
-        digest.update(file.name.encode("utf-8", "ignore"))
-        digest.update(str(len(contenuto)).encode("ascii"))
-        digest.update(hashlib.sha256(contenuto).digest())
-    return digest.hexdigest()
+    """Compatibilità UI: l'impronta pura vive in project_sources.py."""
+    return firma_fonti_esterne_core(caricati)
 
 
 def crea_scheda_fonti(testo, limite=2600):
-    """Sintesi locale e rapida delle fonti, senza chiamate API supplementari."""
-    paragrafi = [re.sub(r"\s+", " ", p).strip() for p in re.split(r"\n\s*\n|(?<=\.)\s{2,}", testo or "")]
-    paragrafi = [p for p in paragrafi if len(p) > 80]
-    scelti, usati = [], 0
-    for paragrafo in paragrafi:
-        if usati + len(paragrafo) > limite:
-            break
-        scelti.append(paragrafo)
-        usati += len(paragrafo)
-    return "\n".join(scelti) or (testo or "")[:limite]
+    """Compatibilità UI: la sintesi pura vive in project_sources.py."""
+    return crea_scheda_fonti_core(testo, limite)
 
 
 MODELLO_STESURA = os.getenv("WRITING_MODEL", "gpt-5.4-mini")
@@ -207,49 +211,18 @@ def studia_fonti_con_ai(testo, limite_input=30000):
 
 
 def firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti):
-    """La ricerca viene riutilizzata finché il brief non cambia."""
-    base = "\n".join([titolo or "", genere or "", trama or "", obiettivo or "", lingua or "", approfondimenti or ""])
-    return hashlib.sha256(base.encode("utf-8", "ignore")).hexdigest()
+    """Compatibilità UI: l'impronta pura vive in project_sources.py."""
+    return firma_ricerca_preliminare_core(titolo, genere, trama, obiettivo, lingua, approfondimenti)
 
 
 def separa_mappa_e_registro_fonti_web(testo):
-    """Separa la mappa usata dall'AI dal registro leggibile delle fonti web."""
-    testo = (testo or "").strip()
-    # I due cervelli possono rendere il titolo con Markdown o con una
-    # formulazione leggermente diversa. Il parser resta quindi tollerante,
-    # altrimenti il registro veniva confuso con il dossier interno e non era
-    # visibile né salvabile come elenco delle fonti web.
-    marcatore = re.search(
-        r"(?im)^\s*(?:#{1,6}\s*)?REGISTRO\s+(?:DELLE\s+)?FONTI(?:\s+WEB)?\s*:?[ \t]*$",
-        testo,
-    )
-    if marcatore:
-        return testo[:marcatore.start()].strip(), testo[marcatore.end():].strip()
-
-    # Estrema tutela: se il modello ha dimenticato il titolo del registro ma
-    # ha comunque restituito URL, li conserviamo in una sezione interna invece
-    # di perderli. La mappa rimane separata dai collegamenti.
-    righe = testo.splitlines()
-    righe_fonti = [riga for riga in righe if re.search(r"https?://\S+", riga)]
-    if righe_fonti:
-        mappa = "\n".join(riga for riga in righe if riga not in righe_fonti).strip()
-        return mappa or testo, "\n".join(righe_fonti).strip()
-    return testo, ""
+    """Compatibilità UI: il parser puro vive in project_sources.py."""
+    return separa_mappa_e_registro_fonti_web_core(testo)
 
 
 def conserva_solo_fonti_web_selezionate(registro, massimo_fonti=5):
-    """Conserva solo le fonti scelte dal ricercatore per questo brief.
-
-    Il modello riceve la consegna di ordinare prima le fonti per pertinenza e
-    autorevolezza. Qui manteniamo soltanto le prime voci selezionate: le fonti
-    consultate ma non scelte non sono mostrate nell'interfaccia, non entrano
-    nella memoria del progetto e non finiscono nel CSV.
-    """
-    righe = [
-        riga.strip() for riga in str(registro or "").splitlines()
-        if re.search(r"https?://\S+", riga)
-    ]
-    return "\n".join(righe[:max(1, int(massimo_fonti))])
+    """Compatibilità UI: il filtro puro vive in project_sources.py."""
+    return conserva_solo_fonti_web_selezionate_core(registro, massimo_fonti)
 
 
 def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
@@ -2413,150 +2386,24 @@ def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
         return None, None
 
 def normalizza_immagine_caricata(file_caricato):
-    """Prepara un'immagine caricata dall'utente per anteprima, Word e PDF."""
+    """Compatibilità UI: la conversione locale vive in project_documents.py."""
     try:
-        sorgente = Image.open(BytesIO(file_caricato.getvalue()))
-        if sorgente.mode in ("RGBA", "LA"):
-            sfondo = Image.new("RGB", sorgente.size, "white")
-            sfondo.paste(sorgente, mask=sorgente.getchannel("A"))
-            sorgente = sfondo
-        else:
-            sorgente = sorgente.convert("RGB")
-        sorgente.thumbnail((1400, 1400), Image.Resampling.LANCZOS)
-        output = BytesIO()
-        sorgente.save(output, format="PNG", optimize=True)
-        return output.getvalue()
+        return normalizza_immagine_caricata_core(file_caricato)
     except Exception as e:
         st.error(f"Il file caricato non è un'immagine valida: {e}")
         return None
 
-def elimina_paragrafo_docx(paragrafo):
-    elemento = paragrafo._element
-    elemento.getparent().remove(elemento)
-    paragrafo._p = paragrafo._element = None
-
-def aggiungi_numeri_pagina_docx(documento):
-    """Inserisce il campo numero pagina nel piè di pagina di ogni sezione Word."""
-    for sezione in documento.sections:
-        paragrafo = sezione.footer.paragraphs[0]
-        paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        campo_inizio = OxmlElement('w:fldChar')
-        campo_inizio.set(ns.qn('w:fldCharType'), 'begin')
-        istruzione = OxmlElement('w:instrText')
-        istruzione.text = 'PAGE'
-        campo_fine = OxmlElement('w:fldChar')
-        campo_fine.set(ns.qn('w:fldCharType'), 'end')
-        run = paragrafo.add_run()
-        run._r.append(campo_inizio)
-        run._r.append(istruzione)
-        run._r.append(campo_fine)
-
 def formatta_manoscritto_kdp(file_docx):
-    """Applica un formato Word pulito 6x9 per il manoscritto KDP caricato dall'utente."""
-    documento = Document(BytesIO(file_docx.getvalue()))
-    for nome_stile in ('Heading 1', 'Heading 2'):
-        try:
-            documento.styles[nome_stile]
-        except KeyError:
-            documento.styles.add_style(nome_stile, WD_STYLE_TYPE.PARAGRAPH)
-
-    for sezione in documento.sections:
-        sezione.page_width = Inches(6)
-        sezione.page_height = Inches(9)
-        sezione.top_margin = Inches(0.75)
-        sezione.bottom_margin = Inches(0.75)
-        sezione.left_margin = Inches(0.75)
-        sezione.right_margin = Inches(0.75)
-
-    for paragrafo in list(documento.paragraphs):
-        testo = pulisci_testo_editoriale(paragrafo.text).strip()
-        if not testo:
-            elimina_paragrafo_docx(paragrafo)
-            continue
-        paragrafo.text = ' '.join(testo.split())
-        if len(paragrafo.text) < 80 and re.search(r'(?i)\b(capitolo|chapter|parte|part)\b', paragrafo.text):
-            paragrafo.style = 'Heading 1'
-            paragrafo.paragraph_format.page_break_before = True
-            paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            paragrafo.paragraph_format.space_before = Pt(0)
-            paragrafo.paragraph_format.space_after = Pt(30)
-        elif len(paragrafo.text) < 100 and re.match(r'^\d+(?:\.\d+)?\s+', paragrafo.text):
-            paragrafo.style = 'Heading 2'
-            paragrafo.alignment = WD_ALIGN_PARAGRAPH.LEFT
-            paragrafo.paragraph_format.first_line_indent = Inches(0)
-            paragrafo.paragraph_format.space_before = Pt(18)
-            paragrafo.paragraph_format.space_after = Pt(10)
-        else:
-            paragrafo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            paragrafo.paragraph_format.first_line_indent = Inches(0.25)
-            paragrafo.paragraph_format.space_after = Pt(6)
-
-    stile_normale = documento.styles['Normal']
-    stile_normale.font.name = 'Georgia'
-    stile_normale.font.size = Pt(11)
-    aggiungi_numeri_pagina_docx(documento)
-    output = BytesIO()
-    documento.save(output)
-    output.seek(0)
-    return output
+    """Compatibilità UI: la formattazione locale vive in project_documents.py."""
+    return formatta_manoscritto_kdp_core(file_docx, pulisci_testo_editoriale)
 
 def estrai_anteprima_manoscritto(file_caricato):
-    """Estrae una porzione di testo da DOCX o PDF per la generazione dei metadati."""
-    dati = BytesIO(file_caricato.getvalue())
-    if file_caricato.name.lower().endswith('.docx'):
-        documento = Document(dati)
-        return '\n'.join(p.text for p in documento.paragraphs[:100])
-    lettore = PyPDF2.PdfReader(dati)
-    return '\n'.join((pagina.extract_text() or '') for pagina in lettore.pages[:15])
+    """Compatibilità UI: l'estrazione locale vive in project_documents.py."""
+    return estrai_anteprima_manoscritto_core(file_caricato)
 
 def analizza_qualita_prosa(testo):
-    """
-    Motore Linter NLP Potenziato: analizza densità, lunghezza frasi e vocabolario.
-    """
-    if not testo or len(testo) < 50: 
-        return "⚠️ Testo troppo breve per un'analisi sintattica significativa."
-    
-    risultati = ["📊 **REPORT LINTER AVANZATO E ANALISI SINTATTICA**\n"]
-    
-    # 1. Parsing base
-    parole = re.findall(r'\b\w+\b', testo.lower())
-    frasi = [f.strip() for f in re.split(r'[.!?]+', testo) if len(f.strip()) > 5]
-    
-    tot_parole = len(parole)
-    tot_frasi = len(frasi) if len(frasi) > 0 else 1
-    
-    # 2. Diversità Lessicale (Ricchezza del vocabolario)
-    vocabolo_unico = len(set(parole))
-    indice_diversita = (vocabolo_unico / tot_parole) * 100 if tot_parole > 0 else 0
-    if indice_diversita < 35:
-        risultati.append(f"⚠️ **Vocabolario Ripetitivo**: Indice di diversità lessicale basso ({indice_diversita:.1f}%). Valuta di usare più sinonimi.")
-    else:
-        risultati.append(f"✅ **Ricchezza Lessicale**: Ottima diversità ({indice_diversita:.1f}%). Il testo risulta stimolante.")
-
-    # 3. Lunghezza Media delle Frasi (Pacing e Affaticamento Neocorteccia)
-    parole_per_frase = tot_parole / tot_frasi
-    if parole_per_frase > 30:
-        risultati.append(f"⚠️ **Sintassi Pesante**: Le frasi sono troppo lunghe (media {parole_per_frase:.1f} parole/frase). Rischio di affaticamento cognitivo: spezza i periodi.")
-    elif parole_per_frase < 8:
-        risultati.append(f"⚠️ **Ritmo Frammentato**: Frasi molto brevi (media {parole_per_frase:.1f} parole/frase). Il testo potrebbe risultare troppo robotico o telegrafico.")
-    else:
-        risultati.append(f"✅ **Ritmo e Leggibilità**: Lunghezza frasi perfettamente bilanciata (media {parole_per_frase:.1f} parole/frase).")
-
-    # 4. Ripetizioni Ravvicinate Fastidiose (Finestra Mobile)
-    ripetizioni = []
-    for i in range(len(parole) - 15):
-        target = parole[i]
-        # Escludiamo congiunzioni e preposizioni comuni basandoci sulla lunghezza della parola
-        if len(target) > 4 and target in parole[i+1 : i+15]: 
-            ripetizioni.append(target)
-            
-    if ripetizioni:
-        comuni = [p[0] for p in Counter(ripetizioni).most_common(5)]
-        risultati.append(f"🔍 **Allerta Ripetizioni Ravvicinate**: Le seguenti parole si ripetono troppo vicine tra loro: *{', '.join(comuni)}*")
-    else:
-        risultati.append("✅ **Fluidità Testuale**: Nessuna ripetizione fastidiosa o eco ravvicinata rilevata.")
-
-    return "\n\n".join(risultati)
+    """Compatibilità UI: il controllo puro vive in project_checks.py."""
+    return analizza_qualita_prosa_core(testo)
 
 def sync_capitoli():
     """Costruisce la lista scrivibile dall'indice, inclusa la Prefazione."""
@@ -7016,41 +6863,22 @@ def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, na
 
 
 def blocchi_per_audit_manoscritto(contenuti, limite_caratteri=18000):
-    """Divide il testo intero in blocchi consecutivi, senza omettere la parte centrale delle sezioni."""
-    blocchi, corrente = [], ""
-    for sezione, contenuto in contenuti.items():
-        testo = pulisci_testo_editoriale(contenuto).strip()
-        if not testo:
-            continue
-        unita = f"SEZIONE: {sezione}\nTESTO:\n{testo}\n\n"
-        while unita:
-            spazio = limite_caratteri - len(corrente)
-            if spazio <= 300:
-                blocchi.append(corrente)
-                corrente, spazio = "", limite_caratteri
-            if len(unita) <= spazio:
-                corrente += unita
-                unita = ""
-            else:
-                punto_taglio = unita.rfind("\n", 0, spazio)
-                if punto_taglio < max(500, spazio // 2):
-                    punto_taglio = spazio
-                corrente += unita[:punto_taglio]
-                blocchi.append(corrente)
-                corrente, unita = "", unita[punto_taglio:]
-    if corrente.strip():
-        blocchi.append(corrente)
-    return blocchi
+    """Compatibilità UI: la divisione pura vive in project_checks.py."""
+    return blocchi_per_audit_manoscritto_core(
+        contenuti,
+        pulisci_testo_editoriale,
+        limite_caratteri,
+    )
 
 
 URL_LINEE_GUIDA_KDP_CONTENUTI = "https://kdp.amazon.com/it_IT/help/topic/G200672390"
 
 
 def firma_controllo_conformita_kdp(contenuti, titolo, genere, argomento, lingua):
-    """Rende riconoscibile la versione del manoscritto verificata da KDP."""
-    parti = [titolo, genere, argomento, lingua]
-    parti.extend(f"{sezione}\n{contenuto}" for sezione, contenuto in contenuti.items())
-    return hashlib.sha256("\n\u241e\n".join(str(parte or "") for parte in parti).encode("utf-8")).hexdigest()
+    """Compatibilità UI: l'impronta pura vive in project_checks.py."""
+    return firma_controllo_conformita_kdp_core(
+        contenuti, titolo, genere, argomento, lingua
+    )
 
 
 def controllo_conformita_kdp_manoscritto(contenuti, *, titolo, genere, argomento, lingua, avanzamento=None):
@@ -7212,23 +7040,8 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
 
 
 def mappa_capitoli_e_sottocapitoli(indice):
-    """Restituisce una mappa leggibile sottocapitolo -> capitolo padre per rendere il report azionabile."""
-    capitolo_corrente = ""
-    righe_mappa = []
-    pattern_capitolo = re.compile(
-        r"(?i)^(?:capitolo|chapter|kapitel|cap[ií]tulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+.*"
-    )
-    pattern_sottocapitolo = re.compile(r"^\d+\.\d+(?:\.\d+)?\s+.+")
-    for riga in (indice or "").splitlines():
-        voce = riga.strip()
-        if not voce:
-            continue
-        if pattern_capitolo.match(voce):
-            capitolo_corrente = voce
-        elif pattern_sottocapitolo.match(voce):
-            if capitolo_corrente:
-                righe_mappa.append(f"{voce}  →  {capitolo_corrente}")
-    return "\n".join(righe_mappa) or "Nessun sottocapitolo mappabile nell'indice."
+    """Compatibilità UI: la mappa pura vive in project_checks.py."""
+    return mappa_capitoli_e_sottocapitoli_core(indice)
 
 
 def valuta_manoscritto_completo(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua, approfondimenti="", avanzamento=None):
