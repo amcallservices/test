@@ -40,12 +40,15 @@ def esporta_fotografia_csv(fotografia: Mapping[str, Any]) -> bytes:
         if dati:
             immagini[sezione] = dati
     fotografia_completa = {
-        "versione": 3,
+        "versione": 4,
         "sidebar": dict(fotografia.get("sidebar", {}) or {}),
         "indice": str(fotografia.get("indice", "") or ""),
         "contenuti": dict(fotografia.get("contenuti", {}) or {}),
         "fonti": dict(fotografia.get("fonti", {}) or {}),
         "immagini": immagini,
+        # È una sintesi deterministica del progetto, mai una seconda copia
+        # del manoscritto. Viene conservata per guidare la stesura successiva.
+        "memoria_editoriale": dict(fotografia.get("memoria_editoriale", {}) or {}),
         # I controlli sono report informativi: non cambiano mai manoscritto,
         # indice o sidebar e restano disponibili dopo l'importazione.
         "controlli": dict(fotografia.get("controlli", {}) or {}),
@@ -56,7 +59,7 @@ def esporta_fotografia_csv(fotografia: Mapping[str, Any]) -> bytes:
     buffer = StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=["tipo", "chiave", "valore"], lineterminator="\n")
     writer.writeheader()
-    writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "3"})
+    writer.writerow({"tipo": "formato", "chiave": "scrittore_site", "valore": "4"})
     writer.writerow({"tipo": "progetto", "chiave": "fotografia_completa_v2", "valore": fotografia_b64})
     for nome, valore in fotografia_completa["sidebar"].items():
         writer.writerow({"tipo": "sidebar", "chiave": nome, "valore": str(valore or "")})
@@ -123,18 +126,19 @@ def importa_fotografia_csv(dati_grezzi: bytes, campi_sidebar_validi: Iterable[st
                     "contenuti": dict(fotografia.get("contenuti", {}) or {}),
                     "fonti": dict(fotografia.get("fonti", {}) or {}),
                     "immagini_capitoli": immagini,
+                    "memoria_editoriale": dict(fotografia.get("memoria_editoriale", {}) or {}),
                     "controlli": dict(fotografia.get("controlli", {}) or {}),
                 }
             except Exception as exc:
                 raise ValueError(f"La fotografia completa del CSV è danneggiata: {exc}") from exc
     snapshot: dict[str, Any] = {
-        "sidebar": {}, "indice_raw": "", "indice_backup": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}, "controlli": {}
+        "sidebar": {}, "indice_raw": "", "indice_backup": "", "contenuti": {}, "fonti": {}, "immagini_capitoli": {}, "memoria_editoriale": {}, "controlli": {}
     }
     formato_valido = False
     validi = set(campi_sidebar_validi)
     for riga in righe:
         tipo, chiave, valore = riga.get("tipo", ""), riga.get("chiave", ""), riga.get("valore", "")
-        if tipo == "formato" and chiave == "scrittore_site" and valore in {"1", "2", "3"}:
+        if tipo == "formato" and chiave == "scrittore_site" and valore in {"1", "2", "3", "4"}:
             formato_valido = True
         elif tipo == "sidebar" and chiave in validi:
             snapshot["sidebar"][chiave] = valore

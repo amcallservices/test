@@ -1506,13 +1506,14 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 .ss-project-title { margin:0 0 .34rem; color:#fff; font-size:.92rem; font-weight:850; letter-spacing:-.02em; }
 .ss-project-caption { margin:.16rem .12rem 0; color:#8fa8c0; font-size:.68rem; line-height:1.28; }
 .ss-project-caption strong { color:#bfd8ec; font-weight:750; }
-/* Il percorso in cinque riquadri è ora nel Centro operativo, subito sotto.
-   Qui sarebbe duplicato: il Centro del progetto resta un riepilogo compatto. */
-.ss-project-journey { display:none; }
+/* Il percorso KDP rende visibili le tappe già disponibili nel Centro
+   operativo. È una sola lettura dello stato: non avvia né blocca funzioni. */
+.ss-project-journey { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:.28rem; margin:.05rem 0 .42rem; }
 .ss-project-step { min-width:0; display:flex; align-items:center; gap:.38rem; padding:.44rem .45rem; border:1px solid #2b4968; border-radius:9px; background:#0d2037; color:#a8bed5; font-size:.7rem; font-weight:750; }
 .ss-project-step span { flex:0 0 1.22rem; width:1.22rem; height:1.22rem; display:grid; place-items:center; border-radius:50%; background:#29445f; color:#dcecff; font-size:.63rem; }
 .ss-project-step.done { color:#b8f6c7; border-color:#357754; background:#102c24; }.ss-project-step.done span { background:#1f9d55; color:#fff; }
 .ss-project-step.current { color:#fff; border-color:#3ea7fa; background:linear-gradient(135deg,#165a91,#187fc8); box-shadow:0 6px 15px rgba(33,150,243,.18); }.ss-project-step.current span { background:#fff; color:#1477c1; }
+.ss-project-step.optional { color:#d5c9a3; border-color:#6a5a30; background:#2b2619; }.ss-project-step.optional span { background:#4b4021; color:#ffdf7e; }
 .ss-project-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.32rem; margin:.06rem 0 .42rem; }
 .ss-project-metric { min-width:0; padding:.4rem .45rem; border-radius:8px; border:1px solid #294764; background:rgba(9,25,43,.72); }.ss-project-metric span { display:block; color:#9eb8d3; font-size:.61rem; font-weight:700; }.ss-project-metric b { display:block; margin-top:.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:1.05rem; letter-spacing:-.04em; }
 .ss-next-action { display:flex; gap:.46rem; align-items:flex-start; padding:.48rem .55rem; border-radius:8px; background:#153a60; border:1px solid #28699b; color:#e8f5ff; }.ss-next-action .ss-next-icon { flex:0 0 1.4rem; width:1.4rem; height:1.4rem; display:grid; place-items:center; border-radius:7px; background:#2a9ded; font-size:.8rem; }.ss-next-action small { display:block; color:#a7d4f6; font-size:.66rem; font-weight:800; margin-bottom:.05rem; }.ss-next-action strong { display:block; font-size:.79rem; line-height:1.22; }.ss-next-action p { margin:.15rem 0 0; color:#d7ecfc; font-size:.7rem; line-height:1.25; }.ss-next-action p b { color:#fff; }
@@ -1627,8 +1628,8 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-project-panel { margin:.08rem 0 .62rem !important; padding:.66rem .62rem !important; border-radius:12px !important; }
     .ss-project-title { font-size:.98rem !important; margin-bottom:.38rem !important; }
     .ss-project-caption { font-size:.65rem !important; line-height:1.25 !important; }
-    .ss-project-journey { grid-template-columns:1fr !important; gap:.3rem !important; margin-bottom:.5rem !important; }
-    .ss-project-step { padding:.45rem .52rem !important; font-size:.76rem !important; }
+    .ss-project-journey { display:flex !important; overflow-x:auto !important; grid-template-columns:none !important; gap:.35rem !important; margin-bottom:.5rem !important; padding-bottom:.2rem !important; }
+    .ss-project-step { flex:0 0 8.7rem !important; padding:.45rem .52rem !important; font-size:.76rem !important; }
     .ss-project-metrics { grid-template-columns:1fr 1fr !important; gap:.35rem !important; margin-bottom:.5rem !important; }
     .ss-project-metric { padding:.5rem .54rem !important; }.ss-project-metric b { font-size:1.08rem !important; }
     .ss-next-action { padding:.58rem .62rem !important; gap:.48rem !important; }.ss-next-action strong { font-size:.83rem !important; }
@@ -4117,6 +4118,16 @@ def reidrata_sezioni_memorizzate(sezioni):
     )
 
 
+def memoria_editoriale_progetto():
+    """Legge la bussola editoriale senza generare o modificare il manoscritto."""
+    return memoria_core.memoria_editoriale_progetto(st.session_state)
+
+
+def contesto_memoria_editoriale(sezione, sezioni):
+    """Contesto sintetico delle parti già salvate, pronto per la nuova stesura."""
+    return memoria_core.contesto_memoria_editoriale(st.session_state, sezione, sezioni)
+
+
 def immagini_per_snapshot_cloud(immagini):
     """Rende serializzabili le immagini caricate dall'utente per il cloud.
 
@@ -4186,6 +4197,7 @@ def esporta_progetto_editoriale_csv():
         "contenuti": contenuti,
         "fonti": fonti,
         "immagini": st.session_state.get("immagini_capitoli", {}) or {},
+        "memoria_editoriale": memoria_editoriale_progetto(),
         "controlli": {
             "conformita_kdp": st.session_state.get("report_conformita_kdp", {}) or {},
         },
@@ -4203,6 +4215,67 @@ def importa_progetto_editoriale_csv(file_caricato):
     """
     dati_grezzi = file_caricato.getvalue()
     return importa_fotografia_csv(dati_grezzi, CAMPI_SALVATAGGIO_PROGETTO)
+
+
+def testi_memoria_editoriale_ui(lingua):
+    """Etichette della memoria editoriale, senza aggiungere logica al testo."""
+    testi = {
+        "Italiano": {
+            "titolo": "🧠 Memoria editoriale della sezione", "nessuna": "Questa sezione non ha ancora contenuto salvato.",
+            "parole": "Parole salvate", "apertura": "Inizio registrato", "chiusura": "Finale registrato",
+            "manuale": "Le modifiche manuali sono protette nella memoria.",
+            "sync": "↻ Aggiorna memoria della sezione", "salvata": "Memoria aggiornata. Premi SALVA SESSIONE per conservarla anche nel tuo account.",
+        },
+        "English": {
+            "titolo": "🧠 Section editorial memory", "nessuna": "This section has no saved content yet.",
+            "parole": "Saved words", "apertura": "Recorded opening", "chiusura": "Recorded ending",
+            "manuale": "Manual edits are protected in memory.",
+            "sync": "↻ Refresh section memory", "salvata": "Memory updated. Select SAVE SESSION to keep it in your account too.",
+        },
+        "Español": {
+            "titolo": "🧠 Memoria editorial de la sección", "nessuna": "Esta sección todavía no tiene contenido guardado.",
+            "parole": "Palabras guardadas", "apertura": "Inicio registrado", "chiusura": "Final registrado",
+            "manuale": "Las modificaciones manuales están protegidas en la memoria.",
+            "sync": "↻ Actualizar memoria de la sección", "salvata": "Memoria actualizada. Pulsa GUARDAR SESIÓN para conservarla también en tu cuenta.",
+        },
+        "Français": {
+            "titolo": "🧠 Mémoire éditoriale de la section", "nessuna": "Cette section n’a pas encore de contenu enregistré.",
+            "parole": "Mots enregistrés", "apertura": "Début enregistré", "chiusura": "Fin enregistrée",
+            "manuale": "Les modifications manuelles sont protégées dans la mémoire.",
+            "sync": "↻ Mettre à jour la mémoire de la section", "salvata": "Mémoire mise à jour. Choisissez SAUVEGARDER LA SESSION pour la conserver aussi dans votre compte.",
+        },
+        "Deutsch": {
+            "titolo": "🧠 Redaktionelles Gedächtnis des Abschnitts", "nessuna": "Dieser Abschnitt enthält noch keinen gespeicherten Text.",
+            "parole": "Gespeicherte Wörter", "apertura": "Gespeicherter Anfang", "chiusura": "Gespeichertes Ende",
+            "manuale": "Manuelle Änderungen sind im Gedächtnis geschützt.",
+            "sync": "↻ Abschnittsgedächtnis aktualisieren", "salvata": "Gedächtnis aktualisiert. Wählen Sie SITZUNG SPEICHERN, um es auch im Konto zu sichern.",
+        },
+        "Română": {
+            "titolo": "🧠 Memoria editorială a secțiunii", "nessuna": "Această secțiune nu are încă text salvat.",
+            "parole": "Cuvinte salvate", "apertura": "Început înregistrat", "chiusura": "Final înregistrat",
+            "manuale": "Modificările manuale sunt protejate în memorie.",
+            "sync": "↻ Actualizează memoria secțiunii", "salvata": "Memorie actualizată. Apasă SALVEAZĂ SESIUNEA pentru a o păstra și în cont.",
+        },
+        "Русский": {
+            "titolo": "🧠 Редакторская память раздела", "nessuna": "В этом разделе пока нет сохранённого текста.",
+            "parole": "Сохранённые слова", "apertura": "Сохранённое начало", "chiusura": "Сохранённый финал",
+            "manuale": "Ручные изменения защищены в памяти.",
+            "sync": "↻ Обновить память раздела", "salvata": "Память обновлена. Нажмите СОХРАНИТЬ СЕССИЮ, чтобы сохранить её также в аккаунте.",
+        },
+        "العربية": {
+            "titolo": "🧠 الذاكرة التحريرية للقسم", "nessuna": "لا يحتوي هذا القسم على نص محفوظ بعد.",
+            "parole": "الكلمات المحفوظة", "apertura": "البداية المسجلة", "chiusura": "النهاية المسجلة",
+            "manuale": "التعديلات اليدوية محمية في الذاكرة.",
+            "sync": "↻ تحديث ذاكرة القسم", "salvata": "تم تحديث الذاكرة. اضغط حفظ الجلسة للاحتفاظ بها في حسابك أيضاً.",
+        },
+        "中文": {
+            "titolo": "🧠 本节编辑记忆", "nessuna": "本节尚无已保存的内容。",
+            "parole": "已保存字数", "apertura": "已记录开头", "chiusura": "已记录结尾",
+            "manuale": "手动修改已受到记忆保护。", "sync": "↻ 更新本节记忆",
+            "salvata": "记忆已更新。请点击保存会话，同时保存至您的账户。",
+        },
+    }
+    return testi.get(lingua, testi["English"])
 
 
 def mostra_memoria_visiva_progetto():
@@ -4360,15 +4433,15 @@ def etichette_centro_progetto(lingua):
 # Il percorso è puramente visivo: riassume le funzioni già disponibili nelle
 # tab, senza spostare l'utente né modificare i dati del progetto.
 PASSI_PERCORSO_PROGETTO = {
-    "Italiano": ("Idea", "Indice", "Scrittura", "Controllo", "Esporta"),
-    "English": ("Idea", "Outline", "Writing", "Review", "Export"),
-    "Español": ("Idea", "Índice", "Escritura", "Revisión", "Exportar"),
-    "Français": ("Idée", "Plan", "Écriture", "Contrôle", "Exporter"),
-    "Deutsch": ("Idee", "Gliederung", "Schreiben", "Prüfen", "Export"),
-    "Română": ("Idee", "Cuprins", "Scriere", "Verificare", "Export"),
-    "Русский": ("Идея", "План", "Написание", "Проверка", "Экспорт"),
-    "العربية": ("الفكرة", "الفهرس", "الكتابة", "المراجعة", "التصدير"),
-    "中文": ("想法", "目录", "写作", "检查", "导出"),
+    "Italiano": ("Nicchia", "Brief", "Indice", "Scrittura", "Revisione", "KDP facoltativo", "Esporta"),
+    "English": ("Niche", "Brief", "Outline", "Writing", "Review", "Optional KDP", "Export"),
+    "Español": ("Nicho", "Brief", "Índice", "Escritura", "Revisión", "KDP opcional", "Exportar"),
+    "Français": ("Niche", "Brief", "Plan", "Écriture", "Révision", "KDP facultatif", "Exporter"),
+    "Deutsch": ("Nische", "Briefing", "Gliederung", "Schreiben", "Prüfung", "KDP optional", "Export"),
+    "Română": ("Nișă", "Brief", "Cuprins", "Scriere", "Revizuire", "KDP opțional", "Export"),
+    "Русский": ("Ниша", "Бриф", "План", "Написание", "Проверка", "KDP необязательно", "Экспорт"),
+    "العربية": ("النيش", "الموجز", "الفهرس", "الكتابة", "المراجعة", "KDP اختياري", "التصدير"),
+    "中文": ("细分市场", "简报", "目录", "写作", "审阅", "KDP 可选", "导出"),
 }
 
 # Istruzioni concrete accanto al Centro del progetto. Descrivono soltanto
@@ -4500,7 +4573,7 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
     direzione = "rtl" if lingua == "العربية" else "ltr"
 
     if stato["job_attivo"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 3, "", "✍️", "scrittura"
+        fase_attiva, stato_visuale, icona, guida_chiave = 4, "", "✍️", "scrittura"
         sezione_corrente = stato["coda"][0] if stato["coda"] else stato["ultima_sezione"]
         dettaglio = (
             f"{stato['sezioni_scritte']}/{stato['sezioni_previste']} · {sezione_corrente}"
@@ -4508,26 +4581,26 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         )
         messaggio, prossimo = f"{etichette['in_corso']} — {dettaglio}", etichette["in_corso"]
     elif stato["job_pausa"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 3, "pause", "⏸", "pausa"
+        fase_attiva, stato_visuale, icona, guida_chiave = 4, "pause", "⏸", "pausa"
         dettagli_pausa = stato["coda"][0] if stato["coda"] else etichette["nessun"]
         messaggio, prossimo = f"{etichette['in_pausa']} — {dettagli_pausa}", etichette["continua"]
     elif stato["job_fermato"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 3, "pause", "⏹", "pausa"
+        fase_attiva, stato_visuale, icona, guida_chiave = 4, "pause", "⏹", "pausa"
         messaggio, prossimo = etichette["fermato"], etichette["continua"]
     elif not stato["brief_pronto"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 1, "", "🧭", "brief"
+        fase_attiva, stato_visuale, icona, guida_chiave = 2, "", "🧭", "brief"
         messaggio, prossimo = etichette["configura"], etichette["configura"]
     elif not stato["indice_pronto"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 2, "", "🧠", "indice"
+        fase_attiva, stato_visuale, icona, guida_chiave = 3, "", "🧠", "indice"
         messaggio, prossimo = etichette["crea_indice"], etichette["crea_indice"]
     elif stato["sezioni_previste"] and stato["sezioni_scritte"] < stato["sezioni_previste"]:
-        fase_attiva, stato_visuale, icona, guida_chiave = 3, "", "✍️", "scrittura"
+        fase_attiva, stato_visuale, icona, guida_chiave = 4, "", "✍️", "scrittura"
         messaggio, prossimo = (
             f"{etichette['manoscritto']}: {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
             etichette["continua"],
         )
     else:
-        fase_attiva, stato_visuale, icona, guida_chiave = 4, "complete", "✓", "controllo"
+        fase_attiva, stato_visuale, icona, guida_chiave = 5, "complete", "✓", "controllo"
         messaggio, prossimo = (
             f"{etichette['manoscritto']} ✓ — {stato['sezioni_scritte']}/{stato['sezioni_previste']}",
             etichette["controlla"],
@@ -4535,13 +4608,40 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
 
     istruzioni = ISTRUZIONI_PROSSIMO_PASSO.get(lingua, ISTRUZIONI_PROSSIMO_PASSO["English"])
     istruzione_operativa = istruzioni[guida_chiave]
-    percorso_html = "".join(
-        (
-            f"<div class='ss-project-step {'done' if numero < fase_attiva else 'current' if numero == fase_attiva else ''}'>"
-            f"<span>{'✓' if numero < fase_attiva else numero}</span><b>{html.escape(passo)}</b></div>"
+    report_kdp = st.session_state.get("report_conformita_kdp", {}) or {}
+    controllo_kdp_eseguito = False
+    if isinstance(report_kdp, dict) and report_kdp:
+        # Un controllo resta indicato come eseguito soltanto se appartiene al
+        # manoscritto attuale. Dopo un cambiamento manuale torna correttamente
+        # facoltativo/da ripetere, senza mai bloccare l'esportazione.
+        try:
+            dati_kdp = memoria_progetto_unica()
+            sidebar_kdp = sidebar_memorizzata_corrente()
+            firma_kdp_attuale = firma_controllo_conformita_kdp(
+                dict(dati_kdp.get("contenuti", {}) or {}),
+                sidebar_kdp.get("titolo", ""),
+                sidebar_kdp.get("genere", ""),
+                sidebar_kdp.get("argomento", ""),
+                sidebar_kdp.get("lingua", lingua),
+            )
+            controllo_kdp_eseguito = report_kdp.get("firma_manoscritto") == firma_kdp_attuale
+        except Exception:
+            controllo_kdp_eseguito = False
+    percorso_html = ""
+    for numero, passo in enumerate(passi, start=1):
+        # Nicchia e KDP sono strumenti utili ma facoltativi: non devono mai
+        # apparire come obblighi completati né bloccare il percorso principale.
+        facoltativo = numero == 1 or numero == 6
+        completato = (
+            (numero < fase_attiva and not facoltativo)
+            or (numero == 6 and controllo_kdp_eseguito)
         )
-        for numero, passo in enumerate(passi, start=1)
-    )
+        classe = "optional" if facoltativo and not completato else "done" if completato else "current" if numero == fase_attiva else ""
+        indicatore = "✓" if completato else "○" if facoltativo else numero
+        percorso_html += (
+            f"<div class='ss-project-step {classe}'>"
+            f"<span>{indicatore}</span><b>{html.escape(passo)}</b></div>"
+        )
     dati_metriche = (
         (etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}"),
         (etichette["indice"], "✓" if stato["indice_pronto"] else "—"),
@@ -4627,6 +4727,7 @@ def applica_snapshot_progetto(snapshot):
         indice = "\n".join(contenuti.keys())
     fonti = dict(snapshot.get("fonti", {}) or {})
     immagini = immagini_da_snapshot_cloud(snapshot.get("immagini_capitoli", {}) or {})
+    memoria_editoriale = dict(snapshot.get("memoria_editoriale", {}) or {})
     controlli = dict(snapshot.get("controlli", {}) or {})
     ha_dati_ripristinabili = bool(
         indice.strip()
@@ -4646,7 +4747,9 @@ def applica_snapshot_progetto(snapshot):
         "contenuti": dict(contenuti),
         "fonti": dict(fonti),
         "immagini": dict(immagini),
+        "memoria_editoriale": dict(memoria_editoriale),
     })
+    memoria_core.ripristina_memoria_editoriale(st.session_state, memoria_editoriale)
 
     # Elimina soltanto le vecchie textarea, non i dati: l'indice e ogni
     # sezione verranno ridisegnati con valori nuovi dalla memoria unica.
@@ -4845,6 +4948,7 @@ def salva_progetto_corrente(sidebar, sezioni):
         indice_corrente = indice_precedente
         imposta_indice_progetto(indice_corrente)
     progetto["indice"] = indice_corrente
+    memoria_editoriale = memoria_core.aggiorna_memoria_editoriale(st.session_state)
     # Anche le immagini esterne fanno parte del progetto: prima le custodiamo
     # nella memoria unica e poi le rendiamo serializzabili per Supabase. Nessun
     # pulsante genera immagini; qui proteggiamo esclusivamente i file caricati.
@@ -4861,6 +4965,7 @@ def salva_progetto_corrente(sidebar, sezioni):
         "indice_raw": indice_corrente,
         "indice_backup": indice_corrente,
         "contenuti": contenuti,
+        "memoria_editoriale": memoria_editoriale,
         "immagini_capitoli": immagini_per_snapshot_cloud(immagini),
         "controlli": {
             "conformita_kdp": st.session_state.get("report_conformita_kdp", {}) or {},
@@ -6587,19 +6692,40 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
 # 7. LOGICA DI MEMORIA E COERENZA (EVITA RIPETIZIONI GLOBALI) E INTEGRAZIONE FONTI
 # ======================================================================================================================
 def genera_contesto_avanzato(sezione_corrente, argomento=""):
-    contesto = ""
+    """Prepara un contesto breve, stabile e utile alla prossima sezione.
+
+    La memoria strutturata è ricavata soltanto da sezioni già salvate: non
+    genera testo, non cancella nulla e non aggiunge chiamate AI. Gli estratti
+    completi sono limitati alle ultime due sezioni, così il modello riceve
+    continuità concreta senza sovraccaricarsi di tutto il manoscritto.
+    """
+    sezioni_ordinate = list(st.session_state.get("lista_capitoli", []) or [])
+    blocchi = [contesto_memoria_editoriale(sezione_corrente, sezioni_ordinate)]
     estratti_fonti = estratti_fonti_pertinenti(sezione_corrente, argomento)
     if estratti_fonti:
-        contesto += f"=== ESTRATTI PERTINENTI DELLE FONTI ESTERNE (SOLO PER RAGIONAMENTO) ===\n{estratti_fonti}\n\n"
-        
-    for s in st.session_state.get("lista_capitoli", []):
-        if s == sezione_corrente: break
-        testo_precedente = leggi_sezione_memorizzata(s)
-        if str(testo_precedente).strip():
-            # Memoria estesa: il riepilogo breve da 150 caratteri non era sufficiente
-            # per distinguere concetti, esempi e procedure già utilizzati.
-            contesto += f"- Trattato in {s}:\n{testo_precedente[:1200]}\n"
-    return contesto
+        blocchi.append(
+            "=== ESTRATTI PERTINENTI DELLE FONTI ESTERNE (SOLO PER RAGIONAMENTO) ===\n"
+            f"{estratti_fonti}"
+        )
+
+    if sezione_corrente in sezioni_ordinate:
+        precedenti = sezioni_ordinate[:sezioni_ordinate.index(sezione_corrente)]
+    else:
+        precedenti = sezioni_ordinate
+    estratti_recenti = []
+    for sezione_precedente in precedenti[-2:]:
+        testo_precedente = str(leggi_sezione_memorizzata(sezione_precedente) or "").strip()
+        if testo_precedente:
+            estratti_recenti.append(
+                f"- Estratto recente da {sezione_precedente}:\n{testo_precedente[:650]}"
+            )
+    if estratti_recenti:
+        blocchi.append(
+            "=== CONTINUITÀ RECENTE DEL MANOSCRITTO ===\n"
+            "Usa questi passaggi solo per evitare ripetizioni e incoerenze; non copiarli.\n"
+            + "\n".join(estratti_recenti)
+        )
+    return "\n\n".join(blocco for blocco in blocchi if str(blocco).strip())[:9000]
 
 def individua_sottocapitoli_del_capitolo(capitolo, sezioni):
     """Restituisce soltanto i sottocapitoli numerati appartenenti al capitolo selezionato."""
@@ -10308,6 +10434,30 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 on_change=sincronizza_modifica_manuale,
                 args=(sez_scelta, chiave_widget_editor),
             )
+
+            testi_memoria_editor = testi_memoria_editoriale_ui(lingua_sel)
+            with st.expander(testi_memoria_editor["titolo"], expanded=False):
+                memoria_editoriale = memoria_editoriale_progetto()
+                scheda_memoria = dict(memoria_editoriale.get("sezioni", {}) or {}).get(sez_scelta, {})
+                if scheda_memoria:
+                    col_memoria_a, col_memoria_b = st.columns((1, 3))
+                    col_memoria_a.metric(testi_memoria_editor["parole"], scheda_memoria.get("parole", 0))
+                    col_memoria_b.caption(
+                        testi_memoria_editor["manuale"]
+                        if scheda_memoria.get("modificata_manualmente") else ""
+                    )
+                    st.caption(f"**{testi_memoria_editor['apertura']}:** {scheda_memoria.get('apertura', '—')}")
+                    st.caption(f"**{testi_memoria_editor['chiusura']}:** {scheda_memoria.get('chiusura', '—')}")
+                else:
+                    st.caption(testi_memoria_editor["nessuna"])
+                if st.button(
+                    testi_memoria_editor["sync"],
+                    use_container_width=True,
+                    key=f"sincronizza_memoria_editoriale_{hashlib.sha256(sez_scelta.encode('utf-8')).hexdigest()[:12]}",
+                ):
+                    sincronizza_modifica_manuale(sez_scelta, chiave_widget_editor)
+                    memoria_editoriale_progetto()
+                    st.success(testi_memoria_editor["salvata"])
             
             with st.expander("🔍 Linter Qualità & Analisi Sintattica Avanzata"):
                 if pulsante_con_preventivo(

@@ -8,6 +8,7 @@ chiamante e conserva le stesse chiavi usate dalle versioni precedenti.
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, Sequence
+import re
 from typing import Any
 
 
@@ -25,6 +26,8 @@ CHIAVE_SELETTORE_EDITOR = "sezione_editor_selezionata"
 CHIAVE_VERSIONI_WIDGET_SEZIONI = "versioni_widget_sezioni"
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 CHIAVE_PROGETTO_UNICO = "progetto_editoriale_unico"
+CHIAVE_MEMORIA_EDITORIALE = "memoria_editoriale_strutturata"
+VERSIONE_MEMORIA_EDITORIALE = 1
 
 CAMPI_SALVATAGGIO_PROGETTO = {
     "titolo": "book_title",
@@ -61,11 +64,127 @@ def memoria_progetto_unica(stato: MutableMapping[str, Any]) -> dict[str, Any]:
     if not isinstance(progetto, dict):
         progetto = {}
         stato[CHIAVE_PROGETTO_UNICO] = progetto
-    for nome in ("sidebar", "contenuti", "fonti", "immagini"):
+    for nome in ("sidebar", "contenuti", "fonti", "immagini", "memoria_editoriale"):
         if not isinstance(progetto.get(nome), dict):
             progetto[nome] = {}
     progetto["indice"] = str(progetto.get("indice", "") or "")
     return progetto
+
+
+def _testo_memoria_breve(testo: str, limite: int) -> str:
+    """Crea un estratto leggibile senza duplicare il manoscritto nella memoria."""
+    pulito = re.sub(r"\s+", " ", str(testo or "")).strip()
+    if len(pulito) <= limite:
+        return pulito
+    taglio = pulito.rfind(" ", 0, limite)
+    return (pulito[:taglio if taglio > 40 else limite].rstrip(" ,;:") + "…").strip()
+
+
+def _scheda_memoria_sezione(titolo: str, testo: str, *, manuale: bool = False) -> dict[str, Any]:
+    """Registra solo le coordinate editoriali di una sezione già salvata."""
+    pulito = re.sub(r"\s+", " ", str(testo or "")).strip()
+    frasi = [frase.strip() for frase in re.split(r"(?<=[.!?…])\s+", pulito) if frase.strip()]
+    apertura = _testo_memoria_breve(" ".join(frasi[:2]) or pulito, 300)
+    chiusura = _testo_memoria_breve(" ".join(frasi[-2:]) or pulito, 220)
+    return {
+        "titolo": str(titolo or "").strip(),
+        "parole": len(pulito.split()),
+        "apertura": apertura,
+        "chiusura": chiusura,
+        "modificata_manualmente": bool(manuale),
+    }
+
+
+def aggiorna_memoria_editoriale(
+    stato: MutableMapping[str, Any],
+    sezione: str = "",
+    *,
+    modificata_manualmente: bool = False,
+) -> dict[str, Any]:
+    """Sincronizza una memoria editoriale deterministica dal progetto già salvato.
+
+    Non invia richieste IA, non modifica il manoscritto e non interpreta i
+    contenuti: ne conserva soltanto coordinate sintetiche utili alla sezione
+    successiva. Per questo è sicura anche dopo pause, logout o importazioni.
+    """
+    progetto = memoria_progetto_unica(stato)
+    precedente = dict(progetto.get("memoria_editoriale", {}) or {})
+    schede_precedenti = dict(precedente.get("sezioni", {}) or {})
+    contenuti = dict(progetto.get("contenuti", {}) or {})
+    sidebar = dict(progetto.get("sidebar", {}) or {})
+    profilo = {
+        campo: str(sidebar.get(campo, "") or "").strip()
+        for campo in (
+            "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
+            "stile_racconto", "punto_di_vista", "obiettivo", "risultato_finale",
+            "argomento", "approfondimenti", "voce_personale", "priorita_personali",
+            "confini_personali",
+        )
+        if str(sidebar.get(campo, "") or "").strip()
+    }
+    schede = {}
+    for titolo, testo in contenuti.items():
+        if not str(testo or "").strip():
+            continue
+        titolo_testo = str(titolo)
+        manuale = bool(schede_precedenti.get(titolo_testo, {}).get("modificata_manualmente"))
+        if sezione and titolo_testo == str(sezione):
+            manuale = bool(modificata_manualmente)
+        schede[titolo_testo] = _scheda_memoria_sezione(titolo_testo, str(testo), manuale=manuale)
+    memoria = {
+        "versione": VERSIONE_MEMORIA_EDITORIALE,
+        "profilo": profilo,
+        "indice": str(progetto.get("indice", "") or ""),
+        "sezioni": schede,
+    }
+    progetto["memoria_editoriale"] = memoria
+    stato[CHIAVE_MEMORIA_EDITORIALE] = memoria
+    return memoria
+
+
+def ripristina_memoria_editoriale(stato: MutableMapping[str, Any], memoria: Any) -> dict[str, Any]:
+    """Recupera una memoria esportata, scartando dati non strutturati in sicurezza."""
+    progetto = memoria_progetto_unica(stato)
+    progetto["memoria_editoriale"] = dict(memoria or {}) if isinstance(memoria, dict) else {}
+    return aggiorna_memoria_editoriale(stato)
+
+
+def memoria_editoriale_progetto(stato: MutableMapping[str, Any]) -> dict[str, Any]:
+    """Restituisce la fotografia aggiornata, senza mai produrre o alterare testo."""
+    return aggiorna_memoria_editoriale(stato)
+
+
+def contesto_memoria_editoriale(
+    stato: MutableMapping[str, Any], sezione_corrente: str, sezioni_ordinate: Sequence[str]
+) -> str:
+    """Fornisce un contesto breve e ordinato per evitare ripetizioni nella stesura."""
+    memoria = memoria_editoriale_progetto(stato)
+    profilo = dict(memoria.get("profilo", {}) or {})
+    schede = dict(memoria.get("sezioni", {}) or {})
+    ordine = list(dict.fromkeys([str(sezione) for sezione in (sezioni_ordinate or []) if str(sezione).strip()]))
+    if sezione_corrente in ordine:
+        precedenti = ordine[:ordine.index(sezione_corrente)]
+        successive = ordine[ordine.index(sezione_corrente) + 1:]
+    else:
+        precedenti, successive = ordine, []
+    righe = ["=== MEMORIA EDITORIALE STRUTTURATA ==="]
+    if profilo:
+        righe.append("Identità del libro: " + " · ".join(
+            f"{chiave.replace('_', ' ')}: {valore}" for chiave, valore in profilo.items()
+            if valore
+        )[:1800])
+    schede_precedenti = [schede[titolo] for titolo in precedenti if titolo in schede]
+    if schede_precedenti:
+        righe.append("Sezioni già sviluppate: non ripetere definizioni, esempi o promesse già presenti.")
+        for scheda in schede_precedenti[-10:]:
+            flag = " [modifica utente da rispettare]" if scheda.get("modificata_manualmente") else ""
+            righe.append(
+                f"- {scheda.get('titolo', '')}{flag}: apertura {scheda.get('apertura', '')} "
+                f"| chiusura {scheda.get('chiusura', '')}"
+            )
+    if successive:
+        righe.append("Sezioni successive da preparare senza anticiparle: " + "; ".join(successive[:5]))
+    return _testo_memoria_breve("\n".join(righe), 7000)
 
 
 def fotografia_sidebar_integrale(
@@ -198,7 +317,8 @@ def leggi_sezione_memorizzata(
 
 
 def scrivi_sezione_memorizzata(
-    stato: MutableMapping[str, Any], sezione: str, contenuto: str, chiave_sezione: Callable[[str], str]
+    stato: MutableMapping[str, Any], sezione: str, contenuto: str, chiave_sezione: Callable[[str], str],
+    *, modificata_manualmente: bool = False,
 ) -> str:
     """Scrive insieme nell'archivio del progetto, nella copia protetta e nel widget."""
     testo = contenuto or ""
@@ -218,6 +338,9 @@ def scrivi_sezione_memorizzata(
     da_reidratare = set(stato.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
     da_reidratare.add(sezione)
     stato[CHIAVE_SEZIONI_DA_REIDRATARE] = list(da_reidratare)
+    aggiorna_memoria_editoriale(
+        stato, sezione, modificata_manualmente=modificata_manualmente
+    )
     return testo
 
 
@@ -312,7 +435,9 @@ def sincronizza_modifica_manuale(
         stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})[sezione] = testo_confermato
         return
 
-    scrivi_sezione_memorizzata(stato, sezione, contenuto, chiave_sezione)
+    scrivi_sezione_memorizzata(
+        stato, sezione, contenuto, chiave_sezione, modificata_manualmente=True
+    )
     archivio = stato.setdefault(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {})
     if sezione in archivio:
         if str(contenuto or "").strip():
