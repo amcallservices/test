@@ -8060,10 +8060,11 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49 64%, #0c233b)');
             imposta(lista.style, 'box-shadow', '0 17px 34px rgba(3, 15, 27, .3)');
 
-            // La tab 0 resta la prima per l'apertura automatica, ma -1 viene
-            // mostrata prima nel menu come richiesto dall'utente.
-            schede[0].style.order = '1';
-            schede[1].style.order = '0';
+            // La tab 0 resta la prima nel DOM per l'apertura automatica.
+            // Nel menu visivo l'ordine è però -1, 0, 1, 2, 3, 4, 5.
+            schede.forEach(function (scheda, indice) {
+              scheda.style.order = indice === 1 ? '0' : indice === 0 ? '1' : '2';
+            });
             schede.slice(0, 7).forEach(function (scheda, indice) {
               const scelto = scheda.getAttribute('aria-selected') === 'true';
               const colore = colori[indice];
