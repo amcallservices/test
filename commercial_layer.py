@@ -1209,9 +1209,13 @@ HOME_GUIDE_FILES = {
 }
 
 
-@st.cache_data(show_spinner=False)
 def _read_public_guide(filename: str) -> bytes | None:
-    """Legge una guida inclusa nel deploy senza esporre percorsi del server."""
+    """Legge la guida inclusa nel deploy senza conservarne una copia obsoleta.
+
+    I PDF possono essere sostituiti mantenendo lo stesso nome: evitare la cache
+    fa sì che i pulsanti della home offrano sempre la versione pubblicata più
+    recente.
+    """
     guide_path = Path(__file__).resolve().parent / "assets" / filename
     try:
         return guide_path.read_bytes()
