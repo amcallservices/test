@@ -3731,6 +3731,22 @@ def _testi_chat_nicchia(lingua):
     return testi.get(str(lingua or "").strip(), testi["Italiano"])
 
 
+def _domanda_iniziale_chat_nicchia(lingua):
+    """Primo passaggio obbligatorio: evita analisi senza mercato di riferimento."""
+    domande = {
+        "Italiano": "Per iniziare, indicami: **1) il mercato Amazon da analizzare** (es. Italia, USA, Germania), **2) la lingua del libro**, **3) la tua idea, il lettore o il problema da risolvere**.",
+        "English": "To begin, tell me: **1) the Amazon marketplace to analyse** (for example Italy, USA or Germany), **2) the book language**, **3) your idea, reader or problem to solve**.",
+        "Español": "Para empezar, indícame: **1) el mercado Amazon que analizaremos** (por ejemplo Italia, EE. UU. o Alemania), **2) el idioma del libro**, **3) tu idea, lector o problema que resolver**.",
+        "Français": "Pour commencer, indiquez-moi : **1) le marché Amazon à analyser** (par exemple Italie, États-Unis ou Allemagne), **2) la langue du livre**, **3) votre idée, lecteur ou problème à résoudre**.",
+        "Deutsch": "Bitte nenne zuerst: **1) den zu analysierenden Amazon-Marktplatz** (z. B. Italien, USA oder Deutschland), **2) die Buchsprache**, **3) deine Idee, Lesergruppe oder das zu lösende Problem**.",
+        "Română": "Pentru început, spune-mi: **1) piața Amazon de analizat** (de exemplu Italia, SUA sau Germania), **2) limba cărții**, **3) ideea, cititorul sau problema de rezolvat**.",
+        "Русский": "Для начала укажите: **1) рынок Amazon для анализа** (например Италия, США или Германия), **2) язык книги**, **3) идею, читателя или проблему, которую нужно решить**.",
+        "العربية": "للبدء، أخبرني بـ: **1) سوق Amazon المراد تحليله** (مثل إيطاليا أو الولايات المتحدة أو ألمانيا)، **2) لغة الكتاب**، **3) الفكرة أو القارئ أو المشكلة المراد حلها**.",
+        "中文": "开始前，请告诉我：**1）要分析的 Amazon 市场**（例如意大利、美国或德国），**2）图书语言**，**3）你的想法、读者或要解决的问题**。",
+    }
+    return domande.get(str(lingua or "").strip(), domande["Italiano"])
+
+
 def avvia_chat_nicchia():
     lingua = st.session_state.get("editor_language", "Italiano") or "Italiano"
     testi = _testi_chat_nicchia(lingua)
@@ -3738,7 +3754,7 @@ def avvia_chat_nicchia():
     st.session_state["chat_nicchia_fase"] = "dialogo"
     st.session_state["chat_nicchia_messaggi"] = [{
         "role": "assistant",
-        "content": testi["istruzioni"] + "\n\n" + _testi_chat_nicchia(lingua)["placeholder"],
+        "content": testi["istruzioni"] + "\n\n" + _domanda_iniziale_chat_nicchia(lingua),
     }]
     st.session_state["chat_nicchia_input_nonce"] = 0
 
@@ -9003,7 +9019,8 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                     risposta_nicchia = chiedi_gpt(
                         _cronologia_chat_nicchia(messaggi_nicchia),
                         "Sei la Chat della nicchia di Scrittore Site. Rispondi nella lingua selezionata dall'utente. "
-                        "Ragiona con lucidità sull'idea editoriale, fai al massimo una domanda utile alla volta e non creare mai indice, capitoli, testo del libro o campi della sidebar. "
+                        "Prima di discutere o valutare la nicchia, raccogli obbligatoriamente: marketplace Amazon, lingua del libro e idea/lettore/problema. "
+                        "Se uno di questi tre elementi manca, chiedi solo quello mancante e non svolgere analisi generiche. Quando sono tutti chiari, ragiona con lucidità sull'idea editoriale, fai al massimo una domanda utile alla volta e non creare mai indice, capitoli, testo del libro o campi della sidebar. "
                         "Ricorda che l'analisi documentata avverrà solo quando l'utente premerà il relativo pulsante.",
                         addebita=True, amount=CREDIT_COSTS["chat_nicchia_dialogo"], max_completion_tokens=700,
                         model=MODELLO_EDITORIALE, reason="chat_nicchia_dialogo", timeout_seconds=75,
