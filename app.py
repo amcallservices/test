@@ -4118,14 +4118,105 @@ def reidrata_sezioni_memorizzate(sezioni):
     )
 
 
+def aggiorna_memoria_editoriale_compatibile(sezione="", modificata_manualmente=False):
+    """Aggiorna la memoria anche durante un deploy parziale di Streamlit.
+
+    Normalmente delega il lavoro a ``project_memory.py``. Il ramo locale è
+    una protezione temporanea e non distruttiva: ricava una scheda breve dai
+    contenuti già salvati quando Streamlit ha caricato app.py prima del modulo
+    aggiornato. Così salvataggio, CSV ed editor non restano mai bloccati.
+    """
+    funzione_core = getattr(memoria_core, "aggiorna_memoria_editoriale", None)
+    if callable(funzione_core):
+        return funzione_core(
+            st.session_state,
+            sezione,
+            modificata_manualmente=modificata_manualmente,
+        )
+
+    progetto = memoria_progetto_unica()
+    precedente = dict(progetto.get("memoria_editoriale", {}) or {})
+    schede_precedenti = dict(precedente.get("sezioni", {}) or {})
+    sidebar = dict(progetto.get("sidebar", {}) or {})
+    profilo = {
+        campo: str(sidebar.get(campo, "") or "").strip()
+        for campo in (
+            "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
+            "stile_racconto", "punto_di_vista", "obiettivo", "risultato_finale",
+            "argomento", "approfondimenti", "voce_personale", "priorita_personali",
+            "confini_personali",
+        )
+        if str(sidebar.get(campo, "") or "").strip()
+    }
+    schede = {}
+    for titolo, testo in dict(progetto.get("contenuti", {}) or {}).items():
+        pulito = re.sub(r"\s+", " ", str(testo or "")).strip()
+        if not pulito:
+            continue
+        frasi = [frase.strip() for frase in re.split(r"(?<=[.!?…])\s+", pulito) if frase.strip()]
+        apertura = " ".join(frasi[:2]) or pulito
+        chiusura = " ".join(frasi[-2:]) or pulito
+        manuale = bool(schede_precedenti.get(titolo, {}).get("modificata_manualmente"))
+        if sezione and titolo == sezione:
+            manuale = bool(modificata_manualmente)
+        schede[titolo] = {
+            "titolo": titolo,
+            "parole": len(pulito.split()),
+            "apertura": apertura[:300].rsplit(" ", 1)[0] + "…" if len(apertura) > 300 else apertura,
+            "chiusura": chiusura[:220].rsplit(" ", 1)[0] + "…" if len(chiusura) > 220 else chiusura,
+            "modificata_manualmente": manuale,
+        }
+    memoria = {
+        "versione": 1,
+        "profilo": profilo,
+        "indice": str(progetto.get("indice", "") or ""),
+        "sezioni": schede,
+    }
+    progetto["memoria_editoriale"] = memoria
+    st.session_state["memoria_editoriale_strutturata"] = memoria
+    return memoria
+
+
+def ripristina_memoria_editoriale_compatibile(memoria):
+    """Ripristina una memoria esportata senza dipendere dalla versione del modulo."""
+    funzione_core = getattr(memoria_core, "ripristina_memoria_editoriale", None)
+    if callable(funzione_core):
+        return funzione_core(st.session_state, memoria)
+    memoria_progetto_unica()["memoria_editoriale"] = dict(memoria or {}) if isinstance(memoria, dict) else {}
+    return aggiorna_memoria_editoriale_compatibile()
+
+
 def memoria_editoriale_progetto():
     """Legge la bussola editoriale senza generare o modificare il manoscritto."""
-    return memoria_core.memoria_editoriale_progetto(st.session_state)
+    funzione_core = getattr(memoria_core, "memoria_editoriale_progetto", None)
+    if callable(funzione_core):
+        return funzione_core(st.session_state)
+    return aggiorna_memoria_editoriale_compatibile()
 
 
 def contesto_memoria_editoriale(sezione, sezioni):
     """Contesto sintetico delle parti già salvate, pronto per la nuova stesura."""
-    return memoria_core.contesto_memoria_editoriale(st.session_state, sezione, sezioni)
+    funzione_core = getattr(memoria_core, "contesto_memoria_editoriale", None)
+    if callable(funzione_core):
+        return funzione_core(st.session_state, sezione, sezioni)
+    memoria = memoria_editoriale_progetto()
+    schede = dict(memoria.get("sezioni", {}) or {})
+    ordine = list(dict.fromkeys([str(voce) for voce in (sezioni or []) if str(voce).strip()]))
+    precedenti = ordine[:ordine.index(sezione)] if sezione in ordine else ordine
+    righe = ["=== MEMORIA EDITORIALE STRUTTURATA ==="]
+    if memoria.get("profilo"):
+        righe.append("Identità del libro: " + " · ".join(
+            f"{chiave.replace('_', ' ')}: {valore}"
+            for chiave, valore in memoria["profilo"].items() if valore
+        )[:1800])
+    for titolo in precedenti[-10:]:
+        scheda = schede.get(titolo)
+        if scheda:
+            righe.append(
+                f"- {titolo}: apertura {scheda.get('apertura', '')} | "
+                f"chiusura {scheda.get('chiusura', '')}"
+            )
+    return "\n".join(righe)[:7000]
 
 
 def immagini_per_snapshot_cloud(immagini):
@@ -4749,7 +4840,7 @@ def applica_snapshot_progetto(snapshot):
         "immagini": dict(immagini),
         "memoria_editoriale": dict(memoria_editoriale),
     })
-    memoria_core.ripristina_memoria_editoriale(st.session_state, memoria_editoriale)
+    ripristina_memoria_editoriale_compatibile(memoria_editoriale)
 
     # Elimina soltanto le vecchie textarea, non i dati: l'indice e ogni
     # sezione verranno ridisegnati con valori nuovi dalla memoria unica.
@@ -4948,7 +5039,7 @@ def salva_progetto_corrente(sidebar, sezioni):
         indice_corrente = indice_precedente
         imposta_indice_progetto(indice_corrente)
     progetto["indice"] = indice_corrente
-    memoria_editoriale = memoria_core.aggiorna_memoria_editoriale(st.session_state)
+    memoria_editoriale = aggiorna_memoria_editoriale_compatibile()
     # Anche le immagini esterne fanno parte del progetto: prima le custodiamo
     # nella memoria unica e poi le rendiamo serializzabili per Supabase. Nessun
     # pulsante genera immagini; qui proteggiamo esclusivamente i file caricati.
