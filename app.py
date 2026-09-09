@@ -65,6 +65,19 @@ from project_text import (
     dividi_blocchi_lettura as dividi_blocchi_lettura_core,
     pulisci_testo_editoriale as pulisci_testo_editoriale_core,
 )
+from project_outline import (
+    conta_sezioni_indice as conta_sezioni_indice_core,
+    criticita_indice_generato as criticita_indice_generato_core,
+    estrai_numero_ricette as estrai_numero_ricette_core,
+    firma_indice as firma_indice_core,
+    normalizza_indice_generato as normalizza_indice_generato_core,
+    profilo_genere_stesura as profilo_genere_stesura_core,
+    profilo_struttura_indice as profilo_struttura_indice_core,
+    profilo_tipologia_stesura as profilo_tipologia_stesura_core,
+    riepilogo_stima_pagine_manoscritto as riepilogo_stima_pagine_manoscritto_core,
+    stima_budget_parole_indice as stima_budget_parole_indice_core,
+    superamenti_budget_editoriale as superamenti_budget_editoriale_core,
+)
 import project_memory as memoria_core
 from commercial_layer import (
     AI_REQUEST_CREDITS,
@@ -2409,6 +2422,7 @@ def imposta_indice_progetto(testo_indice):
 # PROFILI EDITORIALI: REGOLE SPECIFICHE PER GENERE, TIPOLOGIA E STRUTTURA
 # ======================================================================================================================
 def profilo_tipologia_stesura(stile):
+    return profilo_tipologia_stesura_core(stile)
     """Restituisce istruzioni di stesura realmente diverse per ogni tipologia selezionabile."""
     profili = {
         "Standard": "Esponi con chiarezza e ordine. Alterna spiegazione, esempio e applicazione senza estremi retorici.",
@@ -2426,6 +2440,7 @@ def profilo_tipologia_stesura(stile):
 
 
 def profilo_genere_stesura(genere):
+    return profilo_genere_stesura_core(genere)
     """Regole di forma e contenuto per tutti i generi offerti dall'interfaccia."""
     profili = {
         "Saggio Scientifico": "Sostieni una tesi con definizioni, metodo, evidenze, controargomentazioni, limiti e implicazioni. Non inventare dati o studi.",
@@ -2455,6 +2470,7 @@ def profilo_genere_stesura(genere):
 
 
 def estrai_numero_ricette(titolo, trama, obiettivo):
+    return estrai_numero_ricette_core(titolo, trama, obiettivo)
     testo = f"{titolo} {trama} {obiettivo}".lower()
     # Il confine di parola deve essere una vera espressione regolare, non il testo letterale "\\b".
     # Supporta le principali lingue offerte dalla sidebar.
@@ -2463,6 +2479,7 @@ def estrai_numero_ricette(titolo, trama, obiettivo):
 
 
 def profilo_struttura_indice(genere, titolo, trama, obiettivo):
+    return profilo_struttura_indice_core(genere, titolo, trama, obiettivo)
     """Evita che una stessa gabbia 15-18 capitoli venga applicata a libri incompatibili."""
     if genere == "Ricettario":
         numero = estrai_numero_ricette(titolo, trama, obiettivo)
@@ -2476,6 +2493,7 @@ def profilo_struttura_indice(genere, titolo, trama, obiettivo):
 
 
 def normalizza_indice_generato(indice):
+    return normalizza_indice_generato_core(indice)
     """Rimuove solo rumore di formattazione, senza alterare l'architettura proposta."""
     righe = []
     for riga in (indice or "").splitlines():
@@ -2488,6 +2506,9 @@ def normalizza_indice_generato(indice):
 
 
 def criticita_indice_generato(indice, genere, titolo, trama, obiettivo, minimo_parti=4, minimo_capitoli=None):
+    return criticita_indice_generato_core(
+        indice, genere, titolo, trama, obiettivo, minimo_parti, minimo_capitoli
+    )
     """Controllo deterministico leggero: intercetta gli errori che il modello tende a ripetere."""
     testo = normalizza_indice_generato(indice)
     righe = testo.splitlines()
@@ -2586,17 +2607,22 @@ def audit_editoriale_indice_generato(indice, genere, titolo, trama, obiettivo, l
 
 
 def firma_indice(indice):
+    return firma_indice_core(indice)
     """Confronto robusto: ignora maiuscole e spazi, non le differenze editoriali reali."""
     return re.sub(r"\s+", " ", (indice or "").strip().lower())
 
 
 def conta_sezioni_indice(indice):
+    return conta_sezioni_indice_core(indice)
     """Conta le voci che saranno realmente disponibili nell'editor, in tutte le lingue supportate."""
     regex = r'(?i)(Capitolo|Chapter|Kapitel|Capítulo|Chapitre|Capitolul|Глава|الفصل|Раздел|章节|Secţiune|Parte|Part|Partie|Teil|Partea|Часть|الجزء|部分|\d+\.)'
     return sum(1 for riga in (indice or "").splitlines() if re.search(regex, riga.strip()))
 
 
 def superamenti_budget_editoriale(indice, massimo_parti, massimo_capitoli, massimo_sottocapitoli):
+    return superamenti_budget_editoriale_core(
+        indice, massimo_parti, massimo_capitoli, massimo_sottocapitoli
+    )
     """Rileva un indice troppo esteso o spezzato rispetto al profilo scelto."""
     righe = [riga.strip() for riga in normalizza_indice_generato(indice).splitlines() if riga.strip()]
     regex_capitolo = r"(?i)^(capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+"
@@ -2976,6 +3002,14 @@ PAROLE_PER_PAGINA_6X9 = 275
 
 
 def stima_budget_parole_indice(indice, profilo_lunghezza):
+    return stima_budget_parole_indice_core(
+        indice,
+        profilo_lunghezza,
+        is_prefazione=sezione_prefazione,
+        titolo_prefazione=titolo_prefazione,
+        classifica=tipo_sezione_editoriale,
+        ha_sottocapitoli=individua_sottocapitoli_del_capitolo,
+    )
     """Stima la capacità reale di un indice prima della stesura.
 
     Il calcolo non usa un numero teorico di capitoli: somma i limiti reali
@@ -3036,6 +3070,15 @@ def stima_budget_parole_indice(indice, profilo_lunghezza):
 
 
 def riepilogo_stima_pagine_manoscritto(sezioni, contenuti, indice, profilo_lunghezza):
+    return riepilogo_stima_pagine_manoscritto_core(
+        sezioni,
+        contenuti,
+        indice,
+        profilo_lunghezza,
+        pulisci_testo=pulisci_testo_editoriale,
+        classifica=tipo_sezione_editoriale,
+        ha_sottocapitoli=individua_sottocapitoli_del_capitolo,
+    )
     """Calcola pagine attuali e previsione prudente senza gonfiare il testo.
 
     Le sezioni già scritte usano sempre il loro conteggio reale. Per le voci
