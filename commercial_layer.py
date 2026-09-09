@@ -43,6 +43,13 @@ CREDIT_COSTS = {
     # un credito per risposta; DeepSeek usa una unità interna, cioè un terzo
     # di credito. Il messaggio dell'utente e l'avvio della chat restano gratuiti.
     "chat_sidebar_guidata": 1,
+    # Chat della nicchia: dialogo leggero, primo report con ricerca, analisi
+    # approfondita e prompt conclusivo sono fasi separate e trasparenti.
+    # Il prompt finale non modifica mai il progetto: resta da copiare.
+    "chat_nicchia_dialogo": 1,
+    "chat_nicchia_report_iniziale": 5,
+    "chat_nicchia_ricerca_approfondita": 8,
+    "chat_nicchia_prompt_finale": 1,
     # Indice professionale GPT: ricerca 4 + generazione 6 = 10 crediti.
     "indice_ricerca_web": 4,
     "indice_generazione_editoriale": 6,
@@ -96,6 +103,10 @@ def _unita_deepseek(reason: str, amount: int) -> int:
     amount = max(1, int(amount or 1))
     tariffe = {
         "chat_sidebar_guidata": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
+        "chat_nicchia_dialogo": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
+        "chat_nicchia_report_iniziale": 5,       # 5 unità = 1⅔ crediti DeepSeek
+        "chat_nicchia_ricerca_approfondita": 8,  # 8 unità = 2⅔ crediti DeepSeek
+        "chat_nicchia_prompt_finale": 1,         # 1 unità = ⅓ di credito DeepSeek
         # Indice professionale DeepSeek: 4 + 6 = 10 unità interne,
         # equivalenti a 3⅓ crediti. Il terzo residuo resta custodito nel saldo.
         "ricerca_preliminare_indice": 4,
@@ -1104,6 +1115,20 @@ HOME_COMPACT_COPY = {
     "中文": {"core": ("所需功能，一目了然", "从想法到书稿，只需四个清晰步骤。"), "cards": (("1", "设置项目", "语言、标题、类型、读者和目标。"), ("2", "创建目录", "资料来源、专业结构和针对性优化。"), ("3", "写作并改进", "一个小节、一章或整本书，由你决定。"), ("4", "检查并导出", "预览、检查、Word、PDF、KDP 和 CSV。")), "steps": (("1", "定义", "填写引导式简报。"), ("2", "写作", "生成、阅读和编辑。"), ("3", "保存", "按需保存并导出。")), "details": "全部功能与详细说明", "optional": "个性化与引导暂停（可选）"},
 }
 
+# Una sola descrizione compatta nella home: informa senza aggiungere pulsanti
+# o deviazioni nel percorso di accesso al software.
+HOME_NICHE_FEATURE = {
+    "Italiano": ("🔎 Trova la tua nicchia", "Ragiona con la Chat della nicchia: valuta domanda, concorrenza e opportunità, poi ottieni un prompt pronto da copiare nella Chat guidata."),
+    "English": ("🔎 Find your niche", "Use the Niche chat to assess demand, competition and opportunity, then receive a prompt ready to copy into the Guided chat."),
+    "Español": ("🔎 Encuentra tu nicho", "Habla con el Chat de nicho: evalúa demanda, competencia y oportunidad, y recibe un prompt para copiar en el Chat guiado."),
+    "Français": ("🔎 Trouvez votre niche", "Échangez avec le Chat de niche : évaluez demande, concurrence et opportunité, puis obtenez un prompt à copier dans le Chat guidé."),
+    "Deutsch": ("🔎 Finde deine Nische", "Nutze den Nischen-Chat: Bewerte Nachfrage, Wettbewerb und Chance und erhalte danach einen Prompt für den geführten Chat."),
+    "Română": ("🔎 Găsește-ți nișa", "Discută cu Chatul nișei: evaluează cererea, concurența și oportunitatea, apoi primești un prompt de copiat în Chatul ghidat."),
+    "Русский": ("🔎 Найдите свою нишу", "Обсудите идею в чате ниши: оцените спрос, конкуренцию и возможность, затем получите промпт для управляемого чата."),
+    "العربية": ("🔎 اعثر على مجالك", "تحدث مع دردشة المجال لتقييم الطلب والمنافسة والفرصة، ثم احصل على مطالبة جاهزة لنسخها إلى الدردشة الموجّهة."),
+    "中文": ("🔎 找到你的细分市场", "使用细分市场聊天评估需求、竞争和机会，然后获得可复制到引导式聊天的提示词。"),
+}
+
 # Vantaggi esplicitati con misura: non sostituisce le capacità di una chat,
 # ma chiarisce il valore del flusso editoriale integrato di Scrittore Site.
 HOME_ADVANTAGES_COPY = {
@@ -1374,6 +1399,7 @@ def _landing_page() -> None:
     A = HOME_AI_ENGINES_COPY[home_language]
     P = HOME_PERSONALIZATION_COPY[home_language]
     K = HOME_COMPACT_COPY[home_language]
+    Q = HOME_NICHE_FEATURE[home_language]
     V = HOME_ADVANTAGES_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
@@ -1494,6 +1520,10 @@ def _landing_page() -> None:
     st.markdown(
         f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{N[1]}</h2>"
         f"<p class='ss-home-detail-caption'>{K['details']}</p></div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='ss-feature-group' dir='{direzione_home}'><h3>{Q[0]}</h3><p>{Q[1]}</p></div>",
         unsafe_allow_html=True,
     )
     with st.expander(f"⌄ {K['details']}", expanded=False):

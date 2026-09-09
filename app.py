@@ -1826,6 +1826,12 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
         return "circa 3⅓"
     if "fonti" in azione:
         return "circa 1⅓"
+    if "chat_nicchia_report_iniziale" in azione:
+        return "1⅔"
+    if "chat_nicchia_ricerca_approfondita" in azione:
+        return "2⅔"
+    if "chat_nicchia_prompt_finale" in azione:
+        return "1/3"
     if any(parola in azione for parola in ("scrivi_tutto", "scrivi_sottocapitoli", "rielabora_sezioni_originalita")):
         return f"fino a {max(1, math.ceil(totale_gpt / 3))}"
     if any(parola in azione for parola in ("scrivi_sezione", "rigenera_sezione", "rielabora", "quiz", "esempi")):
@@ -3702,6 +3708,120 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
     if mantenuti:
         messaggio += " Campi già compilati mantenuti: " + ", ".join(mantenuti) + "."
     st.session_state["chat_sidebar_esito_applicazione"] = messaggio
+
+
+# La chat della nicchia è volutamente separata dalla Chat guidata: non salva
+# né modifica sidebar, indice, fonti o manoscritto. Il suo unico risultato
+# operativo è un prompt che l'utente può decidere di copiare manualmente.
+def _testi_chat_nicchia(lingua):
+    testi = {
+        "Italiano": {
+            "titolo": "🔎 La chat della nicchia", "istruzioni": "Ragiona qui sull'opportunità editoriale. La chat analizza domanda, lettore, concorrenza e fonti; non modifica il progetto. Dopo due conferme crea soltanto un prompt da copiare nella Chat guidata.",
+            "avvia": "AVVIA LA CHAT DELLA NICCHIA", "placeholder": "Descrivi l'idea, il lettore o il problema che vorresti trasformare in un libro.", "invia": "➤ INVIA — risposta IA", "analizza": "ANALIZZA LA NICCHIA E CREA IL PRIMO REPORT", "approfondisci": "CONFERMO: FAI LA RICERCA APPROFONDITA", "prompt": "CONFERMO: CREA IL PROMPT FINALE COPIABILE", "reset": "↺ CHIUDI E REIMPOSTA QUESTA CHAT", "pronto": "Il prompt finale è pronto: copialo e incollalo manualmente nella Chat guidata della sezione 0.", "errore": "La fase non ha prodotto un risultato utilizzabile. Il credito della fase è stato riaccreditato.",
+        },
+        "English": {"titolo": "🔎 Niche chat", "istruzioni": "Use this space to assess an editorial opportunity. It analyses demand, reader, competition and sources; it never changes the project. After two confirmations it creates only a prompt to copy into the Guided chat.", "avvia": "START NICHE CHAT", "placeholder": "Describe the idea, reader or problem you would like to turn into a book.", "invia": "➤ SEND — AI reply", "analizza": "ANALYSE THE NICHE AND CREATE THE FIRST REPORT", "approfondisci": "I CONFIRM: RUN DEEP RESEARCH", "prompt": "I CONFIRM: CREATE THE FINAL COPYABLE PROMPT", "reset": "↺ CLOSE AND RESET THIS CHAT", "pronto": "The final prompt is ready: copy it and paste it manually into the Guided chat in section 0.", "errore": "This stage did not produce a usable result. Its credit has been refunded."},
+        "Español": {"titolo": "🔎 Chat de nicho", "istruzioni": "Aquí puedes evaluar una oportunidad editorial. Analiza demanda, lector, competencia y fuentes; no modifica el proyecto. Tras dos confirmaciones crea solo un prompt para copiar en el Chat guiado.", "avvia": "INICIAR CHAT DE NICHO", "placeholder": "Describe la idea, el lector o el problema que quieres convertir en libro.", "invia": "➤ ENVIAR — respuesta IA", "analizza": "ANALIZAR EL NICHO Y CREAR EL PRIMER INFORME", "approfondisci": "CONFIRMO: HACER INVESTIGACIÓN PROFUNDA", "prompt": "CONFIRMO: CREAR EL PROMPT FINAL COPIABLE", "reset": "↺ CERRAR Y REINICIAR ESTE CHAT", "pronto": "El prompt final está listo: cópialo y pégalo manualmente en el Chat guiado de la sección 0.", "errore": "La fase no produjo un resultado utilizable. El crédito ha sido reembolsado."},
+        "Français": {"titolo": "🔎 Chat de niche", "istruzioni": "Évaluez ici une opportunité éditoriale. Le chat analyse demande, lecteur, concurrence et sources ; il ne modifie jamais le projet. Après deux confirmations, il crée uniquement un prompt à copier dans le Chat guidé.", "avvia": "DÉMARRER LE CHAT DE NICHE", "placeholder": "Décrivez l'idée, le lecteur ou le problème à transformer en livre.", "invia": "➤ ENVOYER — réponse IA", "analizza": "ANALYSER LA NICHE ET CRÉER LE PREMIER RAPPORT", "approfondisci": "JE CONFIRME : RECHERCHE APPROFONDIE", "prompt": "JE CONFIRME : CRÉER LE PROMPT FINAL À COPIER", "reset": "↺ FERMER ET RÉINITIALISER CE CHAT", "pronto": "Le prompt final est prêt : copiez-le puis collez-le manuellement dans le Chat guidé de la section 0.", "errore": "Cette étape n'a pas produit de résultat utilisable. Le crédit a été remboursé."},
+        "Deutsch": {"titolo": "🔎 Nischen-Chat", "istruzioni": "Hier bewertest du eine redaktionelle Chance. Der Chat analysiert Nachfrage, Leser, Wettbewerb und Quellen; er ändert das Projekt nicht. Nach zwei Bestätigungen erstellt er nur einen Prompt zum Kopieren in den geführten Chat.", "avvia": "NISCHEN-CHAT STARTEN", "placeholder": "Beschreibe die Idee, den Leser oder das Problem, das du in ein Buch verwandeln möchtest.", "invia": "➤ SENDEN — KI-Antwort", "analizza": "NISCHE ANALYSIEREN UND ERSTEN BERICHT ERSTELLEN", "approfondisci": "ICH BESTÄTIGE: TIEFENRECHERCHE STARTEN", "prompt": "ICH BESTÄTIGE: FINALEN KOPIERBAREN PROMPT ERSTELLEN", "reset": "↺ CHAT SCHLIESSEN UND ZURÜCKSETZEN", "pronto": "Der finale Prompt ist fertig: Kopiere ihn und füge ihn manuell in den geführten Chat in Bereich 0 ein.", "errore": "Diese Phase hat kein nutzbares Ergebnis geliefert. Der Credit wurde erstattet."},
+        "Română": {"titolo": "🔎 Chatul nișei", "istruzioni": "Evaluează aici o oportunitate editorială. Chatul analizează cererea, cititorul, concurența și sursele; nu modifică proiectul. După două confirmări creează doar un prompt de copiat în Chatul ghidat.", "avvia": "PORNEȘTE CHATUL NIȘEI", "placeholder": "Descrie ideea, cititorul sau problema pe care vrei să o transformi într-o carte.", "invia": "➤ TRIMITE — răspuns IA", "analizza": "ANALIZEAZĂ NIȘA ȘI CREEAZĂ PRIMUL RAPORT", "approfondisci": "CONFIRM: CERCETARE APROFUNDATĂ", "prompt": "CONFIRM: CREEAZĂ PROMPTUL FINAL COPIABIL", "reset": "↺ ÎNCHIDE ȘI RESETEAZĂ ACEST CHAT", "pronto": "Promptul final este gata: copiază-l și lipește-l manual în Chatul ghidat din secțiunea 0.", "errore": "Etapa nu a produs un rezultat utilizabil. Creditul a fost rambursat."},
+        "Русский": {"titolo": "🔎 Чат ниши", "istruzioni": "Здесь можно оценить издательскую возможность. Чат анализирует спрос, читателя, конкуренцию и источники; он не меняет проект. После двух подтверждений создаёт только промпт для копирования в управляемый чат.", "avvia": "ЗАПУСТИТЬ ЧАТ НИШИ", "placeholder": "Опишите идею, читателя или проблему, которую хотите превратить в книгу.", "invia": "➤ ОТПРАВИТЬ — ответ ИИ", "analizza": "ПРОАНАЛИЗИРОВАТЬ НИШУ И СОЗДАТЬ ПЕРВЫЙ ОТЧЁТ", "approfondisci": "ПОДТВЕРЖДАЮ: УГЛУБЛЁННОЕ ИССЛЕДОВАНИЕ", "prompt": "ПОДТВЕРЖДАЮ: СОЗДАТЬ ФИНАЛЬНЫЙ ПРОМПТ", "reset": "↺ ЗАКРЫТЬ И СБРОСИТЬ ЭТОТ ЧАТ", "pronto": "Финальный промпт готов: скопируйте его и вручную вставьте в управляемый чат раздела 0.", "errore": "Этап не дал пригодного результата. Кредит возвращён."},
+        "العربية": {"titolo": "🔎 دردشة المجال", "istruzioni": "قيّم هنا فرصة تحريرية. تحلل الدردشة الطلب والقارئ والمنافسة والمصادر؛ ولا تعدّل المشروع. بعد تأكيدين تنشئ فقط مطالبة لنسخها إلى الدردشة الموجّهة.", "avvia": "ابدأ دردشة المجال", "placeholder": "صف الفكرة أو القارئ أو المشكلة التي تريد تحويلها إلى كتاب.", "invia": "➤ إرسال — رد الذكاء الاصطناعي", "analizza": "حلّل المجال وأنشئ التقرير الأول", "approfondisci": "أؤكد: أجرِ بحثاً معمقاً", "prompt": "أؤكد: أنشئ المطالبة النهائية القابلة للنسخ", "reset": "↺ أغلق وأعد ضبط هذه الدردشة", "pronto": "المطالبة النهائية جاهزة: انسخها والصقها يدوياً في الدردشة الموجّهة بالقسم 0.", "errore": "لم تنتج هذه المرحلة نتيجة قابلة للاستخدام. تم رد الرصيد."},
+        "中文": {"titolo": "🔎 细分市场聊天", "istruzioni": "在这里评估出版机会。聊天会分析需求、读者、竞争和来源；不会修改项目。两次确认后，只会生成可复制到引导式聊天的提示词。", "avvia": "开始细分市场聊天", "placeholder": "描述你想转化为图书的想法、读者或问题。", "invia": "➤ 发送 — AI 回复", "analizza": "分析细分市场并创建首份报告", "approfondisci": "我确认：进行深入研究", "prompt": "我确认：创建可复制的最终提示词", "reset": "↺ 关闭并重置此聊天", "pronto": "最终提示词已准备好：请复制并手动粘贴到第 0 节的引导式聊天中。", "errore": "此阶段未产生可用结果，积分已退还。"},
+    }
+    return testi.get(str(lingua or "").strip(), testi["Italiano"])
+
+
+def avvia_chat_nicchia():
+    lingua = st.session_state.get("editor_language", "Italiano") or "Italiano"
+    testi = _testi_chat_nicchia(lingua)
+    st.session_state["chat_nicchia_attiva"] = True
+    st.session_state["chat_nicchia_fase"] = "dialogo"
+    st.session_state["chat_nicchia_messaggi"] = [{
+        "role": "assistant",
+        "content": testi["istruzioni"] + "\n\n" + _testi_chat_nicchia(lingua)["placeholder"],
+    }]
+    st.session_state["chat_nicchia_input_nonce"] = 0
+
+
+def reimposta_chat_nicchia():
+    for chiave in list(st.session_state):
+        if chiave.startswith("chat_nicchia_"):
+            st.session_state.pop(chiave, None)
+
+
+def _cronologia_chat_nicchia(messaggi, limite=14):
+    return "\n\n".join(
+        f"{'UTENTE' if voce.get('role') == 'user' else 'ASSISTENTE'}:\n{voce.get('content', '')}"
+        for voce in list(messaggi or [])[-limite:]
+    )
+
+
+def _ricerca_web_chat_nicchia(cronologia, lingua, fase):
+    """Esegue una ricerca isolata e rimborsa la fase se non è utilizzabile."""
+    costo = CREDIT_COSTS[fase]
+    riferimento = addebita_azione_diretta(fase, amount=costo)
+    approfondita = fase == "chat_nicchia_ricerca_approfondita"
+    consegna = (
+        "Sei un analista di nicchie per libri Amazon KDP. Usa la ricerca web integrata prima di rispondere. "
+        f"Rispondi nella lingua selezionata dall'utente: {lingua}. Le query, i titoli dei libri e gli esempi devono usare la lingua e il marketplace indicati dall'utente. "
+        "Non inventare vendite, ranking, recensioni, volume di keyword, dati economici o fonti. Distingui sempre EVIDENZA, INFERENZA e IPOTESI. "
+        "Non proporre plagio, imitazione di libri esistenti, promesse di guadagno o consigli legali/medici non verificati. "
+        "Per ogni fonte inserisci URL diretto e una breve ragione di rilevanza."
+    )
+    if approfondita:
+        consegna += (
+            "\n\nQuesta è la RICERCA APPROFONDITA, successiva al primo report. Verifica con attenzione: persona, problema/desiderio, domanda, "
+            "concorrenza pubblicamente osservabile, vuoti editoriali, fattibilità, rischi KDP e fonti. Assegna il NICHE SCORE su 100: domanda 20, competizione 20, "
+            "intensità del problema 15, vuoto editoriale 15, sostenibilità economica 10, qualità fonti 10, durata 5, rischio KDP 5. "
+            "Se mancano dati, scrivi chiaramente 'NICCHIA NON ANCORA VALIDATA' e spiega cosa servirebbe per validarla."
+        )
+    else:
+        consegna += (
+            "\n\nCrea il PRIMO REPORT: definisci mercato, lingua, lettore, problema/desiderio e risultato atteso; raccogli prove di domanda e una vista prudente della concorrenza. "
+            "Concludi con una raccomandazione chiara: approfondire, cambiare angolo oppure non procedere."
+        )
+    try:
+        if usa_deepseek_pro():
+            if not client_deepseek:
+                raise RuntimeError("DeepSeek non configurato")
+            risposta = client_deepseek.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
+                model=MODELLO_DEEPSEEK_PRO,
+                tools=[{"type": "web_search"}], tool_choice={"type": "web_search"},
+                instructions=consegna, input=cronologia,
+            )
+            modello = MODELLO_DEEPSEEK_PRO
+        else:
+            if not client_openai:
+                raise RuntimeError("GPT non configurato")
+            risposta = client_openai.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
+                model=MODELLO_ANALISI_FONTI,
+                tools=[{"type": "web_search_preview"}], input=f"{consegna}\n\nCONVERSAZIONE:\n{cronologia}",
+            )
+            modello = MODELLO_ANALISI_FONTI
+        testo = (getattr(risposta, "output_text", "") or "").strip()
+        if not testo:
+            raise RuntimeError("Risposta di ricerca vuota")
+        registra_esito_chiamata_ai(risposta, riferimento=riferimento, reason=fase, amount=costo, model=modello)
+        return testo
+    except Exception as exc:
+        refund_credits(riferimento, reason=f"{fase}_fallita", amount=costo)
+        registra_esito_chiamata_ai(None, riferimento=riferimento, reason=fase, amount=costo,
+                                   model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+                                   riuscita=False, rimborsata=True, errore=type(exc).__name__)
+        return ""
+
+
+def _prompt_finale_chat_nicchia(cronologia, lingua):
+    istruzioni = """Sei un progettista editoriale. Crea esclusivamente un testo pronto da copiare, intitolato esattamente:
+PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE
+
+Il prompt deve trasferire alla Chat guidata solo le evidenze e le ipotesi prudenti emerse dalla ricerca, senza inventare dati. Deve chiederle di compilare esclusivamente i campi effettivamente disponibili nella sua sidebar e di domandare obbligatoriamente la personalizzazione del libro prima della scheda finale. Non creare indice né manoscritto. Rispondi nella lingua selezionata."""
+    return chiedi_gpt(
+        _cronologia_chat_nicchia(cronologia), istruzioni + f"\nLingua selezionata: {lingua}.",
+        addebita=True, amount=CREDIT_COSTS["chat_nicchia_prompt_finale"],
+        max_completion_tokens=1800, model=MODELLO_EDITORIALE,
+        reason="chat_nicchia_prompt_finale", timeout_seconds=90,
+    )
 
 # Memoria unica del progetto. È la sola fonte autorevole per sidebar, indice,
 # manoscritto, fonti e immagini. Le vecchie chiavi rimangono soltanto come
@@ -7847,15 +7967,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.rerun()
 
     etichette_menu_operativo = {
-        "Italiano": ("Centro operativo", "Le sezioni 0–5: segui il percorso dall'idea all'esportazione."),
-        "English": ("Operations center", "Sections 0–5: follow the project from idea to export."),
-        "Español": ("Centro operativo", "Secciones 0–5: sigue el proyecto desde la idea hasta la exportación."),
-        "Français": ("Centre opérationnel", "Sections 0–5 : suivez le projet de l’idée à l’exportation."),
-        "Deutsch": ("Arbeitszentrale", "Bereiche 0–5: Folgen Sie dem Projekt von der Idee bis zum Export."),
-        "Română": ("Centru operațional", "Secțiunile 0–5: urmează proiectul de la idee până la export."),
-        "Русский": ("Рабочий центр", "Разделы 0–5: следуйте проекту от идеи до экспорта."),
-        "العربية": ("مركز العمل", "الأقسام 0–5: اتبع المشروع من الفكرة إلى التصدير."),
-        "中文": ("操作中心", "第 0–5 节：从想法到导出，按步骤完成项目。"),
+        "Italiano": ("Centro operativo", "Dalla nicchia all'esportazione: la sezione -1 è facoltativa, la sezione 0 è il punto di partenza."),
+        "English": ("Operations center", "From niche to export: section -1 is optional, while section 0 is your starting point."),
+        "Español": ("Centro operativo", "Del nicho a la exportación: la sección -1 es opcional y la sección 0 es el punto de partida."),
+        "Français": ("Centre opérationnel", "De la niche à l’exportation : la section -1 est facultative et la section 0 est votre point de départ."),
+        "Deutsch": ("Arbeitszentrale", "Von der Nische bis zum Export: Bereich -1 ist optional, Bereich 0 ist der Einstieg."),
+        "Română": ("Centru operațional", "De la nișă la export: secțiunea -1 este opțională, iar secțiunea 0 este punctul de plecare."),
+        "Русский": ("Рабочий центр", "От ниши до экспорта: раздел -1 необязателен, раздел 0 — точка начала."),
+        "العربية": ("مركز العمل", "من المجال إلى التصدير: القسم -1 اختياري، والقسم 0 هو نقطة البداية."),
+        "中文": ("操作中心", "从细分市场到导出：-1 节为可选功能，0 节是起点。"),
     }
     titolo_menu_operativo, descrizione_menu_operativo = etichette_menu_operativo.get(
         lingua_sel, etichette_menu_operativo["Italiano"]
@@ -7864,11 +7984,19 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         f"""<section class='ss-operational-menu-heading'>
           <span>🧭</span><div><h2>{html.escape(titolo_menu_operativo)}</h2>
           <p>{html.escape(descrizione_menu_operativo)}</p></div>
-          <span class='ss-menu-range'>0 — 5</span>
+          <span class='ss-menu-range'>-1 — 5</span>
         </section>""",
         unsafe_allow_html=True,
     )
-    tabs = st.tabs([f"📘 0. {titolo_guida}"] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
+    etichette_tab_nicchia = {
+        "Italiano": "🔎 -1. La chat della nicchia", "English": "🔎 -1. Niche chat",
+        "Español": "🔎 -1. Chat de nicho", "Français": "🔎 -1. Chat de niche",
+        "Deutsch": "🔎 -1. Nischen-Chat", "Română": "🔎 -1. Chatul nișei",
+        "Русский": "🔎 -1. Чат ниши", "العربية": "🔎 -1. دردشة المجال", "中文": "🔎 -1. 细分市场聊天",
+    }
+    # La tab 0 rimane la prima nel DOM e quindi è quella aperta ad ogni avvio.
+    # Lo stile la mostra dopo -1, senza cambiare alcuna funzione delle tab 1–5.
+    tabs = st.tabs([f"📘 0. {titolo_guida}", etichette_tab_nicchia.get(lingua_sel, etichette_tab_nicchia["Italiano"])] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
 
     # Stile diretto e indipendente dal tema per le sei schede principali.
     # Interviene esclusivamente sul menu che Streamlit ha già creato: ogni
@@ -7879,8 +8007,8 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         (function () {
           const documento = window.parent.document;
           const colori = [
-            ['#154f7c', '#0c2e4b'], ['#58318a', '#331c56'], ['#9a5415', '#5d300b'],
-            ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
+            ['#154f7c', '#0c2e4b'], ['#245b75', '#12374a'], ['#58318a', '#331c56'],
+            ['#9a5415', '#5d300b'], ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
           ];
 
           function imposta(stile, nome, valore) {
@@ -7893,7 +8021,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               || documento.querySelector('[role="tablist"]');
             if (!lista) return false;
             const schede = Array.from(lista.querySelectorAll('[role="tab"]'));
-            if (schede.length < 6) return false;
+            if (schede.length < 7) return false;
             const mobile = window.parent.innerWidth <= 768;
             const intestazione = documento.querySelector('.ss-operational-menu-heading');
             if (intestazione) {
@@ -7932,7 +8060,11 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49 64%, #0c233b)');
             imposta(lista.style, 'box-shadow', '0 17px 34px rgba(3, 15, 27, .3)');
 
-            schede.slice(0, 6).forEach(function (scheda, indice) {
+            // La tab 0 resta la prima per l'apertura automatica, ma -1 viene
+            // mostrata prima nel menu come richiesto dall'utente.
+            schede[0].style.order = '1';
+            schede[1].style.order = '0';
+            schede.slice(0, 7).forEach(function (scheda, indice) {
               const scelto = scheda.getAttribute('aria-selected') === 'true';
               const colore = colori[indice];
               imposta(scheda.style, 'box-sizing', 'border-box');
@@ -7994,7 +8126,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             setTimeout(function () {
               try {
                 const schede = Array.from(window.parent.document.querySelectorAll('[role="tab"]'));
-                const scrittura = schede[2] || schede.find(function (scheda) {
+                const scrittura = schede[3] || schede.find(function (scheda) {
                   const testo = (scheda.innerText || '').toLowerCase();
                   return testo.includes('scrittura') || testo.includes('write');
                 });
@@ -8659,6 +8791,36 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             if voce.get("role") == "user"
                         )
                         ultimo_messaggio_chat = testo_utente_chat.casefold()
+                        cronologia_completa_chat = "\n".join(
+                            str(voce.get("content", "")) for voce in messaggi_chat
+                        ).casefold()
+                        # Il prompt della Chat della nicchia è una base già
+                        # ricercata: non va scartata né sostituita da domande
+                        # generiche. La personalizzazione resta comunque un
+                        # passaggio obbligatorio prima della scheda finale.
+                        origine_chat_nicchia = (
+                            "prompt finale per chat guidata" in cronologia_completa_chat
+                            or ("prompt finale" in cronologia_completa_chat and "chat guidata" in cronologia_completa_chat)
+                        )
+                        indice_prompt_nicchia = next(
+                            (
+                                indice for indice, voce in enumerate(messaggi_chat)
+                                if voce.get("role") == "user" and "prompt finale" in str(voce.get("content", "")).casefold()
+                                and "chat guidata" in str(voce.get("content", "")).casefold()
+                            ),
+                            -1,
+                        )
+                        messaggi_successivi_nicchia = "\n".join(
+                            str(voce.get("content", "")) for voce in messaggi_chat[indice_prompt_nicchia + 1:]
+                            if voce.get("role") == "user"
+                        ).casefold()
+                        scelta_personalizzazione_esplicita = bool(re.search(
+                            r"(?:^|\n|\b)(?:opzione\s*)?[abcd](?:\b|\)|\.)|personalizz(?:a|azione).{0,80}(?:sì|si|no|non so|fai tu|scegli tu|confermo)",
+                            messaggi_successivi_nicchia,
+                        ))
+                        richiedi_prima_personalizzazione = (
+                            origine_chat_nicchia and not scelta_personalizzazione_esplicita
+                        )
                         conferma_chat = prepara_scheda_chat or bool(re.search(
                             r"\b(confermo|conferma|procedi|prosegui|vai|ok|okay|yes|si|sì|continue|go ahead|continúa|continuez|weiter|продолж|افعل|继续)\b",
                             ultimo_messaggio_chat,
@@ -8668,6 +8830,9 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             ultimo_messaggio_chat,
                         ))
                         istruzione_chiusura_chat = (
+                            "La conversazione contiene un prompt finale della Chat della nicchia, ma manca ancora la scelta di personalizzazione. "
+                            "Non produrre la scheda e non applicare l'opzione D automaticamente: poni adesso, in modo chiaro, la domanda A/B/C/D prevista dal protocollo."
+                            if richiedi_prima_personalizzazione else
                             "MODALITÀ CONCLUSIVA ATTIVATA DAL PULSANTE: produci ADESSO la scheda finale completa. "
                             "Non porre domande, non chiedere conferme e non offrire alternative. Se la scelta di "
                             "personalizzazione non è esplicita nella conversazione, applica automaticamente l'opzione D "
@@ -8684,6 +8849,10 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
                             "Se l'utente non ti chiede di scegliere autonomamente, non inventare informazioni personali o fatti non dichiarati."
                         )
                         fase_personalizzazione_chat = (
+                            "2. È stato incollato un PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE proveniente dalla Chat della nicchia. "
+                            "Trattalo come brief prioritario, non ripetere la ricerca e non perderne le informazioni. Prima di qualunque scheda poni obbligatoriamente la domanda A/B/C/D sulla personalizzazione. "
+                            "Neppure il pulsante di preparazione può saltare questa domanda; dopo la risposta dell'utente completa la scheda."
+                            if richiedi_prima_personalizzazione else
                             "2. Il pulsante «Prepara la scheda per la sidebar» è stato premuto. Questo annulla "
                             "qualsiasi ulteriore fase di domande: considera scelta l'opzione D se non esiste già "
                             "una scelta esplicita e restituisci immediatamente la scheda finale completa."
@@ -8799,8 +8968,106 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                     use_container_width=True,
                 )
 
-    # TAB 1: INDICE (CHIRURGIA: FIX SENSO LOGICO E PULIZIA ASSOLUTA DELL'INDICE E CONNESSIONE SARTORIALE)
+    # TAB -1: CHAT DELLA NICCHIA. È una ricerca autonoma e non può toccare
+    # nessun dato editoriale del progetto corrente.
     with tabs[1]:
+        testi_nicchia = _testi_chat_nicchia(lingua_sel)
+        st.subheader(testi_nicchia["titolo"])
+        st.info(testi_nicchia["istruzioni"])
+        cervello_nicchia = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
+        costo_dialogo_nicchia = "1/3 di credito (1 credito ogni 3 risposte)" if usa_deepseek_pro() else "1 credito"
+        st.caption(
+            f"Cervello selezionato: **{cervello_nicchia}**. Avvio e messaggi dell'utente gratuiti; "
+            f"ogni risposta di dialogo costa **{costo_dialogo_nicchia}**. Le fasi di ricerca mostrano un preventivo prima dell'avvio."
+        )
+        if not st.session_state.get("chat_nicchia_attiva"):
+            st.button(testi_nicchia["avvia"], key="avvia_chat_nicchia", on_click=avvia_chat_nicchia, use_container_width=True)
+        else:
+            messaggi_nicchia = list(st.session_state.get("chat_nicchia_messaggi", []) or [])
+            for messaggio in messaggi_nicchia:
+                with st.chat_message(messaggio.get("role", "assistant")):
+                    st.markdown(messaggio.get("content", ""))
+
+            nonce_nicchia = int(st.session_state.get("chat_nicchia_input_nonce", 0))
+            testo_nicchia = st.text_area(
+                campo_ui("messaggio", lingua_sel), key=f"chat_nicchia_input_{nonce_nicchia}",
+                placeholder=testi_nicchia["placeholder"], height=90,
+            )
+            if st.button(f"{testi_nicchia['invia']} — {costo_dialogo_nicchia}", key=f"invia_chat_nicchia_{nonce_nicchia}", use_container_width=True):
+                testo_nicchia = str(testo_nicchia or "").strip()
+                if not testo_nicchia:
+                    st.warning(testi_nicchia["placeholder"])
+                else:
+                    messaggi_nicchia.append({"role": "user", "content": testo_nicchia})
+                    risposta_nicchia = chiedi_gpt(
+                        _cronologia_chat_nicchia(messaggi_nicchia),
+                        "Sei la Chat della nicchia di Scrittore Site. Rispondi nella lingua selezionata dall'utente. "
+                        "Ragiona con lucidità sull'idea editoriale, fai al massimo una domanda utile alla volta e non creare mai indice, capitoli, testo del libro o campi della sidebar. "
+                        "Ricorda che l'analisi documentata avverrà solo quando l'utente premerà il relativo pulsante.",
+                        addebita=True, amount=CREDIT_COSTS["chat_nicchia_dialogo"], max_completion_tokens=700,
+                        model=MODELLO_EDITORIALE, reason="chat_nicchia_dialogo", timeout_seconds=75,
+                    )
+                    if str(risposta_nicchia or "").startswith("ERRORE:"):
+                        st.error(testi_nicchia["errore"])
+                    else:
+                        messaggi_nicchia.append({"role": "assistant", "content": risposta_nicchia})
+                        st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
+                        st.session_state["chat_nicchia_input_nonce"] = nonce_nicchia + 1
+                        st.rerun()
+
+            ha_idea_nicchia = any(voce.get("role") == "user" for voce in messaggi_nicchia)
+            fase_nicchia = st.session_state.get("chat_nicchia_fase", "dialogo")
+            if fase_nicchia == "dialogo":
+                if pulsante_con_preventivo(
+                    "chat_nicchia_report_iniziale", testi_nicchia["analizza"], CREDIT_COSTS["chat_nicchia_report_iniziale"],
+                    "Ricerca fonti pubbliche pertinenti e crea un primo report prudente su lettore, domanda, concorrenza e opportunità. Non modifica il progetto.",
+                    disabled=not ha_idea_nicchia, use_container_width=True,
+                ):
+                    with st.spinner("Ricerca e primo report in corso..."):
+                        report = _ricerca_web_chat_nicchia(_cronologia_chat_nicchia(messaggi_nicchia), lingua_sel, "chat_nicchia_report_iniziale")
+                    if report:
+                        messaggi_nicchia.append({"role": "assistant", "content": report})
+                        st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
+                        st.session_state["chat_nicchia_fase"] = "report_iniziale"
+                        st.rerun()
+                    st.error(testi_nicchia["errore"])
+            elif fase_nicchia == "report_iniziale":
+                if pulsante_con_preventivo(
+                    "chat_nicchia_ricerca_approfondita", testi_nicchia["approfondisci"], CREDIT_COSTS["chat_nicchia_ricerca_approfondita"],
+                    "Approfondisce le fonti e produce una valutazione documentata con Niche Score, rischi e decisione editoriale. Non modifica il progetto.",
+                    use_container_width=True,
+                ):
+                    with st.spinner("Ricerca approfondita della nicchia in corso..."):
+                        report = _ricerca_web_chat_nicchia(_cronologia_chat_nicchia(messaggi_nicchia), lingua_sel, "chat_nicchia_ricerca_approfondita")
+                    if report:
+                        messaggi_nicchia.append({"role": "assistant", "content": report})
+                        st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
+                        st.session_state["chat_nicchia_fase"] = "ricerca_approfondita"
+                        st.rerun()
+                    st.error(testi_nicchia["errore"])
+            elif fase_nicchia == "ricerca_approfondita":
+                if pulsante_con_preventivo(
+                    "chat_nicchia_prompt_finale", testi_nicchia["prompt"], CREDIT_COSTS["chat_nicchia_prompt_finale"],
+                    "Trasforma la ricerca confermata in un solo prompt pronto da copiare manualmente nella Chat guidata. Non modifica la sidebar.",
+                    use_container_width=True,
+                ):
+                    with st.spinner("Preparazione del prompt finale in corso..."):
+                        prompt_finale = _prompt_finale_chat_nicchia(messaggi_nicchia, lingua_sel)
+                    if not str(prompt_finale or "").startswith("ERRORE:"):
+                        messaggi_nicchia.append({"role": "assistant", "content": prompt_finale})
+                        st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
+                        st.session_state["chat_nicchia_fase"] = "prompt_finale"
+                        st.rerun()
+                    st.error(testi_nicchia["errore"])
+            elif fase_nicchia == "prompt_finale":
+                st.success(testi_nicchia["pronto"])
+                prompt_da_copiare = next((voce.get("content", "") for voce in reversed(messaggi_nicchia) if voce.get("role") == "assistant" and "PROMPT FINALE" in voce.get("content", "").upper()), "")
+                if prompt_da_copiare:
+                    st.code(prompt_da_copiare, language=None)
+            st.button(testi_nicchia["reset"], key="reset_chat_nicchia", on_click=reimposta_chat_nicchia, use_container_width=True)
+
+    # TAB 1: INDICE (CHIRURGIA: FIX SENSO LOGICO E PULIZIA ASSOLUTA DELL'INDICE E CONNESSIONE SARTORIALE)
+    with tabs[2]:
         if not sidebar_pronta:
             st.info(
                 "Completa tutti i campi obbligatori della barra laterale prima di generare l'indice. "
@@ -9112,7 +9379,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         st.rerun()
 
     # TAB 2: SCRITTURA E QUIZ (E ORA ANCHE RICETTE)
-    with tabs[2]:
+    with tabs[3]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
             # La stesura completa è una coda controllata: una sezione viene
@@ -10002,7 +10269,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.write(analizza_qualita_prosa(st.session_state.get(k_sessione, "")))
 
     # TAB 3: ANTEPRIMA
-    with tabs[3]:
+    with tabs[4]:
         st.subheader(L["preview_tit"])
         sezioni_anteprima = elenco_sezioni_progetto(opzioni_editor)
         contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
@@ -10219,7 +10486,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 )
 
     # TAB 4: IMPORTAZIONE / ESPORTAZIONE
-    with tabs[4]:
+    with tabs[5]:
         st.subheader("📦 Importa / Esporta / Copyright")
         st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Qui trovi anche i controlli di originalità e copyright. Il CSV non consuma crediti.")
         progetto_csv = esporta_progetto_editoriale_csv()
@@ -10676,7 +10943,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}.pdf", mime="application/pdf")
 
     # TAB 5: FORMATTAZIONE E METADATI KDP
-    with tabs[5]:
+    with tabs[6]:
         st.subheader("🛠️ Formattazione")
         st.caption("Carica un manoscritto DOCX o PDF per generare metadati; i file DOCX possono anche essere formattati per il formato KDP 6×9.")
         manoscritto = st.file_uploader(
