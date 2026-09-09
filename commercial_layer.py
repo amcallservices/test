@@ -1129,6 +1129,20 @@ HOME_NICHE_FEATURE = {
     "中文": ("🔎 找到你的细分市场", "使用细分市场聊天评估需求、竞争和机会，然后获得可复制到引导式聊天的提示词。"),
 }
 
+# Promessa centrale della home: il software non è una chat isolata, ma un
+# percorso editoriale che porta dall'idea a un manoscritto pronto da pubblicare.
+HOME_IDEA_TO_BOOK_COPY = {
+    "Italiano": {"headline": "HO UN’IDEA →<br>VOGLIO UN LIBRO PUBBLICATO", "subtitle": "Dalla nicchia al manoscritto: un percorso guidato per progettare, scrivere, controllare ed esportare il tuo libro.", "core": ("Dall’idea al libro pubblicabile", "Quattro passaggi chiari, con te sempre al comando."), "cards": (("1", "Hai un’idea", "Valuta la nicchia in modo facoltativo e trova un angolo editoriale concreto."), ("2", "Dai forma al progetto", "Chat guidata, sidebar, lettore e obiettivo definiscono la direzione."), ("3", "Scrivi il tuo libro", "Indice, capitoli e revisioni restano visibili e modificabili."), ("4", "Preparalo alla pubblicazione", "Controlli, Word, PDF, CSV e formattazione KDP quando sei pronto."))},
+    "English": {"headline": "I HAVE AN IDEA →<br>I WANT A PUBLISHED BOOK", "subtitle": "From niche to manuscript: a guided path to plan, write, review and export your book.", "core": ("From idea to a publishable book", "Four clear steps, while you remain in control."), "cards": (("1", "You have an idea", "Optionally assess the niche and find a concrete editorial angle."), ("2", "Shape the project", "Guided chat, sidebar, reader and goal define the direction."), ("3", "Write your book", "Outline, chapters and revisions remain visible and editable."), ("4", "Prepare it for publishing", "Checks, Word, PDF, CSV and KDP formatting when you are ready."))},
+    "Español": {"headline": "TENGO UNA IDEA →<br>QUIERO UN LIBRO PUBLICADO", "subtitle": "Del nicho al manuscrito: un recorrido guiado para planificar, escribir, revisar y exportar tu libro.", "core": ("De la idea a un libro publicable", "Cuatro pasos claros, con el control siempre en tus manos."), "cards": (("1", "Tienes una idea", "Evalúa opcionalmente el nicho y encuentra un enfoque editorial concreto."), ("2", "Da forma al proyecto", "Chat guiado, barra lateral, lector y objetivo definen la dirección."), ("3", "Escribe tu libro", "Índice, capítulos y revisiones permanecen visibles y editables."), ("4", "Prepáralo para publicar", "Controles, Word, PDF, CSV y formato KDP cuando estés listo."))},
+    "Français": {"headline": "J’AI UNE IDÉE →<br>JE VEUX UN LIVRE PUBLIÉ", "subtitle": "De la niche au manuscrit : un parcours guidé pour concevoir, écrire, vérifier et exporter votre livre.", "core": ("De l’idée à un livre publiable", "Quatre étapes claires, tout en gardant le contrôle."), "cards": (("1", "Vous avez une idée", "Évaluez la niche si vous le souhaitez et trouvez un angle éditorial concret."), ("2", "Donnez forme au projet", "Chat guidé, barre latérale, lecteur et objectif définissent la direction."), ("3", "Écrivez votre livre", "Plan, chapitres et révisions restent visibles et modifiables."), ("4", "Préparez-le à la publication", "Contrôles, Word, PDF, CSV et mise en forme KDP quand vous êtes prêt."))},
+    "Deutsch": {"headline": "ICH HABE EINE IDEE →<br>ICH MÖCHTE EIN BUCH VERÖFFENTLICHEN", "subtitle": "Von der Nische zum Manuskript: ein geführter Weg, um dein Buch zu planen, zu schreiben, zu prüfen und zu exportieren.", "core": ("Von der Idee zum veröffentlichungsreifen Buch", "Vier klare Schritte, bei denen du die Kontrolle behältst."), "cards": (("1", "Du hast eine Idee", "Bewerte optional die Nische und finde einen konkreten redaktionellen Blickwinkel."), ("2", "Gestalte dein Projekt", "Geführter Chat, Seitenleiste, Leser und Ziel geben die Richtung vor."), ("3", "Schreibe dein Buch", "Gliederung, Kapitel und Überarbeitungen bleiben sichtbar und editierbar."), ("4", "Bereite die Veröffentlichung vor", "Prüfungen, Word, PDF, CSV und KDP-Formatierung, wenn du bereit bist."))},
+    "Română": {"headline": "AM O IDEE →<br>VREAU O CARTE PUBLICATĂ", "subtitle": "De la nișă la manuscris: un parcurs ghidat pentru a proiecta, scrie, verifica și exporta cartea.", "core": ("De la idee la o carte publicabilă", "Patru pași clari, iar tu păstrezi mereu controlul."), "cards": (("1", "Ai o idee", "Evaluează opțional nișa și găsește un unghi editorial concret."), ("2", "Dă formă proiectului", "Chatul ghidat, bara laterală, cititorul și obiectivul stabilesc direcția."), ("3", "Scrie-ți cartea", "Cuprinsul, capitolele și reviziile rămân vizibile și editabile."), ("4", "Pregătește publicarea", "Controale, Word, PDF, CSV și formatare KDP când ești pregătit."))},
+    "Русский": {"headline": "У МЕНЯ ЕСТЬ ИДЕЯ →<br>Я ХОЧУ ОПУБЛИКОВАННУЮ КНИГУ", "subtitle": "От ниши до рукописи: управляемый путь, чтобы спланировать, написать, проверить и экспортировать книгу.", "core": ("От идеи к книге, готовой к публикации", "Четыре понятных шага, при этом контроль остаётся у вас."), "cards": (("1", "У вас есть идея", "При желании оцените нишу и найдите конкретный редакционный угол."), ("2", "Сформируйте проект", "Управляемый чат, панель, читатель и цель задают направление."), ("3", "Напишите книгу", "План, главы и правки остаются видимыми и редактируемыми."), ("4", "Подготовьте к публикации", "Проверки, Word, PDF, CSV и форматирование KDP, когда вы готовы."))},
+    "العربية": {"headline": "لدي فكرة →<br>أريد كتاباً منشوراً", "subtitle": "من المجال إلى المخطوطة: مسار موجّه لتخطيط كتابك وكتابته ومراجعته وتصديره.", "core": ("من الفكرة إلى كتاب جاهز للنشر", "أربع خطوات واضحة مع بقاء التحكم بيدك."), "cards": (("1", "لديك فكرة", "قيّم المجال اختيارياً وابحث عن زاوية تحريرية عملية."), ("2", "شكّل المشروع", "الدردشة الموجّهة والشريط الجانبي والقارئ والهدف تحدد الاتجاه."), ("3", "اكتب كتابك", "يبقى الفهرس والفصول والمراجعات مرئية وقابلة للتعديل."), ("4", "جهّزه للنشر", "الفحوصات وWord وPDF وCSV وتنسيق KDP عندما تكون جاهزاً."))},
+    "中文": {"headline": "我有一个想法 →<br>我想出版一本书", "subtitle": "从细分市场到书稿：引导你完成图书的规划、写作、检查和导出。", "core": ("从想法到可出版的图书", "四个清晰步骤，始终由你掌控。"), "cards": (("1", "你有一个想法", "可选地评估细分市场，找到具体的出版角度。"), ("2", "塑造项目", "引导式聊天、侧边栏、阅读器和目标共同确定方向。"), ("3", "写下你的书", "目录、章节和修改始终可见且可编辑。"), ("4", "为出版做好准备", "准备好后使用检查、Word、PDF、CSV 与 KDP 排版。"))},
+}
+
 # Vantaggi esplicitati con misura: non sostituisce le capacità di una chat,
 # ma chiarisce il valore del flusso editoriale integrato di Scrittore Site.
 HOME_ADVANTAGES_COPY = {
@@ -1400,6 +1414,7 @@ def _landing_page() -> None:
     P = HOME_PERSONALIZATION_COPY[home_language]
     K = HOME_COMPACT_COPY[home_language]
     Q = HOME_NICHE_FEATURE[home_language]
+    J = HOME_IDEA_TO_BOOK_COPY[home_language]
     V = HOME_ADVANTAGES_COPY[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
@@ -1437,8 +1452,8 @@ def _landing_page() -> None:
         st.markdown(
             f"""<div class='ss-hero-copy ss-hero-copy-tail'>
               <div class='ss-title-line'></div>
-              <div class='ss-headline'>{H['headline']}</div>
-              <p class='ss-subtitle'>{H['subtitle']}</p>
+              <div class='ss-headline'>{J['headline']}</div>
+              <p class='ss-subtitle'>{J['subtitle']}</p>
               <div class='ss-bonus'>{H['bonus']}</div>
             </div>""",
             unsafe_allow_html=True,
@@ -1493,7 +1508,7 @@ def _landing_page() -> None:
     cards_html = "".join(
         f"<div class='ss-priority'><div class='ss-priority-icon'>{icon}</div><b>{title}</b>"
         f"<p>{text}</p><span class='ss-priority-tag'>{number}</span></div>"
-        for icon, (number, title, text) in zip(("🧭", "🧠", "✍️", "🔎"), K["cards"])
+        for icon, (number, title, text) in zip(("💡", "🧭", "✍️", "🚀"), J["cards"])
     )
     steps_html = "".join(
         f"<div class='ss-compact-step'><span class='ss-compact-number'>{number}</span>"
@@ -1501,8 +1516,8 @@ def _landing_page() -> None:
         for number, title, text in K["steps"]
     )
     st.markdown(
-        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{K['core'][0]}</h2>"
-        f"<p class='ss-muted'>{K['core'][1]}</p></div><div class='ss-priority-grid' dir='{direzione_home}'>"
+        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{J['core'][0]}</h2>"
+        f"<p class='ss-muted'>{J['core'][1]}</p></div><div class='ss-priority-grid' dir='{direzione_home}'>"
         f"{cards_html}</div><div class='ss-compact-steps' dir='{direzione_home}'>{steps_html}</div>",
         unsafe_allow_html=True,
     )
