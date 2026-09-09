@@ -2215,13 +2215,16 @@ def _dettaglio_utilizzo(usage: Any) -> dict[str, int]:
 
 
 PREZZI_API_VERSIONE = "2026-09-07"
+DEEPSEEK_V41_FLASH_ATTIVA_DA = dt.datetime(2026, 9, 10, 4, tzinfo=dt.timezone.utc)
 
 
-def _fascia_deepseek_v4_pro(orario: dt.datetime | None = None) -> tuple[str, tuple[float, float, float]]:
-    """Restituisce la fascia ufficiale DeepSeek V4 Pro nell'orario UTC.
+def _fascia_deepseek(orario: dt.datetime | None = None) -> tuple[str, tuple[float, float, float], str]:
+    """Restituisce la tariffa DeepSeek applicabile all'istante UTC indicato.
 
-    DeepSeek applica la fascia di punta dal lunedì al venerdì, 01:00–04:00 e
-    06:00–10:00 UTC. Tutti gli altri momenti rientrano nella fascia ridotta.
+    Lo storico fino al 10 settembre 2026, ore 04:00 UTC, resta valorizzato
+    con V4 Pro. Da quell'istante DeepSeek instrada Pro su V4.1 Flash: il
+    registro applica i prezzi Flash senza alterare righe precedenti.
+
     I valori sono input cache miss, cache hit e output per un milione di token.
     """
     istante = orario or dt.datetime.now(dt.timezone.utc)
@@ -2229,9 +2232,13 @@ def _fascia_deepseek_v4_pro(orario: dt.datetime | None = None) -> tuple[str, tup
         istante = istante.replace(tzinfo=dt.timezone.utc)
     utc = istante.astimezone(dt.timezone.utc)
     ora_punta = utc.weekday() < 5 and (1 <= utc.hour < 4 or 6 <= utc.hour < 10)
+    if utc >= DEEPSEEK_V41_FLASH_ATTIVA_DA:
+        if ora_punta:
+            return "DeepSeek Flash · punta UTC", (0.30, 0.006, 1.20), "deepseek-v4.1-flash-2026-09-10"
+        return "DeepSeek Flash · ridotta UTC", (0.15, 0.003, 0.60), "deepseek-v4.1-flash-2026-09-10"
     if ora_punta:
-        return "DeepSeek V4 Pro · punta UTC", (1.32, 0.044, 3.96)
-    return "DeepSeek V4 Pro · ridotta UTC", (0.66, 0.022, 1.98)
+        return "DeepSeek V4 Pro · punta UTC", (1.32, 0.044, 3.96), "deepseek-v4-pro-2026-09-07"
+    return "DeepSeek V4 Pro · ridotta UTC", (0.66, 0.022, 1.98), "deepseek-v4-pro-2026-09-07"
 
 
 def conteggio_ricerche_web(risposta: Any) -> int:
@@ -2265,8 +2272,7 @@ def _dettaglio_costo_api_calcolato_usd(
     output_tokens = max(0, int(token.get("output_tokens", 0)))
     cached = min(input_tokens, max(0, int(token.get("cached_input_tokens", 0))))
     if str(provider).casefold().startswith("deepseek") or "deepseek" in modello:
-        fascia, (prezzo_input, prezzo_cache, prezzo_output) = _fascia_deepseek_v4_pro(orario)
-        versione = f"deepseek-v4-pro-{PREZZI_API_VERSIONE}"
+        fascia, (prezzo_input, prezzo_cache, prezzo_output), versione = _fascia_deepseek(orario)
     elif "mini" in modello:
         prezzo_input, prezzo_cache, prezzo_output = 0.75, 0.075, 4.50
         fascia, versione = "GPT-5.4 mini", f"openai-gpt-5.4-mini-{PREZZI_API_VERSIONE}"
