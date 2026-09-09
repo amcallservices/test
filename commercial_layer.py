@@ -2759,7 +2759,7 @@ def _commerce_sidebar() -> None:
                         "GET",
                         "rest/v1/writer_profiles",
                         params={
-                            "select": "email,credits,updated_at",
+                            "select": "id,email,credits,updated_at",
                             "order": "email.asc",
                             "limit": "1000",
                         },
@@ -2821,11 +2821,11 @@ def _commerce_sidebar() -> None:
 
             with st.expander("📊 Consumi AI, ricavi e margini", expanded=False):
                 st.caption(
-                    "Registro tecnico riservato: non contiene prompt, testi o titoli. Ogni nuova azione conserva "
-                    "una cartellina anonima con costo, addebito e chiamate interne."
+                    "Registro tecnico riservato: non contiene prompt, testi o titoli. L'email dell'account è "
+                    "visibile solo qui all'amministratore, per associare ogni costo alla relativa operazione."
                 )
                 campi_monitoraggio_economico = (
-                    "created_at,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                    "created_at,user_id,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
                     "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,"
                     "web_search_calls,pricing_band,pricing_version,success,macro_operation_id,parent_reference,"
                     "user_category,billing_status,event_kind,session_fingerprint,project_fingerprint,"
@@ -2833,7 +2833,7 @@ def _commerce_sidebar() -> None:
                     "output_cost_usd,web_cost_usd,cost_currency,duration_ms,retry_of"
                 )
                 campi_monitoraggio_compatibili = (
-                    "created_at,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
+                    "created_at,user_id,reference,provider,model,operation,input_tokens,output_tokens,cached_input_tokens,"
                     "reasoning_tokens,credits_requested,credits_charged,deepseek_units,estimated_cost_usd,"
                     "web_search_calls,pricing_band,pricing_version,success"
                 )
@@ -2863,6 +2863,19 @@ def _commerce_sidebar() -> None:
                 elif not utilizzi:
                     st.caption("Nessuna chiamata AI registrata dopo l'attivazione del monitoraggio.")
                 else:
+                    email_per_utente = {
+                        str(profilo.get("id", "")): str(profilo.get("email", ""))
+                        for profilo in profili_utenti
+                        if profilo.get("id") and profilo.get("email")
+                    }
+
+                    def nome_utente_monitoraggio(voce):
+                        """Restituisce l'email solo nel pannello amministratore corrente."""
+                        utente_id = str(voce.get("user_id", "") or "")
+                        if not utente_id:
+                            return "Storico senza account"
+                        return email_per_utente.get(utente_id, "Account non disponibile")
+
                     def numero(voce, campo):
                         try:
                             return float(voce.get(campo, 0) or 0)
@@ -2903,11 +2916,16 @@ def _commerce_sidebar() -> None:
                         for voce in utilizzi
                     )
                     chiamate_ok = sum(1 for voce in utilizzi if voce.get("success"))
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("Chiamate registrate", len(utilizzi))
-                    c2.metric("Azioni utente tracciate", len(macro_clienti) if tracciamento_economico_attivo else "—")
-                    c3.metric("Ricavo utenti", f"€{ricavo_clienti_eur:.2f}" if tracciamento_economico_attivo else "—")
-                    c4.metric("Margine API stimato", f"€{margine_clienti_eur:.2f}" if tracciamento_economico_attivo else "—")
+                    riepilogo_1, riepilogo_2, riepilogo_3, riepilogo_4 = st.columns(4)
+                    for colonna, etichetta, valore in (
+                        (riepilogo_1, "Chiamate registrate", str(len(utilizzi))),
+                        (riepilogo_2, "Azioni utente tracciate", str(len(macro_clienti)) if tracciamento_economico_attivo else "—"),
+                        (riepilogo_3, "Ricavo utenti", f"€{ricavo_clienti_eur:.2f}" if tracciamento_economico_attivo else "—"),
+                        (riepilogo_4, "Margine API stimato", f"€{margine_clienti_eur:.2f}" if tracciamento_economico_attivo else "—"),
+                    ):
+                        with colonna:
+                            st.caption(etichetta)
+                            st.markdown(f"**{valore}**")
                     if tracciamento_economico_attivo:
                         st.caption(
                             f"Solo utenti paganti: {crediti_addebitati} crediti · {unita_deepseek} unità DS "
@@ -2971,6 +2989,7 @@ def _commerce_sidebar() -> None:
                     tabella = [
                         {
                             "Data": str(voce.get("created_at", ""))[:19].replace("T", " "),
+                            "Utente": nome_utente_monitoraggio(voce),
                             "Tipo": {"customer": "Utente", "admin": "Amministratore"}.get(
                                 voce.get("user_category", ""), "Storico"
                             ),
