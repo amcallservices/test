@@ -1174,6 +1174,46 @@ HOME_EDITORIAL_MEMORY_COPY = {
     "中文": ("🧠", "集成编辑记忆", "简报、目录和已写好的章节会引导书中的每个新部分，以保持连贯并减少重复。"),
 }
 
+# Home pubblica: titoli brevi e riconoscibili. Le sezioni restano le stesse,
+# ma il percorso è più leggibile sia su desktop sia su telefono.
+HOME_SECTION_TITLES = {
+    "Italiano": {"how": "Come funziona", "what": "Cosa puoi fare", "why": "Perché sceglierlo", "credits": "Crediti", "faq": "FAQ", "editor": "Editor professionale"},
+    "English": {"how": "How it works", "what": "What you can do", "why": "Why choose it", "credits": "Credits", "faq": "FAQ", "editor": "Professional editor"},
+    "Español": {"how": "Cómo funciona", "what": "Qué puedes hacer", "why": "Por qué elegirlo", "credits": "Créditos", "faq": "FAQ", "editor": "Editor profesional"},
+    "Français": {"how": "Comment ça marche", "what": "Ce que vous pouvez faire", "why": "Pourquoi le choisir", "credits": "Crédits", "faq": "FAQ", "editor": "Éditeur professionnel"},
+    "Deutsch": {"how": "So funktioniert es", "what": "Was Sie tun können", "why": "Warum wählen", "credits": "Credits", "faq": "FAQ", "editor": "Professioneller Editor"},
+    "Română": {"how": "Cum funcționează", "what": "Ce poți face", "why": "De ce să îl alegi", "credits": "Credite", "faq": "FAQ", "editor": "Editor profesional"},
+    "Русский": {"how": "Как это работает", "what": "Что вы можете делать", "why": "Почему выбрать", "credits": "Кредиты", "faq": "FAQ", "editor": "Профессиональный редактор"},
+    "العربية": {"how": "كيف يعمل", "what": "ما الذي يمكنك فعله", "why": "لماذا تختاره", "credits": "الأرصدة", "faq": "الأسئلة الشائعة", "editor": "محرر احترافي"},
+    "中文": {"how": "如何使用", "what": "你可以做什么", "why": "为什么选择它", "credits": "积分", "faq": "常见问题", "editor": "专业编辑器"},
+}
+
+# Cinque vantaggi concreti, mostrati in carte della stessa dimensione dentro
+# la tendina: nessuna promessa assoluta e nessuna nuova funzione introdotta.
+HOME_ADVANTAGE_CARDS = {
+    "Italiano": (("💬", "Chat guidata", "Raccoglie la tua idea, pone le domande utili e prepara i campi della sidebar."), ("🧠", "Memoria editoriale", "Brief, indice e sezioni già create aiutano a mantenere coerenza e ridurre ripetizioni."), ("✍️", "Scrittura a sezioni", "Puoi creare, leggere e modificare una sezione alla volta oppure continuare l'intero libro."), ("🛡️", "Controlli KDP", "Completezza, copyright e checklist aiutano a rivedere il manoscritto prima dell'esportazione."), ("📄", "Export Word e PDF", "Scarica il manoscritto in formati pratici per revisione, impaginazione o pubblicazione.")),
+    "English": (("💬", "Guided chat", "It gathers your idea, asks useful questions and prepares the sidebar fields."), ("🧠", "Editorial memory", "Your brief, outline and completed sections help preserve consistency and reduce repetition."), ("✍️", "Section-by-section writing", "Create, read and edit one section at a time, or continue with the whole book."), ("🛡️", "KDP checks", "Completeness, copyright and checklist tools help review the manuscript before export."), ("📄", "Word and PDF export", "Download your manuscript in practical formats for review, layout or publishing.")),
+    "Español": (("💬", "Chat guiado", "Recoge tu idea, hace las preguntas útiles y prepara los campos de la barra lateral."), ("🧠", "Memoria editorial", "El brief, el índice y las secciones creadas ayudan a mantener la coherencia y reducir repeticiones."), ("✍️", "Escritura por secciones", "Crea, lee y modifica una sección cada vez o continúa con todo el libro."), ("🛡️", "Controles KDP", "Las herramientas de integridad, copyright y checklist ayudan a revisar antes de exportar."), ("📄", "Exportación Word y PDF", "Descarga el manuscrito en formatos prácticos para revisión, maquetación o publicación.")),
+    "Français": (("💬", "Chat guidé", "Il recueille votre idée, pose les questions utiles et prépare les champs de la barre latérale."), ("🧠", "Mémoire éditoriale", "Le brief, le plan et les sections créées aident à préserver la cohérence et réduire les répétitions."), ("✍️", "Rédaction par sections", "Créez, lisez et modifiez une section à la fois ou poursuivez tout le livre."), ("🛡️", "Contrôles KDP", "Les outils de complétude, copyright et checklist aident à réviser avant l'export."), ("📄", "Export Word et PDF", "Téléchargez le manuscrit dans des formats pratiques pour révision, mise en page ou publication.")),
+    "Deutsch": (("💬", "Geführter Chat", "Er sammelt Ihre Idee, stellt nützliche Fragen und bereitet die Felder der Seitenleiste vor."), ("🧠", "Redaktionsgedächtnis", "Briefing, Gliederung und erstellte Abschnitte helfen, die Kohärenz zu bewahren und Wiederholungen zu verringern."), ("✍️", "Abschnittsweises Schreiben", "Erstellen, lesen und bearbeiten Sie einen Abschnitt nach dem anderen oder schreiben Sie das ganze Buch weiter."), ("🛡️", "KDP-Prüfungen", "Vollständigkeit, Copyright und Checklisten helfen bei der Prüfung vor dem Export."), ("📄", "Word- und PDF-Export", "Laden Sie das Manuskript für Überarbeitung, Layout oder Veröffentlichung in praktischen Formaten herunter.")),
+    "Română": (("💬", "Chat ghidat", "Colectează ideea ta, pune întrebările utile și pregătește câmpurile din bara laterală."), ("🧠", "Memorie editorială", "Brief-ul, cuprinsul și secțiunile create ajută la păstrarea coerenței și reducerea repetițiilor."), ("✍️", "Scriere pe secțiuni", "Creează, citește și modifică o secțiune pe rând sau continuă întreaga carte."), ("🛡️", "Controale KDP", "Instrumentele de completitudine, copyright și checklist ajută la verificarea manuscrisului înainte de export."), ("📄", "Export Word și PDF", "Descarcă manuscrisul în formate practice pentru revizie, machetare sau publicare.")),
+    "Русский": (("💬", "Управляемый чат", "Он собирает вашу идею, задаёт полезные вопросы и подготавливает поля боковой панели."), ("🧠", "Редакторская память", "Бриф, план и созданные разделы помогают сохранить связность и сократить повторы."), ("✍️", "Написание по разделам", "Создавайте, читайте и редактируйте по одному разделу или продолжайте всю книгу."), ("🛡️", "Проверки KDP", "Инструменты полноты, авторских прав и чек-листы помогают проверить рукопись перед экспортом."), ("📄", "Экспорт Word и PDF", "Скачивайте рукопись в удобных форматах для редактуры, вёрстки или публикации.")),
+    "العربية": (("💬", "دردشة موجّهة", "تجمع فكرتك وتطرح الأسئلة المفيدة وتجهّز حقول الشريط الجانبي."), ("🧠", "ذاكرة تحريرية", "يساعد الملخص والفهرس والأقسام المنشأة في الحفاظ على الاتساق وتقليل التكرار."), ("✍️", "كتابة حسب الأقسام", "أنشئ واقرأ وعدّل قسماً واحداً في كل مرة أو تابع الكتاب كاملاً."), ("🛡️", "فحوص KDP", "تساعد أدوات الاكتمال وحقوق النشر وقائمة التحقق في مراجعة المخطوطة قبل التصدير."), ("📄", "تصدير Word وPDF", "نزّل مخطوطتك بتنسيقات عملية للمراجعة أو التنسيق أو النشر.")),
+    "中文": (("💬", "引导式聊天", "它会收集你的想法、提出有用的问题，并准备侧边栏字段。"), ("🧠", "编辑记忆", "简报、目录和已创建章节有助于保持连贯并减少重复。"), ("✍️", "分节写作", "可逐节创建、阅读和编辑，也可以继续整本书。"), ("🛡️", "KDP 检查", "完整性、版权和清单工具可在导出前帮助审阅书稿。"), ("📄", "Word 和 PDF 导出", "以实用格式下载书稿，用于审阅、排版或出版。")),
+}
+
+HOME_TRUST_STRIP = {
+    "Italiano": ("50 crediti gratuiti", "Pagamenti protetti con Stripe", "Progetti salvabili", "Scrittura in più lingue"),
+    "English": ("50 free credits", "Payments protected by Stripe", "Projects can be saved", "Writing in multiple languages"),
+    "Español": ("50 créditos gratuitos", "Pagos protegidos con Stripe", "Proyectos guardables", "Escritura en varios idiomas"),
+    "Français": ("50 crédits offerts", "Paiements protégés par Stripe", "Projets sauvegardables", "Rédaction en plusieurs langues"),
+    "Deutsch": ("50 kostenlose Credits", "Zahlungen über Stripe geschützt", "Projekte speicherbar", "Schreiben in mehreren Sprachen"),
+    "Română": ("50 credite gratuite", "Plăți protejate prin Stripe", "Proiecte salvabile", "Scriere în mai multe limbi"),
+    "Русский": ("50 бесплатных кредитов", "Платежи защищены Stripe", "Проекты можно сохранять", "Написание на нескольких языках"),
+    "العربية": ("50 رصيداً مجانياً", "مدفوعات محمية عبر Stripe", "مشاريع قابلة للحفظ", "الكتابة بلغات متعددة"),
+    "中文": ("50 个免费积分", "Stripe 保护支付", "项目可保存", "支持多语言写作"),
+}
+
 # Menu di orientamento della home: porta alle sezioni già presenti senza
 # introdurre nuove pagine né modificare login, crediti o flusso di acquisto.
 HOME_NAVIGATION = {
@@ -1246,7 +1286,7 @@ def _landing_page() -> None:
           section.main > div.block-container {max-width:1380px !important; padding:0 2.4rem 4.4rem !important}
           [data-testid="stHorizontalBlock"]:has([data-testid="stSelectbox"]) {margin-top:-.72rem !important; margin-bottom:.1rem !important}
           [data-testid="stHorizontalBlock"]:has([data-testid="stSelectbox"]) [data-testid="stSelectbox"] {margin-top:0 !important}
-          .ss-hero-copy {padding:2.15rem .9rem .9rem 1.35rem; color:#102a43}
+          .ss-hero-copy {padding:2.35rem 1.05rem 1rem 1.35rem; color:#102a43}
           .ss-kicker {font-weight:800; font-size:1.03rem; color:#1689e8; margin-bottom:1.1rem; letter-spacing:.01em}
           .ss-version {display:inline-block; margin:0 0 .75rem; padding:.28rem .55rem; border-radius:99px;
             background:#eaf4fc; border:1px solid #bfdbf0; color:#486581; font-size:.72rem; font-weight:800}
@@ -1260,9 +1300,13 @@ def _landing_page() -> None:
              lightbox e non sottrae spazio ai pulsanti di accesso. */
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:nth-child(2) [data-testid="stImage"] img {
             pointer-events:none !important; cursor:default !important; user-select:none !important;
-            border-radius:18px !important; border:1px solid rgba(22,137,232,.26) !important;
-            box-shadow:0 20px 42px rgba(11,59,103,.20) !important;
+            border-radius:22px !important; border:1px solid rgba(125,211,252,.6) !important;
+            box-shadow:0 24px 52px rgba(3,20,36,.38),0 0 0 7px rgba(14,116,185,.13) !important;
           }
+          .ss-editor-badge {display:inline-flex; align-items:center; gap:.4rem; margin:.45rem 0 .7rem .55rem;
+            padding:.34rem .7rem; border:1px solid rgba(125,211,252,.55); border-radius:999px;
+            background:linear-gradient(135deg,rgba(7,51,80,.94),rgba(11,91,133,.88)); color:#e9f8ff;
+            font-size:.78rem; font-weight:850; letter-spacing:.02em; box-shadow:0 7px 18px rgba(0,0,0,.22)}
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"],
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] img,
           [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div:first-child [data-testid="stImage"] figure {background:transparent !important}
@@ -1278,7 +1322,7 @@ def _landing_page() -> None:
             box-shadow:0 15px 32px rgba(2,132,199,.28)}
           .ss-languages-hero b {display:block; color:#fff; font-size:clamp(1.12rem,1.7vw,1.45rem); margin-bottom:.25rem; font-weight:900; letter-spacing:-.02em}
           .ss-languages-hero span {display:block; max-width:920px; margin:0 auto; color:#effaff; line-height:1.45; font-size:.9rem; font-weight:600}
-          .ss-section {max-width:1080px; margin:1.9rem auto .4rem; text-align:center}
+          .ss-section {max-width:1080px; margin:2.75rem auto .65rem; text-align:center}
           .ss-section h2 {font-size:clamp(1.45rem,2vw,1.85rem); margin-bottom:.2rem; color:#102a43; letter-spacing:-.035em}
           .ss-card {background:linear-gradient(155deg,#fff,#f7fbff); border:1px solid #d3e4f2;
             border-radius:16px; padding:1.15rem 1rem; min-height:112px; box-shadow:0 9px 20px rgba(20,77,120,.055)}
@@ -1346,7 +1390,7 @@ def _landing_page() -> None:
             text-align:center; background:#eaf4fc; color:#174a73; border:1px solid #bfdbf0; font-weight:650}
           .ss-trust {max-width:920px; margin:1.15rem auto 1.5rem; text-align:center; padding:1rem;
             border-radius:13px; background:#fff; color:#174a73; border:1px solid #d9e5f0; font-weight:700}
-          .ss-benefits {max-width:1160px; margin:.8rem auto 1.35rem; padding:.35rem .2rem; background:rgba(255,255,255,.92); border:1px solid #d3e4f2; border-radius:17px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 8px 18px rgba(20,77,120,.07)}
+          .ss-benefits {max-width:1160px; margin:1.3rem auto 2.05rem; padding:.45rem .25rem; background:rgba(255,255,255,.92); border:1px solid #d3e4f2; border-radius:17px; display:grid; grid-template-columns:repeat(3,1fr); box-shadow:0 8px 18px rgba(20,77,120,.07)}
           .ss-benefit {min-height:92px; padding:.9rem 1rem; color:#486581; font-size:.92rem; line-height:1.4; border-right:1px solid #d9e5f0; text-align:center}
           .ss-benefit:last-child {border-right:0}.ss-benefit b {display:block; color:#102a43; font-size:1rem; margin-bottom:.3rem}
           .ss-ai-grid {max-width:1040px; margin:.75rem auto 1.15rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
@@ -1359,13 +1403,16 @@ def _landing_page() -> None:
           .ss-home-detail-caption {max-width:850px; margin:.1rem auto .7rem; text-align:center; color:#486581; font-size:.88rem}
           .ss-anchor-target {height:.1rem; scroll-margin-top:4.5rem}
           .ss-advantages-intro {max-width:850px; margin:.25rem auto .8rem; text-align:center; color:#b9d4e8; line-height:1.48}
-          .ss-advantages {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:.45rem 0 .25rem}
-          .ss-advantage {display:flex; gap:.75rem; padding:.85rem; border:1px solid rgba(125,211,252,.24); border-radius:13px; background:rgba(7,37,63,.72); color:#b9d4e8; line-height:1.4}
-          .ss-advantage > span {font-size:1.35rem; line-height:1.2}.ss-advantage b {display:block; color:#f4faff; margin-bottom:.18rem}.ss-advantage p {margin:0; font-size:.87rem}
+          .ss-advantages {display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:.6rem 0 .35rem}
+          .ss-advantage {min-height:176px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:.45rem; padding:1rem .78rem; border:1px solid rgba(125,211,252,.28); border-radius:15px; background:linear-gradient(150deg,rgba(10,54,84,.94),rgba(7,31,54,.94)); color:#b9d4e8; line-height:1.4; box-shadow:0 9px 20px rgba(0,0,0,.18)}
+          .ss-advantage > span {font-size:1.45rem; line-height:1.2}.ss-advantage b {display:block; color:#f4faff; margin-bottom:.18rem; font-size:.93rem}.ss-advantage p {margin:0; font-size:.82rem}
+          .ss-trust-strip {max-width:1120px; margin:2.05rem auto .15rem; padding:.85rem 1rem; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.55rem .95rem; border:1px solid rgba(94,234,212,.34); border-radius:15px; background:linear-gradient(135deg,rgba(8,73,80,.8),rgba(8,44,71,.9)); box-shadow:0 11px 24px rgba(0,0,0,.18)}
+          .ss-trust-item {display:inline-flex; align-items:center; gap:.34rem; color:#d9fff4; font-size:.87rem; font-weight:760}.ss-trust-item::before {content:'✓'; display:grid; place-items:center; width:1.2rem; height:1.2rem; border-radius:50%; color:#073d43; background:#7ce7cf; font-size:.75rem; font-weight:950}
           [data-testid="stExpander"] .ss-section {margin:1.1rem auto .3rem}
           [data-testid="stExpander"] .ss-priority-grid {margin:.65rem 0 1rem}
-          @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}}
-          @media (max-width:760px) {section.main > div.block-container {padding:0 1rem 2.8rem !important}.ss-hero-copy {padding:1.5rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:1.5rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid,.ss-compact-steps,.ss-advantages{grid-template-columns:1fr}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
+          @media (max-width:1120px) {.ss-advantages{grid-template-columns:repeat(3,minmax(0,1fr))}.ss-advantage{min-height:154px}}
+          @media (max-width:960px) {.ss-priority-grid{grid-template-columns:1fr 1fr}.ss-priority{min-height:0}.ss-advantages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          @media (max-width:760px) {section.main > div.block-container {padding:0 1rem 2.8rem !important}.ss-hero-copy {padding:1.65rem .4rem}.ss-title {font-size:4rem}.ss-section {margin-top:2rem}.ss-proof-grid {grid-template-columns:1fr}.ss-proof-action {margin-left:0}.ss-benefits {grid-template-columns:1fr;margin:1.1rem auto 1.85rem}.ss-benefit {border-right:0;border-bottom:1px solid #d9e5f0;padding:1rem}.ss-benefit:last-child {border-bottom:0}.ss-creator {min-height:120px}.ss-language-wrap {margin:0}.ss-priority-grid,.ss-ai-grid,.ss-compact-steps,.ss-advantages{grid-template-columns:1fr}.ss-advantage{min-height:0;padding:1rem}.ss-trust-strip{align-items:stretch;display:grid;grid-template-columns:1fr;margin:1.65rem auto .15rem}.ss-trust-item{font-size:.9rem}[data-testid="stHorizontalBlock"]:has(.ss-hero-copy){flex-direction:column-reverse !important;gap:.35rem !important}[data-testid="stHorizontalBlock"]:has(.ss-hero-copy) > div{width:100% !important;flex:1 1 100% !important}.ss-editor-badge{margin:.15rem 0 .65rem}[data-testid="stMain"] .stButton,[data-testid="stMain"] .stButton button,[data-testid="stMain"] .stDownloadButton,[data-testid="stMain"] .stDownloadButton button{width:100% !important}.ss-quick-nav {position:static; border-radius:14px} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {flex-direction:column !important;gap:.65rem !important} [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) > div {width:100% !important;flex:1 1 100% !important}}
           [data-testid="stMain"] .stButton button {min-height:3.35rem; border-radius:11px; font-size:1.08rem;
             font-weight:800; border:1px solid #1689e8; background:#1689e8 !important;
             border-color:#1689e8 !important; color:#fff !important; box-shadow:0 6px 14px rgba(22,137,232,.18)}
@@ -1437,7 +1484,9 @@ def _landing_page() -> None:
     Q = HOME_NICHE_FEATURE[home_language]
     J = HOME_IDEA_TO_BOOK_COPY[home_language]
     V = HOME_ADVANTAGES_COPY[home_language]
-    M = HOME_EDITORIAL_MEMORY_COPY[home_language]
+    S = HOME_SECTION_TITLES[home_language]
+    advantage_cards = HOME_ADVANTAGE_CARDS[home_language]
+    trust_items = HOME_TRUST_STRIP[home_language]
     N = HOME_NAVIGATION[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
@@ -1458,7 +1507,7 @@ def _landing_page() -> None:
 
     base_dir = Path(__file__).resolve().parent
     public_logo = base_dir / "assets" / "scrittore-site-logo.png"
-    hero_copy, hero_visual = st.columns([0.42, 0.58], gap="large")
+    hero_copy, hero_visual = st.columns([0.38, 0.62], gap="large")
     with hero_copy:
         st.markdown(
             f"""<div class='ss-hero-copy'>
@@ -1502,6 +1551,10 @@ def _landing_page() -> None:
             None,
         )
         if preview_image:
+            st.markdown(
+                f"<span class='ss-editor-badge' dir='{direzione_home}'>✦ {S['editor']}</span>",
+                unsafe_allow_html=True,
+            )
             st.image(str(preview_image), use_container_width=True)
         else:
             # La pagina resta utilizzabile anche durante il primo deploy, prima
@@ -1538,24 +1591,28 @@ def _landing_page() -> None:
         for number, title, text in K["steps"]
     )
     st.markdown(
-        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{J['core'][0]}</h2>"
+        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{S['how']}</h2>"
         f"<p class='ss-muted'>{J['core'][1]}</p></div><div class='ss-priority-grid' dir='{direzione_home}'>"
         f"{cards_html}</div><div class='ss-compact-steps' dir='{direzione_home}'>{steps_html}</div>",
         unsafe_allow_html=True,
     )
     advantages_html = "".join(
         f"<div class='ss-advantage'><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></div>"
-        for icon, title, text in (*V[2], M)
+        for icon, title, text in advantage_cards
     )
     st.markdown("<div id='ss-vantaggi' class='ss-anchor-target'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='ss-section' dir='{direzione_home}'><h2>{S['why']}</h2>"
+        f"<p class='ss-muted'>{V[1]}</p></div>",
+        unsafe_allow_html=True,
+    )
     with st.expander(f"✦ {V[0]}", expanded=False):
         st.markdown(
-            f"<div class='ss-advantages-intro' dir='{direzione_home}'>{V[1]}</div>"
             f"<div class='ss-advantages' dir='{direzione_home}'>{advantages_html}</div>",
             unsafe_allow_html=True,
         )
     st.markdown(
-        f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{N[1]}</h2>"
+        f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{S['what']}</h2>"
         f"<p class='ss-home-detail-caption'>{K['details']}</p></div>",
         unsafe_allow_html=True,
     )
@@ -1580,7 +1637,7 @@ def _landing_page() -> None:
             unsafe_allow_html=True,
         )
     st.markdown(
-        f"<div id='ss-crediti' class='ss-section'><h2>{C['packages']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
+        f"<div id='ss-crediti' class='ss-section'><h2>{S['credits']}</h2><p class='ss-muted'>{C['package_sub']}</p></div>",
         unsafe_allow_html=True,
     )
     price_columns = st.columns(len(PACKAGES))
@@ -1612,8 +1669,12 @@ def _landing_page() -> None:
 
     faq_title, faq_subtitle, faq_items = HOME_FAQ_COPY[home_language]
     faq_items = [*faq_items, *HOME_FAQ_EXTRA[home_language]]
+    trust_html = "".join(
+        f"<span class='ss-trust-item'>{item}</span>" for item in trust_items
+    )
     st.markdown(
-        f"<div id='ss-faq' class='ss-section' dir='{direzione_home}'><h2>{faq_title}</h2>"
+        f"<div class='ss-trust-strip' dir='{direzione_home}'>{trust_html}</div>"
+        f"<div id='ss-faq' class='ss-section' dir='{direzione_home}'><h2>{S['faq']}</h2>"
         f"<p class='ss-muted'>{faq_subtitle}</p></div>",
         unsafe_allow_html=True,
     )
