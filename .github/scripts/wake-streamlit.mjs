@@ -41,25 +41,34 @@ try {
       frame.locator("body").innerText().catch(() => "")));
     return parts.filter(Boolean).join("\n");
   };
-  const deadline = Date.now() + 240_000;
-  let wakeClicked = false;
+  // Un avvio a freddo può richiedere diversi minuti. Se Streamlit torna alla
+  // schermata di sospensione, riproviamo il pulsante senza avviare altre funzioni.
+  const deadline = Date.now() + 480_000;
+  let wakeAttempts = 0;
+  let lastWakeAt = 0;
   let lastReloadAt = Date.now();
 
   while (Date.now() < deadline) {
     if (await appIsReady()) {
-      console.log(wakeClicked
+      console.log(wakeAttempts > 0
         ? "App riattivata: home di Scrittore Site visibile."
         : "App già attiva: home di Scrittore Site visibile.");
       process.exitCode = 0;
       break;
     }
 
-    const wakeButton = wakeClicked ? null : await findWakeButton();
-    if (wakeButton) {
-      console.log("Pagina di sospensione rilevata: avvio il risveglio.");
-      await wakeButton.click({ timeout: 15_000 });
-      wakeClicked = true;
-      lastReloadAt = Date.now();
+    const wakeButton = await findWakeButton();
+    if (wakeButton && wakeAttempts < 3
+        && (wakeAttempts === 0 || Date.now() - lastWakeAt >= 90_000)) {
+      try {
+        await wakeButton.click({ timeout: 15_000 });
+        wakeAttempts += 1;
+        lastWakeAt = Date.now();
+        lastReloadAt = lastWakeAt;
+        console.log(`Pagina sospesa: tentativo di risveglio ${wakeAttempts}/3.`);
+      } catch {
+        console.log("Il pulsante di risveglio è cambiato durante il clic: riproverò.");
+      }
     }
 
     const visibleText = await visiblePageText();
@@ -67,10 +76,14 @@ try {
       throw new Error("Streamlit mostra un errore dell'app, non una semplice sospensione.");
     }
 
-    // La pagina di risveglio può non aggiornarsi da sola: dopo 30 secondi
-    // ricarichiamo soltanto la home pubblica per verificare l'app reale.
-    if (wakeClicked && Date.now() - lastReloadAt > 30_000) {
-      await page.reload({ waitUntil: "domcontentloaded", timeout: 45_000 });
+    // La pagina di risveglio può non aggiornarsi da sola. Anche senza pulsante
+    // visibile, ricarichiamo periodicamente la sola home pubblica.
+    if (Date.now() - lastReloadAt >= 45_000) {
+      try {
+        await page.reload({ waitUntil: "domcontentloaded", timeout: 45_000 });
+      } catch {
+        console.log("Ricaricamento temporaneamente non riuscito: continuo il controllo.");
+      }
       lastReloadAt = Date.now();
     }
 
@@ -80,7 +93,7 @@ try {
   if (!(await appIsReady())) {
     const visibleText = await visiblePageText();
     const frameUrls = page.frames().map((frame) => frame.url()).join(", ");
-    throw new Error(`Home non visibile dopo 4 minuti. Frame: ${frameUrls}. Stato: ${visibleText.slice(0, 350)}`);
+    throw new Error(`Home non visibile dopo 8 minuti (${wakeAttempts} tentativi di risveglio). Frame: ${frameUrls}. Stato: ${visibleText.slice(0, 350)}`);
   }
 } finally {
   await browser.close();
