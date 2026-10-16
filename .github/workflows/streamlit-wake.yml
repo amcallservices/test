@@ -1,0 +1,32 @@
+name: Verifica e riattiva Scrittore Site
+
+on:
+  schedule:
+    # Orario UTC; il minuto 17 riduce i ritardi tipici dei lavori avviati all'ora piena.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: streamlit-wake
+  cancel-in-progress: false
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Installa il browser di controllo
+        run: |
+          npm install --no-save --no-package-lock playwright@1.64.0
+          npx playwright install --with-deps --only-shell chromium
+      - name: Visita la home e riattiva l'app se dorme
+        env:
+          STREAMLIT_URL: https://scrittoresite.streamlit.app/
+        run: node .github/scripts/wake-streamlit.mjs
