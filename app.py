@@ -8990,6 +8990,13 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                             messaggi_chat.append({"role": "assistant", "content": risposta_chat})
                             st.session_state["chat_sidebar_messaggi"] = messaggi_chat
                             scheda_estratta = estrai_scheda_chat_guidata_da_cronologia(messaggi_chat)
+                            # La lingua non deve dipendere dalla formulazione del modello.
+                            # È già stata scelta dall'utente nella sidebar e può essere
+                            # espressa dalla chat con nomi differenti (es. "French",
+                            # "Français" o "Lingua"). Impostarla qui elimina falsi
+                            # campi mancanti senza alterare il resto della scheda.
+                            if lingua_sel in TRADUZIONI:
+                                scheda_estratta["lingua"] = lingua_sel
                             if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_estratta):
                                 # Il provider viene sempre preso dalla scelta corrente, non dalla risposta IA.
                                 scheda_estratta["provider_ia"] = cervello_chat
@@ -9012,6 +9019,11 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                 scheda_da_cronologia = estrai_scheda_chat_guidata_da_cronologia(
                     st.session_state.get("chat_sidebar_messaggi", [])
                 )
+                # Anche dopo un rerun o il recupero della conversazione, la
+                # lingua del progetto resta quella selezionata nella sidebar.
+                # Non chiediamo alla chat di ripeterla né di tradurla.
+                if lingua_sel in TRADUZIONI:
+                    scheda_da_cronologia["lingua"] = lingua_sel
                 if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_da_cronologia):
                     scheda_da_cronologia["provider_ia"] = cervello_chat
                     st.session_state["chat_sidebar_scheda_pronta"] = scheda_da_cronologia
