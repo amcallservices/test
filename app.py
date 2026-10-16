@@ -3404,6 +3404,30 @@ CAMPI_CHAT_GUIDATA_SIDEBAR = {
     "PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO": "modalita_checkpoint",
 }
 
+# La risposta resta nella lingua dell'utente, ma le etichette possono essere
+# tradotte dal modello o provenire da una conversazione già avviata. Tutte le
+# varianti riconosciute confluiscono nelle stesse chiavi tecniche della sidebar.
+CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
+    "titolo": ("Book title", "Título del libro", "Titre du livre", "Buchtitel", "Titlul cărții", "Название книги", "عنوان الكتاب", "书名"),
+    "autore": ("Author name", "Nombre del autor", "Nom de l'auteur", "Name des Autors", "Numele autorului", "Имя автора", "اسم المؤلف", "作者姓名"),
+    "lingua": ("Language", "Idioma", "Langue", "Sprache", "Limbă", "Язык", "اللغة", "语言"),
+    "genere": ("Literary genre", "Género literario", "Genre littéraire", "Literarisches Genre", "Gen literar", "Литературный жанр", "النوع الأدبي", "文学类型"),
+    "tipologia_scrittura": ("Writing type", "Tipo de escritura", "Type d'écriture", "Schreibstil", "Tipul de scriere", "Тип письма", "نوع الكتابة", "写作类型"),
+    "stile_racconto": ("Narrative style", "Estilo narrativo", "Style narratif", "Erzählstil", "Stil narativ", "Стиль повествования", "أسلوب السرد", "叙事风格"),
+    "punto_di_vista": ("Point of view", "Punto de vista", "Point de vue", "Erzählperspektive", "Punct de vedere", "Точка зрения", "وجهة النظر", "叙述视角"),
+    "lunghezza": ("Section length", "Longitud de las secciones", "Longueur des sections", "Abschnittslänge", "Lungimea secțiunilor", "Длина разделов", "طول الأقسام", "章节长度"),
+    "provider_ia": ("AI engine", "Motor de IA", "Moteur IA", "KI-Modell", "Motor IA", "Модель ИИ", "محرك الذكاء الاصطناعي", "AI 模型"),
+    "obiettivo": ("Book goal", "Objetivo del libro", "Objectif du livre", "Ziel des Buches", "Obiectivul cărții", "Цель книги", "هدف الكتاب", "图书目标"),
+    "risultato_finale": ("Desired final result", "Resultado final deseado", "Résultat final souhaité", "Gewünschtes Endergebnis", "Rezultatul final dorit", "Желаемый итоговый результат", "النتيجة النهائية المرجوة", "期望的最终结果"),
+    "argomento": ("Plot or topic", "Trama o tema", "Intrigue ou sujet", "Handlung oder Thema", "Intrigă sau subiect", "Сюжет или тема", "الحبكة أو الموضوع", "情节或主题"),
+    "approfondimenti": ("Further details", "Detalles adicionales", "Approfondissements", "Vertiefungen", "Detalii suplimentare", "Дополнительные детали", "تفاصيل إضافية", "补充细节"),
+    "voce_personale": ("Personal voice or perspective", "Voz o perspectiva personal", "Voix ou perspective personnelle", "Persönliche Stimme oder Perspektive", "Voce sau perspectivă personală", "Личный голос или точка зрения", "الصوت أو المنظور الشخصي", "个人声音或视角"),
+    "materiale_personale": ("Personal materials", "Materiales personales", "Matériaux personnels", "Persönliche Materialien", "Materiale personale", "Личные материалы", "مواد شخصية", "个人材料"),
+    "priorita_personali": ("Personal priorities for the reader", "Prioridades personales para el lector", "Priorités personnelles pour le lecteur", "Persönliche Prioritäten für die Leser", "Priorități personale pentru cititor", "Личные приоритеты для читателя", "أولويات شخصية للقارئ", "面向读者的个人重点"),
+    "confini_personali": ("Personal boundaries to respect", "Límites personales que respetar", "Limites personnelles à respecter", "Persönliche Grenzen", "Limite personale de respectat", "Личные границы", "حدود شخصية يجب احترامها", "需要遵守的个人界限"),
+    "modalita_checkpoint": ("Guided pause during full book writing", "Pausa guiada al escribir todo el libro", "Pause guidée pendant la rédaction du livre", "Geführte Pause beim Schreiben des ganzen Buches", "Pauză ghidată la scrierea întregii cărți", "Пауза при написании всей книги", "توقف موجه أثناء كتابة الكتاب كاملاً", "整本书写作期间的引导暂停"),
+}
+
 CAMPI_CHAT_GUIDATA_OBBLIGATORI = {
     "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
     "stile_racconto", "punto_di_vista", "lunghezza", "obiettivo",
@@ -3489,7 +3513,11 @@ def estrai_scheda_chat_guidata(testo):
     testo = str(testo or "").replace("\r\n", "\n")
     risultati = {}
     corrispondenze = []
-    for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items():
+    etichette = dict(CAMPI_CHAT_GUIDATA_SIDEBAR)
+    for campo, traduzioni in CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE.items():
+        for traduzione in traduzioni:
+            etichette[traduzione] = campo
+    for etichetta, campo in etichette.items():
         espressione = (
             rf"(?im)^\s*(?:[-•]\s+)?(?:\*{{1,3}}|_{{1,3}})?\s*"
             rf"{re.escape(etichetta)}\s*(?:\*{{1,3}}|_{{1,3}})?"
@@ -3517,6 +3545,15 @@ def estrai_scheda_chat_guidata_da_cronologia(messaggi):
         if messaggio.get("role") == "assistant":
             risultati.update(estrai_scheda_chat_guidata(messaggio.get("content", "")))
     return risultati
+
+
+def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
+    """Ricompone i campi e usa le scelte già confermate nella sidebar."""
+    scheda = estrai_scheda_chat_guidata_da_cronologia(messaggi)
+    if lingua in TRADUZIONI:
+        scheda["lingua"] = lingua
+    scheda["provider_ia"] = provider
+    return scheda
 
 
 def messaggio_benvenuto_chat_sidebar(lingua):
@@ -8761,6 +8798,19 @@ PRIORITÀ PERSONALI PER IL LETTORE (FACOLTATIVO):
 CONFINI PERSONALI DA RISPETTARE (FACOLTATIVO):
 
 PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
+        # Le etichette sono identificatori della scheda, non testo da
+        # tradurre. Solo i valori descrittivi e il dialogo seguono la lingua
+        # selezionata; i menu usano i valori reali della sidebar.
+        prompt_chat_sidebar += f"""
+
+FORMATO OBBLIGATORIO DELLA SCHEDA FINALE
+Scrivi il dialogo e i valori descrittivi in {lingua_sel}. Mantieni invece le etichette
+della scheda finale esattamente come nel modello sopra (TITOLO DEL LIBRO, LINGUA,
+GENERE LETTERARIO ecc.), anche quando dialoghi in un'altra lingua. Per genere,
+tipologia, stile, punto di vista e lunghezza copia esattamente una delle opzioni
+italiane elencate sopra: sono i valori tecnici effettivi dei menu. Scrivi un campo
+per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
+"""
         # Il prompt manuale resta disponibile per chi vuole usarlo nella
         # propria ChatGPT, ma non occupa più tutta la pagina.
         with st.expander(etichette_chat["manuale"], expanded=False):
@@ -8989,17 +9039,10 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                         else:
                             messaggi_chat.append({"role": "assistant", "content": risposta_chat})
                             st.session_state["chat_sidebar_messaggi"] = messaggi_chat
-                            scheda_estratta = estrai_scheda_chat_guidata_da_cronologia(messaggi_chat)
-                            # La lingua non deve dipendere dalla formulazione del modello.
-                            # È già stata scelta dall'utente nella sidebar e può essere
-                            # espressa dalla chat con nomi differenti (es. "French",
-                            # "Français" o "Lingua"). Impostarla qui elimina falsi
-                            # campi mancanti senza alterare il resto della scheda.
-                            if lingua_sel in TRADUZIONI:
-                                scheda_estratta["lingua"] = lingua_sel
+                            scheda_estratta = scheda_chat_guidata_per_sidebar(
+                                messaggi_chat, lingua_sel, cervello_chat
+                            )
                             if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_estratta):
-                                # Il provider viene sempre preso dalla scelta corrente, non dalla risposta IA.
-                                scheda_estratta["provider_ia"] = cervello_chat
                                 st.session_state["chat_sidebar_scheda_pronta"] = scheda_estratta
                                 st.session_state.pop("chat_sidebar_esito_scheda", None)
                             elif prepara_scheda_chat:
@@ -9016,16 +9059,11 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                             st.session_state["chat_sidebar_input_nonce"] = nonce_chat + 1
                             st.rerun()
 
-                scheda_da_cronologia = estrai_scheda_chat_guidata_da_cronologia(
-                    st.session_state.get("chat_sidebar_messaggi", [])
+                scheda_da_cronologia = scheda_chat_guidata_per_sidebar(
+                    st.session_state.get("chat_sidebar_messaggi", []),
+                    lingua_sel, cervello_chat,
                 )
-                # Anche dopo un rerun o il recupero della conversazione, la
-                # lingua del progetto resta quella selezionata nella sidebar.
-                # Non chiediamo alla chat di ripeterla né di tradurla.
-                if lingua_sel in TRADUZIONI:
-                    scheda_da_cronologia["lingua"] = lingua_sel
                 if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_da_cronologia):
-                    scheda_da_cronologia["provider_ia"] = cervello_chat
                     st.session_state["chat_sidebar_scheda_pronta"] = scheda_da_cronologia
                 scheda_chat_pronta = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
                 esito_scheda_chat = str(st.session_state.get("chat_sidebar_esito_scheda", "") or "").strip()
