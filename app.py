@@ -3573,7 +3573,63 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
     return scheda
 
 
-def prompt_scheda_chat_guidata_deepseek(lingua, provider):
+def scelta_personalizzazione_chat_deepseek(messaggi):
+    """Ricorda la scelta A/B/C/D e se B/C ha già ricevuto dettagli successivi."""
+    scelta, posizione_scelta = "", -1
+    domanda_personalizzazione = False
+    for indice, messaggio in enumerate(messaggi):
+        if messaggio.get("role") == "assistant":
+            risposta = str(messaggio.get("content", "") or "").casefold()
+            domanda_personalizzazione = domanda_personalizzazione or bool(re.search(
+                r"personalizz|personaliz|personnal|persönlich|персонал|تخصيص|个性化|a/b/c/d",
+                risposta,
+            ))
+            continue
+        if messaggio.get("role") != "user":
+            continue
+        testo = str(messaggio.get("content", "") or "").strip().casefold()
+        if testo.startswith("prepara ora la scheda finale completa per la sidebar"):
+            continue
+        opzione = re.match(
+            r"^(?:scelgo|scelta|opzione|choice|option)\s+([abcd])(?:\b|[.)])", testo
+        ) or (
+            re.match(r"^([abcd])(?:\b|[.)])", testo)
+            if domanda_personalizzazione else None
+        )
+        nuova_scelta = opzione.group(1).upper() if opzione else ""
+        if not nuova_scelta and re.search(
+            r"\b(fai tu|scegli tu|decidi tu|non so|you decide|you choose|i don't know|hazlo tú|choisis|entscheide du)\b",
+            testo,
+        ):
+            nuova_scelta = "D"
+        if not nuova_scelta and (
+            testo in {"no", "non voglio personalizzare", "no personalization"}
+            or "non voglio personalizz" in testo
+        ):
+            nuova_scelta = "A"
+        if nuova_scelta:
+            scelta, posizione_scelta = nuova_scelta, indice
+    dettagli_successivi = any(
+        messaggio.get("role") == "user"
+        and not str(messaggio.get("content", "") or "").startswith(
+            "Prepara ora la scheda finale completa per la sidebar"
+        )
+        for messaggio in messaggi[posizione_scelta + 1:]
+    ) if posizione_scelta >= 0 else False
+    return scelta, dettagli_successivi
+
+
+def campi_personalizzazione_deepseek(scelta):
+    """Richiede solo campi pertinenti; mai materiali o esperienze inventati."""
+    return {
+        "A": set(),
+        "B": {"voce_personale", "priorita_personali"},
+        "C": {"confini_personali"},
+        "D": {"voce_personale", "priorita_personali", "confini_personali"},
+    }.get(scelta, set())
+
+
+def prompt_scheda_chat_guidata_deepseek(lingua, provider, scelta="D"):
     """Istruzioni concise per la sola scheda finale DeepSeek, senza fasi in conflitto."""
     opzioni = "\n".join(
         f"{etichetta}: {'; '.join(sorted(OPZIONI_CHAT_GUIDATA[campo]))}"
@@ -3585,11 +3641,30 @@ def prompt_scheda_chat_guidata_deepseek(lingua, provider):
         for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
         if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
     )
+    campi_personali = campi_personalizzazione_deepseek(scelta)
+    etichette_personali = "\n".join(
+        f"{etichetta}:"
+        for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
+        if campo in campi_personali
+    )
+    istruzione_personalizzazione = (
+        "L'utente ha scelto A: non aggiungere campi di personalizzazione."
+        if scelta == "A" else
+        "L'utente ha scelto B: usa i dettagli forniti; proponi voce e priorità editoriali coerenti."
+        if scelta == "B" else
+        "L'utente ha scelto C: formula i confini indicati; se non sono specifici, proponi confini editoriali prudenti."
+        if scelta == "C" else
+        "L'utente ha scelto D o ti ha chiesto di fare tu: proponi voce, priorità e confini editoriali coerenti."
+    )
+    blocco_personale = (
+        f"\nDopo i campi principali aggiungi OBBLIGATORIAMENTE queste righe con valori concreti:\n{etichette_personali}\n"
+        if etichette_personali else ""
+    )
     return f"""Sei l'assistente di Scrittore Site. La conversazione contiene già l'idea del libro.
 Il pulsante per preparare la scheda finale è stato premuto: NON porre domande.
 Leggi tutta la conversazione e produci subito UNA scheda completa per la sidebar.
-Se la personalizzazione non è stata scelta, proponi tu un taglio editoriale coerente,
-senza inventare esperienze personali, testimonianze, fatti o biografie dell'autore.
+{istruzione_personalizzazione}
+Non inventare esperienze personali, testimonianze, materiali, fatti o biografie dell'autore.
 Se il nome dell'autore non è noto, scrivi [Inserisci il tuo nome].
 
 Parla e scrivi i valori descrittivi in {lingua}; non tradurre le etichette qui sotto.
@@ -3603,14 +3678,21 @@ Niente numeri iniziali, Markdown, tabelle, testo introduttivo o conclusivo.
 Titolo senza sottotitolo. Obiettivo, risultato e argomento concreti e coerenti.
 Non creare indice, capitoli o promesse di risultato garantito.
 {etichette}
+{blocco_personale}
 
-Dopo le righe obbligatorie puoi aggiungere APPROFONDIMENTI e i campi personali
-solo se utili e fondati sulla conversazione. Non lasciare mai righe vuote."""
+Dopo le righe obbligatorie puoi aggiungere APPROFONDIMENTI.
+MATERIALI PERSONALI va aggiunto obbligatoriamente se l'utente ha davvero fornito
+materiali, episodi o casi personali; altrimenti omettilo. Non creare esempi autobiografici fittizi.
+CONFINI PERSONALI indica limiti editoriali proposti, non fatti attribuiti all'autore.
+La PAUSA GUIDATA va indicata soltanto se richiesta esplicitamente.
+Non lasciare mai righe vuote."""
 
 
-def scheda_finale_deepseek_valida(testo):
+def scheda_finale_deepseek_valida(testo, scelta="D"):
     """La sola risposta finale DeepSeek deve contenere tutti i campi trasferibili."""
-    return CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(estrai_scheda_chat_guidata(testo))
+    campi = estrai_scheda_chat_guidata(testo)
+    richiesti = CAMPI_CHAT_GUIDATA_OBBLIGATORI | campi_personalizzazione_deepseek(scelta)
+    return richiesti.issubset(campi)
 
 
 def messaggio_benvenuto_chat_sidebar(lingua):
@@ -9077,16 +9159,24 @@ Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta del
 
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
 Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
+                        scelta_personale_deepseek, dettagli_personali_deepseek = (
+                            scelta_personalizzazione_chat_deepseek(messaggi_chat)
+                            if usa_deepseek_chat else ("", False)
+                        )
+                        scelta_finale_deepseek = scelta_personale_deepseek or "D"
                         scheda_finale_deepseek = (
                             usa_deepseek_chat
                             and not richiedi_prima_personalizzazione
                             and (
                                 prepara_scheda_chat or conferma_chat or autonomia_creativa_chat
                                 or ultimo_messaggio_chat.strip() in {"a", "d"}
+                                or (scelta_personale_deepseek in {"B", "C"} and dettagli_personali_deepseek)
                             )
                         )
                         istruzioni_da_inviare = (
-                            prompt_scheda_chat_guidata_deepseek(lingua_sel, cervello_chat)
+                            prompt_scheda_chat_guidata_deepseek(
+                                lingua_sel, cervello_chat, scelta_finale_deepseek
+                            )
                             if scheda_finale_deepseek else istruzioni_chat_interattiva
                         )
                         with st.spinner("La chat sta preparando la risposta..."):
@@ -9100,7 +9190,9 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                                 reason="chat_sidebar_guidata",
                                 timeout_seconds=90,
                                 validatore_deepseek=(
-                                    scheda_finale_deepseek_valida if scheda_finale_deepseek else None
+                                    (lambda testo: scheda_finale_deepseek_valida(
+                                        testo, scelta_finale_deepseek
+                                    )) if scheda_finale_deepseek else None
                                 ),
                             )
                         if str(risposta_chat or "").startswith("ERRORE:"):

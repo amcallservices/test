@@ -35,6 +35,7 @@ def parser_namespace():
             exec(compile(ast.Module(body=[node], type_ignores=[]), "app.py", "exec"), namespace)
     return load_functions({
         "_valore_scelta_chat_guidata", "estrai_scheda_chat_guidata",
+        "scelta_personalizzazione_chat_deepseek", "campi_personalizzazione_deepseek",
         "prompt_scheda_chat_guidata_deepseek", "scheda_finale_deepseek_valida",
     }, namespace)
 
@@ -52,6 +53,10 @@ CARD = """1. TITOLO DEL LIBRO: Comprare un'auto usata senza fregature
 11. RISULTATO FINALE DESIDERATO: Una scelta d'acquisto più consapevole.
 12. TRAMA O ARGOMENTO: Controlli documentali e meccanici per principianti.
 """
+PERSONALIZATION = """VOCE O PROSPETTIVA PERSONALE: Tono pratico e rassicurante, senza attribuire esperienze all'autore.
+PRIORITÀ PERSONALI PER IL LETTORE: Controlli verificabili prima dell'acquisto.
+CONFINI PERSONALI DA RISPETTARE: Nessuna garanzia di assenza di rischi; verificare dati e norme aggiornate.
+"""
 
 
 class DeepSeekCardTests(unittest.TestCase):
@@ -64,15 +69,55 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertIn("GENERE LETTERARIO:", prompt)
         self.assertIn("Manuale Pratico", prompt)
         self.assertIn("NON porre domande", prompt)
+        self.assertIn("VOCE O PROSPETTIVA PERSONALE:", prompt)
+        self.assertIn("PRIORITÀ PERSONALI PER IL LETTORE:", prompt)
+        self.assertIn("CONFINI PERSONALI DA RISPETTARE:", prompt)
+
+    def test_no_personalization_does_not_require_optional_fields(self):
+        prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("Italiano", "DeepSeek V4 Pro", "A")
+        self.assertIn("non aggiungere campi di personalizzazione", prompt)
+        self.assertTrue(self.app["scheda_finale_deepseek_valida"](self._without_numbers(CARD), "A"))
+
+    def _without_numbers(self, card):
+        return re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", card)
 
     def test_complete_card_is_transferable(self):
-        card = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", CARD)
-        self.assertTrue(self.app["scheda_finale_deepseek_valida"](card))
+        card = self._without_numbers(CARD) + PERSONALIZATION
+        self.assertTrue(self.app["scheda_finale_deepseek_valida"](card, "D"))
+        parsed = self.app["estrai_scheda_chat_guidata"](card)
+        self.assertIn("voce_personale", parsed)
+        self.assertIn("priorita_personali", parsed)
+        self.assertIn("confini_personali", parsed)
+
+    def test_personalization_choice_controls_required_fields(self):
+        card = self._without_numbers(CARD)
+        self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "B"))
+        self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "C"))
+        self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "D"))
+        self.assertTrue(self.app["scheda_finale_deepseek_valida"](card + PERSONALIZATION, "B"))
+        self.assertTrue(self.app["scheda_finale_deepseek_valida"](card + PERSONALIZATION, "C"))
+
+    def test_choice_b_and_followup_are_remembered(self):
+        conversation = [
+            {"role": "user", "content": "Voglio scrivere un libro sulle auto usate"},
+            {"role": "assistant", "content": "Vuoi personalizzare il libro? A/B/C/D"},
+            {"role": "user", "content": "B"},
+            {"role": "assistant", "content": "Quali dettagli personali vuoi aggiungere?"},
+            {"role": "user", "content": "Usa un tono pratico; ho una lista di controlli"},
+        ]
+        self.assertEqual(self.app["scelta_personalizzazione_chat_deepseek"](conversation), ("B", True))
+
+    def test_english_book_idea_is_not_mistaken_for_choice_a(self):
+        conversation = [
+            {"role": "assistant", "content": "What book would you like to create?"},
+            {"role": "user", "content": "A book about buying used cars safely"},
+        ]
+        self.assertEqual(self.app["scelta_personalizzazione_chat_deepseek"](conversation), ("", False))
 
     def test_missing_required_field_is_rejected(self):
         card = CARD.replace("10. OBIETTIVO DEL LIBRO: Aiutare il lettore a valutare un'auto usata.\n", "")
-        card = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", card)
-        self.assertFalse(self.app["scheda_finale_deepseek_valida"](card))
+        card = self._without_numbers(card) + PERSONALIZATION
+        self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "D"))
 
 
 class DeepSeekBillingTests(unittest.TestCase):
@@ -118,7 +163,7 @@ class DeepSeekBillingTests(unittest.TestCase):
         )
 
     def test_deepseek_does_not_spend_output_on_thinking(self):
-        valid = parser_namespace()["scheda_finale_deepseek_valida"]
+        valid = lambda text: parser_namespace()["scheda_finale_deepseek_valida"](text, "A")
         result = self.call_chat(valid)
         self.assertTrue(result.startswith("TITOLO DEL LIBRO:"))
         self.assertEqual(self.requests[0]["extra_body"], {"thinking": {"type": "disabled"}})
@@ -132,7 +177,7 @@ class DeepSeekBillingTests(unittest.TestCase):
 
     def test_incomplete_card_is_refunded(self):
         self.answer.choices[0].message.content = "TITOLO DEL LIBRO: Auto usate"
-        valid = parser_namespace()["scheda_finale_deepseek_valida"]
+        valid = lambda text: parser_namespace()["scheda_finale_deepseek_valida"](text, "A")
         self.assertTrue(self.call_chat(valid).startswith("ERRORE:"))
         self.assertEqual(len(self.refunds), 1)
         self.assertIs(self.logged[0][0][0], self.answer)
