@@ -1741,7 +1741,7 @@ def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazion
 
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None,
                model=None, reason="generazione_testo", timeout_seconds=None,
-               riferimento_padre="", macro_operation_id="", retry_di=""):
+               riferimento_padre="", macro_operation_id="", retry_di="", validatore_deepseek=None):
     """Invia una richiesta testuale con addebito unico e tracciamento coerente.
 
     Quando ``riferimento_padre`` è presente, la richiesta è una fase interna
@@ -1749,11 +1749,14 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
     scala ulteriori crediti. Timeout, testo e salvataggi restano invariati.
     """
     riferimento = uuid.uuid4().hex
+    risposta_deepseek_guidata = None
+    chat_guidata_deepseek = False
     inizio = time.perf_counter()
     try:
         if addebita:
             riferimento = charge_credits(reason, amount=amount)
         client_testuale, modello_effettivo = _client_e_modello_testuale(model or MODELLO_STESURA)
+        chat_guidata_deepseek = usa_deepseek_pro() and reason == "chat_sidebar_guidata"
         richiesta = {
             "model": modello_effettivo,
             "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
@@ -1763,7 +1766,9 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         # Per la stesura ordinaria DeepSeek Pro lavora senza ragionamento
         # esteso: testo più rapido, costo più prevedibile. I prompt editoriali
         # complessi attivano invece la modalità high.
-        if usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
+        if chat_guidata_deepseek:
+            richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
+        elif usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
             richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
         elif usa_deepseek_pro():
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
@@ -1777,7 +1782,19 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
                 timeout=float(timeout_seconds), max_retries=0
             )
         response = client_richiesta.chat.completions.create(**richiesta)
-        testo = response.choices[0].message.content.strip()
+        if chat_guidata_deepseek:
+            risposta_deepseek_guidata = response
+            scelta = response.choices[0]
+            testo = str(scelta.message.content or "").strip()
+            if scelta.finish_reason != "stop" or not testo:
+                raise ValueError("La risposta DeepSeek della chat guidata è incompleta.")
+            # DeepSeek talvolta numera le etichette della scheda; la sidebar
+            # accetta le stesse etichette senza il numero iniziale.
+            testo = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", testo)
+            if validatore_deepseek is not None and not validatore_deepseek(testo):
+                raise ValueError("La scheda DeepSeek non contiene tutti i campi della sidebar.")
+        else:
+            testo = response.choices[0].message.content.strip()
         registra_esito_chiamata_ai(
             response,
             riferimento=riferimento,
@@ -1802,7 +1819,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if addebita and riferimento:
             refund_credits(riferimento, amount=amount)
         registra_esito_chiamata_ai(
-            None,
+            risposta_deepseek_guidata if chat_guidata_deepseek else None,
             riferimento=riferimento,
             reason=reason,
             amount=amount if addebita else 0,
@@ -3554,6 +3571,46 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
         scheda["lingua"] = lingua
     scheda["provider_ia"] = provider
     return scheda
+
+
+def prompt_scheda_chat_guidata_deepseek(lingua, provider):
+    """Istruzioni concise per la sola scheda finale DeepSeek, senza fasi in conflitto."""
+    opzioni = "\n".join(
+        f"{etichetta}: {'; '.join(sorted(OPZIONI_CHAT_GUIDATA[campo]))}"
+        for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
+        if campo in OPZIONI_CHAT_GUIDATA
+    )
+    etichette = "\n".join(
+        f"{etichetta}:"
+        for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
+        if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
+    )
+    return f"""Sei l'assistente di Scrittore Site. La conversazione contiene già l'idea del libro.
+Il pulsante per preparare la scheda finale è stato premuto: NON porre domande.
+Leggi tutta la conversazione e produci subito UNA scheda completa per la sidebar.
+Se la personalizzazione non è stata scelta, proponi tu un taglio editoriale coerente,
+senza inventare esperienze personali, testimonianze, fatti o biografie dell'autore.
+Se il nome dell'autore non è noto, scrivi [Inserisci il tuo nome].
+
+Parla e scrivi i valori descrittivi in {lingua}; non tradurre le etichette qui sotto.
+LINGUA deve essere esattamente: {lingua}.
+CERVELLO AI deve essere esattamente: {provider}.
+Per i menu scegli una sola opzione esatta tra queste, senza spiegazioni aggiunte:
+{opzioni}
+
+Restituisci SOLO queste righe, ciascuna con un valore non vuoto dopo i due punti.
+Niente numeri iniziali, Markdown, tabelle, testo introduttivo o conclusivo.
+Titolo senza sottotitolo. Obiettivo, risultato e argomento concreti e coerenti.
+Non creare indice, capitoli o promesse di risultato garantito.
+{etichette}
+
+Dopo le righe obbligatorie puoi aggiungere APPROFONDIMENTI e i campi personali
+solo se utili e fondati sulla conversazione. Non lasciare mai righe vuote."""
+
+
+def scheda_finale_deepseek_valida(testo):
+    """La sola risposta finale DeepSeek deve contenere tutti i campi trasferibili."""
+    return CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(estrai_scheda_chat_guidata(testo))
 
 
 def messaggio_benvenuto_chat_sidebar(lingua):
@@ -9020,16 +9077,31 @@ Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta del
 
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
 Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
+                        scheda_finale_deepseek = (
+                            usa_deepseek_chat
+                            and not richiedi_prima_personalizzazione
+                            and (
+                                prepara_scheda_chat or conferma_chat or autonomia_creativa_chat
+                                or ultimo_messaggio_chat.strip() in {"a", "d"}
+                            )
+                        )
+                        istruzioni_da_inviare = (
+                            prompt_scheda_chat_guidata_deepseek(lingua_sel, cervello_chat)
+                            if scheda_finale_deepseek else istruzioni_chat_interattiva
+                        )
                         with st.spinner("La chat sta preparando la risposta..."):
                             risposta_chat = chiedi_gpt(
                                 conversazione,
-                                istruzioni_chat_interattiva,
+                                istruzioni_da_inviare,
                                 addebita=True,
                                 amount=CREDIT_COSTS["chat_sidebar_guidata"],
-                                max_completion_tokens=1700,
+                                max_completion_tokens=3000 if usa_deepseek_chat else 1700,
                                 model=MODELLO_EDITORIALE,
                                 reason="chat_sidebar_guidata",
                                 timeout_seconds=90,
+                                validatore_deepseek=(
+                                    scheda_finale_deepseek_valida if scheda_finale_deepseek else None
+                                ),
                             )
                         if str(risposta_chat or "").startswith("ERRORE:"):
                             st.error(
