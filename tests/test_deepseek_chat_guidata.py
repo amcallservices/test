@@ -211,20 +211,22 @@ class DeepSeekBillingTests(unittest.TestCase):
         self.assertEqual(self.requests[0]["max_tokens"], 4200)
         self.assertEqual(self.refunds, [])
 
-    def test_short_or_truncated_niche_final_is_refunded(self):
+    def test_short_niche_final_is_available_for_free_expansion(self):
         self.answer.choices[0].message.content = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\nIdea: auto usate."
-        self.assertTrue(self.app["chiedi_gpt"](
+        self.assertIn("Idea: auto usate.", self.app["chiedi_gpt"](
             "Report", "Crea prompt", model="gpt-editorial",
             reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
-        ).startswith("ERRORE:"))
-        self.assertEqual(len(self.refunds), 1)
+        ))
+        self.assertEqual(self.refunds, [])
+
+    def test_truncated_niche_final_is_refunded(self):
         self.answer.choices[0].message.content = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Dettaglio. " * 250
         self.answer.choices[0].finish_reason = "length"
         self.assertTrue(self.app["chiedi_gpt"](
             "Report", "Crea prompt", model="gpt-editorial",
             reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
         ).startswith("ERRORE:"))
-        self.assertEqual(len(self.refunds), 2)
+        self.assertEqual(len(self.refunds), 1)
 
     def test_deepseek_writing_reference_is_available_for_unsaved_section_refund(self):
         references = []
@@ -237,12 +239,14 @@ class DeepSeekNichePromptTests(unittest.TestCase):
     def test_only_deepseek_gets_detailed_eight_part_brief(self):
         requests = []
         deepseek = [True]
+        detailed = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Analisi pertinente. " * 120
         namespace = {
+            "re": re,
             "usa_deepseek_pro": lambda: deepseek[0],
             "_cronologia_chat_nicchia": lambda conversation: "Report confermato",
             "CREDIT_COSTS": {"chat_nicchia_prompt_finale": 1},
             "MODELLO_EDITORIALE": "gpt-editorial",
-            "chiedi_gpt": lambda prompt, system, **kwargs: requests.append((system, kwargs)) or "ok",
+            "chiedi_gpt": lambda prompt, system, **kwargs: requests.append((system, kwargs)) or detailed,
         }
         app = load_functions({"_prompt_finale_chat_nicchia"}, namespace)
         app["_prompt_finale_chat_nicchia"]([], "Italiano")
@@ -256,6 +260,40 @@ class DeepSeekNichePromptTests(unittest.TestCase):
         gpt_system, gpt_options = requests[-1]
         self.assertNotIn("otto parti numerate", gpt_system)
         self.assertEqual(gpt_options["max_completion_tokens"], 2600)
+
+    def test_short_deepseek_prompt_is_expanded_without_second_charge(self):
+        calls = []
+        answers = ["# PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\nIdea: auto usate.",
+                   "# PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Dettagli verificati. " * 120]
+        namespace = {
+            "re": re,
+            "usa_deepseek_pro": lambda: True,
+            "_cronologia_chat_nicchia": lambda conversation: "Report confermato sulle auto usate",
+            "CREDIT_COSTS": {"chat_nicchia_prompt_finale": 1},
+            "MODELLO_EDITORIALE": "gpt-editorial",
+            "chiedi_gpt": lambda prompt, system, **kwargs: calls.append(kwargs) or answers.pop(0),
+        }
+        app = load_functions({"_prompt_finale_chat_nicchia"}, namespace)
+        result = app["_prompt_finale_chat_nicchia"]([], "Italiano")
+        self.assertTrue(result.startswith("PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE"))
+        self.assertIn("Dettagli verificati", result)
+        self.assertEqual([call["addebita"] for call in calls], [True, False])
+
+    def test_failed_first_request_gets_one_free_retry(self):
+        calls = []
+        answers = ["ERRORE: risposta interrotta", "# PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Contenuto. " * 220]
+        namespace = {
+            "re": re,
+            "usa_deepseek_pro": lambda: True,
+            "_cronologia_chat_nicchia": lambda conversation: "Report confermato",
+            "CREDIT_COSTS": {"chat_nicchia_prompt_finale": 1},
+            "MODELLO_EDITORIALE": "gpt-editorial",
+            "chiedi_gpt": lambda prompt, system, **kwargs: calls.append(kwargs) or answers.pop(0),
+        }
+        app = load_functions({"_prompt_finale_chat_nicchia"}, namespace)
+        result = app["_prompt_finale_chat_nicchia"]([], "Italiano")
+        self.assertTrue(result.startswith("PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE"))
+        self.assertEqual([call["addebita"] for call in calls], [True, False])
 
 
 if __name__ == "__main__":

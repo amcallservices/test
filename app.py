@@ -1798,8 +1798,6 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
                 testo = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", testo)
                 if validatore_deepseek is not None and not validatore_deepseek(testo):
                     raise ValueError("La scheda DeepSeek non contiene tutti i campi della sidebar.")
-            elif not testo.upper().startswith("PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE") or len(testo) < 1600:
-                raise ValueError("Il prompt finale DeepSeek è troppo breve o non è copiabile.")
         else:
             testo = response.choices[0].message.content.strip()
         registra_esito_chiamata_ai(
@@ -3914,8 +3912,10 @@ Apri esattamente con il titolo richiesto e organizza il testo copiabile in quest
 8. Istruzione finale alla Chat guidata: dialoga con l'utente, chiedi SEMPRE se vuole personalizzare il libro e come; se vuole ma non sa come, proponi tu una personalizzazione coerente. Solo dopo prepara i valori compatibili con i campi realmente selezionabili nella sidebar; non creare indice o manoscritto.
 
 Elabora ciascuna parte con dettagli concreti ricavati dalla conversazione e dai report. Non comprimere tutto in poche frasi e non ripetere formule generiche per allungare il testo. Se una prova manca, dichiaralo e indica cosa verificare; non trasformare le ipotesi in fatti. Concludi con una richiesta chiara alla Chat guidata di avviare il dialogo, non di compilare subito la scheda."""
-    return chiedi_gpt(
-        _cronologia_chat_nicchia(cronologia), istruzioni + f"\nLingua selezionata: {lingua}.",
+    contesto = _cronologia_chat_nicchia(cronologia)
+    sistema = istruzioni + f"\nLingua selezionata: {lingua}."
+    risultato = chiedi_gpt(
+        contesto, sistema,
         addebita=True, amount=CREDIT_COSTS["chat_nicchia_prompt_finale"],
         # Il prompt deve poter riportare evidenze, cautele e istruzioni senza
         # interrompersi a metà; il tariffario resta invariato.
@@ -3923,6 +3923,41 @@ Elabora ciascuna parte con dettagli concreti ricavati dalla conversazione e dai 
         model=MODELLO_EDITORIALE, reason="chat_nicchia_prompt_finale",
         timeout_seconds=150 if usa_deepseek_pro() else 90,
     )
+    if not usa_deepseek_pro():
+        return risultato
+    # Un'interruzione tecnica della prima risposta viene già rimborsata da
+    # chiedi_gpt. Riproviamo una volta senza un secondo addebito.
+    if not str(risultato or "").strip() or str(risultato).startswith("ERRORE:"):
+        risultato = chiedi_gpt(
+            contesto, sistema, addebita=False, max_completion_tokens=4800,
+            model=MODELLO_EDITORIALE, reason="chat_nicchia_prompt_finale",
+            timeout_seconds=150,
+        )
+    if not str(risultato or "").strip() or str(risultato).startswith("ERRORE:"):
+        return risultato
+
+    titolo_prompt = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE"
+    risultato = str(risultato).strip()
+    # Il titolo è un identificatore del flusso, non un requisito di addebito:
+    # accettiamo anche Markdown o un'intestazione localizzata.
+    risultato = re.sub(r"(?m)^\s*#{1,6}\s*(?=PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE)", "", risultato, count=1, flags=re.IGNORECASE)
+    if not risultato.upper().startswith(titolo_prompt):
+        risultato = f"{titolo_prompt}\n\n{risultato}"
+
+    if len(risultato) < 1600:
+        ampliato = chiedi_gpt(
+            f"REPORT E CONVERSAZIONE:\n{contesto}\n\nBOZZA DA AMPLIARE SENZA INVENTARE FATTI:\n{risultato}",
+            sistema + "\nAmplia la bozza in un prompt completo e concreto. Mantieni le otto parti e i dati confermati; non limitarti a un riassunto.",
+            addebita=False, max_completion_tokens=4800, model=MODELLO_EDITORIALE,
+            reason="chat_nicchia_prompt_finale", timeout_seconds=150,
+        )
+        if str(ampliato or "").strip() and not str(ampliato).startswith("ERRORE:"):
+            ampliato = re.sub(r"(?m)^\s*#{1,6}\s*(?=PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE)", "", str(ampliato).strip(), count=1, flags=re.IGNORECASE)
+            if not ampliato.upper().startswith(titolo_prompt):
+                ampliato = f"{titolo_prompt}\n\n{ampliato}"
+            if len(ampliato) > len(risultato):
+                risultato = ampliato
+    return risultato
 
 # Memoria unica del progetto. È la sola fonte autorevole per sidebar, indice,
 # manoscritto, fonti e immagini. Le vecchie chiavi rimangono soltanto come
@@ -9495,15 +9530,26 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                 ):
                     with st.spinner("Preparazione del prompt finale in corso..."):
                         prompt_finale = _prompt_finale_chat_nicchia(messaggi_nicchia, lingua_sel)
-                    if not str(prompt_finale or "").startswith("ERRORE:"):
+                    if (not str(prompt_finale or "").startswith("ERRORE:")
+                            and (not usa_deepseek_pro() or bool(str(prompt_finale or "").strip()))):
                         messaggi_nicchia.append({"role": "assistant", "content": prompt_finale})
                         st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
+                        if usa_deepseek_pro():
+                            st.session_state["chat_nicchia_prompt_da_copiare"] = prompt_finale
                         st.session_state["chat_nicchia_fase"] = "prompt_finale"
                         st.rerun()
                     st.error(testi_nicchia["errore"])
             elif fase_nicchia == "prompt_finale":
                 st.success(testi_nicchia["pronto"])
-                prompt_da_copiare = next((voce.get("content", "") for voce in reversed(messaggi_nicchia) if voce.get("role") == "assistant" and "PROMPT FINALE" in voce.get("content", "").upper()), "")
+                if usa_deepseek_pro():
+                    # Recupera anche le sessioni già concluse prima della
+                    # correzione, quando il titolo era formattato o tradotto.
+                    prompt_da_copiare = st.session_state.get("chat_nicchia_prompt_da_copiare", "") or next(
+                        (voce.get("content", "") for voce in reversed(messaggi_nicchia)
+                         if voce.get("role") == "assistant"), ""
+                    )
+                else:
+                    prompt_da_copiare = next((voce.get("content", "") for voce in reversed(messaggi_nicchia) if voce.get("role") == "assistant" and "PROMPT FINALE" in voce.get("content", "").upper()), "")
                 if prompt_da_copiare:
                     st.code(prompt_da_copiare, language=None)
             st.button(testi_nicchia["reset"], key="reset_chat_nicchia", on_click=reimposta_chat_nicchia, use_container_width=True)
