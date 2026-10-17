@@ -1741,7 +1741,7 @@ def registra_esito_chiamata_ai(risposta, *, riferimento=None, reason="generazion
 
 def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDITS, max_completion_tokens=None,
                model=None, reason="generazione_testo", timeout_seconds=None,
-               riferimento_padre="", macro_operation_id="", retry_di="", validatore_risposta=None):
+               riferimento_padre="", macro_operation_id="", retry_di=""):
     """Invia una richiesta testuale con addebito unico e tracciamento coerente.
 
     Quando ``riferimento_padre`` è presente, la richiesta è una fase interna
@@ -1749,7 +1749,6 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
     scala ulteriori crediti. Timeout, testo e salvataggi restano invariati.
     """
     riferimento = uuid.uuid4().hex
-    risposta_api = None
     inizio = time.perf_counter()
     try:
         if addebita:
@@ -1764,11 +1763,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         # Per la stesura ordinaria DeepSeek Pro lavora senza ragionamento
         # esteso: testo più rapido, costo più prevedibile. I prompt editoriali
         # complessi attivano invece la modalità high.
-        if usa_deepseek_pro() and reason == "chat_sidebar_guidata":
-            # La chat deve restituire etichette e valori, non una lunga catena
-            # di ragionamento che consumerebbe il limite della risposta.
-            richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
-        elif usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
+        if usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
             richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
         elif usa_deepseek_pro():
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
@@ -1781,17 +1776,10 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             client_richiesta = client_testuale.with_options(
                 timeout=float(timeout_seconds), max_retries=0
             )
-        risposta_api = client_richiesta.chat.completions.create(**richiesta)
-        scelta = risposta_api.choices[0]
-        testo = str(scelta.message.content or "").strip()
-        if reason == "chat_sidebar_guidata" and (
-            scelta.finish_reason != "stop" or not testo
-        ):
-            raise ValueError("La risposta della chat guidata è vuota o incompleta.")
-        if validatore_risposta is not None and not validatore_risposta(testo):
-            raise ValueError("La scheda della chat guidata non contiene tutti i campi richiesti.")
+        response = client_richiesta.chat.completions.create(**richiesta)
+        testo = response.choices[0].message.content.strip()
         registra_esito_chiamata_ai(
-            risposta_api,
+            response,
             riferimento=riferimento,
             reason=reason,
             amount=amount if addebita else 0,
@@ -1814,7 +1802,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if addebita and riferimento:
             refund_credits(riferimento, amount=amount)
         registra_esito_chiamata_ai(
-            risposta_api,
+            None,
             riferimento=riferimento,
             reason=reason,
             amount=amount if addebita else 0,
@@ -3531,7 +3519,7 @@ def estrai_scheda_chat_guidata(testo):
             etichette[traduzione] = campo
     for etichetta, campo in etichette.items():
         espressione = (
-            rf"(?im)^\s*(?:(?:[-•]|\d{{1,2}}[.)])\s+)?(?:\*{{1,3}}|_{{1,3}})?\s*"
+            rf"(?im)^\s*(?:[-•]\s+)?(?:\*{{1,3}}|_{{1,3}})?\s*"
             rf"{re.escape(etichetta)}\s*(?:\*{{1,3}}|_{{1,3}})?"
             rf"\s*(?:\([^\n)]*\))?\s*(?:\*{{1,3}}|_{{1,3}})?\s*:\s*"
         )
@@ -3566,13 +3554,6 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
         scheda["lingua"] = lingua
     scheda["provider_ia"] = provider
     return scheda
-
-
-def risposta_chat_guidata_trasferibile(testo, messaggi, lingua, provider):
-    """Verifica la scheda conclusiva prima di considerare riuscita la chiamata."""
-    cronologia = [*messaggi, {"role": "assistant", "content": testo}]
-    scheda = scheda_chat_guidata_per_sidebar(cronologia, lingua, provider)
-    return CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda)
 
 
 def messaggio_benvenuto_chat_sidebar(lingua):
@@ -9045,24 +9026,15 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                                 istruzioni_chat_interattiva,
                                 addebita=True,
                                 amount=CREDIT_COSTS["chat_sidebar_guidata"],
-                                max_completion_tokens=(
-                                    2600 if usa_deepseek_chat else 1700
-                                ),
+                                max_completion_tokens=1700,
                                 model=MODELLO_EDITORIALE,
                                 reason="chat_sidebar_guidata",
                                 timeout_seconds=90,
-                                validatore_risposta=(
-                                    lambda testo: risposta_chat_guidata_trasferibile(
-                                        testo, messaggi_chat, lingua_sel, cervello_chat
-                                    )
-                                    if prepara_scheda_chat and not richiedi_prima_personalizzazione
-                                    else None
-                                ),
                             )
                         if str(risposta_chat or "").startswith("ERRORE:"):
                             st.error(
-                                "La chat non ha prodotto una risposta completa e utilizzabile. "
-                                "Nessun credito è stato trattenuto; puoi riprovare senza perdere la conversazione."
+                                "La chat non ha prodotto una risposta. Nessun credito è stato trattenuto; "
+                                "puoi inviare di nuovo il messaggio."
                             )
                         else:
                             messaggi_chat.append({"role": "assistant", "content": risposta_chat})
