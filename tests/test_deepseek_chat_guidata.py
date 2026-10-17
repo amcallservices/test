@@ -1,4 +1,4 @@
-"""Regression tests for the DeepSeek-only guided sidebar chat path."""
+"""Regression tests for sidebar parsing and the GPT-only chat paths."""
 
 import ast
 import re
@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 
 TREE = ast.parse((Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8"))
+COMMERCIAL_TREE = ast.parse((Path(__file__).resolve().parents[1] / "commercial_layer.py").read_text(encoding="utf-8"))
 
 
 def load_functions(names, namespace):
@@ -140,6 +141,11 @@ class DeepSeekBillingTests(unittest.TestCase):
             "MODELLO_ANALISI_FONTI": "gpt-sources",
             "MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO": "gpt-copyright",
             "MODELLO_DEEPSEEK_PRO": "deepseek-v4-pro",
+            "CHAT_SOLO_GPT_OPERAZIONI": frozenset({
+                "chat_sidebar_guidata", "chat_nicchia_dialogo",
+                "chat_nicchia_report_iniziale", "chat_nicchia_ricerca_approfondita",
+                "chat_nicchia_prompt_finale",
+            }),
             "TIMEOUT_INDICE_SECONDI": 150,
             "CommercialCreditError": type("CommercialCreditError", (Exception,), {}),
             "uuid": uuid,
@@ -149,7 +155,9 @@ class DeepSeekBillingTests(unittest.TestCase):
             "charge_credits": lambda *args, **kwargs: "charged-reference",
             "refund_credits": lambda *args, **kwargs: self.refunds.append((args, kwargs)),
             "registra_esito_chiamata_ai": lambda *args, **kwargs: self.logged.append((args, kwargs)),
-            "_client_e_modello_testuale": lambda model: (client, "deepseek-v4-pro" if self.deepseek else "gpt-editorial"),
+            "_client_e_modello_testuale": lambda model, *, forza_gpt=False: (
+                client, "deepseek-v4-pro" if self.deepseek and not forza_gpt else model
+            ),
         }
         self.app = load_functions({"chiedi_gpt"}, namespace)
 
@@ -164,12 +172,13 @@ class DeepSeekBillingTests(unittest.TestCase):
             max_completion_tokens=3000, validatore_deepseek=validator,
         )
 
-    def test_deepseek_does_not_spend_output_on_thinking(self):
+    def test_guided_chat_uses_gpt_even_with_deepseek_selected(self):
         valid = lambda text: parser_namespace()["scheda_finale_deepseek_valida"](text, "A")
         result = self.call_chat(valid)
-        self.assertTrue(result.startswith("TITOLO DEL LIBRO:"))
-        self.assertEqual(self.requests[0]["extra_body"], {"thinking": {"type": "disabled"}})
-        self.assertEqual(self.requests[0]["max_tokens"], 3000)
+        self.assertTrue(result.startswith("1. TITOLO DEL LIBRO:"))
+        self.assertEqual(self.requests[0]["model"], "gpt-editorial")
+        self.assertNotIn("extra_body", self.requests[0])
+        self.assertEqual(self.requests[0]["max_completion_tokens"], 3000)
         self.assertEqual(self.refunds, [])
 
     def test_short_dialogue_reply_remains_allowed(self):
@@ -177,12 +186,11 @@ class DeepSeekBillingTests(unittest.TestCase):
         self.assertIn("personalizzare", self.call_chat())
         self.assertEqual(self.refunds, [])
 
-    def test_incomplete_card_is_refunded(self):
+    def test_gpt_chat_keeps_the_existing_card_parser(self):
         self.answer.choices[0].message.content = "TITOLO DEL LIBRO: Auto usate"
         valid = lambda text: parser_namespace()["scheda_finale_deepseek_valida"](text, "A")
-        self.assertTrue(self.call_chat(valid).startswith("ERRORE:"))
-        self.assertEqual(len(self.refunds), 1)
-        self.assertIs(self.logged[0][0][0], self.answer)
+        self.assertEqual(self.call_chat(valid), "TITOLO DEL LIBRO: Auto usate")
+        self.assertEqual(self.refunds, [])
 
     def test_truncated_reply_is_refunded(self):
         self.answer.choices[0].finish_reason = "length"
@@ -197,7 +205,7 @@ class DeepSeekBillingTests(unittest.TestCase):
         self.assertEqual(self.requests[0]["max_completion_tokens"], 3000)
         self.assertEqual(self.refunds, [])
 
-    def test_niche_final_uses_output_budget_without_thinking(self):
+    def test_niche_final_uses_gpt_output_budget(self):
         detailed = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + (
             "1. Mercato italiano e libro sulle auto usate: controlli verificabili.\n" * 35
         )
@@ -207,8 +215,9 @@ class DeepSeekBillingTests(unittest.TestCase):
             reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
         )
         self.assertEqual(result, detailed.strip())
-        self.assertEqual(self.requests[0]["extra_body"], {"thinking": {"type": "disabled"}})
-        self.assertEqual(self.requests[0]["max_tokens"], 4200)
+        self.assertEqual(self.requests[0]["model"], "gpt-editorial")
+        self.assertNotIn("extra_body", self.requests[0])
+        self.assertEqual(self.requests[0]["max_completion_tokens"], 4200)
         self.assertEqual(self.refunds, [])
 
     def test_short_niche_final_is_available_for_free_expansion(self):
@@ -236,7 +245,7 @@ class DeepSeekBillingTests(unittest.TestCase):
 
 
 class DeepSeekNichePromptTests(unittest.TestCase):
-    def test_only_deepseek_gets_detailed_eight_part_brief(self):
+    def test_gpt_gets_detailed_eight_part_brief_for_both_sidebar_choices(self):
         requests = []
         deepseek = [True]
         detailed = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Analisi pertinente. " * 120
@@ -258,8 +267,8 @@ class DeepSeekNichePromptTests(unittest.TestCase):
         deepseek[0] = False
         app["_prompt_finale_chat_nicchia"]([], "Italiano")
         gpt_system, gpt_options = requests[-1]
-        self.assertNotIn("otto parti numerate", gpt_system)
-        self.assertEqual(gpt_options["max_completion_tokens"], 2600)
+        self.assertIn("otto parti numerate", gpt_system)
+        self.assertEqual(gpt_options["max_completion_tokens"], 4200)
 
     def test_short_deepseek_prompt_is_expanded_without_second_charge(self):
         calls = []
@@ -278,6 +287,78 @@ class DeepSeekNichePromptTests(unittest.TestCase):
         self.assertTrue(result.startswith("PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE"))
         self.assertIn("Dettagli verificati", result)
         self.assertEqual([call["addebita"] for call in calls], [True, False])
+
+
+class GptOnlyChatIntegrationTests(unittest.TestCase):
+    def test_niche_research_uses_openai_web_search_with_deepseek_selected(self):
+        requests = []
+        refunds = []
+        response = SimpleNamespace(output_text="Report documentato", usage=None)
+        openai = SimpleNamespace(responses=SimpleNamespace(create=lambda **kwargs: requests.append(kwargs) or response))
+        openai.with_options = lambda **kwargs: openai
+        namespace = {
+            "CREDIT_COSTS": {"chat_nicchia_report_iniziale": 5},
+            "TIMEOUT_RICERCA_WEB_SECONDI": 90,
+            "MODELLO_ANALISI_FONTI": "gpt-sources",
+            "client_openai": openai,
+            "client_deepseek": None,
+            "addebita_azione_diretta": lambda *args, **kwargs: "ref",
+            "refund_credits": lambda *args, **kwargs: refunds.append(args),
+            "registra_esito_chiamata_ai": lambda *args, **kwargs: None,
+            "usa_deepseek_pro": lambda: True,
+        }
+        app = load_functions({"_ricerca_web_chat_nicchia"}, namespace)
+        self.assertEqual(app["_ricerca_web_chat_nicchia"]("Auto usate", "Italiano", "chat_nicchia_report_iniziale"), "Report documentato")
+        self.assertEqual(requests[0]["model"], "gpt-sources")
+        self.assertEqual(requests[0]["tools"], [{"type": "web_search_preview"}])
+        self.assertEqual(refunds, [])
+
+    def test_gpt_chat_charge_ignores_deepseek_selection(self):
+        state = {"commercial_user_context": {"id": "reader"}, "commercial_demo_credits": 30}
+        ledger = []
+        chat_costs = {
+            "chat_sidebar_guidata": 1,
+            "chat_nicchia_dialogo": 1,
+            "chat_nicchia_report_iniziale": 5,
+            "chat_nicchia_ricerca_approfondita": 8,
+            "chat_nicchia_prompt_finale": 1,
+        }
+        namespace = {
+            "st": SimpleNamespace(session_state=state),
+            "AI_REQUEST_CREDITS": 1,
+            "CHAT_SOLO_GPT_OPERAZIONI": frozenset(chat_costs),
+            "DEEPSEEK_UNITI_PER_CREDITO": 3,
+            "CommercialCreditError": type("CommercialCreditError", (Exception,), {}),
+            "uuid": uuid,
+            "_is_admin": lambda user: False,
+            "usa_deepseek": lambda: True,
+            "_mode": lambda: "demo",
+            "_supabase_ready": lambda: False,
+            "_balance": lambda user_id: state["commercial_demo_credits"],
+            "_demo_ledger": lambda *args: ledger.append(args),
+            "_salva_contesto_addebito": lambda *args, **kwargs: None,
+            "_registra_ancora_economica": lambda *args: None,
+            "_unita_deepseek": lambda *args: 1,
+        }
+        for node in COMMERCIAL_TREE.body:
+            if isinstance(node, ast.FunctionDef) and node.name == "charge_credits":
+                exec(compile(ast.Module(body=[node], type_ignores=[]), "commercial_layer.py", "exec"), namespace)
+        for reason, cost in chat_costs.items():
+            namespace["charge_credits"](reason, amount=cost)
+        self.assertEqual(state["commercial_demo_credits"], 14)
+        self.assertNotIn("commercial_deepseek_charges", state)
+        self.assertEqual(ledger[0][1], -1)
+        namespace["charge_credits"]("scrittura_sezione", amount=1)
+        self.assertEqual(state["commercial_demo_credits"], 14)
+        self.assertEqual(state["commercial_demo_deepseek_units"], 1)
+
+    def test_niche_estimate_uses_gpt_tariff_when_deepseek_is_selected(self):
+        app = load_functions({"stima_crediti_per_cervello"}, {
+            "CHAT_SOLO_GPT_OPERAZIONI": frozenset({"chat_nicchia_report_iniziale"}),
+            "usa_deepseek_pro": lambda: True,
+            "re": re,
+        })
+        self.assertEqual(app["stima_crediti_per_cervello"]("chat_nicchia_report_iniziale", 5), 5)
 
     def test_failed_first_request_gets_one_free_retry(self):
         calls = []

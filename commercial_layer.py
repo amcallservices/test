@@ -42,9 +42,7 @@ STANDARD_BOOK_DEEPSEEK_UNITS = STANDARD_BOOK_GPT_CREDITS
 # restano gratuite.
 CREDIT_COSTS = {
     "scrittura_sezione": 1,
-    # Chat opzionale che guida la compilazione della sidebar: con GPT costa
-    # un credito per risposta; DeepSeek usa una unità interna, cioè un terzo
-    # di credito. Il messaggio dell'utente e l'avvio della chat restano gratuiti.
+    # Le due chat usano GPT: l'avvio e i messaggi dell'utente restano gratuiti.
     "chat_sidebar_guidata": 1,
     # Chat della nicchia: dialogo leggero, primo report con ricerca, analisi
     # approfondita e prompt conclusivo sono fasi separate e trasparenti.
@@ -86,6 +84,16 @@ CREDIT_COSTS = {
 # corrispondente azione GPT, senza usare decimali visibili all'utente.
 DEEPSEEK_UNITI_PER_CREDITO = 3
 
+# Le due chat usano GPT indipendentemente dal cervello scelto per il libro.
+# La stessa regola governa addebito, preventivo e registro economico.
+CHAT_SOLO_GPT_OPERAZIONI = frozenset({
+    "chat_sidebar_guidata",
+    "chat_nicchia_dialogo",
+    "chat_nicchia_report_iniziale",
+    "chat_nicchia_ricerca_approfondita",
+    "chat_nicchia_prompt_finale",
+})
+
 
 def _provider_ia_corrente() -> str:
     """Legge la scelta fatta nella sidebar senza memorizzarla nel codice."""
@@ -105,11 +113,6 @@ def _unita_deepseek(reason: str, amount: int) -> int:
     """
     amount = max(1, int(amount or 1))
     tariffe = {
-        "chat_sidebar_guidata": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
-        "chat_nicchia_dialogo": 1,               # 1 unità; 3 risposte = 1 credito DeepSeek
-        "chat_nicchia_report_iniziale": 5,       # 5 unità = 1⅔ crediti DeepSeek
-        "chat_nicchia_ricerca_approfondita": 8,  # 8 unità = 2⅔ crediti DeepSeek
-        "chat_nicchia_prompt_finale": 1,         # 1 unità = ⅓ di credito DeepSeek
         # Indice professionale DeepSeek: 4 + 6 = 10 unità interne,
         # equivalenti a 3⅓ crediti. Il terzo residuo resta custodito nel saldo.
         "ricerca_preliminare_indice": 4,
@@ -2092,7 +2095,7 @@ def _registra_ancora_economica(reference: str) -> None:
         return
     try:
         dettaglio = dettaglio_addebito_ai(reference, int(contesto.get("credits_requested", 0) or 0))
-        provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
+        provider = "DeepSeek V4 Pro" if usa_deepseek() and contesto.get("operation_requested") not in CHAT_SOLO_GPT_OPERAZIONI else "GPT-5.4 (OpenAI)"
         valore_eur = (
             dettaglio["deepseek_units"] * 0.02
             if provider.casefold().startswith("deepseek")
@@ -2164,7 +2167,7 @@ def charge_credits(reason: str = "ai_request", amount: int = AI_REQUEST_CREDITS)
         _salva_contesto_addebito(reference, reason, amount, user, billing_status="admin_exempt")
         _registra_ancora_economica(reference)
         return reference
-    if usa_deepseek():
+    if usa_deepseek() and reason not in CHAT_SOLO_GPT_OPERAZIONI:
         unita = _unita_deepseek(reason, amount)
         if _mode() == "demo" or not _supabase_ready():
             residue = int(st.session_state.get("commercial_demo_deepseek_units", 0))
@@ -2460,7 +2463,7 @@ def registra_utilizzo_ai(
         billing_reference = str(parent_reference or event_reference)
         contesto = _contesto_addebito(billing_reference)
         dettaglio = _dettaglio_utilizzo(usage)
-        provider = "DeepSeek V4 Pro" if usa_deepseek() else "GPT-5.4 (OpenAI)"
+        provider = "DeepSeek V4 Pro" if usa_deepseek() and operation not in CHAT_SOLO_GPT_OPERAZIONI else "GPT-5.4 (OpenAI)"
         costo = _dettaglio_costo_api_calcolato_usd(
             provider,
             model,

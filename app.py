@@ -81,6 +81,7 @@ from project_outline import (
 import project_memory as memoria_core
 from commercial_layer import (
     AI_REQUEST_CREDITS,
+    CHAT_SOLO_GPT_OPERAZIONI,
     CREDIT_COSTS,
     COMMERCIAL_TEST_VERSION,
     CommercialCreditError,
@@ -1696,9 +1697,9 @@ class EbookPDF(FPDF):
 # ======================================================================================================================
 # 5. CORE LOGIC DI STESURA E ANALISI QUALITÀ (POTENZIATA) E DECISIONE NEURALE
 # ======================================================================================================================
-def _client_e_modello_testuale(modello_richiesto=None):
+def _client_e_modello_testuale(modello_richiesto=None, *, forza_gpt=False):
     """Restituisce uno solo dei due cervelli, senza fallback nascosti."""
-    if usa_deepseek_pro():
+    if usa_deepseek_pro() and not forza_gpt:
         if not client_deepseek:
             raise RuntimeError("DeepSeek Pro non è configurato. Aggiungi DEEPSEEK_API_KEY nei Secrets di Streamlit oppure seleziona GPT-5.4.")
         return client_deepseek, MODELLO_DEEPSEEK_PRO
@@ -1756,25 +1757,28 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
     try:
         if addebita:
             riferimento = charge_credits(reason, amount=amount)
-        client_testuale, modello_effettivo = _client_e_modello_testuale(model or MODELLO_STESURA)
-        chat_guidata_deepseek = usa_deepseek_pro() and reason == "chat_sidebar_guidata"
-        prompt_nicchia_deepseek = usa_deepseek_pro() and reason == "chat_nicchia_prompt_finale"
+        usa_deepseek_richiesta = usa_deepseek_pro() and reason not in CHAT_SOLO_GPT_OPERAZIONI
+        client_testuale, modello_effettivo = _client_e_modello_testuale(
+            model or MODELLO_STESURA, forza_gpt=reason in CHAT_SOLO_GPT_OPERAZIONI
+        )
+        chat_guidata_deepseek = usa_deepseek_richiesta and reason == "chat_sidebar_guidata"
+        prompt_nicchia_deepseek = usa_deepseek_richiesta and reason == "chat_nicchia_prompt_finale"
         richiesta = {
             "model": modello_effettivo,
             "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
         }
         if max_completion_tokens:
-            richiesta["max_tokens" if usa_deepseek_pro() else "max_completion_tokens"] = max_completion_tokens
+            richiesta["max_tokens" if usa_deepseek_richiesta else "max_completion_tokens"] = max_completion_tokens
         # Per la stesura ordinaria DeepSeek Pro lavora senza ragionamento
         # esteso: testo più rapido, costo più prevedibile. I prompt editoriali
         # complessi attivano invece la modalità high.
         if chat_guidata_deepseek or prompt_nicchia_deepseek or (
-            usa_deepseek_pro() and reason == "verifica_attinenza_stesura_deepseek"
+            usa_deepseek_richiesta and reason == "verifica_attinenza_stesura_deepseek"
         ):
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
-        elif usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
+        elif usa_deepseek_richiesta and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
             richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
-        elif usa_deepseek_pro():
+        elif usa_deepseek_richiesta:
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
         if timeout_seconds is None and model in {
             MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
@@ -1786,7 +1790,13 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
                 timeout=float(timeout_seconds), max_retries=0
             )
         response = client_richiesta.chat.completions.create(**richiesta)
-        if chat_guidata_deepseek or prompt_nicchia_deepseek:
+        if reason in CHAT_SOLO_GPT_OPERAZIONI:
+            risposta_deepseek_guidata = response
+            scelta = response.choices[0]
+            testo = str(scelta.message.content or "").strip()
+            if scelta.finish_reason != "stop" or not testo:
+                raise ValueError("La risposta della chat è incompleta.")
+        elif chat_guidata_deepseek or prompt_nicchia_deepseek:
             risposta_deepseek_guidata = response
             scelta = response.choices[0]
             testo = str(scelta.message.content or "").strip()
@@ -1828,11 +1838,11 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if addebita and riferimento:
             refund_credits(riferimento, amount=amount)
         registra_esito_chiamata_ai(
-            risposta_deepseek_guidata if (chat_guidata_deepseek or prompt_nicchia_deepseek) else None,
+            risposta_deepseek_guidata if reason in CHAT_SOLO_GPT_OPERAZIONI or chat_guidata_deepseek or prompt_nicchia_deepseek else None,
             riferimento=riferimento,
             reason=reason,
             amount=amount if addebita else 0,
-            model=model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
+            model=MODELLO_EDITORIALE if reason in CHAT_SOLO_GPT_OPERAZIONI else model or (MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_STESURA),
             riuscita=False,
             rimborsata=bool(addebita and riferimento),
             errore=type(e).__name__,
@@ -1847,7 +1857,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
 
 def stima_crediti_per_cervello(azione_id, stima_gpt):
     """Mostra un preventivo coerente con il cervello selezionato."""
-    if not usa_deepseek_pro():
+    if azione_id in CHAT_SOLO_GPT_OPERAZIONI or not usa_deepseek_pro():
         return stima_gpt
     azione = str(azione_id).casefold()
     # Per i comandi che redigono più sezioni il valore ricevuto è del tipo
@@ -1861,12 +1871,6 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
         return "circa 3⅓"
     if "fonti" in azione:
         return "circa 1⅓"
-    if "chat_nicchia_report_iniziale" in azione:
-        return "1⅔"
-    if "chat_nicchia_ricerca_approfondita" in azione:
-        return "2⅔"
-    if "chat_nicchia_prompt_finale" in azione:
-        return "1/3"
     if any(parola in azione for parola in ("scrivi_tutto", "scrivi_sottocapitoli", "rielabora_sezioni_originalita")):
         return f"fino a {max(1, math.ceil(totale_gpt / 3))}"
     if any(parola in azione for parola in ("scrivi_sezione", "rigenera_sezione", "rielabora", "quiz", "esempi")):
@@ -1959,7 +1963,7 @@ def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
     if preventivo.get("azione_id") != azione_id:
         return False
 
-    motore_preventivo = "DeepSeek V4 Pro" if usa_deepseek_pro() else "GPT-5.4 (OpenAI)"
+    motore_preventivo = "DeepSeek V4 Pro" if usa_deepseek_pro() and azione_id not in CHAT_SOLO_GPT_OPERAZIONI else "GPT-5.4 (OpenAI)"
     st.warning(f"**Preventivo prima dell'avvio — {preventivo['stima']} crediti al massimo**")
     col_cosa_fa, col_tutela = st.columns(2)
     with col_cosa_fa:
@@ -3862,23 +3866,13 @@ def _ricerca_web_chat_nicchia(cronologia, lingua, fase):
             "Concludi con una raccomandazione chiara: approfondire, cambiare angolo oppure non procedere."
         )
     try:
-        if usa_deepseek_pro():
-            if not client_deepseek:
-                raise RuntimeError("DeepSeek non configurato")
-            risposta = client_deepseek.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
-                model=MODELLO_DEEPSEEK_PRO,
-                tools=[{"type": "web_search"}], tool_choice={"type": "web_search"},
-                instructions=consegna, input=cronologia,
-            )
-            modello = MODELLO_DEEPSEEK_PRO
-        else:
-            if not client_openai:
-                raise RuntimeError("GPT non configurato")
-            risposta = client_openai.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
-                model=MODELLO_ANALISI_FONTI,
-                tools=[{"type": "web_search_preview"}], input=f"{consegna}\n\nCONVERSAZIONE:\n{cronologia}",
-            )
-            modello = MODELLO_ANALISI_FONTI
+        if not client_openai:
+            raise RuntimeError("GPT non configurato")
+        risposta = client_openai.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
+            model=MODELLO_ANALISI_FONTI,
+            tools=[{"type": "web_search_preview"}], input=f"{consegna}\n\nCONVERSAZIONE:\n{cronologia}",
+        )
+        modello = MODELLO_ANALISI_FONTI
         testo = (getattr(risposta, "output_text", "") or "").strip()
         if not testo:
             raise RuntimeError("Risposta di ricerca vuota")
@@ -3887,7 +3881,7 @@ def _ricerca_web_chat_nicchia(cronologia, lingua, fase):
     except Exception as exc:
         refund_credits(riferimento, reason=f"{fase}_fallita", amount=costo)
         registra_esito_chiamata_ai(None, riferimento=riferimento, reason=fase, amount=costo,
-                                   model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+                                   model=MODELLO_ANALISI_FONTI,
                                    riuscita=False, rimborsata=True, errore=type(exc).__name__)
         return ""
 
@@ -3897,10 +3891,9 @@ def _prompt_finale_chat_nicchia(cronologia, lingua):
 PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE
 
 Il prompt deve trasferire alla Chat guidata solo le evidenze e le ipotesi prudenti emerse dalla ricerca, senza inventare dati. Deve chiederle di compilare esclusivamente i campi effettivamente disponibili nella sua sidebar e di domandare obbligatoriamente la personalizzazione del libro prima della scheda finale. Non creare indice né manoscritto. Rispondi nella lingua selezionata."""
-    if usa_deepseek_pro():
-        istruzioni += """
+    istruzioni += """
 
-Per DeepSeek produci un PROMPT OPERATIVO DETTAGLIATO, non una breve sintesi del report.
+Produci un PROMPT OPERATIVO DETTAGLIATO, non una breve sintesi del report.
 Apri esattamente con il titolo richiesto e organizza il testo copiabile in queste otto parti numerate, nella lingua selezionata:
 1. Identità del libro: tema preciso, mercato Amazon e lingua del libro, obiettivo e risultato realistico per il lettore.
 2. Lettore ideale: bisogni, livello di esperienza, motivazioni, dubbi e ostacoli; distingui osservazioni documentate e ipotesi.
@@ -3918,13 +3911,11 @@ Elabora ciascuna parte con dettagli concreti ricavati dalla conversazione e dai 
         contesto, sistema,
         addebita=True, amount=CREDIT_COSTS["chat_nicchia_prompt_finale"],
         # Il prompt deve poter riportare evidenze, cautele e istruzioni senza
-        # interrompersi a metà; il tariffario resta invariato.
-        max_completion_tokens=4200 if usa_deepseek_pro() else 2600,
+        # interrompersi a metà; il tariffario GPT resta invariato.
+        max_completion_tokens=4200,
         model=MODELLO_EDITORIALE, reason="chat_nicchia_prompt_finale",
-        timeout_seconds=150 if usa_deepseek_pro() else 90,
+        timeout_seconds=150,
     )
-    if not usa_deepseek_pro():
-        return risultato
     # Un'interruzione tecnica della prima risposta viene già rimborsata da
     # chiedi_gpt. Riproviamo una volta senza un secondo addebito.
     if not str(risultato or "").strip() or str(risultato).startswith("ERRORE:"):
@@ -8826,15 +8817,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.info(guida_chat["nota"])
         st.markdown(guida_chat["passi"])
         istruzioni_chat_guidata = {
-            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto per parlare direttamente con Scrittore Site. Usa lingua e cervello selezionati nella sidebar. L'avvio è gratuito; ogni risposta costa 1 credito con GPT oppure 1/3 di credito con DeepSeek (1 credito ogni 3 risposte). Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
-            "English": "**Optional alternative:** open the guided chat below to speak directly with Scrittore Site. It uses the language and brain selected in the sidebar. Starting is free; each reply costs 1 credit with GPT or 1/3 credit with DeepSeek (1 credit every 3 replies). At the end you may fill only empty fields automatically or replace existing ones.",
-            "Español": "**Alternativa opcional:** abre el chat guiado de abajo para hablar directamente con Scrittore Site. Usa el idioma y el motor elegidos en la barra lateral. Iniciar es gratuito; cada respuesta cuesta 1 crédito con GPT o 1/3 de crédito con DeepSeek (1 crédito cada 3 respuestas). Al final puedes completar solo campos vacíos o sustituir los existentes.",
-            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous pour dialoguer directement avec Scrittore Site. Il utilise la langue et le moteur choisis dans la barre latérale. Le démarrage est gratuit ; chaque réponse coûte 1 crédit avec GPT ou 1/3 de crédit avec DeepSeek (1 crédit toutes les 3 réponses). À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
-            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat und sprechen Sie direkt mit Scrittore Site. Er verwendet die in der Seitenleiste gewählte Sprache und KI. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt mit GPT oder 1/3 Punkt mit DeepSeek (1 Punkt je 3 Antworten). Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
-            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos pentru a vorbi direct cu Scrittore Site. Folosește limba și motorul selectate în bara laterală. Pornirea este gratuită; fiecare răspuns costă 1 credit cu GPT sau 1/3 credit cu DeepSeek (1 credit la 3 răspunsuri). La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
-            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже, чтобы общаться напрямую со Scrittore Site. Он использует язык и модель, выбранные на боковой панели. Запуск бесплатен; каждый ответ стоит 1 кредит с GPT или 1/3 кредита с DeepSeek (1 кредит за 3 ответа). В конце можно заполнить только пустые поля или заменить существующие.",
-            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه للتحدث مباشرة مع Scrittore Site. تستخدم اللغة والمحرك المختارين في الشريط الجانبي. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا مع GPT أو ثلث رصيد مع DeepSeek (رصيد واحد كل 3 ردود). في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
-            "中文": "**可选方式：** 打开下方的引导式聊天，直接与 Scrittore Site 对话。它使用侧边栏中选择的语言和模型。启动免费；GPT 每次回复消耗 1 积分，DeepSeek 每次消耗 1/3 积分（每 3 次回复消耗 1 积分）。最后可自动仅填写空字段，或替换已有字段。",
+            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto. Risponde nella lingua selezionata e usa sempre GPT, anche se per il libro hai scelto DeepSeek. L'avvio è gratuito; ogni risposta costa 1 credito. Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
+            "English": "**Optional alternative:** open the guided chat below. It replies in the selected language and always uses GPT, even if you selected DeepSeek for the book. Starting is free; each reply costs 1 credit. At the end you may fill only empty fields automatically or replace existing ones.",
+            "Español": "**Alternativa opcional:** abre el chat guiado de abajo. Responde en el idioma elegido y siempre usa GPT, aunque hayas elegido DeepSeek para el libro. Iniciar es gratuito; cada respuesta cuesta 1 crédito. Al final puedes completar solo campos vacíos o sustituir los existentes.",
+            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous. Il répond dans la langue choisie et utilise toujours GPT, même si vous avez choisi DeepSeek pour le livre. Le démarrage est gratuit ; chaque réponse coûte 1 crédit. À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
+            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat. Er antwortet in der gewählten Sprache und verwendet immer GPT, auch wenn für das Buch DeepSeek ausgewählt wurde. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt. Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
+            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos. Răspunde în limba selectată și folosește întotdeauna GPT, chiar dacă ai ales DeepSeek pentru carte. Pornirea este gratuită; fiecare răspuns costă 1 credit. La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
+            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже. Он отвечает на выбранном языке и всегда использует GPT, даже если для книги выбран DeepSeek. Запуск бесплатен; каждый ответ стоит 1 кредит. В конце можно заполнить только пустые поля или заменить существующие.",
+            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه. ترد باللغة المحددة وتستخدم GPT دائمًا، حتى إذا اخترت DeepSeek للكتاب. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا. في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
+            "中文": "**可选方式：** 打开下方的引导式聊天。它会用所选语言回复，并始终使用 GPT，即使图书选择了 DeepSeek。启动免费；每次回复消耗 1 积分。最后可自动仅填写空字段，或替换已有字段。",
         }
         st.info(istruzioni_chat_guidata.get(lingua_sel, istruzioni_chat_guidata["Italiano"]))
         istruzione_lingua_prompt = {
@@ -9161,21 +9152,16 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                     """,
                     height=0,
                 )
-            usa_deepseek_chat = usa_deepseek_pro()
-            costo_chat_visibile = (
-                "1/3 di credito (1 credito ogni 3 risposte)"
-                if usa_deepseek_chat else
-                f"{CREDIT_COSTS['chat_sidebar_guidata']} credito"
-            )
+            usa_deepseek_chat = False
+            costo_chat_visibile = f"{CREDIT_COSTS['chat_sidebar_guidata']} credito"
             cervello_chat = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
             st.info(
-                f"La chat usa il cervello selezionato: **{cervello_chat}**. "
+                "La Chat guidata usa sempre **GPT-5.4**, indipendentemente dal cervello scelto per il libro. "
                 f"L'avvio e i tuoi messaggi sono gratuiti; ogni risposta della chat costa "
                 f"**{costo_chat_visibile}**."
             )
             st.caption(
-                "Puoi cambiare cervello nella sidebar anche durante la conversazione: "
-                "la risposta successiva userà la nuova scelta e il relativo costo."
+                f"Per indice e stesura resta selezionato **{cervello_chat}**: la chat non cambia questa scelta."
             )
 
             if not st.session_state.get("chat_sidebar_attiva"):
@@ -9448,10 +9434,9 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
         testi_nicchia = _testi_chat_nicchia(lingua_sel)
         st.subheader(testi_nicchia["titolo"])
         st.info(testi_nicchia["istruzioni"])
-        cervello_nicchia = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
-        costo_dialogo_nicchia = "1/3 di credito (1 credito ogni 3 risposte)" if usa_deepseek_pro() else "1 credito"
+        costo_dialogo_nicchia = "1 credito"
         st.caption(
-            f"Cervello selezionato: **{cervello_nicchia}**. Avvio e messaggi dell'utente gratuiti; "
+            "La Chat della nicchia usa sempre **GPT-5.4**, anche per ricerca e prompt finale. Avvio e messaggi dell'utente gratuiti; "
             f"ogni risposta di dialogo costa **{costo_dialogo_nicchia}**. Le fasi di ricerca mostrano un preventivo prima dell'avvio."
         )
         if not st.session_state.get("chat_nicchia_attiva"):
@@ -9530,26 +9515,20 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                 ):
                     with st.spinner("Preparazione del prompt finale in corso..."):
                         prompt_finale = _prompt_finale_chat_nicchia(messaggi_nicchia, lingua_sel)
-                    if (not str(prompt_finale or "").startswith("ERRORE:")
-                            and (not usa_deepseek_pro() or bool(str(prompt_finale or "").strip()))):
+                    if str(prompt_finale or "").strip() and not str(prompt_finale).startswith("ERRORE:"):
                         messaggi_nicchia.append({"role": "assistant", "content": prompt_finale})
                         st.session_state["chat_nicchia_messaggi"] = messaggi_nicchia
-                        if usa_deepseek_pro():
-                            st.session_state["chat_nicchia_prompt_da_copiare"] = prompt_finale
+                        st.session_state["chat_nicchia_prompt_da_copiare"] = prompt_finale
                         st.session_state["chat_nicchia_fase"] = "prompt_finale"
                         st.rerun()
                     st.error(testi_nicchia["errore"])
             elif fase_nicchia == "prompt_finale":
                 st.success(testi_nicchia["pronto"])
-                if usa_deepseek_pro():
-                    # Recupera anche le sessioni già concluse prima della
-                    # correzione, quando il titolo era formattato o tradotto.
-                    prompt_da_copiare = st.session_state.get("chat_nicchia_prompt_da_copiare", "") or next(
-                        (voce.get("content", "") for voce in reversed(messaggi_nicchia)
-                         if voce.get("role") == "assistant"), ""
-                    )
-                else:
-                    prompt_da_copiare = next((voce.get("content", "") for voce in reversed(messaggi_nicchia) if voce.get("role") == "assistant" and "PROMPT FINALE" in voce.get("content", "").upper()), "")
+                # Compatibile anche con chat concluse prima del cambio di motore.
+                prompt_da_copiare = st.session_state.get("chat_nicchia_prompt_da_copiare", "") or next(
+                    (voce.get("content", "") for voce in reversed(messaggi_nicchia)
+                     if voce.get("role") == "assistant"), ""
+                )
                 if prompt_da_copiare:
                     st.code(prompt_da_copiare, language=None)
             st.button(testi_nicchia["reset"], key="reset_chat_nicchia", on_click=reimposta_chat_nicchia, use_container_width=True)
