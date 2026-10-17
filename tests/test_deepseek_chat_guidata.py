@@ -131,7 +131,9 @@ class DeepSeekBillingTests(unittest.TestCase):
         )
         client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=self.create_response)))
         client.with_options = lambda **kwargs: client
+        self.state = {}
         namespace = {
+            "st": SimpleNamespace(session_state=self.state),
             "AI_REQUEST_CREDITS": 1,
             "MODELLO_STESURA": "gpt-mini",
             "MODELLO_EDITORIALE": "gpt-editorial",
@@ -194,6 +196,66 @@ class DeepSeekBillingTests(unittest.TestCase):
         self.assertNotIn("extra_body", self.requests[0])
         self.assertEqual(self.requests[0]["max_completion_tokens"], 3000)
         self.assertEqual(self.refunds, [])
+
+    def test_niche_final_uses_output_budget_without_thinking(self):
+        detailed = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + (
+            "1. Mercato italiano e libro sulle auto usate: controlli verificabili.\n" * 35
+        )
+        self.answer.choices[0].message.content = detailed
+        result = self.app["chiedi_gpt"](
+            "Report della nicchia", "Crea prompt", model="gpt-editorial",
+            reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
+        )
+        self.assertEqual(result, detailed.strip())
+        self.assertEqual(self.requests[0]["extra_body"], {"thinking": {"type": "disabled"}})
+        self.assertEqual(self.requests[0]["max_tokens"], 4200)
+        self.assertEqual(self.refunds, [])
+
+    def test_short_or_truncated_niche_final_is_refunded(self):
+        self.answer.choices[0].message.content = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\nIdea: auto usate."
+        self.assertTrue(self.app["chiedi_gpt"](
+            "Report", "Crea prompt", model="gpt-editorial",
+            reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
+        ).startswith("ERRORE:"))
+        self.assertEqual(len(self.refunds), 1)
+        self.answer.choices[0].message.content = "PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE\n" + "Dettaglio. " * 250
+        self.answer.choices[0].finish_reason = "length"
+        self.assertTrue(self.app["chiedi_gpt"](
+            "Report", "Crea prompt", model="gpt-editorial",
+            reason="chat_nicchia_prompt_finale", max_completion_tokens=4200,
+        ).startswith("ERRORE:"))
+        self.assertEqual(len(self.refunds), 2)
+
+    def test_deepseek_writing_reference_is_available_for_unsaved_section_refund(self):
+        references = []
+        self.state["_riferimenti_stesura_deepseek_corrente"] = references
+        self.app["chiedi_gpt"]("Scrivi", "System", reason="generazione_testo")
+        self.assertEqual(references, ["charged-reference"])
+
+
+class DeepSeekNichePromptTests(unittest.TestCase):
+    def test_only_deepseek_gets_detailed_eight_part_brief(self):
+        requests = []
+        deepseek = [True]
+        namespace = {
+            "usa_deepseek_pro": lambda: deepseek[0],
+            "_cronologia_chat_nicchia": lambda conversation: "Report confermato",
+            "CREDIT_COSTS": {"chat_nicchia_prompt_finale": 1},
+            "MODELLO_EDITORIALE": "gpt-editorial",
+            "chiedi_gpt": lambda prompt, system, **kwargs: requests.append((system, kwargs)) or "ok",
+        }
+        app = load_functions({"_prompt_finale_chat_nicchia"}, namespace)
+        app["_prompt_finale_chat_nicchia"]([], "Italiano")
+        deepseek_system, deepseek_options = requests[-1]
+        self.assertIn("otto parti numerate", deepseek_system)
+        self.assertIn("recensioni positive e negative", deepseek_system)
+        self.assertIn("chiedi SEMPRE se vuole personalizzare", deepseek_system)
+        self.assertEqual(deepseek_options["max_completion_tokens"], 4200)
+        deepseek[0] = False
+        app["_prompt_finale_chat_nicchia"]([], "Italiano")
+        gpt_system, gpt_options = requests[-1]
+        self.assertNotIn("otto parti numerate", gpt_system)
+        self.assertEqual(gpt_options["max_completion_tokens"], 2600)
 
 
 if __name__ == "__main__":

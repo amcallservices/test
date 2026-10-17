@@ -1751,12 +1751,14 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
     riferimento = uuid.uuid4().hex
     risposta_deepseek_guidata = None
     chat_guidata_deepseek = False
+    prompt_nicchia_deepseek = False
     inizio = time.perf_counter()
     try:
         if addebita:
             riferimento = charge_credits(reason, amount=amount)
         client_testuale, modello_effettivo = _client_e_modello_testuale(model or MODELLO_STESURA)
         chat_guidata_deepseek = usa_deepseek_pro() and reason == "chat_sidebar_guidata"
+        prompt_nicchia_deepseek = usa_deepseek_pro() and reason == "chat_nicchia_prompt_finale"
         richiesta = {
             "model": modello_effettivo,
             "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
@@ -1766,7 +1768,9 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         # Per la stesura ordinaria DeepSeek Pro lavora senza ragionamento
         # esteso: testo più rapido, costo più prevedibile. I prompt editoriali
         # complessi attivano invece la modalità high.
-        if chat_guidata_deepseek:
+        if chat_guidata_deepseek or prompt_nicchia_deepseek or (
+            usa_deepseek_pro() and reason == "verifica_attinenza_stesura_deepseek"
+        ):
             richiesta["extra_body"] = {"thinking": {"type": "disabled"}}
         elif usa_deepseek_pro() and model in {MODELLO_EDITORIALE, MODELLO_ANALISI_FONTI, MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO}:
             richiesta["extra_body"] = {"thinking": {"type": "enabled", "reasoning_effort": "high"}}
@@ -1782,17 +1786,20 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
                 timeout=float(timeout_seconds), max_retries=0
             )
         response = client_richiesta.chat.completions.create(**richiesta)
-        if chat_guidata_deepseek:
+        if chat_guidata_deepseek or prompt_nicchia_deepseek:
             risposta_deepseek_guidata = response
             scelta = response.choices[0]
             testo = str(scelta.message.content or "").strip()
             if scelta.finish_reason != "stop" or not testo:
-                raise ValueError("La risposta DeepSeek della chat guidata è incompleta.")
-            # DeepSeek talvolta numera le etichette della scheda; la sidebar
-            # accetta le stesse etichette senza il numero iniziale.
-            testo = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", testo)
-            if validatore_deepseek is not None and not validatore_deepseek(testo):
-                raise ValueError("La scheda DeepSeek non contiene tutti i campi della sidebar.")
+                raise ValueError("La risposta DeepSeek è incompleta.")
+            if chat_guidata_deepseek:
+                # DeepSeek talvolta numera le etichette della scheda; la sidebar
+                # accetta le stesse etichette senza il numero iniziale.
+                testo = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", testo)
+                if validatore_deepseek is not None and not validatore_deepseek(testo):
+                    raise ValueError("La scheda DeepSeek non contiene tutti i campi della sidebar.")
+            elif not testo.upper().startswith("PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE") or len(testo) < 1600:
+                raise ValueError("Il prompt finale DeepSeek è troppo breve o non è copiabile.")
         else:
             testo = response.choices[0].message.content.strip()
         registra_esito_chiamata_ai(
@@ -1807,6 +1814,10 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             durata_ms=round((time.perf_counter() - inizio) * 1000),
             retry_di=retry_di,
         )
+        if addebita and reason == "generazione_testo" and usa_deepseek_pro():
+            riferimenti_sezione = st.session_state.get("_riferimenti_stesura_deepseek_corrente")
+            if isinstance(riferimenti_sezione, list):
+                riferimenti_sezione.append(riferimento)
         prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
         righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
         return "\n".join(righe).strip()
@@ -1819,7 +1830,7 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
         if addebita and riferimento:
             refund_credits(riferimento, amount=amount)
         registra_esito_chiamata_ai(
-            risposta_deepseek_guidata if chat_guidata_deepseek else None,
+            risposta_deepseek_guidata if (chat_guidata_deepseek or prompt_nicchia_deepseek) else None,
             riferimento=riferimento,
             reason=reason,
             amount=amount if addebita else 0,
@@ -3888,13 +3899,29 @@ def _prompt_finale_chat_nicchia(cronologia, lingua):
 PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE
 
 Il prompt deve trasferire alla Chat guidata solo le evidenze e le ipotesi prudenti emerse dalla ricerca, senza inventare dati. Deve chiederle di compilare esclusivamente i campi effettivamente disponibili nella sua sidebar e di domandare obbligatoriamente la personalizzazione del libro prima della scheda finale. Non creare indice né manoscritto. Rispondi nella lingua selezionata."""
+    if usa_deepseek_pro():
+        istruzioni += """
+
+Per DeepSeek produci un PROMPT OPERATIVO DETTAGLIATO, non una breve sintesi del report.
+Apri esattamente con il titolo richiesto e organizza il testo copiabile in queste otto parti numerate, nella lingua selezionata:
+1. Identità del libro: tema preciso, mercato Amazon e lingua del libro, obiettivo e risultato realistico per il lettore.
+2. Lettore ideale: bisogni, livello di esperienza, motivazioni, dubbi e ostacoli; distingui osservazioni documentate e ipotesi.
+3. Domanda e concorrenza: solo segnali emersi davvero dalla ricerca, con URL disponibili; BSR, prezzi e recensioni solo se verificati.
+4. Problemi e desideri tratti dalle recensioni positive e negative, quando presenti; altrimenti indica esplicitamente che vanno verificati.
+5. Angolo originale: differenziazione lecita rispetto ai libri osservati, senza imitare titoli, autori, strutture o testi esistenti.
+6. Perimetro dei contenuti: argomenti essenziali, livello di approfondimento, esempi utili, temi da evitare e cautele sulle affermazioni non verificate.
+7. Preferenze editoriali già dette dall'utente: tono, destinatari, vincoli e idee personali; per i dati mancanti chiedi conferma senza inventarli.
+8. Istruzione finale alla Chat guidata: dialoga con l'utente, chiedi SEMPRE se vuole personalizzare il libro e come; se vuole ma non sa come, proponi tu una personalizzazione coerente. Solo dopo prepara i valori compatibili con i campi realmente selezionabili nella sidebar; non creare indice o manoscritto.
+
+Elabora ciascuna parte con dettagli concreti ricavati dalla conversazione e dai report. Non comprimere tutto in poche frasi e non ripetere formule generiche per allungare il testo. Se una prova manca, dichiaralo e indica cosa verificare; non trasformare le ipotesi in fatti. Concludi con una richiesta chiara alla Chat guidata di avviare il dialogo, non di compilare subito la scheda."""
     return chiedi_gpt(
         _cronologia_chat_nicchia(cronologia), istruzioni + f"\nLingua selezionata: {lingua}.",
         addebita=True, amount=CREDIT_COSTS["chat_nicchia_prompt_finale"],
         # Il prompt deve poter riportare evidenze, cautele e istruzioni senza
         # interrompersi a metà; il tariffario resta invariato.
-        max_completion_tokens=2600, model=MODELLO_EDITORIALE,
-        reason="chat_nicchia_prompt_finale", timeout_seconds=90,
+        max_completion_tokens=4200 if usa_deepseek_pro() else 2600,
+        model=MODELLO_EDITORIALE, reason="chat_nicchia_prompt_finale",
+        timeout_seconds=150 if usa_deepseek_pro() else 90,
     )
 
 # Memoria unica del progetto. È la sola fonte autorevole per sidebar, indice,
@@ -6097,6 +6124,61 @@ TESTO GIÀ APPROVATO NELLA FORMA:
     return pulisci_testo_editoriale(testo)
 
 
+def verifica_attinenza_sezione_deepseek(testo, sezione, indice, trama, obiettivo, lingua):
+    """Controllo semantico prudente: non confonde un esempio utile con un cambio di tema.
+
+    Restituisce ``None`` se il controllo tecnico non è disponibile, così un
+    errore del verificatore non distrugge una sezione già generata.
+    """
+    testo = str(testo or "").strip()
+    centro = max(0, len(testo) // 2 - 900)
+    campione = "\n[...]\n".join((testo[:1800], testo[centro:centro + 1800], testo[-1800:]))
+    indice_testo = str(indice or "")
+    posizione = indice_testo.casefold().find(str(sezione or "").casefold())
+    indice_vicino = indice_testo[max(0, posizione - 900):posizione + 1900] if posizione >= 0 else indice_testo[:2800]
+    richiesta = f"""Valuta SOLO la pertinenza tematica del testo rispetto al libro e alla voce corrente dell'indice.
+Titolo della sezione: {sezione}
+Tema del libro dalla sidebar: {trama}
+Obiettivo del libro: {obiettivo}
+Indice vicino alla voce corrente (contesto, non una lista di temi da svolgere tutti): {indice_vicino}
+Lingua del manoscritto: {lingua}
+
+ESTRATTI DELLA SEZIONE:
+{campione}
+
+Rispondi con una sola riga: PERTINENTE oppure FUORI_TEMA: motivo breve.
+Usa FUORI_TEMA soltanto se il tema dominante è chiaramente un altro libro o una
+voce diversa dell'indice. Un esempio, un'introduzione, un flashback o una
+metafora collegati alla sezione sono PERTINENTI. Non valutare stile o lunghezza."""
+    esito = chiedi_gpt(
+        richiesta, "Sei un verificatore editoriale prudente. Rispondi solo PERTINENTE o FUORI_TEMA: motivo.",
+        addebita=False, max_completion_tokens=120, model=MODELLO_STESURA,
+        reason="verifica_attinenza_stesura_deepseek", timeout_seconds=45,
+    )
+    prima_riga = str(esito or "").strip().splitlines()[0].strip().upper() if str(esito or "").strip() else ""
+    if prima_riga.startswith("FUORI_TEMA"):
+        return False
+    if prima_riga.startswith("PERTINENTE"):
+        return True
+    return None
+
+
+def rafforza_focus_sezione_deepseek(prompt, sezione, trama, obiettivo):
+    """L'ultima istruzione rende il brief più visibile nel prompt lungo di DeepSeek."""
+    return prompt + f"""
+
+PRIORITÀ TEMATICA FINALE — DEEPSEEK
+Libro: {trama}
+Voce ESATTA dell'indice da scrivere: {sezione}
+Obiettivo del libro: {obiettivo}
+Tratta soltanto l'aspetto di questo tema assegnato alla voce corrente.
+La memoria delle sezioni precedenti serve a evitare ripetizioni, non a cambiare
+argomento. Le fonti o gli esempi non pertinenti vanno ignorati. Se il titolo è
+generico, interpretalo nel contesto del libro e delle voci vicine dell'indice.
+Prima di concludere, verifica che inizio, sviluppo e conclusione rispondano
+alla stessa voce e al tema del libro. Non mostrare questa verifica."""
+
+
 def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
                                  obiettivo, lingua, approfondimenti, profilo_lunghezza):
     """Scrive e salva una sezione con un recupero indipendente dai controlli.
@@ -6111,11 +6193,22 @@ def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stil
         sezione, indice, trama, genere, tipologia, stile, punto_di_vista,
         obiettivo, lingua, approfondimenti, profilo_lunghezza,
     )
+    focus_deepseek = usa_deepseek_pro()
+    controllo_deepseek = (
+        focus_deepseek
+        and tipo_sezione_editoriale(sezione) not in {"prefazione", "parte"}
+        and not sezione_simulazione_test_prep(sezione, indice, genere)
+    )
+    if focus_deepseek:
+        prompt = rafforza_focus_sezione_deepseek(prompt, sezione, trama, obiettivo)
+    riferimenti_stesura = []
     limite_output = PROFILI_LUNGHEZZA_STESURA.get(
         profilo_lunghezza,
         PROFILI_LUNGHEZZA_STESURA["Standard KDP"],
     )["max_completion_tokens"]
     errore_principale = None
+    if controllo_deepseek:
+        st.session_state["_riferimenti_stesura_deepseek_corrente"] = riferimenti_stesura
     try:
         contenuto_generato = genera_contenuto_editoriale(
             prompt, S_PROMPT, sezione, indice, trama, genere, obiettivo,
@@ -6124,6 +6217,9 @@ def scrivi_contenuto_dettagliato(sezione, indice, trama, genere, tipologia, stil
     except Exception as exc:
         errore_principale = exc
         contenuto_generato = ""
+    finally:
+        if controllo_deepseek:
+            st.session_state.pop("_riferimenti_stesura_deepseek_corrente", None)
 
     testo_pulito = pulisci_testo_editoriale(contenuto_generato).strip()
     testo_valido = (
@@ -6147,6 +6243,8 @@ o punto esclamativo. Non passare alla sezione successiva e non riassumere
 l'indice. Restituisci un testo autonomo di almeno 80 parole.
 """
         try:
+            if controllo_deepseek:
+                st.session_state["_riferimenti_stesura_deepseek_corrente"] = riferimenti_stesura
             recupero = genera_sezione_con_ripetizione(
                 prompt_recupero,
                 S_PROMPT,
@@ -6167,10 +6265,52 @@ l'indice. Restituisci un testo autonomo di almeno 80 parole.
         except Exception as exc:
             if errore_principale is None:
                 errore_principale = exc
+        finally:
+            if controllo_deepseek:
+                st.session_state.pop("_riferimenti_stesura_deepseek_corrente", None)
 
     if not testo_valido:
         dettaglio = str(errore_principale or "risposta non valida")
         raise RuntimeError(f"nessun testo completo restituito per '{sezione}': {dettaglio}")
+
+    if controllo_deepseek:
+        attinente = verifica_attinenza_sezione_deepseek(
+            testo_pulito, sezione, indice, trama, obiettivo, lingua,
+        )
+        if attinente is False:
+            # La correzione è interna e non addebita una seconda stesura.
+            # Non passiamo la bozza fuori tema al modello, per non contaminarlo.
+            for _ in range(2):
+                try:
+                    nuova_bozza, _conclusa = genera_bozza_sezione_con_chiusura(
+                        prompt + "\n\nLa bozza precedente non era pertinente. Riscrivi da zero solo la voce corrente, "
+                        "senza cambiare argomento e senza commentare la correzione.",
+                        S_PROMPT, sezione, lingua, max_completion_tokens=limite_output,
+                        addebita=False,
+                    )
+                    nuova_bozza = pulisci_testo_editoriale(nuova_bozza).strip()
+                    if (len(nuova_bozza.split()) < max(30, int(len(testo_pulito.split()) * 0.65))
+                            or motivo_chiusura_tecnica(nuova_bozza)):
+                        continue
+                    if verifica_attinenza_sezione_deepseek(
+                            nuova_bozza, sezione, indice, trama, obiettivo, lingua) is True:
+                        testo_pulito = nuova_bozza
+                        break
+                except Exception:
+                    continue
+            else:
+                for riferimento in dict.fromkeys(riferimenti_stesura):
+                    refund_credits(riferimento, reason="stesura_deepseek_fuori_tema", amount=AI_REQUEST_CREDITS)
+                raise RuntimeError(
+                    f"La sezione '{sezione}' non è risultata attinente al tema del libro. "
+                    "Non è stata salvata né ha sostituito una versione precedente. "
+                    + ("È stato richiesto il rimborso dell'addebito della stesura."
+                       if riferimenti_stesura else "Controlla il saldo prima di riprovare.")
+                )
+        elif attinente is None:
+            st.session_state.setdefault("avvisi_qualita_sezioni", {})[sezione] = (
+                "Il controllo automatico di pertinenza DeepSeek non è riuscito: verifica questa sezione prima dell'esportazione."
+            )
 
     # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
     # stabile della stesura completa prima del rerun della coda automatica.
