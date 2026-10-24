@@ -1347,7 +1347,20 @@ section[data-testid="stSidebar"] .stTextInput input,
 section[data-testid="stSidebar"] .stTextArea textarea,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background: #16263d !important; border-color: #385574 !important;
-    border-radius: 9px !important;
+    border-radius: 9px !important; color: #f4f8ff !important;
+    caret-color: #f4f8ff !important;
+}
+section[data-testid="stSidebar"] .stTextInput input::placeholder,
+section[data-testid="stSidebar"] .stTextArea textarea::placeholder {
+    color: #b8cce2 !important; opacity: 1 !important;
+}
+section[data-testid="stSidebar"] .stTextInput input:disabled,
+section[data-testid="stSidebar"] .stTextArea textarea:disabled {
+    color: #d5e4f4 !important; -webkit-text-fill-color: #d5e4f4 !important;
+    opacity: 1 !important;
+}
+section[data-testid="stSidebar"] div[data-baseweb="select"] span {
+    color: #f4f8ff !important;
 }
 .stButton>button {
     width: 100% !important; border-radius: 10px !important; height: 3.15em !important;
