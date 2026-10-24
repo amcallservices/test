@@ -92,6 +92,8 @@ CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     "chat_nicchia_report_iniziale",
     "chat_nicchia_ricerca_approfondita",
     "chat_nicchia_prompt_finale",
+    "trascrizione_chat_sidebar_guidata",
+    "trascrizione_chat_nicchia",
 })
 
 
@@ -2294,6 +2296,7 @@ def _dettaglio_utilizzo(usage: Any) -> dict[str, int]:
         "output_tokens": _numero_utilizzo(usage, "completion_tokens", "output_tokens"),
         "cached_input_tokens": _numero_utilizzo(dettagli_input, "cached_tokens", "cache_read_input_tokens", "prompt_cache_hit_tokens"),
         "reasoning_tokens": _numero_utilizzo(dettagli_output, "reasoning_tokens"),
+        "audio_seconds": _numero_utilizzo(usage, "audio_seconds", "seconds"),
     }
 
 
@@ -2351,6 +2354,18 @@ def _dettaglio_costo_api_calcolato_usd(
 ) -> dict[str, Any]:
     """Calcola e separa le componenti del costo API, senza toccare i crediti."""
     modello = str(model or "").casefold()
+    if modello == "gpt-transcribe":
+        # Tariffa audio per minuto; la registrazione è gratuita in crediti utente.
+        costo_audio = round(max(0, int(token.get("audio_seconds", 0))) * 0.0045 / 60, 8)
+        return {
+            "total_usd": costo_audio,
+            "input_usd": costo_audio,
+            "cached_input_usd": 0.0,
+            "output_usd": 0.0,
+            "web_usd": 0.0,
+            "pricing_band": "GPT transcription · audio",
+            "pricing_version": "openai-gpt-transcribe-2026-10-24",
+        }
     input_tokens = max(0, int(token.get("input_tokens", 0)))
     output_tokens = max(0, int(token.get("output_tokens", 0)))
     cached = min(input_tokens, max(0, int(token.get("cached_input_tokens", 0))))

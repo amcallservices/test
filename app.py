@@ -79,6 +79,7 @@ from project_outline import (
     superamenti_budget_editoriale as superamenti_budget_editoriale_core,
 )
 import project_memory as memoria_core
+from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 from commercial_layer import (
     AI_REQUEST_CREDITS,
     CHAT_SOLO_GPT_OPERAZIONI,
@@ -1047,7 +1048,7 @@ TRADUZIONI = {
         "lbl_tit": "Titolo del Libro", "lbl_auth": "Nome Autore", "lbl_lang": "Lingua", 
         "lbl_gen": "Genere Letterario", "lbl_style": "Tipologia Scrittura", "lbl_plot": "Trama o Argomento",
         "lbl_narrative": "Stile di Racconto", "lbl_goal": "Obiettivo del Libro", "lbl_pov": "Punto di Vista (Pronome)",
-        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrittura & Quiz", "📖 3. Anteprima", "📑 4. Importa / Esporta / Copyright"],
+        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrivi il libro", "📖 3. Anteprima", "📑 4. Importa / Esporta / Copyright"],
         "btn_idx": "🚀 Genera Indice Professionale", "btn_sync": "✅ Salva e Sincronizza Capitoli",
         "lbl_sec": "Seleziona sezione:", "btn_write": "✨ SCRIVI CONTENUTO (Dettagliato)",
         "btn_quiz": "🧠 AGGIUNGI QUIZ AL LIBRO", "btn_edit": "🚀 RIELABORA CON IA",
@@ -1060,7 +1061,7 @@ TRADUZIONI = {
     "English": {
         "side_tit": "⚙️ Editor Setup", "lbl_tit": "Book Title", "lbl_auth": "Author Name", "lbl_lang": "Language", 
         "lbl_gen": "Genre", "lbl_style": "Writing Style", "lbl_plot": "Plot", "lbl_narrative": "Narrative Style", "lbl_goal": "Book Goal", "lbl_pov": "Point of View (Pronoun)",
-        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write & Quiz", "📖 3. Preview", "📑 4. Import / Export / Copyright"],
+        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write the book", "📖 3. Preview", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generate Index", "btn_sync": "✅ Sync Chapters", "lbl_sec": "Select section:",
         "btn_write": "✨ WRITE CONTENT", "btn_quiz": "🧠 ADD QUIZ", "btn_edit": "🚀 REWRITE",
         "msg_run": "Native expert analyzing hierarchy, style and goal...", "preface": "Preface", "ack": "Acknowledgements",
@@ -1071,7 +1072,7 @@ TRADUZIONI = {
     "Español": {
         "side_tit": "⚙️ Configuración del Editor", "lbl_tit": "Título del Libro", "lbl_auth": "Nombre del Autor", "lbl_lang": "Idioma", 
         "lbl_gen": "Género Literario", "lbl_style": "Estilo de Escritura", "lbl_plot": "Trama o Argumento", "lbl_narrative": "Estilo Narrativo", "lbl_goal": "Objetivo del Libro", "lbl_pov": "Punto de Vista (Pronombre)",
-        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escritura y Quiz", "📖 3. Vista Previa", "📑 4. Importar / Exportar / Copyright"],
+        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escribe el libro", "📖 3. Vista Previa", "📑 4. Importar / Exportar / Copyright"],
         "btn_idx": "🚀 Generar Índice Profesional", "btn_sync": "✅ Guardar y Sincronizar", "lbl_sec": "Seleccionar sección:",
         "btn_write": "✨ ESCRIBIR CONTENIDO", "btn_quiz": "🧠 AÑADIR QUIZ", "btn_edit": "🚀 REESCRIBIR",
         "msg_run": "Analizando jerarquía y estilo...", "preface": "Prefacio", "ack": "Agradecimientos",
@@ -1081,7 +1082,7 @@ TRADUZIONI = {
     "Français": {
         "side_tit": "⚙️ Configuration de l'Éditeur", "lbl_tit": "Titre du Livre", "lbl_auth": "Nom de l'Auteur", "lbl_lang": "Langue", 
         "lbl_gen": "Genre Littéraire", "lbl_style": "Style d'Écriture", "lbl_plot": "Intrigue ou Sujet", "lbl_narrative": "Style Narratif", "lbl_goal": "Objectif du Livre", "lbl_pov": "Point de Vue (Pronom)",
-        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écriture & Quiz", "📖 3. Aperçu", "📑 4. Importer / Exporter / Copyright"],
+        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écrire le livre", "📖 3. Aperçu", "📑 4. Importer / Exporter / Copyright"],
         "btn_idx": "🚀 Générer l'Index", "btn_sync": "✅ Synchroniser", "lbl_sec": "Sélectionner la section:",
         "btn_write": "✨ ÉCRIRE LE CONTENU", "btn_quiz": "🧠 AJOUTER UN QUIZ", "btn_edit": "🚀 RÉÉCRIRE",
         "msg_run": "Analyse de la hiérarchie et du style...", "preface": "Préface", "ack": "Remerciements",
@@ -1091,7 +1092,7 @@ TRADUZIONI = {
     "Deutsch": {
         "side_tit": "⚙️ Editor-Setup", "lbl_tit": "Buchtitel", "lbl_auth": "Autorenname", "lbl_lang": "Sprache", 
         "lbl_gen": "Genre", "lbl_style": "Schreibstil", "lbl_plot": "Handlung", "lbl_narrative": "Erzählstil", "lbl_goal": "Buchziel", "lbl_pov": "Erzählperspektive (Pronomen)",
-        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Schreiben & Quiz", "📖 3. Vorschau", "📑 4. Importieren / Exportieren / Copyright"],
+        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Buch schreiben", "📖 3. Vorschau", "📑 4. Importieren / Exportieren / Copyright"],
         "btn_idx": "🚀 Index Generieren", "btn_sync": "✅ Synchronisieren", "lbl_sec": "Abschnitt wählen:",
         "btn_write": "✨ INHALT SCHREIBEN", "btn_quiz": "🧠 QUIZ HINZUFÜGEN", "btn_edit": "🚀 UMSCHREIBEN",
         "msg_run": "Analysiere Hierarchie und Stil...", "preface": "Vorwort", "ack": "Danksagungen",
@@ -1101,7 +1102,7 @@ TRADUZIONI = {
     "Română": {
         "side_tit": "⚙️ Configurare Editor", "lbl_tit": "Titlul Cărții", "lbl_auth": "Nume Autor", "lbl_lang": "Limbă", 
         "lbl_gen": "Gen Literar", "lbl_style": "Stil de Scriere", "lbl_plot": "Subiect", "lbl_narrative": "Stil Narativ", "lbl_goal": "Obiectivul Cărții", "lbl_pov": "Punct de Vedere (Pronume)",
-        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scriere & Quiz", "📖 3. Previzualizare", "📑 4. Import / Export / Copyright"],
+        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scrie cartea", "📖 3. Previzualizare", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generare Cuprins", "btn_sync": "✅ Sincronizare", "lbl_sec": "Selectează secțiunea:",
         "btn_write": "✨ SCRIE CONȚINUT", "btn_quiz": "🧠 ADAUGĂ QUIZ", "btn_edit": "🚀 RESCRIE",
         "msg_run": "Se analizează ierarhia și stilul...", "preface": "Prefață", "ack": "Mulțumiri",
@@ -1111,7 +1112,7 @@ TRADUZIONI = {
     "Русский": {
         "side_tit": "⚙️ Настройки Редактора", "lbl_tit": "Название Книги", "lbl_auth": "Имя Автора", "lbl_lang": "Язык", 
         "lbl_gen": "Жанр", "lbl_style": "Стиль Написания", "lbl_plot": "Сюжет", "lbl_narrative": "Стиль Повествования", "lbl_goal": "Цель Книги", "lbl_pov": "Точка зрения (Местоимение)",
-        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Текст и Тест", "📖 3. Просмотр", "📑 4. Импорт / Экспорт / Copyright"],
+        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Написать книгу", "📖 3. Просмотр", "📑 4. Импорт / Экспорт / Copyright"],
         "btn_idx": "🚀 Создать Оглавление", "btn_sync": "✅ Синхронизировать", "lbl_sec": "Выберите раздел:",
         "btn_write": "✨ НАПИСАТЬ ТЕКСТ", "btn_quiz": "🧠 ДОБАВИТЬ ТЕСТ", "btn_edit": "🚀 ПЕРЕПИСАТЬ",
         "msg_run": "Анализ иерархии и стиля...", "preface": "Предисловие", "ack": "Благодарности",
@@ -1121,7 +1122,7 @@ TRADUZIONI = {
     "العربية": {
         "side_tit": "⚙️ إعدادات المحرر", "lbl_tit": "عنوان الكتاب", "lbl_auth": "اسم المؤلف", "lbl_lang": "اللغة", 
         "lbl_gen": "النوع الأدبي", "lbl_style": "أسلوب الكتابة", "lbl_plot": "الحبكة أو الموضوع", "lbl_narrative": "الأسلوب السردي", "lbl_goal": "هدف الكتاب", "lbl_pov": "وجهة النظر (الضمير)",
-        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. الكتابة والاختبار", "📖 3. معاينة", "📑 4. استيراد / تصدير / Copyright"],
+        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. اكتب الكتاب", "📖 3. معاينة", "📑 4. استيراد / تصدير / Copyright"],
         "btn_idx": "🚀 إنشاء فهرس احترافي", "btn_sync": "✅ حفظ ومزامنة الفصول", "lbl_sec": "اختر القسم:",
         "btn_write": "✨ كتابة المحتوى", "btn_quiz": "🧠 إضافة اختبار", "btn_edit": "🚀 إعادة صياغة",
         "msg_run": "جاري تحليل التسلسل الهرمي والأسلوب...", "preface": "مقدمة", "ack": "شكر وتقدير",
@@ -1131,7 +1132,7 @@ TRADUZIONI = {
     "中文": {
         "side_tit": "⚙️ 编辑器设置", "lbl_tit": "书名", "lbl_auth": "作者姓名", "lbl_lang": "语言", 
         "lbl_gen": "文学体裁", "lbl_style": "写作类型", "lbl_plot": "情节或主题", "lbl_narrative": "叙事风格", "lbl_goal": "书籍目标", "lbl_pov": "叙事视角 (代词)",
-        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作与测试", "📖 3. 预览", "📑 4. 导入 / 导出 / Copyright"],
+        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作全书", "📖 3. 预览", "📑 4. 导入 / 导出 / Copyright"],
         "btn_idx": "🚀 生成专业目录", "btn_sync": "✅ 保存并同步章节", "lbl_sec": "选择章节:",
         "btn_write": "✨ 编写内容", "btn_quiz": "🧠 添加测试", "btn_edit": "🚀 用AI重写",
         "msg_run": "正在分析层级、风格和情感目标...", "preface": "前言", "ack": "致谢",
@@ -3815,6 +3816,63 @@ def avvia_chat_sidebar_da_guida():
     st.session_state["chat_sidebar_scroll_request"] = True
 
 
+TESTI_VOCE_CHAT = {
+    "Italiano": ("🎙️ Registra un messaggio", "Registra fino a 90 secondi. La trascrizione è gratuita; controlla il testo prima di inviarlo.", "Trascrivi nel messaggio", "Trascrizione pronta: puoi correggerla prima di inviare.", "Non riesco a trascrivere la registrazione. Riprova con un audio più breve e chiaro."),
+    "English": ("🎙️ Record a message", "Record up to 90 seconds. Transcription is free; check the text before sending.", "Transcribe into message", "Transcript ready: you can edit it before sending.", "The recording could not be transcribed. Try a shorter, clearer recording."),
+    "Español": ("🎙️ Graba un mensaje", "Graba hasta 90 segundos. La transcripción es gratuita; revisa el texto antes de enviarlo.", "Transcribir en el mensaje", "Transcripción lista: puedes corregirla antes de enviarla.", "No se pudo transcribir. Prueba una grabación más breve y clara."),
+    "Français": ("🎙️ Enregistrer un message", "Enregistrez jusqu'à 90 secondes. La transcription est gratuite ; vérifiez le texte avant l'envoi.", "Transcrire dans le message", "Transcription prête : vous pouvez la corriger avant l'envoi.", "Transcription impossible. Réessayez avec un enregistrement plus court et plus clair."),
+    "Deutsch": ("🎙️ Nachricht aufnehmen", "Bis zu 90 Sekunden aufnehmen. Die Transkription ist kostenlos; prüfen Sie den Text vor dem Senden.", "In Nachricht transkribieren", "Transkript bereit: Sie können es vor dem Senden bearbeiten.", "Die Aufnahme konnte nicht transkribiert werden. Versuchen Sie eine kürzere, klarere Aufnahme."),
+    "Română": ("🎙️ Înregistrează un mesaj", "Înregistrează cel mult 90 de secunde. Transcrierea este gratuită; verifică textul înainte de trimitere.", "Transcrie în mesaj", "Transcrierea este gata: o poți corecta înainte de trimitere.", "Înregistrarea nu a putut fi transcrisă. Încearcă una mai scurtă și mai clară."),
+    "Русский": ("🎙️ Записать сообщение", "Запись до 90 секунд. Расшифровка бесплатна; проверьте текст перед отправкой.", "Расшифровать в сообщение", "Текст готов: его можно исправить перед отправкой.", "Не удалось расшифровать запись. Попробуйте более короткую и чёткую запись."),
+    "العربية": ("🎙️ سجّل رسالة", "سجّل مدة تصل إلى 90 ثانية. التفريغ مجاني؛ راجع النص قبل الإرسال.", "حوّل التسجيل إلى نص", "النص جاهز: يمكنك تصحيحه قبل الإرسال.", "تعذّر تفريغ التسجيل. جرّب تسجيلاً أقصر وأكثر وضوحاً."),
+    "中文": ("🎙️ 录制消息", "最多录制 90 秒。转录免费；发送前请检查文字。", "转录到消息中", "转录完成：发送前可以修改文字。", "无法转录录音。请尝试更短、更清晰的录音。"),
+}
+
+
+def inserisci_messaggio_vocale(chat, nonce, lingua, chiave_input):
+    """Aggiunge testo correggibile all'input esistente, senza inviare la chat."""
+    etichetta, aiuto, pulsante, successo, errore = TESTI_VOCE_CHAT.get(
+        lingua, TESTI_VOCE_CHAT["Italiano"]
+    )
+    st.caption(aiuto)
+    registrazione = st.audio_input(etichetta, key=f"{chat}_audio_{nonce}")
+    if not registrazione or not st.button(
+        pulsante, key=f"{chat}_trascrivi_{nonce}", use_container_width=True,
+    ):
+        return
+    audio = registrazione.getvalue()
+    chiamata_inviata = False
+    durata = 0.0
+    avvio = time.monotonic()
+    try:
+        durata = durata_registrazione_wav(audio)
+        if not client_openai:
+            raise ValueError("chiave_api_assente")
+        chiave_api = st.secrets["OPENAI_API_KEY"]
+        chiamata_inviata = True
+        testo, durata = trascrivi_registrazione(audio, chiave_api)
+        testo_precedente = str(st.session_state.get(chiave_input, "") or "").strip()
+        st.session_state[chiave_input] = "\n".join(
+            parte for parte in (testo_precedente, testo) if parte
+        )
+        registra_utilizzo_ai(
+            reference=uuid.uuid4().hex, operation=f"trascrizione_{chat}",
+            model=MODELLO_TRASCRIZIONE, usage={"audio_seconds": math.ceil(durata)},
+            credits_requested=0, success=True,
+            duration_ms=int((time.monotonic() - avvio) * 1000),
+        )
+        st.success(successo)
+    except Exception as exc:
+        if chiamata_inviata:
+            registra_utilizzo_ai(
+                reference=uuid.uuid4().hex, operation=f"trascrizione_{chat}",
+                model=MODELLO_TRASCRIZIONE, usage={"audio_seconds": math.ceil(durata)},
+                credits_requested=0, success=False, error_code=type(exc).__name__,
+                duration_ms=int((time.monotonic() - avvio) * 1000),
+            )
+        st.error(errore)
+
+
 def reimposta_chat_sidebar_guidata():
     for chiave in list(st.session_state):
         if chiave.startswith("chat_sidebar_"):
@@ -4699,8 +4757,8 @@ ISTRUZIONI_PROSSIMO_PASSO = {
     "Italiano": {
         "brief": "Apri la sidebar a sinistra; su telefono tocca ☰. Completa i campi obbligatori del libro.",
         "indice": "Apri la scheda 1. Indice e premi «Genera indice professionale».",
-        "scrittura": "Apri la scheda 2. Scrittura & Quiz e premi «Scrivi tutto il libro», oppure «Scrivi contenuto» per una sola sezione.",
-        "pausa": "Resta nella scheda 2. Scrittura & Quiz e premi «Riprendi generazione» quando vuoi continuare. Il testo già creato resta salvato.",
+        "scrittura": "Apri la scheda 2. Scrivi il libro e premi «Scrivi tutto il libro», oppure «Scrivi contenuto» per una sola sezione.",
+        "pausa": "Resta nella scheda 2. Scrivi il libro e premi «Riprendi generazione» quando vuoi continuare. Il testo già creato resta salvato.",
         "controllo": "Apri la scheda 4. Importa / Esporta / Copyright, esegui «Controlla completezza del manoscritto», poi scarica Word o PDF.",
     },
     "English": {
@@ -8225,7 +8283,7 @@ Notifiche sonore: sentirai il segnale quando la sidebar è pronta, quando parte 
 
 2. Open Index and press Generate Professional Index. If you edit it manually, use Save and Sync Chapters. Index Score evaluates it; Regenerate index following the score creates a proposal that you apply only if you approve it.
 
-3. In Write & Quiz choose a section. Write content creates one section, Write all subsections of the chapter creates the selected block, and Write the whole book completes empty sections. Pause stops before the next section; Resume continues.
+3. In Write the book choose a section. Write content creates one section, Write all subsections of the chapter creates the selected block, and Write the whole book completes empty sections. Pause stops before the next section; Resume continues.
 
 4. Regenerate with AI changes only the selected section using your instruction. Quiz adds questions, 10 Examples adds examples, 10 Recipes is for cookbooks; Check facts and Syntax Report check quality and readability. Upload image places your image in Preview, Word and PDF.
 
@@ -8468,7 +8526,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 - **3. 创建目录和手稿** — 生成并检查目录，然后写一个部分或整本书。AI 内容受保护；手动修改后请点击 **保存会话**。
 - **4. 检查并导出** — 使用预览、完整性和最终检查，然后导出 Word、PDF 或 CSV。""",
     }
-    titolo_guida, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
+    _, testo_guida = guide_localizzate.get(lingua_sel, guide_localizzate["Italiano"])
+    titoli_sezione_zero = {
+        "Italiano": "Compila la sidebar", "English": "Fill in the sidebar",
+        "Español": "Completa la barra lateral", "Français": "Remplir la barre latérale",
+        "Deutsch": "Seitenleiste ausfüllen", "Română": "Completează bara laterală",
+        "Русский": "Заполните боковую панель", "العربية": "املأ الشريط الجانبي",
+        "中文": "填写侧边栏",
+    }
+    titolo_guida = titoli_sezione_zero.get(lingua_sel, titoli_sezione_zero["Italiano"])
     if st.session_state.get("admin_test_run_requested") and st.session_state.get("admin_test_mode"):
         esegui_collaudo_automatico()
         st.rerun()
@@ -8618,7 +8684,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     # Una correzione preparata dal controllo finale o una stesura in corso
     # deve arrivare davvero all'editor. Streamlit non espone un'API Python per
     # attivare una tab: il piccolo script seleziona la terza scheda, che è
-    # sempre Scrittura & Quiz in tutte le lingue. Durante una pausa il click
+    # sempre la sezione 2 in tutte le lingue. Durante una pausa il click
     # viene eseguito una volta e l'utente può poi consultare liberamente le
     # altre sezioni dell'app.
     apri_tab_scrittura = (
@@ -9260,6 +9326,9 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 
                 nonce_chat = int(st.session_state.get("chat_sidebar_input_nonce", 0))
                 chiave_input_chat = f"chat_sidebar_input_{nonce_chat}"
+                inserisci_messaggio_vocale(
+                    "chat_sidebar_guidata", nonce_chat, lingua_sel, chiave_input_chat
+                )
                 testo_utente_chat = st.text_area(
                     campo_ui("messaggio", lingua_sel),
                     key=chiave_input_chat,
@@ -9529,8 +9598,12 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                     st.markdown(messaggio.get("content", ""))
 
             nonce_nicchia = int(st.session_state.get("chat_nicchia_input_nonce", 0))
+            chiave_input_nicchia = f"chat_nicchia_input_{nonce_nicchia}"
+            inserisci_messaggio_vocale(
+                "chat_nicchia", nonce_nicchia, lingua_sel, chiave_input_nicchia
+            )
             testo_nicchia = st.text_area(
-                campo_ui("messaggio", lingua_sel), key=f"chat_nicchia_input_{nonce_nicchia}",
+                campo_ui("messaggio", lingua_sel), key=chiave_input_nicchia,
                 placeholder=testi_nicchia["placeholder"], height=90,
             )
             if st.button(f"{testi_nicchia['invia']} — {costo_dialogo_nicchia}", key=f"invia_chat_nicchia_{nonce_nicchia}", use_container_width=True):
@@ -11063,7 +11136,19 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Qui trovi anche i controlli di originalità e copyright. Il CSV non consuma crediti.")
         progetto_csv = esporta_progetto_editoriale_csv()
         nome_archivio = re.sub(r"[^\w.-]+", "_", val_titolo.strip() or "progetto_scrittore_site", flags=re.UNICODE).strip("_")
-        col_csv_esporta, col_csv_importa = st.columns(2)
+        avvisi_export = {
+            "Italiano": "CSV, Word e PDF sono disponibili qui. Controlla il report finale più in basso prima di pubblicare il libro.",
+            "English": "CSV, Word and PDF are available here. Check the final report below before publishing your book.",
+            "Español": "Aquí puedes descargar CSV, Word y PDF. Revisa el informe final antes de publicar el libro.",
+            "Français": "Téléchargez les fichiers CSV, Word et PDF ici. Vérifiez le rapport final avant de publier le livre.",
+            "Deutsch": "CSV, Word und PDF stehen hier bereit. Prüfen Sie vor der Veröffentlichung den Abschlussbericht unten.",
+            "Română": "Descarcă CSV, Word și PDF aici. Verifică raportul final înainte de publicarea cărții.",
+            "Русский": "Скачайте CSV, Word и PDF здесь. Перед публикацией книги проверьте итоговый отчёт ниже.",
+            "العربية": "يمكنك تنزيل CSV وWord وPDF هنا. راجع التقرير النهائي أدناه قبل نشر الكتاب.",
+            "中文": "可在此下载 CSV、Word 和 PDF。出版前请查看下方的最终报告。",
+        }
+        st.caption(avvisi_export.get(lingua_sel, avvisi_export["Italiano"]))
+        col_csv_esporta, col_word_esporta, col_pdf_esporta = st.columns(3)
         with col_csv_esporta:
             st.download_button(
                 "📥 Esporta progetto completo (.csv)",
@@ -11073,26 +11158,64 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 use_container_width=True,
                 help="Crea una copia portabile del progetto attualmente aperto.",
             )
-        with col_csv_importa:
-            csv_da_importare = st.file_uploader(
-                campo_ui("import_csv", lingua_sel), type=["csv"], key="importa_progetto_editoriale_csv",
-                help="Accetta solo un CSV esportato da Scrittore Site.",
-            )
-            if csv_da_importare and st.button("📤 Importa e ripristina progetto", use_container_width=True, key="conferma_importazione_progetto_csv"):
-                try:
-                    snapshot_csv = importa_progetto_editoriale_csv(csv_da_importare)
-                    snapshot_csv["_origine_importazione_csv"] = True
-                    # L'applicazione avviene nel rerun seguente, prima della
-                    # sidebar: Streamlit può così aggiornare ogni widget senza
-                    # perdere campi o testi.
-                    st.session_state.pop("commercial_project_reset_requested", None)
-                    st.session_state.pop("commercial_project_reset_completed", None)
-                    st.session_state["autosave_snapshot_da_ripristinare"] = snapshot_csv
-                    st.rerun()
-                except ValueError as exc:
-                    st.error(str(exc))
-                except Exception as exc:
-                    st.error(f"Importazione non riuscita: {exc}")
+        with col_word_esporta:
+            if st.button(L["btn_word"], disabled=not lista_cap_base, use_container_width=True):
+                doc = Document(); doc.add_heading(val_titolo, 0)
+                for s in opzioni_editor:
+                    ke = chiave_sezione(s)
+                    if st.session_state.get(ke, "").strip():
+                        doc.add_page_break(); doc.add_heading(s.upper(), level=1)
+                        img = st.session_state.get("immagini_capitoli", {}).get(s)
+                        if img:
+                            doc.add_picture(BytesIO(img["bytes"]), width=Inches(4.3))
+                            doc.add_paragraph(img.get("caption", ""))
+                        doc.add_paragraph(pulisci_testo_editoriale(st.session_state[ke]))
+                bw = BytesIO(); doc.save(bw); bw.seek(0)
+                notifica_sonora("word_pronto", lingua_sel, ripeti=True)
+                st.download_button(
+                    L["btn_word"], data=bw, file_name=f"{val_titolo}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                )
+        with col_pdf_esporta:
+            if st.button(L["btn_pdf"], disabled=not lista_cap_base, use_container_width=True):
+                pdf = EbookPDF(val_titolo, val_autore); pdf.cover_page()
+                for s in opzioni_editor:
+                    kd = chiave_sezione(s)
+                    if st.session_state.get(kd, "").strip():
+                        img = st.session_state.get("immagini_capitoli", {}).get(s)
+                        pdf.add_content(
+                            s.upper(), pulisci_testo_editoriale(st.session_state[kd]),
+                            image_bytes=img.get("bytes") if img else None,
+                            image_caption=img.get("caption") if img else None
+                        )
+                # fpdf2 restituisce bytearray; versioni precedenti possono restituire testo.
+                pdf_output = pdf.output(dest="S")
+                out_p = pdf_output.encode("latin-1", "replace") if isinstance(pdf_output, str) else bytes(pdf_output)
+                notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
+                st.download_button(
+                    L["btn_pdf"], data=out_p, file_name=f"{val_titolo}.pdf",
+                    mime="application/pdf", use_container_width=True,
+                )
+        csv_da_importare = st.file_uploader(
+            campo_ui("import_csv", lingua_sel), type=["csv"], key="importa_progetto_editoriale_csv",
+            help="Accetta solo un CSV esportato da Scrittore Site.",
+        )
+        if csv_da_importare and st.button("📤 Importa e ripristina progetto", use_container_width=True, key="conferma_importazione_progetto_csv"):
+            try:
+                snapshot_csv = importa_progetto_editoriale_csv(csv_da_importare)
+                snapshot_csv["_origine_importazione_csv"] = True
+                # L'applicazione avviene nel rerun seguente, prima della
+                # sidebar: Streamlit può così aggiornare ogni widget senza
+                # perdere campi o testi.
+                st.session_state.pop("commercial_project_reset_requested", None)
+                st.session_state.pop("commercial_project_reset_completed", None)
+                st.session_state["autosave_snapshot_da_ripristinare"] = snapshot_csv
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+            except Exception as exc:
+                st.error(f"Importazione non riuscita: {exc}")
         st.info("L'importazione sostituisce il progetto aperto solo nella pagina corrente. Per salvarla anche nel tuo account premi poi “💾 SALVA SESSIONE” nella sidebar.")
         with st.expander(
             "🛡️ Controllo originalità e copyright",
@@ -11479,40 +11602,6 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     )
         else:
             st.success("Controllo finale superato: struttura, sezioni richieste e contenuti promessi risultano completi. Il file può essere esportato come versione definitiva.")
-        cw, cp = st.columns(2)
-        with cw:
-            if st.button(L["btn_word"], disabled=not lista_cap_base):
-                doc = Document(); doc.add_heading(val_titolo, 0)
-                for s in opzioni_editor:
-                    ke = chiave_sezione(s)
-                    if st.session_state.get(ke, "").strip():
-                        doc.add_page_break(); doc.add_heading(s.upper(), level=1)
-                        img = st.session_state.get("immagini_capitoli", {}).get(s)
-                        if img:
-                            doc.add_picture(BytesIO(img["bytes"]), width=Inches(4.3))
-                            doc.add_paragraph(img.get("caption", ""))
-                        doc.add_paragraph(pulisci_testo_editoriale(st.session_state[ke]))
-                bw = BytesIO(); doc.save(bw); bw.seek(0)
-                notifica_sonora("word_pronto", lingua_sel, ripeti=True)
-                st.download_button(L["btn_word"], data=bw, file_name=f"{val_titolo}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        with cp:
-            if st.button(L["btn_pdf"], disabled=not lista_cap_base):
-                pdf = EbookPDF(val_titolo, val_autore); pdf.cover_page()
-                for s in opzioni_editor:
-                    kd = chiave_sezione(s)
-                    if st.session_state.get(kd, "").strip():
-                        img = st.session_state.get("immagini_capitoli", {}).get(s)
-                        pdf.add_content(
-                            s.upper(), pulisci_testo_editoriale(st.session_state[kd]),
-                            image_bytes=img.get("bytes") if img else None,
-                            image_caption=img.get("caption") if img else None
-                        )
-                # fpdf2 restituisce bytearray; versioni precedenti possono restituire testo.
-                # Gestiamo entrambe le forme senza usare .encode() su un oggetto binario.
-                pdf_output = pdf.output(dest="S")
-                out_p = pdf_output.encode("latin-1", "replace") if isinstance(pdf_output, str) else bytes(pdf_output)
-                notifica_sonora("pdf_pronto", lingua_sel, ripeti=True)
-                st.download_button(L["btn_pdf"], data=out_p, file_name=f"{val_titolo}.pdf", mime="application/pdf")
 
     # TAB 5: FORMATTAZIONE E METADATI KDP
     with tabs[6]:
