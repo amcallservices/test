@@ -7032,6 +7032,14 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
 
     mostra_memoria_visiva_progetto()
 
+    st.divider()
+    st.markdown("### ISTRUZIONI SULL'UTILIZZO DI SCRITTORE SITE")
+    video_istruzioni = os.path.join(
+        os.path.dirname(__file__), "assets", "istruzioni-scrittore-site.mp4"
+    )
+    if os.path.isfile(video_istruzioni):
+        st.video(video_istruzioni, format="video/mp4")
+
 # ======================================================================================================================
 # 7. LOGICA DI MEMORIA E COERENZA (EVITA RIPETIZIONI GLOBALI) E INTEGRAZIONE FONTI
 # ======================================================================================================================
