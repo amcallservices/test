@@ -1449,49 +1449,36 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] span {
    soltanto la presentazione grafica e quindi non cambia il flusso di lavoro. */
 [data-testid="stTabs"] { margin: 1.1rem 0 1.35rem; }
 .ss-operational-menu-heading {
-    display:flex; align-items:center; gap:1rem; margin:1.45rem 0 .25rem;
-    padding:1.05rem 1.2rem; border:2px solid #3d9fde; border-left:7px solid #65c6ff; border-radius:17px;
-    background:linear-gradient(135deg,#123f64,#0d2948 64%,#11283d); box-shadow:0 14px 30px rgba(7,42,71,.32);
+    display:flex; align-items:center; gap:.8rem; margin:.9rem 0 .25rem;
+    padding:.75rem 1rem; border:1px solid #3c7197; border-left:4px solid #65bded; border-radius:13px;
+    background:#102c47;
 }
-.ss-operational-menu-heading span { font-size:1.9rem; line-height:1; }
-.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.92rem; font-weight:900; letter-spacing:-.025em; }
-.ss-operational-menu-heading p { margin:.18rem 0 0; color:#cce8fb; font-size:.93rem; font-weight:650; }
+.ss-operational-menu-heading span { font-size:1.35rem; line-height:1; }
+.ss-operational-menu-heading h2 { margin:0; color:#fff; font-size:1.5rem; font-weight:850; letter-spacing:-.02em; }
+.ss-operational-menu-heading p { margin:.12rem 0 0; color:#cce8fb; font-size:.78rem; font-weight:600; }
 .ss-operational-menu-heading .ss-menu-range { margin-left:auto; padding:.44rem .66rem; border:1px solid #87d2ff; border-radius:999px; color:#e9f8ff; background:rgba(9,31,52,.52); font-size:.84rem; font-weight:850; white-space:nowrap; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
-    display:flex; align-items:stretch; gap:.62rem; padding:.68rem;
-    overflow-x:auto; overflow-y:hidden; border:1px solid #2d4c6d; border-radius:19px;
-    background:rgba(7,19,34,.78); box-shadow:0 12px 28px rgba(0,0,0,.2);
+    display:flex; align-items:stretch; gap:.5rem; padding:.5rem;
+    overflow-x:auto; overflow-y:hidden; border:1px solid #2d4c6d; border-radius:14px;
+    background:#0b2037;
 }
 [data-testid="stTabs"] button[role="tab"] {
-    position:relative; flex:1 0 155px; min-height:6.1rem; margin:0 !important;
-    border:1px solid #294966 !important; border-top:4px solid #4b7da2 !important;
-    border-radius:15px !important; padding:1rem .92rem !important;
-    background:linear-gradient(145deg,#10243b,#0d1e33) !important;
-    color:#c9d9eb !important; font-size:1.06rem !important; font-weight:800 !important;
+    position:relative; flex:1 0 115px; min-height:4.2rem; margin:0 !important;
+    border:1px solid #356186 !important; border-top:3px solid #2b658b !important;
+    border-radius:10px !important; padding:.6rem .5rem !important;
+    background:#102a43 !important;
+    color:#ecf6ff !important; font-size:.9rem !important; font-weight:800 !important;
     line-height:1.35 !important; white-space:normal !important; text-align:center !important;
     transition:transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
 }
 [data-testid="stTabs"] button[role="tab"]:hover {
-    transform:translateY(-3px); border-color:#5da9e8 !important;
-    background:linear-gradient(145deg,#17395b,#123251) !important; color:#fff !important;
-    box-shadow:0 11px 21px rgba(0,0,0,.25) !important;
+    border-color:#76bee9 !important;
+    background:#194b70 !important; color:#fff !important;
 }
 [data-testid="stTabs"] button[role="tab"]:focus-visible { outline:3px solid #7fc5ff !important; outline-offset:2px !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(1) { border-top-color:#62b6ff !important; background:linear-gradient(145deg,#123b5d,#0d2741) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(2) { border-top-color:#d2a6ff !important; background:linear-gradient(145deg,#40255f,#26183f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(3) { border-top-color:#ffb45f !important; background:linear-gradient(145deg,#5a3719,#38220f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(4) { border-top-color:#73d6ff !important; background:linear-gradient(145deg,#144b63,#0d3043) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(5) { border-top-color:#f5d56f !important; background:linear-gradient(145deg,#59481a,#382c0f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(6) { border-top-color:#7fdea8 !important; background:linear-gradient(145deg,#164c34,#0e3022) !important; }
 [data-testid="stTabs"] button[aria-selected="true"] {
-    transform:translateY(-4px); border-color:#62b6ff !important; border-top-color:#d7efff !important;
-    background:linear-gradient(135deg,#1675bc,#2399e8) !important; color:#fff !important;
-    box-shadow:0 13px 26px rgba(29,145,225,.42) !important;
-}
-[data-testid="stTabs"] button[aria-selected="true"]::after {
-    content:"✓"; position:absolute; right:.68rem; bottom:.58rem;
-    width:1.28rem; height:1.28rem; display:grid; place-items:center;
-    border-radius:50%; background:#e8f8ff; color:#0879c6; font-size:.86rem; font-weight:900;
+    border-color:#a5e3ff !important; border-top-color:#a5e3ff !important;
+    background:#176697 !important; color:#fff !important;
 }
 .ss-workspace-header {
     position:sticky; top:.5rem; z-index:110; display:flex; align-items:center; justify-content:space-between; gap:1rem;
@@ -1616,17 +1603,16 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
         padding: .4rem 0 !important; background: #0f1d31 !important;
     }
 
-    /* Il menu 0–5 rimane completo su telefono: grandi tessere scorrevoli,
-       senza testi tagliati né passaggi a capo difficili da toccare. */
+    /* Il menu rimane scorrevole su telefono e lascia visibili più sezioni. */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
         overflow-x:auto !important; overflow-y:hidden !important; flex-wrap:nowrap !important;
-        gap:.62rem !important; padding:.58rem !important; border-radius:16px !important;
+        gap:.45rem !important; padding:.45rem !important; border-radius:12px !important;
         -webkit-overflow-scrolling:touch !important; scrollbar-width:thin !important;
     }
     [data-testid="stTabs"] button[role="tab"] {
-        flex:0 0 min(84vw, 340px) !important; min-height:6.4rem !important;
-        white-space:normal !important; padding:1rem 1rem !important;
-        font-size:1.08rem !important; text-align:left !important;
+        flex:0 0 min(64vw, 230px) !important; min-height:4.5rem !important;
+        white-space:normal !important; padding:.65rem .7rem !important;
+        font-size:.94rem !important; text-align:left !important;
     }
     [data-testid="stTabs"] button[aria-selected="true"]::after { right:.82rem !important; bottom:.7rem !important; }
     .ss-operational-menu-heading { margin:1rem 0 .25rem !important; padding:.86rem .88rem !important; gap:.7rem !important; }
@@ -4811,14 +4797,12 @@ def riepilogo_operativo_progetto(campi_obbligatori=None):
 
 
 def mostra_centro_progetto(lingua, campi_obbligatori=None):
-    """Rende il punto del progetto come un percorso semplice e non interattivo.
+    """Mostra lo stato del progetto e apre la sezione del prossimo passo.
 
-    La vista legge soltanto lo stato già presente: non sostituisce tab,
-    pulsanti, salvataggi o controlli e non avvia alcuna operazione.
+    Il pulsante naviga soltanto: non avvia operazioni a pagamento.
     """
     etichette = etichette_centro_progetto(lingua)
     stato = riepilogo_operativo_progetto(campi_obbligatori)
-    passi = PASSI_PERCORSO_PROGETTO.get(lingua, PASSI_PERCORSO_PROGETTO["English"])
     direzione = "rtl" if lingua == "العربية" else "ltr"
 
     if stato["job_attivo"]:
@@ -4857,40 +4841,6 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
 
     istruzioni = ISTRUZIONI_PROSSIMO_PASSO.get(lingua, ISTRUZIONI_PROSSIMO_PASSO["English"])
     istruzione_operativa = istruzioni[guida_chiave]
-    report_kdp = st.session_state.get("report_conformita_kdp", {}) or {}
-    controllo_kdp_eseguito = False
-    if isinstance(report_kdp, dict) and report_kdp:
-        # Un controllo resta indicato come eseguito soltanto se appartiene al
-        # manoscritto attuale. Dopo un cambiamento manuale torna correttamente
-        # facoltativo/da ripetere, senza mai bloccare l'esportazione.
-        try:
-            dati_kdp = memoria_progetto_unica()
-            sidebar_kdp = sidebar_memorizzata_corrente()
-            firma_kdp_attuale = firma_controllo_conformita_kdp(
-                dict(dati_kdp.get("contenuti", {}) or {}),
-                sidebar_kdp.get("titolo", ""),
-                sidebar_kdp.get("genere", ""),
-                sidebar_kdp.get("argomento", ""),
-                sidebar_kdp.get("lingua", lingua),
-            )
-            controllo_kdp_eseguito = report_kdp.get("firma_manoscritto") == firma_kdp_attuale
-        except Exception:
-            controllo_kdp_eseguito = False
-    percorso_html = ""
-    for numero, passo in enumerate(passi, start=1):
-        # Nicchia e KDP sono strumenti utili ma facoltativi: non devono mai
-        # apparire come obblighi completati né bloccare il percorso principale.
-        facoltativo = numero == 1 or numero == 6
-        completato = (
-            (numero < fase_attiva and not facoltativo)
-            or (numero == 6 and controllo_kdp_eseguito)
-        )
-        classe = "optional" if facoltativo and not completato else "done" if completato else "current" if numero == fase_attiva else ""
-        indicatore = "✓" if completato else "○" if facoltativo else numero
-        percorso_html += (
-            f"<div class='ss-project-step {classe}'>"
-            f"<span>{indicatore}</span><b>{html.escape(passo)}</b></div>"
-        )
     dati_metriche = (
         (etichette["sidebar"], f"{stato['campi_compilati']}/{stato['campi_totali']}"),
         (etichette["indice"], "✓" if stato["indice_pronto"] else "—"),
@@ -4904,7 +4854,6 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
     st.markdown(
         f"""<section class='ss-project-panel' dir='{direzione}'>
           <h2 class='ss-project-title'>{html.escape(etichette['titolo'])}</h2>
-          <div class='ss-project-journey'>{percorso_html}</div>
           <div class='ss-project-metrics'>{metriche_html}</div>
           <div class='ss-next-action {stato_visuale}'><span class='ss-next-icon'>{icona}</span>
             <div><small>{html.escape(etichette['prossimo'])}</small><strong>{html.escape(messaggio)}</strong>
@@ -4913,6 +4862,21 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         </section>""",
         unsafe_allow_html=True,
     )
+    # Un solo comando per il passo suggerito: seleziona la sezione pertinente,
+    # senza avviare operazioni a pagamento né modificare il manoscritto.
+    if not stato["job_attivo"] and st.button(
+        f"→ {prossimo}", key="prossimo_passo_centro", use_container_width=True,
+    ):
+        if guida_chiave == "brief":
+            if st.session_state.get("chat_sidebar_attiva"):
+                st.session_state["chat_sidebar_scroll_request"] = True
+            else:
+                avvia_chat_sidebar_da_guida()
+            st.session_state["ui_tab_destinazione"] = 0
+        else:
+            st.session_state["ui_tab_destinazione"] = {
+                "indice": 2, "scrittura": 3, "pausa": 3, "controllo": 5,
+            }.get(guida_chiave, 0)
     if stato["job_attivo"] and stato["sezioni_previste"]:
         st.progress(
             min(100, int(stato["sezioni_scritte"] / stato["sezioni_previste"] * 100)),
@@ -4927,9 +4891,6 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
             unsafe_allow_html=True,
         )
 
-    mostra_didascalia_centro(
-        f"<strong>{html.escape(etichette['prossimo'])}:</strong> {html.escape(prossimo)}"
-    )
     if stato["errore"]:
         mostra_didascalia_centro(
             f"<strong>{html.escape(etichette['dettaglio'])}:</strong> {html.escape(stato['errore'])}"
@@ -8504,6 +8465,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     # La tab 0 rimane la prima nel DOM e quindi è quella aperta ad ogni avvio.
     # Lo stile la mostra dopo -1, senza cambiare alcuna funzione delle tab 1–5.
     tabs = st.tabs([f"📘 0. {titolo_guida}", etichette_tab_nicchia.get(lingua_sel, etichette_tab_nicchia["Italiano"])] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
+    tab_destinazione = st.session_state.pop("ui_tab_destinazione", None)
+    if tab_destinazione is not None:
+        components.html(
+            f"""<script>setTimeout(function () {{
+              const schede = Array.from(window.parent.document.querySelectorAll('[role="tab"]'));
+              if (schede[{int(tab_destinazione)}]) schede[{int(tab_destinazione)}].click();
+            }}, 250);</script>""",
+            height=0,
+        )
 
     # Stile diretto e indipendente dal tema per le sei schede principali.
     # Interviene esclusivamente sul menu che Streamlit ha già creato: ogni
@@ -8514,8 +8484,8 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         (function () {
           const documento = window.parent.document;
           const colori = [
-            ['#154f7c', '#0c2e4b'], ['#245b75', '#12374a'], ['#58318a', '#331c56'],
-            ['#9a5415', '#5d300b'], ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
+            ['#2b658b', '#102a43'], ['#2b658b', '#102a43'], ['#2b658b', '#102a43'],
+            ['#2b658b', '#102a43'], ['#2b658b', '#102a43'], ['#2b658b', '#102a43'], ['#2b658b', '#102a43']
           ];
 
           function imposta(stile, nome, valore) {
@@ -8535,18 +8505,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(intestazione.style, 'display', 'flex');
               imposta(intestazione.style, 'align-items', 'center');
               imposta(intestazione.style, 'gap', mobile ? '11px' : '15px');
-              imposta(intestazione.style, 'padding', mobile ? '15px 16px' : '20px 23px');
-              imposta(intestazione.style, 'margin', '24px 0 5px');
-              imposta(intestazione.style, 'border', '2px solid #49abe8');
-              imposta(intestazione.style, 'border-left', '8px solid #76d0ff');
-              imposta(intestazione.style, 'border-radius', '18px');
-              imposta(intestazione.style, 'background', 'linear-gradient(135deg, #123f64, #0d2948)');
-              imposta(intestazione.style, 'box-shadow', '0 15px 31px rgba(6, 38, 65, .34)');
+              imposta(intestazione.style, 'padding', mobile ? '12px 14px' : '13px 18px');
+              imposta(intestazione.style, 'margin', '14px 0 5px');
+              imposta(intestazione.style, 'border', '1px solid #3c7197');
+              imposta(intestazione.style, 'border-left', '4px solid #65bded');
+              imposta(intestazione.style, 'border-radius', '13px');
+              imposta(intestazione.style, 'background', '#102c47');
+              imposta(intestazione.style, 'box-shadow', 'none');
               const titolo = intestazione.querySelector('h2');
               const testo = intestazione.querySelector('p');
               const intervallo = intestazione.querySelector('.ss-menu-range');
-              if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '23px' : '31px'); }
-              if (testo) { imposta(testo.style, 'color', '#d3efff'); imposta(testo.style, 'font-size', mobile ? '13px' : '15px'); }
+              if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '20px' : '24px'); }
+              if (testo) { imposta(testo.style, 'color', '#d3efff'); imposta(testo.style, 'font-size', mobile ? '12px' : '13px'); }
               if (intervallo) {
                 imposta(intervallo.style, 'margin-left', 'auto'); imposta(intervallo.style, 'padding', '7px 10px');
                 imposta(intervallo.style, 'border', '1px solid #97dcff'); imposta(intervallo.style, 'border-radius', '999px');
@@ -8556,16 +8526,16 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
             imposta(lista.style, 'display', 'flex');
             imposta(lista.style, 'align-items', 'stretch');
-            imposta(lista.style, 'gap', mobile ? '12px' : '14px');
-            imposta(lista.style, 'padding', mobile ? '12px' : '15px');
+            imposta(lista.style, 'gap', mobile ? '8px' : '8px');
+            imposta(lista.style, 'padding', mobile ? '8px' : '9px');
             imposta(lista.style, 'overflow-x', mobile ? 'auto' : 'hidden');
             imposta(lista.style, 'overflow-y', 'hidden');
             imposta(lista.style, 'width', '100%');
             imposta(lista.style, 'box-sizing', 'border-box');
-            imposta(lista.style, 'border', '2px solid #49abe8');
-            imposta(lista.style, 'border-radius', '22px');
-            imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49 64%, #0c233b)');
-            imposta(lista.style, 'box-shadow', '0 17px 34px rgba(3, 15, 27, .3)');
+            imposta(lista.style, 'border', '1px solid #365d7e');
+            imposta(lista.style, 'border-radius', '14px');
+            imposta(lista.style, 'background', '#0b2037');
+            imposta(lista.style, 'box-shadow', 'none');
 
             // La tab 0 resta la prima nel DOM per l'apertura automatica.
             // Nel menu visivo l'ordine è però -1, 0, 1, 2, 3, 4, 5.
@@ -8576,27 +8546,27 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               const scelto = scheda.getAttribute('aria-selected') === 'true';
               const colore = colori[indice];
               imposta(scheda.style, 'box-sizing', 'border-box');
-              imposta(scheda.style, 'flex', mobile ? '0 0 min(76vw, 310px)' : '1 1 0');
+              imposta(scheda.style, 'flex', mobile ? '0 0 min(64vw, 230px)' : '1 1 0');
               imposta(scheda.style, 'min-width', '0');
-              imposta(scheda.style, 'min-height', mobile ? '108px' : '94px');
-              imposta(scheda.style, 'padding', mobile ? '16px 17px' : '14px 13px');
+              imposta(scheda.style, 'min-height', mobile ? '72px' : '66px');
+              imposta(scheda.style, 'padding', mobile ? '10px 11px' : '9px 8px');
               imposta(scheda.style, 'margin', '0');
-              imposta(scheda.style, 'border-radius', '18px');
-              imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
-              imposta(scheda.style, 'border-top', scelto ? '7px solid #ffffff' : '7px solid ' + colore[0]);
+              imposta(scheda.style, 'border-radius', '10px');
+              imposta(scheda.style, 'border', scelto ? '2px solid #a5e3ff' : '1px solid #356186');
+              imposta(scheda.style, 'border-top', scelto ? '3px solid #a5e3ff' : '3px solid #2b658b');
               imposta(scheda.style, 'background', scelto
-                ? 'linear-gradient(135deg, #1688da, #36b4f4)'
+                ? 'linear-gradient(135deg, #176697, #2185bb)'
                 : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
               imposta(scheda.style, 'color', '#ffffff');
-              imposta(scheda.style, 'font-size', mobile ? '17px' : '16px');
+              imposta(scheda.style, 'font-size', mobile ? '15px' : '14px');
               imposta(scheda.style, 'font-weight', '800');
               imposta(scheda.style, 'line-height', '1.35');
               imposta(scheda.style, 'white-space', 'normal');
               imposta(scheda.style, 'text-align', mobile ? 'left' : 'center');
               imposta(scheda.style, 'justify-content', 'center');
               imposta(scheda.style, 'box-shadow', scelto
-                ? '0 12px 25px rgba(45, 170, 243, .55)'
-                : '0 8px 17px rgba(0, 0, 0, .23)');
+                ? '0 3px 10px rgba(45, 170, 243, .18)'
+                : 'none');
             });
             return true;
           }
@@ -8660,7 +8630,6 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         }
         st.warning(avviso_reset_nuovo_progetto.get(lingua_sel, avviso_reset_nuovo_progetto["Italiano"]))
         st.subheader(titolo_guida)
-        st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
         chat_subito = {
             "Italiano": ("🤖 Chat guidata — il modo più semplice per iniziare", "Raccontale la tua idea: ti accompagna fino alla scheda pronta e può compilare automaticamente i campi della sidebar. È facoltativa.", "💬 APRI LA CHAT GUIDATA"),
             "English": ("🤖 Guided chat — the easiest way to begin", "Tell it your idea: it guides you to a ready brief and can automatically complete the sidebar fields. It is optional.", "💬 OPEN GUIDED CHAT"),
@@ -8693,7 +8662,6 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             "العربية": "✍️ **خصص كتابك** ميزة اختيارية تحفظ الصوت والأمثلة والأولويات والحدود داخل المشروع. يمكنك أيضاً اختيار توقف موجّه قبل الأجزاء أو الخاتمة من دون استهلاك أرصدة.",
             "中文": "✍️ **个性化你的图书**是可选功能：写作声音、案例、重点和边界会随项目保存。也可在各部分或结论前选择引导暂停，不消耗积分。",
         }
-        st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
         avvisi_guida_base = {
             "Italiano": ("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.", "📚 Guida completa e regole di utilizzo", "✨ Funzioni, salvataggio e copyright"),
             "English": ("Complete the sidebar, then create the index and start writing. The full instructions remain available below.", "📚 Complete guide and rules", "✨ Features, saving and copyright"),
@@ -8709,11 +8677,13 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         if not sidebar_pronta:
             st.info(avviso_guida)
         with st.expander(etichetta_guida_completa, expanded=False):
+            st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
             st.markdown(testo_guida)
         with st.expander(etichetta_funzioni, expanded=False):
+            st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
             st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
-        st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
-        st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
+            st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
+            st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
         etichette_prova_notifiche = {
             "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
             "Français": "🔔 TESTER LES NOTIFICATIONS", "Deutsch": "🔔 BENACHRICHTIGUNGEN TESTEN", "Română": "🔔 TESTEAZĂ NOTIFICĂRILE",
