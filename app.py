@@ -11687,6 +11687,20 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         etichetta_descrizione, etichetta_contatore, etichetta_frasi = etichette_metadati.get(
                             lingua_sel, etichette_metadati["Italiano"]
                         )
+                        etichette_copia_metadati = {
+                            "Italiano": ("📋 Copia la descrizione", "📋 Copia le frasi chiave singolarmente", "Usa l'icona di copia nel riquadro."),
+                            "English": ("📋 Copy description", "📋 Copy keyword phrases individually", "Use the copy icon in each box."),
+                            "Español": ("📋 Copiar descripción", "📋 Copiar frases clave por separado", "Usa el icono de copia del recuadro."),
+                            "Français": ("📋 Copier la description", "📋 Copier les expressions clés séparément", "Utilisez l'icône de copie dans chaque cadre."),
+                            "Deutsch": ("📋 Beschreibung kopieren", "📋 Suchbegriffe einzeln kopieren", "Nutzen Sie das Kopiersymbol im Feld."),
+                            "Română": ("📋 Copiază descrierea", "📋 Copiază separat expresiile cheie", "Folosește pictograma de copiere din casetă."),
+                            "Русский": ("📋 Скопировать описание", "📋 Копировать ключевые фразы отдельно", "Нажмите значок копирования в блоке."),
+                            "العربية": ("📋 انسخ الوصف", "📋 انسخ العبارات المفتاحية كلًّا على حدة", "استخدم أيقونة النسخ داخل المربع."),
+                            "中文": ("📋 复制简介", "📋 逐条复制关键词短语", "使用框内的复制图标。"),
+                        }
+                        copia_descrizione, copia_frasi, istruzione_copia = etichette_copia_metadati.get(
+                            lingua_sel, etichette_copia_metadati["Italiano"]
+                        )
                         versione_metadati = hashlib.sha256(
                             metadati_visibili.encode("utf-8")
                         ).hexdigest()[:10]
@@ -11697,19 +11711,37 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             key=f"output_metadati_descrizione_{versione_metadati}",
                         )
                         st.caption(f"{etichetta_contatore}: {len(descrizione_modificata)} / 4.000 KDP")
-                        st.text_area(
+                        with st.expander(copia_descrizione):
+                            st.caption(istruzione_copia)
+                            st.code(descrizione_modificata, language=None, wrap_lines=True)
+                        frasi_modificate = st.text_area(
                             etichetta_frasi,
                             value=frasi_kdp,
                             height=210,
                             key=f"output_metadati_parole_chiave_{versione_metadati}",
                         )
+                        with st.expander(copia_frasi):
+                            st.caption(istruzione_copia)
+                            for riga_frase in frasi_modificate.splitlines():
+                                frase_da_copiare = re.sub(r"^\s*\d+[.)]\s*", "", riga_frase).strip()
+                                if frase_da_copiare:
+                                    st.code(frase_da_copiare, language=None)
                     else:
-                        st.text_area(
+                        metadati_legacy_modificati = st.text_area(
                             campo_controllo_ui(5, lingua_sel),
                             value=metadati_visibili,
                             height=480,
                             key="output_metadati_formattazione",
                         )
+                        etichetta_copia_legacy = {
+                            "Italiano": "📋 Copia i metadati", "English": "📋 Copy metadata",
+                            "Español": "📋 Copiar metadatos", "Français": "📋 Copier les métadonnées",
+                            "Deutsch": "📋 Metadaten kopieren", "Română": "📋 Copiază metadatele",
+                            "Русский": "📋 Скопировать метаданные", "العربية": "📋 انسخ البيانات الوصفية",
+                            "中文": "📋 复制元数据",
+                        }
+                        with st.expander(etichetta_copia_legacy.get(lingua_sel, etichetta_copia_legacy["Italiano"])):
+                            st.code(metadati_legacy_modificati, language=None, wrap_lines=True)
 
             with col_formato:
                 st.markdown("### Formattazione Word 6×9")
