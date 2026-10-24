@@ -2872,6 +2872,9 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     avanza(58, "Struttura ricevuta: controllo gerarchia, limiti e coerenza...")
     indice_di_partenza = firma_indice(indice_da_superare)
     massimo_tentativi = 2  # bozza + una sola correzione mirata: evita attese inutili
+    migliore_bozza = ""
+    migliore_qualita = None
+    migliori_rilievi = []
     for tentativo in range(massimo_tentativi):
         avanza(
             64 + tentativo * 17,
@@ -2903,6 +2906,14 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 "la proposta è identica all'indice valutato: applica concretamente i miglioramenti richiesti "
                 "modificando struttura e titoli pertinenti"
             )
+        problemi_strutturali = list(problemi)
+        # Un voto basso o un vincolo non rispettato non cancellano una bozza
+        # che contiene capitoli riconoscibili. Testo libero e risposte vuote
+        # non diventano invece un indice del progetto.
+        bozza_leggibile = bool(re.search(
+            r"(?im)^\s*(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+\b",
+            corrente,
+        ))
         supera_limite = bool(massimo_sezioni and sezioni_generate > massimo_sezioni)
         problemi_senza_estensione = [
             problema for problema in problemi
@@ -2932,10 +2943,13 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         if ha_blocchi or proposta_identica:
             voto_editoriale, difetti_editoriali = 0, "vincoli strutturali da correggere prima della valutazione editoriale"
         else:
-            voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
-                corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
-                addebita=False, riferimento_padre=riferimento,
-            )
+            try:
+                voto_editoriale, difetti_editoriali = audit_editoriale_indice_generato(
+                    corrente, genere, titolo, trama, obiettivo, lingua, stile, narrativa, pov,
+                    addebita=False, riferimento_padre=riferimento,
+                )
+            except Exception as exc:
+                voto_editoriale, difetti_editoriali = 0, f"audit non disponibile ({type(exc).__name__})"
         if voto_editoriale >= 8 and not ha_blocchi and not proposta_identica and not (
             budget_editoriale_superato and tentativo < massimo_tentativi - 1
         ):
@@ -2960,9 +2974,24 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
             return corrente
         if voto_editoriale < 8:
             problemi.append(f"audit editoriale {voto_editoriale}/10: {difetti_editoriali}")
+        if bozza_leggibile and not proposta_identica:
+            scarti_ricette = [
+                abs(int(match.group(1)) - int(match.group(2)))
+                for problema in problemi_strutturali
+                if (match := re.search(r"sono richieste (\d+) ricette.*contiene (\d+) capitoli", problema))
+            ]
+            qualita = (
+                len(problemi_strutturali),
+                min(scarti_ricette, default=0),
+                max(0, sezioni_generate - massimo_sezioni) if massimo_sezioni else 0,
+                -voto_editoriale,
+            )
+            if migliore_qualita is None or qualita < migliore_qualita:
+                migliore_bozza = corrente
+                migliore_qualita = qualita
+                migliori_rilievi = list(problemi)
         if tentativo == massimo_tentativi - 1:
-            st.session_state["ultimo_controllo_indice"] = "Attenzione: l'indice non ha raggiunto la soglia minima di 8/10 e richiede una verifica manuale: " + "; ".join(problemi)
-            return ""
+            break
         if supera_limite:
             # Una richiesta dedicata alla compressione è più affidabile del prompt editoriale completo,
             # che potrebbe contenere molte istruzioni e spingere il modello a espandere l'indice.
@@ -3027,13 +3056,26 @@ INDICE RIFIUTATO DA CORREGGERE
         )
         avanza(92, "Correzione completata: validazione finale in corso...")
         if not str(risposta_revisione or "").strip() or str(risposta_revisione).startswith("ERRORE:"):
-            st.session_state["ultimo_controllo_indice"] = (
-                "La bozza dell'indice è stata creata, ma la correzione automatica non ha concluso "
-                "la risposta entro il tempo previsto. Riprova la generazione tra poco."
-            )
+            migliori_rilievi.append("la correzione automatica non ha concluso la risposta")
             st.session_state["ultimo_errore_indice"] = str(risposta_revisione or "risposta vuota")
-            return ""
+            break
         corrente = normalizza_indice_generato(risposta_revisione)
+    if migliore_bozza:
+        st.session_state["ultimo_controllo_indice"] = (
+            "Indice pubblicato con avviso: la bozza contiene capitoli utilizzabili, ma richiede "
+            "una verifica manuale prima della stesura. Criticità rilevate: "
+            + "; ".join(dict.fromkeys(migliori_rilievi))
+            + ". Puoi correggere l'indice nell'editor o rigenerarlo seguendo il voto; "
+            "le sezioni già scritte restano invariate."
+        )
+        avanza(100, "Indice salvato con avviso: verifica le criticità nell'editor.")
+        return migliore_bozza
+    refund_credits(riferimento, reason="genera_indice_senza_struttura", amount=CREDIT_COSTS["indice_generazione_editoriale"])
+    st.session_state["ultimo_controllo_indice"] = (
+        "Indice non pubblicato: la risposta non contiene capitoli riconoscibili. "
+        "Il credito di progettazione è stato riaccreditato; riprova con un brief più preciso."
+    )
+    avanza(100, "Indice non pubblicato: nessuna struttura leggibile.")
     return ""
 
 def tipo_sezione_editoriale(sezione):
@@ -9746,9 +9788,9 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
             testo_corrente = imposta_indice_progetto(testo_corrente)
         if st.session_state.get("ultimo_controllo_indice"):
             esito_indice = st.session_state["ultimo_controllo_indice"]
-            if re.search(r"\b(?:8|9|10)/10\b", esito_indice):
+            if esito_indice.startswith(("Indice approvato", "Indice corretto automaticamente")):
                 st.success(esito_indice)
-            elif "richiede" in esito_indice or "non ha raggiunto" in esito_indice:
+            elif "avviso" in esito_indice.casefold() or "richiede" in esito_indice or "non ha raggiunto" in esito_indice:
                 st.warning(esito_indice)
         # Una chiave con versione impedisce a Streamlit di riutilizzare la
         # textarea vuota rimasta nel browser prima di un import CSV o di un
