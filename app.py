@@ -1302,15 +1302,19 @@ st.markdown("""
 
 section[data-testid="stSidebar"] { 
     min-width: 370px !important; max-width: 370px !important;
-    width: 370px !important; display: block !important; visibility: visible !important;
-    transform: none !important; background: linear-gradient(180deg, #0b172a 0%, #101d31 100%) !important;
+    width: 370px !important;
+    background: linear-gradient(180deg, #0b172a 0%, #101d31 100%) !important;
     border-right: 1px solid #29405f;
 }
-/* Sidebar fissa: impedisce il collasso accidentale della barra laterale. */
-section[data-testid="stSidebar"][aria-expanded="false"],
-[data-testid="stSidebar"][aria-expanded="false"] {
-    min-width: 370px !important; max-width: 370px !important; width: 370px !important;
-    display: block !important; visibility: visible !important; transform: none !important;
+/* Sul desktop conserva la sidebar fissa; sul mobile lascia funzionare il
+   normale pulsante Streamlit di chiusura e riapertura. */
+@media (min-width: 769px) {
+    section[data-testid="stSidebar"] {
+        display: block !important; visibility: visible !important; transform: none !important;
+    }
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 370px !important; max-width: 370px !important; width: 370px !important;
+    }
 }
 section[data-testid="stSidebar"] > div:first-child {
     width: 370px !important; min-width: 370px !important; display: block !important;
@@ -1551,14 +1555,28 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
        scrittura e si apre dal normale comando laterale di Streamlit. */
     header[data-testid="stHeader"], [data-testid="stHeader"] {
         visibility: visible !important; background: transparent !important;
-        pointer-events: none !important;
+        pointer-events: auto !important;
     }
+    [data-testid="stToolbar"] {
+        display: flex !important; visibility: visible !important;
+        pointer-events: auto !important;
+    }
+    [data-testid="stExpandSidebarButton"],
     [data-testid="collapsedControl"] {
         display: flex !important; visibility: visible !important; pointer-events: auto !important;
         position: fixed !important; top: .55rem !important; left: .55rem !important;
         z-index: 1001 !important; border-radius: 10px !important;
         background: #142b48 !important; border: 1px solid #4aa8ff !important;
         box-shadow: 0 5px 18px rgba(0,0,0,.28) !important;
+    }
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+        display: flex !important; visibility: visible !important; opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+    [data-testid="stExpandSidebarButton"] button,
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+        min-width: 44px !important; min-height: 44px !important;
+        pointer-events: auto !important;
     }
     section[data-testid="stSidebar"][aria-expanded="false"] {
         min-width: 0 !important; max-width: 0 !important; width: 0 !important;
