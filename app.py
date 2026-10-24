@@ -11625,7 +11625,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     key="lingua_metadati"
                 )
                 if pulsante_con_preventivo("metadati_kdp", "Genera metadati dettagliati", CREDIT_COSTS["metadati_kdp"],
-                                           "Genera una descrizione KDP chiara e persuasiva, pensata per le ricerche Amazon e le domande dei lettori, più sette frasi chiave brevi e specifiche."):
+                                           "Genera una descrizione KDP più ricca e persuasiva, che risponda alle ricerche e alle domande dei lettori, più sette frasi chiave brevi e specifiche."):
                     with st.spinner("Analisi del manoscritto e generazione metadati in corso..."):
                         riferimento_metadati = ""
                         try:
@@ -11641,7 +11641,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 restituisci_riferimento=True,
                             )
                             try:
-                                metadati_pronti = formatta_metadati_kdp(testo_metadati, lingua_metadati)
+                                metadati_pronti = formatta_metadati_kdp(
+                                    testo_metadati, lingua_metadati,
+                                    contesto_caratteri=len(contesto_metadati),
+                                )
                             except ValueError as errore_formato:
                                 # Una correzione tecnica è inclusa nello stesso addebito.
                                 testo_metadati = chiedi_gpt(
@@ -11651,7 +11654,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                     reason="metadati_kdp_riparazione",
                                     riferimento_padre=riferimento_metadati,
                                 )
-                                metadati_pronti = formatta_metadati_kdp(testo_metadati, lingua_metadati)
+                                metadati_pronti = formatta_metadati_kdp(
+                                    testo_metadati, lingua_metadati,
+                                    contesto_caratteri=len(contesto_metadati),
+                                )
                             st.session_state["metadati_formattazione"] = metadati_pronti
                         except Exception as e:
                             if riferimento_metadati:
@@ -11661,12 +11667,49 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 )
                             st.error(f"Impossibile generare i metadati: {e}")
                 if st.session_state.get("metadati_formattazione"):
-                    st.text_area(
-                        campo_controllo_ui(5, lingua_sel),
-                        value=st.session_state["metadati_formattazione"],
-                        height=480,
-                        key="output_metadati_formattazione"
-                    )
+                    metadati_visibili = str(st.session_state["metadati_formattazione"])
+                    separatore_metadati = "\n\n7 FRASI CHIAVE KDP\n"
+                    if metadati_visibili.startswith("DESCRIZIONE KDP\n") and separatore_metadati in metadati_visibili:
+                        descrizione_kdp, frasi_kdp = metadati_visibili.removeprefix(
+                            "DESCRIZIONE KDP\n"
+                        ).split(separatore_metadati, 1)
+                        etichette_metadati = {
+                            "Italiano": ("Descrizione KDP — copia questo testo nel campo Descrizione", "Descrizione", "Sette frasi chiave — inseriscile nei sette campi Parole chiave KDP"),
+                            "English": ("KDP description — copy this text into Description", "Description", "Seven keyword phrases — enter them in the seven KDP keyword fields"),
+                            "Español": ("Descripción KDP — copia este texto en Descripción", "Descripción", "Siete frases clave — introdúcelas en los siete campos de palabras clave KDP"),
+                            "Français": ("Description KDP — copiez ce texte dans Description", "Description", "Sept expressions clés — saisissez-les dans les sept champs KDP"),
+                            "Deutsch": ("KDP-Beschreibung — diesen Text in Beschreibung kopieren", "Beschreibung", "Sieben Suchbegriffe — in die sieben KDP-Keyword-Felder eintragen"),
+                            "Română": ("Descriere KDP — copiază textul în câmpul Descriere", "Descriere", "Șapte expresii cheie — introdu-le în cele șapte câmpuri KDP"),
+                            "Русский": ("Описание KDP — скопируйте этот текст в поле описания", "Описание", "Семь ключевых фраз — внесите их в семь полей KDP"),
+                            "العربية": ("وصف KDP — انسخ هذا النص إلى حقل الوصف", "الوصف", "سبع عبارات مفتاحية — أدخلها في حقول KDP السبعة"),
+                            "中文": ("KDP 简介——将此文本复制到简介字段", "简介", "七条关键词短语——分别填入七个 KDP 关键词字段"),
+                        }
+                        etichetta_descrizione, etichetta_contatore, etichetta_frasi = etichette_metadati.get(
+                            lingua_sel, etichette_metadati["Italiano"]
+                        )
+                        versione_metadati = hashlib.sha256(
+                            metadati_visibili.encode("utf-8")
+                        ).hexdigest()[:10]
+                        descrizione_modificata = st.text_area(
+                            etichetta_descrizione,
+                            value=descrizione_kdp,
+                            height=480,
+                            key=f"output_metadati_descrizione_{versione_metadati}",
+                        )
+                        st.caption(f"{etichetta_contatore}: {len(descrizione_modificata)} / 4.000 KDP")
+                        st.text_area(
+                            etichetta_frasi,
+                            value=frasi_kdp,
+                            height=210,
+                            key=f"output_metadati_parole_chiave_{versione_metadati}",
+                        )
+                    else:
+                        st.text_area(
+                            campo_controllo_ui(5, lingua_sel),
+                            value=metadati_visibili,
+                            height=480,
+                            key="output_metadati_formattazione",
+                        )
 
             with col_formato:
                 st.markdown("### Formattazione Word 6×9")

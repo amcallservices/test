@@ -26,12 +26,14 @@ class ProjectMetadataTests(unittest.TestCase):
         prompt = crea_prompt_metadati_kdp("testo del libro " * 100, "Italiano")
         self.assertIn("SEO e AEO", prompt)
         self.assertIn("2–3 parole", prompt)
-        self.assertIn("massimo 3.500 caratteri", prompt)
+        self.assertIn("240–320 parole", prompt)
+        self.assertIn("3.600 caratteri", prompt)
+        self.assertIn("assistente agli acquisti", prompt)
         self.assertIn("non hai dati di ricerca", prompt)
 
     def test_output_has_exactly_seven_short_distinct_fields(self):
         dati = {
-            "descrizione": "Una guida pratica per chi vuole capire un argomento complesso. " * 6,
+            "descrizione": "Una guida pratica per chi vuole capire un argomento complesso. " * 25,
             "parole_chiave": [
                 "scelta consapevole", "errori comuni", "guida pratica", "controlli preliminari",
                 "documenti essenziali", "costi nascosti", "decisione informata",
@@ -49,6 +51,18 @@ class ProjectMetadataTests(unittest.TestCase):
             campiona_testo_manoscritto("troppo breve")
         with self.assertRaises(ValueError):
             formatta_metadati_kdp(json.dumps({"descrizione": "x" * 500, "parole_chiave": ["tema preciso"] * 6}), "Italiano")
+
+    def test_description_is_not_too_short_for_a_full_book(self):
+        dati = {
+            "descrizione": "Una presentazione accurata del libro e del suo tema. " * 12,
+            "parole_chiave": [f"tema {numero}" for numero in range(7)],
+        }
+        with self.assertRaises(ValueError):
+            formatta_metadati_kdp(json.dumps(dati), "Italiano", contesto_caratteri=15000)
+        self.assertIn(
+            "DESCRIZIONE KDP",
+            formatta_metadati_kdp(json.dumps(dati), "Italiano", contesto_caratteri=1500),
+        )
 
 
 if __name__ == "__main__":

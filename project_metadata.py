@@ -85,12 +85,15 @@ def crea_prompt_metadati_kdp(contesto: str, lingua: str) -> str:
 Leggi il contenuto e produci i metadati nella lingua {lingua}.
 
 DESCRIZIONE KDP:
-- Scrivi una descrizione naturale e accattivante, circa 150–220 parole, massimo 3.500 caratteri.
-- Apri con una frase concreta che dica subito tema o situazione e attiri il lettore giusto.
-- Rendi subito chiaro a chi è rivolto il libro, quale domanda o esigenza affronta e che cosa contiene davvero. Per la narrativa presenta premessa, atmosfera e conflitto senza spoiler; per la saggistica spiega il beneficio concreto senza garantire risultati.
-- Per SEO e AEO usa nel testo naturale i concetti che un lettore cercherebbe su Amazon e rispondi con chiarezza alle sue domande principali (di che cosa parla, per chi è, cosa troverà). Non inserire un elenco di parole chiave nella descrizione e non ripetere forzatamente le stesse espressioni.
-- Seleziona 2–4 elementi specifici presenti nel manoscritto; non inventare contenuti, bonus, testimonianze, dati, qualifiche dell'autore o risultati garantiti.
-- Usa frasi semplici e paragrafi brevi. Chiudi con un invito sobrio alla lettura, senza urgenza artificiale.
+- Scrivi una descrizione più sviluppata, circa 240–320 parole nelle lingue con spazi fra parole; per il cinese usa una lunghezza equivalente e naturale. Resta comunque entro 3.600 caratteri, lasciando margine rispetto al massimo KDP di 4.000. Se il manoscritto è davvero breve, riduci la lunghezza anziché inventare o ripetere.
+- Prima di scrivere, individua in silenzio il tema principale, il lettore ideale, tre domande realistiche che un acquirente farebbe, 3–5 contenuti concreti verificabili nel manoscritto e l'elemento distintivo del libro. Non mostrare questa analisi.
+- Apri con una frase forte e specifica: fai capire subito di che cosa parla il libro e quale interesse, desiderio o difficoltà del lettore intercetta. Evita formule generiche e slogan.
+- Nei primi due paragrafi chiarisci a chi è rivolto, quale esigenza affronta e quale promessa editoriale reale mantiene. I primi caratteri devono avere senso anche letti da soli in un'anteprima breve.
+- Sviluppa poi 3–5 dettagli verificabili del contenuto, distribuiti in paragrafi brevi. Collega ogni dettaglio a una domanda o a un'utilità concreta per il lettore: questo rende la descrizione adatta sia alle ricerche testuali sia alle risposte di un assistente agli acquisti. Per la narrativa usa premessa, personaggi, atmosfera e posta in gioco senza spoiler; per la saggistica spiega percorso e utilità senza garantire risultati.
+- Poiché l'assistente agli acquisti di Amazon può ricavare risposte anche dai dettagli della scheda prodotto, rendi espliciti e non solo impliciti genere, tema, pubblico, livello e contenuti specifici quando il manoscritto li conferma. Ogni affermazione deve poter essere compresa anche fuori dal suo paragrafo, senza diventare una lista di tag.
+- Per SEO e AEO Amazon usa espressioni di ricerca pertinenti nel linguaggio naturale, variando le formulazioni secondo gli intenti del lettore. Rispondi implicitamente a: «Di cosa parla?», «È adatto a me?», «Che cosa troverò?» e, solo se il libro lo consente, «Come mi aiuta?». Non creare una FAQ artificiale, non ripetere parole chiave a forza e non fare affermazioni sul funzionamento o sul posizionamento dell'algoritmo Amazon.
+- Rendi il testo accattivante con una progressione editoriale: apertura che incuriosisce, valore concreto, dettagli distintivi e chiusura che inviti con naturalezza alla lettura. Ogni paragrafo deve aggiungere una nuova informazione; niente riempitivi.
+- Non inventare contenuti, bonus, testimonianze, dati, qualifiche dell'autore o risultati garantiti.
 - Non includere emoji, link, recapiti, prezzi, promozioni, richieste di recensione, riferimenti al posizionamento SEO/AEO o a questo prompt. Non usare HTML o Markdown.
 
 SETTE FRASI CHIAVE KDP:
@@ -107,7 +110,7 @@ Rispondi SOLO con un oggetto JSON valido con esattamente queste chiavi, senza bl
 </manoscritto>"""
 
 
-def formatta_metadati_kdp(risposta: str, lingua: str) -> str:
+def formatta_metadati_kdp(risposta: str, lingua: str, *, contesto_caratteri: int | None = None) -> str:
     """Accetta soltanto descrizione KDP e sette frasi brevi e distinte."""
     testo = str(risposta or "").strip()
     if testo.startswith("```"):
@@ -123,8 +126,16 @@ def formatta_metadati_kdp(risposta: str, lingua: str) -> str:
         raise ValueError("Formato metadati non valido.")
     descrizione = str(dati.get("descrizione", "") or "").strip()
     descrizione = re.sub(r"\n{3,}", "\n\n", descrizione)
-    if not 250 <= len(descrizione) <= 4000:
-        raise ValueError("La descrizione deve essere completa e restare entro 4.000 caratteri.")
+    manoscritto_breve = contesto_caratteri is not None and contesto_caratteri < 4000
+    if lingua == "Cinese":
+        minimo = 250 if manoscritto_breve else 500
+    else:
+        minimo = 500 if manoscritto_breve else 1200
+    if not minimo <= len(descrizione) <= 4000:
+        raise ValueError(
+            f"La descrizione deve sviluppare il contenuto del libro (almeno {minimo} caratteri) "
+            "e restare entro i 4.000 caratteri KDP."
+        )
     if re.search(r"https?://|www\.|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|<[^>]+>", descrizione, re.IGNORECASE):
         raise ValueError("La descrizione non deve contenere link, recapiti email o tag HTML.")
     if any(0x1F300 <= ord(carattere) <= 0x1FAFF for carattere in descrizione):
