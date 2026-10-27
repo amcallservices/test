@@ -1347,7 +1347,8 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
     background:#132a44 !important; color:#eaf6ff !important; font-weight:750 !important;
 }
 section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
-    font-size: .83rem !important; font-weight: 700 !important; letter-spacing: .01em;
+    font-size: .9rem !important; font-weight: 700 !important;
+    line-height: 1.4 !important; letter-spacing: .01em;
 }
 section[data-testid="stSidebar"] .stTextInput input,
 section[data-testid="stSidebar"] .stTextArea textarea,
@@ -1479,16 +1480,14 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] span {
     box-shadow:0 11px 21px rgba(0,0,0,.25) !important;
 }
 [data-testid="stTabs"] button[role="tab"]:focus-visible { outline:3px solid #7fc5ff !important; outline-offset:2px !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(1) { border-top-color:#62b6ff !important; background:linear-gradient(145deg,#123b5d,#0d2741) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(2) { border-top-color:#d2a6ff !important; background:linear-gradient(145deg,#40255f,#26183f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(3) { border-top-color:#ffb45f !important; background:linear-gradient(145deg,#5a3719,#38220f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(4) { border-top-color:#73d6ff !important; background:linear-gradient(145deg,#144b63,#0d3043) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(5) { border-top-color:#f5d56f !important; background:linear-gradient(145deg,#59481a,#382c0f) !important; }
-[data-testid="stTabs"] button[role="tab"]:nth-of-type(6) { border-top-color:#7fdea8 !important; background:linear-gradient(145deg,#164c34,#0e3022) !important; }
+[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) {
+    border-top-color:#456d8b !important;
+    background:#142b42 !important;
+}
 [data-testid="stTabs"] button[aria-selected="true"] {
-    transform:translateY(-4px); border-color:#62b6ff !important; border-top-color:#d7efff !important;
-    background:linear-gradient(135deg,#1675bc,#2399e8) !important; color:#fff !important;
-    box-shadow:0 13px 26px rgba(29,145,225,.42) !important;
+    transform:translateY(-2px); border-color:#8fd8ff !important; border-top-color:#d7efff !important;
+    background:#117dbb !important; color:#fff !important;
+    box-shadow:0 8px 18px rgba(10,85,130,.26) !important;
 }
 [data-testid="stTabs"] button[aria-selected="true"]::after {
     content:"✓"; position:absolute; right:.68rem; bottom:.58rem;
@@ -1659,6 +1658,40 @@ div[data-baseweb="select"] > div { background-color: #16263d !important; color: 
     .ss-next-action { padding:.58rem .62rem !important; gap:.48rem !important; }.ss-next-action strong { font-size:.83rem !important; }
     .ss-section-card { padding: .35rem .7rem .75rem !important; border-radius: 11px !important; }
     .ss-editor-actions-heading { margin:.82rem 0 .42rem !important; padding:.56rem .64rem !important; font-size:.82rem !important; }
+}
+/* Gerarchia editoriale: dati e istruzioni restano leggibili anche quando il
+   progetto contiene molte sezioni. I significati dei colori restano invariati. */
+.ss-project-panel { background:#102239; box-shadow:none; }
+.ss-project-caption { color:#c7d9e9; font-size:.78rem; line-height:1.45; }
+.ss-project-caption strong { color:#f0f7ff; }
+.ss-project-step { font-size:.77rem; line-height:1.3; }
+.ss-project-metric span { color:#bfd3e6; font-size:.76rem; line-height:1.3; }
+.ss-project-metric b { font-size:1.14rem; }
+.ss-next-action small { color:#c8e8ff; font-size:.75rem; }
+.ss-next-action strong { font-size:.87rem; line-height:1.35; }
+.ss-next-action p { font-size:.79rem; line-height:1.4; }
+.ss-workspace-subtitle { color:#c3d7e9; font-size:.84rem; }
+.ss-workspace-chip { font-size:.82rem; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {
+    color:#c9d9e9 !important; font-size:.85rem !important; line-height:1.45 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+section[data-testid="stSidebar"] small { color:#e1ebf5 !important; }
+section[data-testid="stSidebar"] .stTextInput input:focus,
+section[data-testid="stSidebar"] .stTextArea textarea:focus,
+section[data-testid="stSidebar"] div[data-baseweb="select"]:focus-within > div {
+    outline:2px solid #72cfff !important; outline-offset:1px !important;
+}
+.stButton>button:focus-visible { outline:3px solid #91d9ff !important; outline-offset:2px !important; }
+@media (max-width:768px) {
+    .ss-project-caption { font-size:.78rem !important; }
+    .ss-project-metric span { font-size:.76rem !important; }
+    .ss-next-action strong { font-size:.86rem !important; }
+    .ss-next-action p { font-size:.79rem !important; }
+    section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p { font-size:.88rem !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+    .stButton>button, [data-testid="stTabs"] button[role="tab"] { transition:none !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -8582,10 +8615,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         <script>
         (function () {
           const documento = window.parent.document;
-          const colori = [
-            ['#154f7c', '#0c2e4b'], ['#245b75', '#12374a'], ['#58318a', '#331c56'],
-            ['#9a5415', '#5d300b'], ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
-          ];
+          const coloreScheda = ['#355c78', '#142b42'];
 
           function imposta(stile, nome, valore) {
             stile.setProperty(nome, valore, 'important');
@@ -8606,11 +8636,11 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(intestazione.style, 'gap', mobile ? '11px' : '15px');
               imposta(intestazione.style, 'padding', mobile ? '15px 16px' : '20px 23px');
               imposta(intestazione.style, 'margin', '24px 0 5px');
-              imposta(intestazione.style, 'border', '2px solid #49abe8');
+              imposta(intestazione.style, 'border', '1px solid #4ba3d6');
               imposta(intestazione.style, 'border-left', '8px solid #76d0ff');
               imposta(intestazione.style, 'border-radius', '18px');
-              imposta(intestazione.style, 'background', 'linear-gradient(135deg, #123f64, #0d2948)');
-              imposta(intestazione.style, 'box-shadow', '0 15px 31px rgba(6, 38, 65, .34)');
+              imposta(intestazione.style, 'background', '#10324d');
+              imposta(intestazione.style, 'box-shadow', '0 6px 18px rgba(6, 38, 65, .22)');
               const titolo = intestazione.querySelector('h2');
               const testo = intestazione.querySelector('p');
               const intervallo = intestazione.querySelector('.ss-menu-range');
@@ -8631,10 +8661,10 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'overflow-y', 'hidden');
             imposta(lista.style, 'width', '100%');
             imposta(lista.style, 'box-sizing', 'border-box');
-            imposta(lista.style, 'border', '2px solid #49abe8');
+            imposta(lista.style, 'border', '1px solid #426786');
             imposta(lista.style, 'border-radius', '22px');
-            imposta(lista.style, 'background', 'linear-gradient(135deg, #07182b, #102d49 64%, #0c233b)');
-            imposta(lista.style, 'box-shadow', '0 17px 34px rgba(3, 15, 27, .3)');
+            imposta(lista.style, 'background', '#0b2035');
+            imposta(lista.style, 'box-shadow', 'none');
 
             // La tab 0 resta la prima nel DOM per l'apertura automatica.
             // Nel menu visivo l'ordine è però -1, 0, 1, 2, 3, 4, 5.
@@ -8643,7 +8673,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             });
             schede.slice(0, 7).forEach(function (scheda, indice) {
               const scelto = scheda.getAttribute('aria-selected') === 'true';
-              const colore = colori[indice];
+              const colore = coloreScheda;
               imposta(scheda.style, 'box-sizing', 'border-box');
               imposta(scheda.style, 'flex', mobile ? '0 0 min(76vw, 310px)' : '1 1 0');
               imposta(scheda.style, 'min-width', '0');
@@ -8651,11 +8681,11 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(scheda.style, 'padding', mobile ? '16px 17px' : '14px 13px');
               imposta(scheda.style, 'margin', '0');
               imposta(scheda.style, 'border-radius', '18px');
-              imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
-              imposta(scheda.style, 'border-top', scelto ? '7px solid #ffffff' : '7px solid ' + colore[0]);
+              imposta(scheda.style, 'border', scelto ? '2px solid #d7f1ff' : '1px solid ' + colore[0]);
+              imposta(scheda.style, 'border-top', scelto ? '5px solid #ffffff' : '5px solid ' + colore[0]);
               imposta(scheda.style, 'background', scelto
-                ? 'linear-gradient(135deg, #1688da, #36b4f4)'
-                : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
+                ? '#117dbb'
+                : colore[1]);
               imposta(scheda.style, 'color', '#ffffff');
               imposta(scheda.style, 'font-size', mobile ? '17px' : '16px');
               imposta(scheda.style, 'font-weight', '800');
@@ -8664,8 +8694,8 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(scheda.style, 'text-align', mobile ? 'left' : 'center');
               imposta(scheda.style, 'justify-content', 'center');
               imposta(scheda.style, 'box-shadow', scelto
-                ? '0 12px 25px rgba(45, 170, 243, .55)'
-                : '0 8px 17px rgba(0, 0, 0, .23)');
+                ? '0 8px 18px rgba(10, 85, 130, .26)'
+                : 'none');
             });
             return true;
           }
