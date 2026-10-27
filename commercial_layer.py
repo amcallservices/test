@@ -1488,7 +1488,7 @@ def _landing_page() -> None:
           .ss-mobile-nav {display:none}
           .ss-hero-copy {padding:1.15rem .65rem .6rem .3rem}
           .ss-hero-copy-tail {padding-top:0}
-          .ss-headline {max-width:650px; font-size:clamp(2.3rem,3.65vw,3.5rem);
+          .ss-headline {max-width:650px; font-size:clamp(2.2rem,3.1vw,3rem);
             line-height:1.08; letter-spacing:-.045em}
           .ss-subtitle {max-width:590px; font-size:1.06rem; line-height:1.52}
           .ss-bonus {margin:1.05rem 0 .45rem; font-size:.9rem}
@@ -1563,24 +1563,18 @@ def _landing_page() -> None:
         f"<nav aria-label='{menu_label}'>{nav_links_html}</nav></details>",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
-        unsafe_allow_html=True,
-    )
-
     base_dir = Path(__file__).resolve().parent
     public_logo = base_dir / "assets" / "scrittore-site-logo.png"
     hero_copy, hero_visual = st.columns([0.44, 0.56], gap="large")
     with hero_copy:
         if public_logo.is_file():
-            st.image(str(public_logo), width=280)
+            st.image(str(public_logo), width=180)
         else:
             st.markdown("<p class='ss-title'>Scrittore Site</p>", unsafe_allow_html=True)
         st.markdown(
             f"""<div class='ss-hero-copy ss-hero-copy-tail'>
               <h1 class='ss-headline'>{J['headline']}</h1>
               <p class='ss-subtitle'>{J['subtitle']}</p>
-              <div class='ss-bonus'>{H['bonus']}</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -1595,6 +1589,7 @@ def _landing_page() -> None:
                 st.session_state["commercial_show_auth"] = True
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
+        st.markdown(f"<div class='ss-bonus'>{H['bonus']}</div>", unsafe_allow_html=True)
     with hero_visual:
         preview_image = next(
             (candidate for candidate in (
@@ -1623,6 +1618,11 @@ def _landing_page() -> None:
                 "<h3>Scrivi con controllo</h3><div class='ss-proof-lines'><i></i><i></i><i></i></div></div></div></div>",
                 unsafe_allow_html=True,
             )
+
+    st.markdown(
+        f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
+        unsafe_allow_html=True,
+    )
 
     # Home essenziale: mostra subito il percorso; le spiegazioni complete sono
     # raccolte in tendine, senza eliminare alcuna funzione del software.
