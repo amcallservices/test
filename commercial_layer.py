@@ -1084,15 +1084,15 @@ def _render_password_recovery() -> bool:
 
 
 HOME_AI_ENGINES_COPY = {
-    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "GPT-5.4 · OpenAI", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web, immagini e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 5 crediti · Coerenza completa: 10 crediti.", "DeepSeek V4 Pro", "Cervello autonomo per ricerca web con fonti visibili, indice, fonti caricate, scrittura e controlli editoriali.", "Rapporto 1:3 con GPT · Scrittura: 1 credito ogni 3 operazioni · Ricerca e indice: circa 2 crediti.", "La verifica copyright sul web e le immagini restano disponibili con GPT, per mantenere i due cervelli separati."),
-    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "GPT-5.4 · OpenAI", "The complete brain: writing, web research, sources, web copyright checks, images and review tools.", "Writing: 1 credit per operation · Full outline: 5 credits · Full coherence check: 10 credits.", "DeepSeek V4 Pro", "An independent brain for web research with visible sources, outlines, uploaded sources, writing and editorial checks.", "1:3 ratio with GPT · Writing: 1 credit every 3 operations · Research and outline: about 2 credits.", "Web copyright checks and images remain available with GPT, keeping the two brains separate."),
-    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "GPT-5.4 · OpenAI", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web, imágenes y revisión.", "Redacción: 1 crédito por operación · Índice completo: 5 créditos · Coherencia completa: 10 créditos.", "DeepSeek V4 Pro", "Cerebro independiente para búsqueda web con fuentes visibles, índices, fuentes cargadas, redacción y controles editoriales.", "Relación 1:3 con GPT · Redacción: 1 crédito cada 3 operaciones · Búsqueda e índice: unos 2 créditos.", "El control de copyright web y las imágenes siguen disponibles con GPT."),
-    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "GPT-5.4 · OpenAI", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web, images et révision.", "Rédaction : 1 crédit par opération · Plan complet : 5 crédits · Cohérence complète : 10 crédits.", "DeepSeek V4 Pro", "Cerveau indépendant pour recherche web avec sources visibles, plans, sources importées, rédaction et contrôles éditoriaux.", "Rapport 1:3 avec GPT · Rédaction : 1 crédit toutes les 3 opérations · Recherche et plan : environ 2 crédits.", "Le contrôle de copyright web et les images restent disponibles avec GPT."),
-    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "GPT-5.4 · OpenAI", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung, Bilder und Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 5 Credits · Kohärenzprüfung: 10 Credits.", "DeepSeek V4 Pro", "Eigenständiges Gehirn für Webrecherche mit sichtbaren Quellen, Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen.", "Verhältnis 1:3 zu GPT · Schreiben: 1 Credit je 3 Vorgänge · Recherche und Gliederung: etwa 2 Credits.", "Web-Urheberrechtsprüfung und Bilder bleiben mit GPT verfügbar."),
-    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "GPT-5.4 · OpenAI", "Creierul complet: scriere, cercetare web, surse, control copyright web, imagini și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 5 credite · Coerență completă: 10 credite.", "DeepSeek V4 Pro", "Creier independent pentru cercetare web cu surse vizibile, cuprins, surse încărcate, scriere și controale editoriale.", "Raport 1:3 cu GPT · Scriere: 1 credit la 3 operațiuni · Cercetare și cuprins: circa 2 credite.", "Controlul copyright web și imaginile rămân disponibile cu GPT."),
-    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "GPT-5.4 · OpenAI", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав, изображения и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 5 кредитов · Полная проверка: 10 кредитов.", "DeepSeek V4 Pro", "Отдельный движок для веб-поиска с видимыми источниками, оглавления, загруженных источников, текста и редакторских проверок.", "Соотношение 1:3 с GPT · Текст: 1 кредит за 3 операции · Поиск и оглавление: около 2 кредитов.", "Веб-проверка авторских прав и изображения остаются доступны с GPT."),
-    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "GPT-5.4 · OpenAI", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب وصور ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 5 أرصدة · فحص الاتساق: 10 أرصدة.", "DeepSeek V4 Pro", "عقل مستقل للبحث على الويب مع مصادر ظاهرة، والفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية.", "نسبة 1:3 مع GPT · الكتابة: رصيد واحد لكل 3 عمليات · البحث والفهرس: نحو رصيدين.", "فحص حقوق الويب والصور متاحان مع GPT."),
-    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查、图片和编辑检查。", "写作：每次操作 1 积分 · 完整目录：5 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 研究和目录：约 2 积分。", "网页版权检查和图片功能仍由 GPT 提供。"),
+    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "GPT-5.4 · OpenAI", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 10 crediti · Coerenza completa: 10 crediti.", "DeepSeek V4 Pro", "Cervello autonomo per ricerca web con fonti visibili, indice, fonti caricate, scrittura e controlli editoriali.", "Rapporto 1:3 con GPT · Scrittura: 1 credito ogni 3 operazioni · Indice completo: 10 unità interne (3⅓ crediti).", "La verifica copyright sul web resta disponibile con GPT; puoi caricare immagini esterne nel progetto."),
+    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "GPT-5.4 · OpenAI", "The complete brain: writing, web research, sources, web copyright checks and review tools.", "Writing: 1 credit per operation · Full outline: 10 credits · Full coherence check: 10 credits.", "DeepSeek V4 Pro", "An independent brain for web research with visible sources, outlines, uploaded sources, writing and editorial checks.", "1:3 ratio with GPT · Writing: 1 credit every 3 operations · Full outline: 10 internal units (3⅓ credits).", "Web copyright checks remain available with GPT; you can upload external images to the project."),
+    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "GPT-5.4 · OpenAI", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web y revisión.", "Redacción: 1 crédito por operación · Índice completo: 10 créditos · Coherencia completa: 10 créditos.", "DeepSeek V4 Pro", "Cerebro independiente para búsqueda web con fuentes visibles, índices, fuentes cargadas, redacción y controles editoriales.", "Relación 1:3 con GPT · Redacción: 1 crédito cada 3 operaciones · Índice completo: 10 unidades internas (3⅓ créditos).", "El control de copyright web sigue disponible con GPT; puedes cargar imágenes externas en el proyecto."),
+    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "GPT-5.4 · OpenAI", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web et révision.", "Rédaction : 1 crédit par opération · Plan complet : 10 crédits · Cohérence complète : 10 crédits.", "DeepSeek V4 Pro", "Cerveau indépendant pour recherche web avec sources visibles, plans, sources importées, rédaction et contrôles éditoriaux.", "Rapport 1:3 avec GPT · Rédaction : 1 crédit toutes les 3 opérations · Plan complet : 10 unités internes (3⅓ crédits).", "Le contrôle de copyright web reste disponible avec GPT ; vous pouvez importer des images externes dans le projet."),
+    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "GPT-5.4 · OpenAI", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung und redaktionelle Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 10 Credits · Kohärenzprüfung: 10 Credits.", "DeepSeek V4 Pro", "Eigenständiges Gehirn für Webrecherche mit sichtbaren Quellen, Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen.", "Verhältnis 1:3 zu GPT · Schreiben: 1 Credit je 3 Vorgänge · Vollständige Gliederung: 10 interne Einheiten (3⅓ Credits).", "Die Web-Urheberrechtsprüfung bleibt mit GPT verfügbar; externe Bilder können ins Projekt hochgeladen werden."),
+    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "GPT-5.4 · OpenAI", "Creierul complet: scriere, cercetare web, surse, control copyright web și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 10 credite · Coerență completă: 10 credite.", "DeepSeek V4 Pro", "Creier independent pentru cercetare web cu surse vizibile, cuprins, surse încărcate, scriere și controale editoriale.", "Raport 1:3 cu GPT · Scriere: 1 credit la 3 operațiuni · Cuprins complet: 10 unități interne (3⅓ credite).", "Controlul copyright web rămâne disponibil cu GPT; poți încărca imagini externe în proiect."),
+    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "GPT-5.4 · OpenAI", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 10 кредитов · Полная проверка: 10 кредитов.", "DeepSeek V4 Pro", "Отдельный движок для веб-поиска с видимыми источниками, оглавления, загруженных источников, текста и редакторских проверок.", "Соотношение 1:3 с GPT · Текст: 1 кредит за 3 операции · Полное оглавление: 10 внутренних единиц (3⅓ кредита).", "Веб-проверка авторских прав остаётся доступной с GPT; внешние изображения можно загрузить в проект."),
+    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "GPT-5.4 · OpenAI", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 10 أرصدة · فحص الاتساق: 10 أرصدة.", "DeepSeek V4 Pro", "عقل مستقل للبحث على الويب مع مصادر ظاهرة، والفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية.", "نسبة 1:3 مع GPT · الكتابة: رصيد واحد لكل 3 عمليات · الفهرس الكامل: 10 وحدات داخلية (3⅓ رصيد).", "فحص حقوق الويب متاح مع GPT؛ ويمكنك رفع صور خارجية إلى المشروع."),
+    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查和编辑检查。", "写作：每次操作 1 积分 · 完整目录：10 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 完整目录：10 个内部单位（3⅓ 积分）。", "网页版权检查仍由 GPT 提供；你可以向项目上传外部图片。"),
 }
 
 # Funzione editoriale opzionale, presentata nella home senza promettere che
@@ -1233,6 +1233,18 @@ HOME_NAVIGATION = {
     "中文": ("使用流程", "功能", "优势", "双引擎", "积分", "常见问题", "指南", "Instagram"),
 }
 
+HOME_STORE_LABELS = {
+    "Italiano": "Il nostro Store", "English": "Our Store",
+    "Español": "Nuestra tienda", "Français": "Notre boutique",
+    "Deutsch": "Unser Shop", "Română": "Magazinul nostru",
+    "Русский": "Наш магазин", "العربية": "متجرنا", "中文": "我们的商店",
+}
+HOME_MENU_LABELS = {
+    "Italiano": "Menu", "English": "Menu", "Español": "Menú",
+    "Français": "Menu", "Deutsch": "Menü", "Română": "Meniu",
+    "Русский": "Меню", "العربية": "القائمة", "中文": "菜单",
+}
+
 # Guide PDF della sola area riservata. Sono disponibili in entrambe le lingue
 # indipendentemente dalla lingua scelta nella home, così ogni visitatore può
 # scaricare la versione che preferisce.
@@ -1350,12 +1362,11 @@ def _landing_page() -> None:
           .ss-priority::after {content:'';position:absolute;width:105px;height:105px;border-radius:50%;right:-33px;bottom:-45px;background:rgba(22,137,232,.10)}
           .ss-priority-icon {font-size:1.45rem;margin-bottom:.42rem}.ss-priority b {display:block;color:#102a43;font-size:1rem;margin-bottom:.32rem}.ss-priority p {position:relative;z-index:1;margin:0;color:#486581;line-height:1.38;font-size:.86rem}
           .ss-priority-tag {display:inline-block;margin-top:.55rem;padding:.2rem .44rem;border-radius:99px;background:#e0f2fe;color:#1269ae;font-weight:800;font-size:.68rem}
-          /* Il primo blocco della home diventa un percorso numerato, senza
-             aggiungere passaggi o cambiare le funzioni presentate. */
+          /* Un solo percorso numerato, senza icone e badge ripetuti. */
           #ss-percorso .ss-priority-grid {counter-reset:ss-home-step}
-          #ss-percorso .ss-priority {counter-increment:ss-home-step;padding-top:2.95rem}
-          #ss-percorso .ss-priority:before {content:counter(ss-home-step);position:absolute;top:.78rem;left:.82rem;width:1.72rem;height:1.72rem;display:grid;place-items:center;border-radius:50%;background:#1689e8;color:#fff;font-size:.82rem;font-weight:900;box-shadow:0 4px 10px rgba(22,137,232,.24)}
-          #ss-percorso .ss-priority:nth-child(4):before {background:#16a36a;box-shadow:0 4px 10px rgba(22,163,106,.22)}
+          #ss-percorso .ss-priority {counter-increment:ss-home-step;padding-top:2.8rem}
+          #ss-percorso .ss-priority:before {content:counter(ss-home-step);position:absolute;
+            top:.85rem;left:1.1rem;color:#8bdcff;font:700 1.1rem/1 Georgia,serif}
           .ss-feature-group {background:rgba(255,255,255,.64);border:1px solid #d9e5f0;border-radius:14px;padding:1.1rem 1.05rem;height:100%;text-align:center}
           .ss-feature-group h3 {margin:0 0 .42rem;color:#1269ae;font-size:1.06rem}.ss-feature-group p {margin:.42rem 0;color:#486581;font-size:.9rem;line-height:1.38}
           .ss-language-wrap {max-width:1500px; margin:0 auto -2.3rem; display:flex; justify-content:flex-end}
@@ -1468,6 +1479,45 @@ def _landing_page() -> None:
           [data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:transparent !important;color:#e5f3ff !important}
           [data-testid="stExpander"] summary:hover {background:rgba(14,116,185,.18) !important}
           [data-testid="stExpander"] [data-testid="stMarkdownContainer"] {color:#c9deef !important}
+          /* Un solo percorso visibile e azioni principali subito disponibili. */
+          [data-testid="stMainBlockContainer"] {padding-top:1.5rem !important}
+          .ss-quick-nav {max-width:1250px; margin:.25rem auto 1rem; padding:.38rem .55rem;
+            gap:.12rem; box-shadow:none !important}
+          .ss-quick-nav a {padding:.4rem .52rem; white-space:nowrap}
+          .ss-quick-nav .ss-store-link {border:1px solid rgba(125,211,252,.35)}
+          .ss-mobile-nav {display:none}
+          .ss-hero-copy {padding:1.15rem .65rem .6rem .3rem}
+          .ss-hero-copy-tail {padding-top:0}
+          .ss-headline {max-width:650px; font-size:clamp(2.3rem,3.65vw,3.5rem);
+            line-height:1.08; letter-spacing:-.045em}
+          .ss-subtitle {max-width:590px; font-size:1.06rem; line-height:1.52}
+          .ss-bonus {margin:1.05rem 0 .45rem; font-size:.9rem}
+          .ss-section {margin-top:2.2rem}
+          .ss-home-path .ss-priority-grid {margin:1rem 0 1.4rem}
+          .ss-home-path .ss-priority {min-height:0;
+            padding:2.8rem 1.15rem 1.2rem; text-align:left; box-shadow:none !important}
+          .ss-home-path .ss-priority::after {display:none}
+          .ss-home-path .ss-priority b {font-size:1.08rem}
+          .ss-home-path .ss-priority p {font-size:.9rem; line-height:1.48}
+          @media (max-width:760px) {
+            .ss-quick-nav {display:none !important}
+            .ss-mobile-nav {display:block; margin:.2rem 0 .85rem;
+              border:1px solid rgba(125,211,252,.35); border-radius:13px;
+              background:#0b2942; color:#e7f4ff}
+            .ss-mobile-nav summary {cursor:pointer; padding:.72rem .95rem;
+              font-weight:800; list-style-position:inside}
+            .ss-mobile-nav nav {display:grid; grid-template-columns:1fr; gap:.2rem;
+              padding:.25rem .65rem .7rem; border-top:1px solid rgba(125,211,252,.22)}
+            .ss-mobile-nav a {padding:.45rem .55rem; border-radius:8px;
+              color:#e7f4ff !important; text-decoration:none !important}
+            .ss-mobile-nav a:hover {background:#17466b}
+            [data-testid="stHorizontalBlock"]:has(.ss-hero-copy) {flex-direction:column !important}
+            .ss-hero-copy {padding:.55rem .25rem .35rem}
+            .ss-headline {font-size:clamp(2rem,8.2vw,2.8rem); line-height:1.1}
+            .ss-home-path .ss-priority {padding:2.5rem 1rem 1rem}
+          }
+          .ss-quick-nav a:focus-visible,.ss-mobile-nav summary:focus-visible,
+          .ss-mobile-nav a:focus-visible {outline:3px solid #91d9ff; outline-offset:2px}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1493,16 +1543,24 @@ def _landing_page() -> None:
     advantage_cards = HOME_ADVANTAGE_CARDS[home_language]
     trust_items = HOME_TRUST_STRIP[home_language]
     N = HOME_NAVIGATION[home_language]
+    store_label = HOME_STORE_LABELS[home_language]
+    menu_label = HOME_MENU_LABELS[home_language]
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
 
-    st.markdown(
-        f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
+    nav_links_html = f"""
         <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
-        <a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a><a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a><a href='#ss-guide'>{N[6]}</a>
+        <a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a>
+        <a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a><a href='#ss-guide'>{N[6]}</a>
         <a class='ss-instagram-link' href='https://www.instagram.com/scrittore.site/' target='_blank' rel='noopener noreferrer' aria-label='Instagram Scrittore Site'><svg viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='5'></rect><circle cx='12' cy='12' r='4'></circle><circle cx='17.5' cy='6.5' r='.7' fill='currentColor' stroke='none'></circle></svg>{N[7]}</a>
         <a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>
-        </nav>""",
+        <a class='ss-store-link' href='https://liberamente.site/' target='_blank' rel='noopener noreferrer'>↗ {store_label}</a>
+    """
+    st.markdown(
+        f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
+        {nav_links_html}</nav>
+        <details class='ss-mobile-nav' dir='{direzione_home}'><summary>{menu_label}</summary>
+        <nav aria-label='{menu_label}'>{nav_links_html}</nav></details>""",
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1512,23 +1570,15 @@ def _landing_page() -> None:
 
     base_dir = Path(__file__).resolve().parent
     public_logo = base_dir / "assets" / "scrittore-site-logo.png"
-    hero_copy, hero_visual = st.columns([0.38, 0.62], gap="large")
+    hero_copy, hero_visual = st.columns([0.44, 0.56], gap="large")
     with hero_copy:
-        st.markdown(
-            f"""<div class='ss-hero-copy'>
-              <div class='ss-kicker'>{H['presenta']}</div>
-              <div class='ss-version'>{C['version']}: {COMMERCIAL_VERSION}</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
         if public_logo.is_file():
             st.image(str(public_logo), width=280)
         else:
-            st.markdown("<h1 class='ss-title'>Scrittore Site</h1>", unsafe_allow_html=True)
+            st.markdown("<p class='ss-title'>Scrittore Site</p>", unsafe_allow_html=True)
         st.markdown(
             f"""<div class='ss-hero-copy ss-hero-copy-tail'>
-              <div class='ss-title-line'></div>
-              <div class='ss-headline'>{J['headline']}</div>
+              <h1 class='ss-headline'>{J['headline']}</h1>
               <p class='ss-subtitle'>{J['subtitle']}</p>
               <div class='ss-bonus'>{H['bonus']}</div>
             </div>""",
@@ -1574,31 +1624,16 @@ def _landing_page() -> None:
                 unsafe_allow_html=True,
             )
 
-    st.markdown(
-        f"""<div class='ss-benefits'>
-          <div class='ss-benefit'><b>▤ &nbsp;{H['b1']}</b>{H['b1t']}</div>
-          <div class='ss-benefit'><b>✎ &nbsp;{H['b2']}</b>{H['b2t']}</div>
-          <div class='ss-benefit'><b>⇩ &nbsp;{H['b3']}</b>{H['b3t']}</div>
-        </div>""",
-        unsafe_allow_html=True,
-    )
-
     # Home essenziale: mostra subito il percorso; le spiegazioni complete sono
     # raccolte in tendine, senza eliminare alcuna funzione del software.
     cards_html = "".join(
-        f"<div class='ss-priority'><div class='ss-priority-icon'>{icon}</div><b>{title}</b>"
-        f"<p>{text}</p><span class='ss-priority-tag'>{number}</span></div>"
-        for icon, (number, title, text) in zip(("💡", "🧭", "✍️", "🚀"), J["cards"])
-    )
-    steps_html = "".join(
-        f"<div class='ss-compact-step'><span class='ss-compact-number'>{number}</span>"
-        f"<span><b>{title}</b>{text}</span></div>"
-        for number, title, text in K["steps"]
+        f"<div class='ss-priority'><b>{title}</b><p>{text}</p></div>"
+        for _, title, text in J["cards"]
     )
     st.markdown(
-        f"<div id='ss-percorso' class='ss-section' dir='{direzione_home}'><h2>{S['how']}</h2>"
-        f"<p class='ss-muted'>{J['core'][1]}</p></div><div class='ss-priority-grid' dir='{direzione_home}'>"
-        f"{cards_html}</div><div class='ss-compact-steps' dir='{direzione_home}'>{steps_html}</div>",
+        f"<section id='ss-percorso' class='ss-home-path' dir='{direzione_home}'>"
+        f"<div class='ss-section'><h2>{S['how']}</h2><p class='ss-muted'>{J['core'][1]}</p></div>"
+        f"<div class='ss-priority-grid'>{cards_html}</div></section>",
         unsafe_allow_html=True,
     )
     advantages_html = "".join(
