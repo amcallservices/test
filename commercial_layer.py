@@ -1548,19 +1548,19 @@ def _landing_page() -> None:
     lingua_titolo, lingua_testo = HOME_LANGUAGE_HIGHLIGHT[home_language]
     direzione_home = "rtl" if home_language == "العربية" else "ltr"
 
-    nav_links_html = f"""
-        <a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>
-        <a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a>
-        <a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a><a href='#ss-guide'>{N[6]}</a>
-        <a class='ss-instagram-link' href='https://www.instagram.com/scrittore.site/' target='_blank' rel='noopener noreferrer' aria-label='Instagram Scrittore Site'><svg viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='5'></rect><circle cx='12' cy='12' r='4'></circle><circle cx='17.5' cy='6.5' r='.7' fill='currentColor' stroke='none'></circle></svg>{N[7]}</a>
-        <a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>
-        <a class='ss-store-link' href='https://liberamente.site/' target='_blank' rel='noopener noreferrer'>↗ {store_label}</a>
-    """
+    nav_links_html = (
+        f"<a href='#ss-percorso'>{N[0]}</a><a href='#ss-funzioni'>{N[1]}</a>"
+        f"<a href='#ss-vantaggi'>{N[2]}</a><a href='#ss-cervelli'>{N[3]}</a>"
+        f"<a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a>"
+        f"<a href='#ss-guide'>{N[6]}</a>"
+        f"<a class='ss-instagram-link' href='https://www.instagram.com/scrittore.site/' target='_blank' rel='noopener noreferrer' aria-label='Instagram Scrittore Site'><svg viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='5'></rect><circle cx='12' cy='12' r='4'></circle><circle cx='17.5' cy='6.5' r='.7' fill='currentColor' stroke='none'></circle></svg>{N[7]}</a>"
+        f"<a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>"
+        f"<a class='ss-store-link' href='https://liberamente.site/' target='_blank' rel='noopener noreferrer'>↗ {store_label}</a>"
+    )
     st.markdown(
-        f"""<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>
-        {nav_links_html}</nav>
-        <details class='ss-mobile-nav' dir='{direzione_home}'><summary>{menu_label}</summary>
-        <nav aria-label='{menu_label}'>{nav_links_html}</nav></details>""",
+        f"<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>{nav_links_html}</nav>"
+        f"<details class='ss-mobile-nav' dir='{direzione_home}'><summary>{menu_label}</summary>"
+        f"<nav aria-label='{menu_label}'>{nav_links_html}</nav></details>",
         unsafe_allow_html=True,
     )
     st.markdown(
