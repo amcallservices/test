@@ -42,10 +42,20 @@ section.main > div.block-container { max-width: 1120px !important; }
   color: var(--ss-ink) !important;
   text-align: center;
 }
-/* Il nero del file logo si fonde con il blu notte della pagina. */
-[data-testid="stMain"] [data-testid="stImage"]:has(img[src*="scrittore-site-logo"]) { background: transparent !important; }
-[data-testid="stMain"] [data-testid="stImage"]:has(img[src*="scrittore-site-logo"]) img {
-  mix-blend-mode: screen !important; background: var(--ss-night) !important; border-radius: 14px;
+/* Il logo resta nitido: il nero del file si fonde con il blu notte della home. */
+[data-testid="stVerticalBlock"]:has(.ss-hero-copy) [data-testid="stImage"] {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+  background: transparent !important;
+}
+[data-testid="stVerticalBlock"]:has(.ss-hero-copy) [data-testid="stImage"] img {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  mix-blend-mode: screen !important;
+  background: var(--ss-night) !important;
+  border-radius: 14px;
 }
 .ss-headline {
   max-width: 13ch; margin: .45rem auto 1.1rem; font-family: Georgia, serif;
@@ -58,16 +68,6 @@ section.main > div.block-container { max-width: 1120px !important; }
 [data-testid="stHorizontalBlock"]:has(.st-key-landing_signup) {
   max-width: 470px;
   margin: 1rem auto 0 !important;
-}
-[data-testid="stMain"] [data-testid="stImage"]:has(img[src*="scrittore-site-logo"]) {
-  display: flex;
-  justify-content: center;
-  margin: .9rem auto 1rem !important;
-}
-[data-testid="stMain"] [data-testid="stImage"]:has(img[src*="scrittore-site-logo"]) img {
-  display: block !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
 }
 .ss-bonus { display: table; margin-left: auto !important; margin-right: auto !important; }
 .ss-bonus {
