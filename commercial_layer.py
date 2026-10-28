@@ -1151,6 +1151,19 @@ HOME_IDEA_TO_BOOK_COPY = {
     "中文": {"headline": "我有一个想法 →<br>我想出版一本书", "subtitle": "从细分市场到书稿：引导你完成图书的规划、写作、检查和导出。", "core": ("从想法到可出版的图书", "四个清晰步骤，始终由你掌控。"), "cards": (("1", "你有一个想法", "可选地评估细分市场，找到具体的出版角度。"), ("2", "塑造项目", "引导式聊天、侧边栏、阅读器和目标共同确定方向。"), ("3", "写下你的书", "目录、章节和修改始终可见且可编辑。"), ("4", "为出版做好准备", "准备好后使用检查、Word、PDF、CSV 与 KDP 排版。"))},
 }
 
+# Titoli brevi per la nuova composizione editoriale della pagina pubblica.
+HOME_EDITORIAL_HEADLINES = {
+    "Italiano": "Hai un’idea.<br>Scrivi il tuo libro.",
+    "English": "Have an idea.<br>Write your book.",
+    "Español": "Tienes una idea.<br>Escribe tu libro.",
+    "Français": "Une idée.<br>Écrivez votre livre.",
+    "Deutsch": "Deine Idee.<br>Dein Buch.",
+    "Română": "Ai o idee.<br>Scrie-ți cartea.",
+    "Русский": "Есть идея.<br>Напишите книгу.",
+    "العربية": "لديك فكرة.<br>اكتب كتابك.",
+    "中文": "有想法。<br>写成一本书。",
+}
+
 # Vantaggi esplicitati con misura: non sostituisce le capacità di una chat,
 # ma chiarisce il valore del flusso editoriale integrato di Scrittore Site.
 HOME_ADVANTAGES_COPY = {
@@ -1522,6 +1535,9 @@ def _landing_page() -> None:
         """,
         unsafe_allow_html=True,
     )
+    editorial_css = Path(__file__).resolve().parent / "assets" / "home_editorial.css"
+    if editorial_css.is_file():
+        st.markdown(f"<style>{editorial_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
     language_spacer, language_picker = st.columns([0.82, 0.18])
     with language_picker:
@@ -1565,7 +1581,10 @@ def _landing_page() -> None:
     )
     base_dir = Path(__file__).resolve().parent
     public_logo = base_dir / "assets" / "scrittore-site-logo.png"
-    hero_copy, hero_visual = st.columns([0.44, 0.56], gap="large")
+    # La home resta intenzionalmente testuale: l'idea e il percorso editoriale
+    # hanno più valore di una fotografia decorativa e risultano più chiari anche
+    # su telefono.
+    hero_copy = st.container()
     with hero_copy:
         if public_logo.is_file():
             st.image(str(public_logo), width=180)
@@ -1573,7 +1592,7 @@ def _landing_page() -> None:
             st.markdown("<p class='ss-title'>Scrittore Site</p>", unsafe_allow_html=True)
         st.markdown(
             f"""<div class='ss-hero-copy ss-hero-copy-tail'>
-              <h1 class='ss-headline'>{J['headline']}</h1>
+              <h1 class='ss-headline'>{HOME_EDITORIAL_HEADLINES[home_language]}</h1>
               <p class='ss-subtitle'>{J['subtitle']}</p>
             </div>""",
             unsafe_allow_html=True,
@@ -1590,35 +1609,6 @@ def _landing_page() -> None:
                 st.session_state["commercial_auth_hint"] = "login"
                 st.rerun()
         st.markdown(f"<div class='ss-bonus'>{H['bonus']}</div>", unsafe_allow_html=True)
-    with hero_visual:
-        preview_image = next(
-            (candidate for candidate in (
-                base_dir / "assets" / "home-editor-desktop-mobile-writing-v2.png",
-                base_dir / "home-editor-preview.png",
-                base_dir / "download.png",
-                base_dir / "assets" / "home-editor-preview.png",
-            ) if candidate.is_file()),
-            None,
-        )
-        if preview_image:
-            st.markdown(
-                f"<span class='ss-editor-badge' dir='{direzione_home}'>✦ {S['editor']}</span>",
-                unsafe_allow_html=True,
-            )
-            st.image(str(preview_image), use_container_width=True)
-        else:
-            # La pagina resta utilizzabile anche durante il primo deploy, prima
-            # dell'upload dell'anteprima grafica nel repository.
-            st.markdown(
-                "<div class='ss-proof'><div class='ss-proof-top'>Anteprima dell'editor</div>"
-                "<div class='ss-proof-grid'><div class='ss-proof-book'></div>"
-                "<div class='ss-proof-page'><div class='ss-proof-toolbar'><span class='ss-proof-pill'>Struttura</span>"
-                "<span class='ss-proof-pill'>Scrittura</span></div><div class='ss-proof-index'><b>INDICE</b>"
-                "<span class='active'>1&nbsp;&nbsp; Il tuo libro</span><span>2&nbsp;&nbsp; Capitolo successivo</span></div>"
-                "<h3>Scrivi con controllo</h3><div class='ss-proof-lines'><i></i><i></i><i></i></div></div></div></div>",
-                unsafe_allow_html=True,
-            )
-
     st.markdown(
         f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
         unsafe_allow_html=True,
@@ -1627,8 +1617,9 @@ def _landing_page() -> None:
     # Home essenziale: mostra subito il percorso; le spiegazioni complete sono
     # raccolte in tendine, senza eliminare alcuna funzione del software.
     cards_html = "".join(
-        f"<div class='ss-priority'><b>{title}</b><p>{text}</p></div>"
-        for _, title, text in J["cards"]
+        f"<div class='ss-priority'><span class='ss-priority-ordinal'>{number}</span>"
+        f"<b>{title}</b><p>{text}</p></div>"
+        for number, title, text in J["cards"]
     )
     st.markdown(
         f"<section id='ss-percorso' class='ss-home-path' dir='{direzione_home}'>"
@@ -1640,17 +1631,6 @@ def _landing_page() -> None:
         f"<div class='ss-advantage'><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></div>"
         for icon, title, text in advantage_cards
     )
-    st.markdown("<div id='ss-vantaggi' class='ss-anchor-target'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f"<div class='ss-section' dir='{direzione_home}'><h2>{S['why']}</h2>"
-        f"<p class='ss-muted'>{V[1]}</p></div>",
-        unsafe_allow_html=True,
-    )
-    with st.expander(f"✦ {V[0]}", expanded=False):
-        st.markdown(
-            f"<div class='ss-advantages' dir='{direzione_home}'>{advantages_html}</div>",
-            unsafe_allow_html=True,
-        )
     st.markdown(
         f"<div id='ss-funzioni' class='ss-section' dir='{direzione_home}'><h2>{S['what']}</h2>"
         f"<p class='ss-home-detail-caption'>{K['details']}</p></div>",
@@ -1662,6 +1642,17 @@ def _landing_page() -> None:
     )
     with st.expander(f"⌄ {K['details']}", expanded=False):
         st.markdown(f"<div dir='{direzione_home}'>{HOME_RICH_COPY[home_language]}</div>", unsafe_allow_html=True)
+    st.markdown("<div id='ss-vantaggi' class='ss-anchor-target'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='ss-section' dir='{direzione_home}'><h2>{S['why']}</h2>"
+        f"<p class='ss-muted'>{V[1]}</p></div>",
+        unsafe_allow_html=True,
+    )
+    with st.expander(f"✦ {V[0]}", expanded=False):
+        st.markdown(
+            f"<div class='ss-advantages' dir='{direzione_home}'>{advantages_html}</div>",
+            unsafe_allow_html=True,
+        )
     st.markdown(
         f"""<div id='ss-cervelli' class='ss-section' dir='{direzione_home}'><h2>{A[0]}</h2><p class='ss-muted'>{A[1]}</p></div>
         <div class='ss-ai-grid' dir='{direzione_home}'>
