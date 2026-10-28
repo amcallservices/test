@@ -64,6 +64,11 @@ section.main > div.block-container { max-width: 1120px !important; }
   justify-content: center;
   margin: .9rem auto 1rem !important;
 }
+[data-testid="stMain"] [data-testid="stImage"]:has(img[src*="scrittore-site-logo"]) img {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 .ss-bonus { display: table; margin-left: auto !important; margin-right: auto !important; }
 .ss-bonus {
   margin-top: 1.15rem !important; padding: .62rem .9rem !important; background: #11443d !important;
