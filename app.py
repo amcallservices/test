@@ -1015,6 +1015,7 @@ def avvia_collaudo_amministratore_se_richiesto():
         "book_genre": profilo["genere"],
         "book_writing_style": profilo["tipologia"],
         "book_narrative_style": profilo["stile"],
+        "book_rhythm": profilo.get("ritmo", "Equilibrato e progressivo"),
         "book_point_of_view": profilo["pov"],
         "book_goal": profilo["obiettivo"],
         "book_desired_result": profilo["risultato"],
@@ -3577,6 +3578,7 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "genere": "book_genre",
     "tipologia_scrittura": "book_writing_style",
     "stile_racconto": "book_narrative_style",
+    "ritmo_libro": "book_rhythm",
     "punto_di_vista": "book_point_of_view",
     "obiettivo": "book_goal",
     "risultato_finale": "book_desired_result",
@@ -3607,6 +3609,7 @@ CAMPI_CHAT_GUIDATA_SIDEBAR = {
     "GENERE LETTERARIO": "genere",
     "TIPOLOGIA SCRITTURA": "tipologia_scrittura",
     "STILE DI RACCONTO": "stile_racconto",
+    "RITMO DEL LIBRO": "ritmo_libro",
     "PUNTO DI VISTA": "punto_di_vista",
     "LUNGHEZZA DELLE SEZIONI": "lunghezza",
     "CERVELLO AI": "provider_ia",
@@ -3631,6 +3634,7 @@ CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
     "genere": ("Literary genre", "Género literario", "Genre littéraire", "Literarisches Genre", "Gen literar", "Литературный жанр", "النوع الأدبي", "文学类型"),
     "tipologia_scrittura": ("Writing type", "Tipo de escritura", "Type d'écriture", "Schreibstil", "Tipul de scriere", "Тип письма", "نوع الكتابة", "写作类型"),
     "stile_racconto": ("Narrative style", "Estilo narrativo", "Style narratif", "Erzählstil", "Stil narativ", "Стиль повествования", "أسلوب السرد", "叙事风格"),
+    "ritmo_libro": ("Book pacing", "Ritmo del libro", "Rythme du livre", "Buchrhythmus", "Ritmul cărții", "Ритм книги", "إيقاع الكتاب", "图书节奏"),
     "punto_di_vista": ("Point of view", "Punto de vista", "Point de vue", "Erzählperspektive", "Punct de vedere", "Точка зрения", "وجهة النظر", "叙述视角"),
     "lunghezza": ("Section length", "Longitud de las secciones", "Longueur des sections", "Abschnittslänge", "Lungimea secțiunilor", "Длина разделов", "طول الأقسام", "章节长度"),
     "provider_ia": ("AI engine", "Motor de IA", "Moteur IA", "KI-Modell", "Motor IA", "Модель ИИ", "محرك الذكاء الاصطناعي", "AI 模型"),
@@ -3647,7 +3651,7 @@ CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
 
 CAMPI_CHAT_GUIDATA_OBBLIGATORI = {
     "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
-    "stile_racconto", "punto_di_vista", "lunghezza", "obiettivo",
+    "stile_racconto", "ritmo_libro", "punto_di_vista", "lunghezza", "obiettivo",
     "risultato_finale", "argomento",
 }
 
@@ -3670,6 +3674,7 @@ OPZIONI_CHAT_GUIDATA = {
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale",
         "Diretto e Pratico (Action-oriented)", "Storico e Documentale",
     },
+    "ritmo_libro": {"Disteso e immersivo", "Equilibrato e progressivo", "Serrato e dinamico"},
     "punto_di_vista": {
         "Tu (Diretto, confidenziale e personale)", "Voi (Plurale, autorevole e rispettoso)",
         "Noi (Inclusivo, partecipativo e didattico)",
@@ -7105,6 +7110,36 @@ with st.sidebar:
         "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante", 
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale", "Diretto e Pratico (Action-oriented)", "Storico e Documentale"
     ], key="book_narrative_style", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+
+    etichette_ritmo = {
+        "Italiano": "Il ritmo del libro",
+        "English": "Book pacing",
+        "Español": "Ritmo del libro",
+        "Français": "Rythme du livre",
+        "Deutsch": "Buchrhythmus",
+        "Română": "Ritmul cărții",
+        "Русский": "Ритм книги",
+        "العربية": "إيقاع الكتاب",
+        "中文": "图书节奏",
+    }
+    descrizioni_ritmo = {
+        "Disteso e immersivo": "Più spazio a scene, esempi, atmosfera e riflessione; evita però digressioni inutili.",
+        "Equilibrato e progressivo": "Alterna spiegazione o scena, sviluppo e svolta con un avanzamento regolare.",
+        "Serrato e dinamico": "Paragrafi e scene più essenziali, passaggi rapidi e svolte frequenti senza perdere chiarezza.",
+    }
+    # I progetti già esistenti restano subito utilizzabili: ricevono il ritmo
+    # editoriale più neutro finché l'autore non sceglie un'impostazione diversa.
+    if "book_rhythm" not in st.session_state:
+        st.session_state["book_rhythm"] = "Equilibrato e progressivo"
+    val_ritmo = st.selectbox(
+        etichette_ritmo.get(lingua_sel, etichette_ritmo["Italiano"]),
+        [""] + ["Disteso e immersivo", "Equilibrato e progressivo", "Serrato e dinamico"],
+        key="book_rhythm",
+        format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
+        help="Scegli quanto velocemente il libro sviluppa scene, spiegazioni, esempi e passaggi tra gli argomenti.",
+    )
+    if val_ritmo:
+        st.caption(descrizioni_ritmo[val_ritmo])
     
     # NUOVO BLOCCO: Punto di Vista (POV)
     lista_pov = [
@@ -7123,6 +7158,7 @@ Titolo: {titolo}
 Genere: {genere}
 Tipologia di scrittura: {stile}
 Stile di racconto: {narrativa}
+Ritmo del libro: {st.session_state.get('book_rhythm', '') or 'Equilibrato e progressivo'}
 Punto di vista: {pov}
 
 OBIETTIVO OPERATIVO:
@@ -7241,6 +7277,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         "genere": val_genere,
         "tipologia_scrittura": val_stile,
         "stile_racconto": val_narrativa,
+        "ritmo_libro": val_ritmo,
         "punto_di_vista": val_pov,
         "obiettivo": val_goal,
         "risultato_finale": val_risultato,
@@ -7298,6 +7335,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         L["lbl_gen"]: val_genere,
         L["lbl_style"]: val_stile,
         L["lbl_narrative"]: val_narrativa,
+        etichette_ritmo.get(lingua_sel, etichette_ritmo["Italiano"]): val_ritmo,
         L["lbl_pov"]: val_pov,
         L["lbl_goal"]: val_goal,
         testo_ui("risultato", lingua_sel): val_risultato,
@@ -7489,6 +7527,13 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     profilo_genere = profilo_genere_stesura(genere)
     profilo_tipologia = profilo_tipologia_stesura(stile)
     regola_struttura = profilo_struttura_indice(genere, "", trama, obiettivo)
+    ritmo_libro = st.session_state.get("book_rhythm", "") or "Equilibrato e progressivo"
+    direttive_ritmo = {
+        "Disteso e immersivo": "Concedi spazio a osservazioni, esempi, atmosfera e passaggi interiori utili. Mantieni comunque una funzione concreta per ogni paragrafo e non aggiungere digressioni.",
+        "Equilibrato e progressivo": "Alterna sviluppo, esempi o scene e svolte con un avanzamento regolare. Ogni paragrafo deve aggiungere una conseguenza, un'informazione o un passaggio utile.",
+        "Serrato e dinamico": "Usa paragrafi più essenziali e transizioni rapide. Porta il lettore al punto, elimina preamboli e ripetizioni, ma non sacrificare nessi logici, contesto o completezza.",
+    }
+    direttiva_ritmo = direttive_ritmo.get(ritmo_libro, direttive_ritmo["Equilibrato e progressivo"])
     profilo_lunghezza_dati = PROFILI_LUNGHEZZA_STESURA.get(
         profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
@@ -7509,6 +7554,7 @@ DATI EDITORIALI DELLA PREFAZIONE
 - Genere: {genere}
 - Tipologia di scrittura: {stile}
 - Stile di racconto: {narrativa}
+- Ritmo del libro: {ritmo_libro}. {direttiva_ritmo}
 - Punto di vista: {pov}
 - Obiettivo del libro: {obiettivo}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}
@@ -7576,6 +7622,8 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 - Genere Letterario: {genere}
 - Tipologia di Scrittura: {stile}
 - Stile di Racconto: {narrativa}
+- Ritmo del libro: {ritmo_libro}
+- Direttiva di ritmo: {direttiva_ritmo}
 - Punto di Vista (POV): {pov}
 - Obiettivo Emozionale/Pratico: {obiettivo}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}
@@ -7598,6 +7646,7 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Se il genere è Ricettario, ogni Capitolo che porta il nome di un piatto è una sola ricetta completa: non aggiungere sottocapitoli autonomi e non ripetere una ricetta già presente nella Parte o in altre sezioni.
 {direttiva_test_prep}
 - Rispetta integralmente i parametri editoriali e usa tassativamente il POV richiesto ({pov}).
+- Rispetta il ritmo scelto senza cambiare la lunghezza concordata e senza creare riempitivi o tagli bruschi.
 - Tratta con priorità gli approfondimenti forniti, ma soltanto nelle sezioni cui sono pertinenti; non ripeterli artificialmente e non anticipare contenuti assegnati a sezioni successive.
 - Sii profondo ed esaustivo nell'ambito della sezione, senza rubare materiale alle altre.
 - {istruzione_lunghezza}
@@ -7632,6 +7681,7 @@ Trama/argomento: {trama}
 Genere: {genere}
 Tipologia di scrittura: {stile}
 Stile di racconto: {narrativa}
+Ritmo del libro: {st.session_state.get('book_rhythm', '') or 'Equilibrato e progressivo'}
 Punto di vista: {pov}
 Obiettivo del libro: {obiettivo}
 Risultato finale desiderato: {val_risultato or "Non dichiarato"}
@@ -7641,7 +7691,7 @@ Approfondimenti prioritari: {approfondimenti.strip() or "Nessun approfondimento 
 INDICE DA VALUTARE
 {indice}
 
-Esamina esclusivamente: attinenza al brief, copertura degli approfondimenti prioritari, raggiungibilità del risultato finale desiderato, ordine logico, completezza, progressione del lettore, assenza di ripetizioni, distinzione tra capitoli e sottocapitoli, concretezza dei titoli e capacità di sostenere un libro completo.
+Esamina esclusivamente: attinenza al brief, copertura degli approfondimenti prioritari, raggiungibilità del risultato finale desiderato, ordine logico, completezza, progressione e ritmo del lettore, assenza di ripetizioni, distinzione tra capitoli e sottocapitoli, concretezza dei titoli e capacità di sostenere un libro completo.
 Non valutare il libro non ancora scritto e non inventare informazioni mancanti.
 
 Restituisci testo semplice, senza Markdown e senza URL, in questo formato:
@@ -7663,7 +7713,7 @@ COERENZA CON IL BRIEF: breve verifica di titolo, pubblico, obiettivo, genere e s
 
 def firma_controllo_coerenza(indice, contenuti, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti):
     """Identifica con certezza la versione del manoscritto su cui è stato prodotto il report."""
-    parti = [indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, risultato_finale, approfondimenti, brief_personalizzazione_progetto()]
+    parti = [indice, titolo, trama, genere, stile, narrativa, st.session_state.get("book_rhythm", ""), pov, obiettivo, risultato_finale, approfondimenti, brief_personalizzazione_progetto()]
     parti.extend(f"{sezione}\n{contenuto}" for sezione, contenuto in contenuti.items())
     return hashlib.sha256("\n\u241e\n".join(str(p or "") for p in parti).encode("utf-8")).hexdigest()
 
@@ -7862,6 +7912,7 @@ Trama/argomento: {trama}
 Genere: {genere}
 Tipologia di scrittura: {stile}
 Stile di racconto: {narrativa}
+Ritmo del libro: {st.session_state.get('book_rhythm', '') or 'Equilibrato e progressivo'}
 Punto di vista: {pov}
 Obiettivo: {obiettivo}
 Risultato finale desiderato: {val_risultato or "Non dichiarato"}
@@ -8033,6 +8084,7 @@ Titolo: {titolo}
 Genere: {genere}
 Tipologia di scrittura: {stile}
 Stile di racconto: {narrativa}
+Ritmo del libro: {st.session_state.get('book_rhythm', '') or 'Equilibrato e progressivo'}
 Punto di vista: {pov}
 
 OBIETTIVO OPERATIVO:
@@ -8425,6 +8477,7 @@ procedure, checklist, test, sottocapitoli o scene narrative quando non sono pert
 
 PARAMETRI DI BASE (DA APPLICARE TASSATIVAMENTE IN OGNI SEZIONE):
 - Stile di Racconto: {val_narrativa}
+- Ritmo del libro: {val_ritmo}. {descrizioni_ritmo.get(val_ritmo, descrizioni_ritmo['Equilibrato e progressivo'])}
 - Obiettivo Emozionale/Pratico: {val_goal}
 - Tipologia di Scrittura: {val_stile}
 - Punto di Vista (Relazione con il lettore): {val_pov}. Adatta coerentemente questo pronome alla grammatica della lingua {lingua_sel}.
@@ -9371,7 +9424,7 @@ Quale scegli?”
 2. Se sceglie B o C, chiedi in un solo messaggio esclusivamente i dettagli indispensabili: cosa includere, cosa evitare e, solo se utile, quando fermare la stesura per aggiungere una nota. Alla risposta successiva prepara obbligatoriamente la scheda.
 3. Se sceglie D, risponde “non so”, “fai tu” o esprime un equivalente, proponi e inserisci direttamente una personalizzazione editoriale generica e coerente con tutto ciò che è emerso. Puoi scegliere tono, taglio, esempi generici, priorità per il lettore e confini del progetto; non attribuire mai all'autore esperienze, testimonianze, biografia, risultati, fonti o fatti reali non dichiarati.
 4. Solo dopo la scelta A/B/C/D, ricava in autonomia titolo, pubblico, obiettivo e dettagli editoriali ragionevoli dalla conversazione. Se l'autore non è noto usa [Inserisci il tuo nome].
-5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, punto di vista, lunghezza o Cervello AI: sceglili tu in modo coerente, usando esclusivamente le opzioni ammesse sotto.
+5. Non chiedere titolo, autore, tipologia di scrittura, stile di racconto, ritmo del libro, punto di vista, lunghezza o Cervello AI: sceglili tu in modo coerente, usando esclusivamente le opzioni ammesse sotto.
 6. Fai una sola domanda aggiuntiva esclusivamente se l'idea iniziale è così vaga da non permettere di identificare un argomento, un lettore plausibile o un obiettivo. Offri al massimo tre opzioni concrete. Alla risposta successiva pubblica obbligatoriamente la scheda.
 7. Dopo che hai già prodotto una scheda, se l'utente vuole modificarla rispondi brevemente e restituisci subito la nuova scheda completa, sempre con le sole etichette consentite.
 
@@ -9437,6 +9490,14 @@ Per lo STILE DI RACCONTO scegli un solo valore tra:
 - Storytelling Emozionale
 - Diretto e Pratico (Action-oriented)
 - Storico e Documentale
+
+Per il RITMO DEL LIBRO scegli un solo valore tra:
+
+- Disteso e immersivo — per testi riflessivi, scene ricche, esempi articolati o approfondimenti graduali
+- Equilibrato e progressivo — impostazione predefinita: alterna sviluppo, passaggi e svolte senza accelerazioni artificiali
+- Serrato e dinamico — per thriller, guide operative, quiz o testi che richiedono passaggi brevi e alta continuità
+
+Il ritmo deve essere coerente con genere, tipologia di scrittura e stile di racconto: non scegliere “serrato” solo per rendere un testo più corto, né “disteso” per aggiungere riempitivi.
 
 Per il PUNTO DI VISTA scegli un solo valore tra:
 
@@ -9506,6 +9567,8 @@ TIPOLOGIA SCRITTURA:
 
 STILE DI RACCONTO:
 
+RITMO DEL LIBRO:
+
 PUNTO DI VISTA:
 
 LUNGHEZZA DELLE SEZIONI:
@@ -9548,7 +9611,7 @@ Non aggiungere testo dopo l'ultima etichetta."""
         }
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
-            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nRITMO DEL LIBRO: Disteso e immersivo; Equilibrato e progressivo; Serrato e dinamico. Choose Equilibrato e progressivo by default and make it coherent with genre, writing type and narrative style.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
             personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION — Before drafting the final form, always ask explicitly whether the user wants to personalize the book: A. no, proceed with a general editorial project; B. yes, add personal voice, episodes, examples, materials or reader priorities; C. yes, mainly define boundaries or guided pauses. If A is selected, omit all optional personalization fields. If B or C is selected, ask in one message only for the indispensable details, then formulate the relevant fields concretely. Never invent personal experiences, testimonials or facts. Append personalization fields after APPROFONDIMENTI only when the user has chosen personalization and supplied relevant details. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
@@ -9571,6 +9634,8 @@ GENERE LETTERARIO:
 TIPOLOGIA SCRITTURA:
 
 STILE DI RACCONTO:
+
+RITMO DEL LIBRO:
 
 PUNTO DI VISTA:
 
@@ -9618,7 +9683,7 @@ contrasto con esso. Trasferisci invece ogni indicazione nei campi disponibili:
   vanno in OBIETTIVO DEL LIBRO, RISULTATO FINALE DESIDERATO e TRAMA O ARGOMENTO;
 - procedure, casi, esercizi, esempi, avvertenze, fonti da verificare, requisiti
   di qualità e dettagli da sviluppare vanno in APPROFONDIMENTI;
-- tono, prospettiva, priorità e limiti editoriali vanno nei campi di
+- tono, ritmo, prospettiva, priorità e limiti editoriali vanno nei campi di
   personalizzazione soltanto quando l'utente li ha chiesti o seleziona B/C/D.
 Se un requisito non ha un campo autonomo, incorporalo nel campo descrittivo più
 pertinente senza aggiungere nuove etichette.
@@ -9632,7 +9697,7 @@ FORMATO OBBLIGATORIO DELLA SCHEDA FINALE
 Scrivi il dialogo in {lingua_sel}. Scrivi i valori descrittivi nella lingua esplicitamente richiesta per il libro, se presente nel brief; altrimenti usa {lingua_sel}. Mantieni invece le etichette
 della scheda finale esattamente come nel modello sopra (TITOLO DEL LIBRO, LINGUA,
 GENERE LETTERARIO ecc.), anche quando dialoghi in un'altra lingua. Per genere,
-tipologia, stile, punto di vista e lunghezza copia esattamente una delle opzioni
+tipologia, stile, ritmo, punto di vista e lunghezza copia esattamente una delle opzioni
 italiane elencate sopra: sono i valori tecnici effettivi dei menu. Scrivi un campo
 per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 """
@@ -10146,6 +10211,7 @@ PARAMETRI EDITORIALI (L'indice deve essere costruito su misura e strettamente at
 - Genere Letterario: {val_genere}
 - Tipologia di Scrittura: {val_stile}
 - Stile di Racconto: {val_narrativa}
+- Ritmo del libro: {val_ritmo}. Applica questo ritmo alla distribuzione delle Parti, dei Capitoli e dei punti di svolta, senza aggiungere voci riempitive.
 - Punto di Vista: {val_pov}
 - Obiettivo Emozionale/Pratico: {val_goal}
 - Risultato finale desiderato: {val_risultato or "Non dichiarato"}

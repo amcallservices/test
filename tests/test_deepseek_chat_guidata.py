@@ -47,12 +47,13 @@ CARD = """1. TITOLO DEL LIBRO: Comprare un'auto usata senza fregature
 4. GENERE LETTERARIO: Manuale Pratico
 5. TIPOLOGIA SCRITTURA: Standard
 6. STILE DI RACCONTO: Diretto e Pratico (Action-oriented)
-7. PUNTO DI VISTA: Tu (Diretto, confidenziale e personale)
-8. LUNGHEZZA DELLE SEZIONI: Standard KDP
-9. CERVELLO AI: DeepSeek V4 Pro
-10. OBIETTIVO DEL LIBRO: Aiutare il lettore a valutare un'auto usata.
-11. RISULTATO FINALE DESIDERATO: Una scelta d'acquisto più consapevole.
-12. TRAMA O ARGOMENTO: Controlli documentali e meccanici per principianti.
+7. RITMO DEL LIBRO: Equilibrato e progressivo
+8. PUNTO DI VISTA: Tu (Diretto, confidenziale e personale)
+9. LUNGHEZZA DELLE SEZIONI: Standard KDP
+10. CERVELLO AI: DeepSeek V4 Pro
+11. OBIETTIVO DEL LIBRO: Aiutare il lettore a valutare un'auto usata.
+12. RISULTATO FINALE DESIDERATO: Una scelta d'acquisto più consapevole.
+13. TRAMA O ARGOMENTO: Controlli documentali e meccanici per principianti.
 """
 PERSONALIZATION = """VOCE O PROSPETTIVA PERSONALE: Tono pratico e rassicurante, senza attribuire esperienze all'autore.
 PRIORITÀ PERSONALI PER IL LETTORE: Controlli verificabili prima dell'acquisto.
@@ -73,6 +74,7 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertIn("VOCE O PROSPETTIVA PERSONALE:", prompt)
         self.assertIn("PRIORITÀ PERSONALI PER IL LETTORE:", prompt)
         self.assertIn("CONFINI PERSONALI DA RISPETTARE:", prompt)
+        self.assertIn("RITMO DEL LIBRO:", prompt)
 
     def test_no_personalization_does_not_require_optional_fields(self):
         prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("Italiano", "DeepSeek V4 Pro", "A")
@@ -89,6 +91,7 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertIn("voce_personale", parsed)
         self.assertIn("priorita_personali", parsed)
         self.assertIn("confini_personali", parsed)
+        self.assertEqual(parsed["ritmo_libro"], "Equilibrato e progressivo")
 
     def test_personalization_choice_controls_required_fields(self):
         card = self._without_numbers(CARD)
@@ -116,7 +119,7 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertEqual(self.app["scelta_personalizzazione_chat_deepseek"](conversation), ("", False))
 
     def test_missing_required_field_is_rejected(self):
-        card = CARD.replace("10. OBIETTIVO DEL LIBRO: Aiutare il lettore a valutare un'auto usata.\n", "")
+        card = CARD.replace("11. OBIETTIVO DEL LIBRO: Aiutare il lettore a valutare un'auto usata.\n", "")
         card = self._without_numbers(card) + PERSONALIZATION
         self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "D"))
 

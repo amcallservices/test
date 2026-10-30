@@ -37,6 +37,7 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "genere": "book_genre",
     "tipologia_scrittura": "book_writing_style",
     "stile_racconto": "book_narrative_style",
+    "ritmo_libro": "book_rhythm",
     "punto_di_vista": "book_point_of_view",
     "obiettivo": "book_goal",
     "risultato_finale": "book_desired_result",
@@ -117,7 +118,7 @@ def aggiorna_memoria_editoriale(
         campo: str(sidebar.get(campo, "") or "").strip()
         for campo in (
             "titolo", "autore", "lingua", "genere", "tipologia_scrittura",
-            "stile_racconto", "punto_di_vista", "obiettivo", "risultato_finale",
+            "stile_racconto", "ritmo_libro", "punto_di_vista", "obiettivo", "risultato_finale",
             "argomento", "approfondimenti", "voce_personale", "priorita_personali",
             "confini_personali",
         )

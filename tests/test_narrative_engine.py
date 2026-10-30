@@ -70,7 +70,7 @@ class NarrativeEngineTests(unittest.TestCase):
             CHIAVE_PROGETTO_UNICO: {
                 "indice": INDICE,
                 "contenuti": dict(self.contenuti),
-                "sidebar": {"genere": "Narrativo"},
+                "sidebar": {"genere": "Narrativo", "ritmo_libro": "Serrato e dinamico"},
                 "fonti": {}, "immagini": {}, "memoria_editoriale": {},
             }
         }
@@ -82,6 +82,7 @@ class NarrativeEngineTests(unittest.TestCase):
         self.assertTrue(prima["narrativa"]["attiva"])
         self.assertIn("Milano", dopo["narrativa"]["scene"]["Capitolo 1: La stazione"]["luoghi_citati"])
         self.assertTrue(dopo["sezioni"]["Capitolo 1: La stazione"]["modificata_manualmente"])
+        self.assertEqual(dopo["profilo"]["ritmo_libro"], "Serrato e dinamico")
 
 
 if __name__ == "__main__":
