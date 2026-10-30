@@ -98,6 +98,26 @@ from commercial_layer import (
     refund_credits,
 )
 
+# Durante un redeploy Streamlit può aggiornare app.py un attimo prima del
+# modulo commerciale già caricato nel processo. Manteniamo quindi queste
+# nuove voci anche nella sessione transitoria: evita che un indice già aperto
+# vada in errore per un semplice disallineamento temporaneo dei file.
+CREDIT_COSTS.setdefault("chat_indice_dialogo", 1)
+CREDIT_COSTS.setdefault("chat_indice_rigenerazione", 6)
+CHAT_SOLO_GPT_OPERAZIONI = frozenset({
+    *CHAT_SOLO_GPT_OPERAZIONI,
+    "chat_indice_dialogo",
+    "chat_indice_rigenerazione",
+    "chat_indice_rigenerazione_correzione",
+})
+try:
+    import commercial_layer as _commercial_layer_runtime
+    _commercial_layer_runtime.CHAT_SOLO_GPT_OPERAZIONI = CHAT_SOLO_GPT_OPERAZIONI
+except Exception:
+    # La lista locale resta sufficiente per l'interfaccia; non blocchiamo
+    # l'avvio dell'app per una compatibilità puramente transitoria.
+    pass
+
 # Compatibilità temporanea: l'app resta avviabile anche se il file commerciale
 # su GitHub viene aggiornato qualche istante dopo app.py.
 try:
