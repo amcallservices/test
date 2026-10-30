@@ -57,9 +57,9 @@ CREDIT_COSTS = {
     # Il voto usa il modello editoriale completo e legge l'intera struttura:
     # due crediti mantengono un margine prudente anche sugli indici più lunghi.
     "voto_indice": 2,
-    # La rigenerazione usa la stessa progettazione editoriale dell'indice,
-    # quindi il preventivo deve coincidere con l'addebito reale.
-    "rigenera_indice": 6,
+    # La rigenerazione completa dell'indice segue il voto editoriale,
+    # ricostruisce la struttura e la ricontrolla: tariffa unica da 10.
+    "rigenera_indice": 10,
     # La chat dell'indice non modifica mai la struttura corrente durante il
     # dialogo: la proposta viene pagata e creata solo su richiesta esplicita.
     "chat_indice_dialogo": 1,
@@ -136,6 +136,7 @@ def _unita_deepseek(reason: str, amount: int) -> int:
         # equivalenti a 3⅓ crediti. Il terzo residuo resta custodito nel saldo.
         "ricerca_preliminare_indice": 4,
         "genera_indice_controllato": 6,
+        "rigenera_indice": 10,
         # Tre unità interne equivalgono a un credito: il voto DeepSeek resta
         # più conveniente, ma non viene più contabilizzato come un controllo
         # leggero da un terzo di credito.
