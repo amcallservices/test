@@ -2931,7 +2931,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                               budget_strutturale="", profilo_lunghezza="Standard KDP",
                               massimo_parti_editoriali=None, massimo_capitoli_editoriali=None,
                               massimo_sottocapitoli=None, aggiorna_stato=None,
-                              reason_credito="genera_indice_controllato", reason_chiamata="genera_indice"):
+                              reason_credito="genera_indice_controllato", reason_chiamata="genera_indice",
+                              timeout_richiesta_secondi=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2948,9 +2949,10 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
     # L'indice resta affidato al modello editoriale completo, ma un timeout o
     # una risposta non utilizzabile non deve lasciare lo spinner senza esito.
     avanza(42, "Generazione della struttura editoriale in corso...")
+    timeout_effettivo = float(timeout_richiesta_secondi or TIMEOUT_INDICE_SECONDI)
     risposta_iniziale = chiedi_gpt(
         prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
-        timeout_seconds=TIMEOUT_INDICE_SECONDI, reason=reason_chiamata,
+        timeout_seconds=timeout_effettivo, reason=reason_chiamata,
         riferimento_padre=riferimento,
     )
     if not str(risposta_iniziale or "").strip() or str(risposta_iniziale).startswith("ERRORE:"):
@@ -3144,7 +3146,7 @@ INDICE RIFIUTATO DA CORREGGERE
 """
         risposta_revisione = chiedi_gpt(
             revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
-            timeout_seconds=TIMEOUT_INDICE_SECONDI,
+            timeout_seconds=timeout_effettivo,
             reason=f"{reason_chiamata}_correzione",
             riferimento_padre=riferimento,
         )
@@ -10295,6 +10297,10 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                     aggiorna_stato=aggiorna_avanzamento_proposta,
                                     reason_credito="chat_indice_rigenerazione",
                                     reason_chiamata="chat_indice_rigenerazione",
+                                    # Un indice esteso (per scelta esplicita
+                                    # dell'autore) richiede più tempo del
+                                    # limite usato per l'indice standard.
+                                    timeout_richiesta_secondi=300,
                                 )
                             if proposta_chat_indice:
                                 st.session_state["chat_indice_proposta"] = proposta_chat_indice
