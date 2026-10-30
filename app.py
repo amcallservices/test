@@ -4060,7 +4060,7 @@ def prompt_dialogo_chat_indice(indice, messaggi, lingua):
 Rispondi rigorosamente nella lingua: {lingua}.
 
 Il tuo perimetro è SOLO questo indice già creato e le richieste dell'autore nella conversazione. Non leggere, citare o dedurre contenuti dal manoscritto, dalle fonti, dalla sidebar, da altri strumenti o da conversazioni esterne.
-Analizza coerenza, ordine, copertura, ripetizioni e opportunità concrete di miglioramento. Puoi chiedere al massimo una domanda utile alla volta oppure proporre interventi chiari. Non creare ancora un nuovo indice completo: l'autore lo richiederà con il pulsante dedicato. Non promettere ricerche web, non cambiare dati e non uscire dal tema dell'indice.
+Analizza coerenza, ordine, copertura, ripetizioni e opportunità concrete di miglioramento. Rispondi in modo conciso: massimo 220 parole. Puoi chiedere al massimo una domanda utile alla volta oppure proporre interventi chiari. Non creare ancora un nuovo indice completo: l'autore lo richiederà con il pulsante dedicato. Non promettere ricerche web, non cambiare dati e non uscire dal tema dell'indice.
 
 INDICE ATTUALE
 {indice}
@@ -10191,7 +10191,10 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                     "Sei un editor di indici chiaro, concreto e rispettoso del perimetro richiesto.",
                                     addebita=True,
                                     amount=CREDIT_COSTS["chat_indice_dialogo"],
-                                    max_completion_tokens=1200,
+                                    # Il modello editoriale può usare una quota iniziale per
+                                    # ragionare: 1200 token causavano risposte vuote o troncate
+                                    # pur con una risposta visibile volutamente breve.
+                                    max_completion_tokens=2400,
                                     model=MODELLO_EDITORIALE,
                                     reason="chat_indice_dialogo",
                                     timeout_seconds=90,
