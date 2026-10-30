@@ -3777,6 +3777,11 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
     in italiano e chiedere esplicitamente, per esempio, un libro in inglese.
     """
     scheda = estrai_scheda_chat_guidata_da_cronologia(messaggi)
+    # Le conversazioni già avviate prima dell'introduzione del ritmo non
+    # contengono questo campo. Un valore editoriale neutro le rende ancora
+    # trasferibili, senza costringere l'autore a rifare tutta la chat.
+    if not scheda.get("ritmo_libro"):
+        scheda["ritmo_libro"] = "Equilibrato e progressivo"
     if not scheda.get("lingua") and lingua in TRADUZIONI:
         scheda["lingua"] = lingua
     scheda["provider_ia"] = provider
@@ -9853,61 +9858,73 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                             "prompt finale per chat guidata" in cronologia_completa_chat
                             or ("prompt finale" in cronologia_completa_chat and "chat guidata" in cronologia_completa_chat)
                         )
-                        indice_prompt_nicchia = next(
-                            (
-                                indice for indice, voce in enumerate(messaggi_chat)
-                                if voce.get("role") == "user" and "prompt finale" in str(voce.get("content", "")).casefold()
-                                and "chat guidata" in str(voce.get("content", "")).casefold()
-                            ),
-                            -1,
+                        # La personalizzazione è un passaggio obbligatorio per
+                        # ogni chat, non solo per i prompt della Chat nicchia.
+                        # Il pulsante di preparazione può accelerare la chiusura,
+                        # ma non può saltare la scelta dell'autore.
+                        scelta_personalizzazione, dettagli_personalizzazione = (
+                            scelta_personalizzazione_chat_deepseek(messaggi_chat)
                         )
-                        messaggi_successivi_nicchia = "\n".join(
-                            str(voce.get("content", "")) for voce in messaggi_chat[indice_prompt_nicchia + 1:]
-                            if voce.get("role") == "user"
-                        ).casefold()
-                        scelta_personalizzazione_esplicita = bool(re.search(
-                            r"(?:^|\n|\b)(?:opzione\s*)?[abcd](?:\b|\)|\.)|personalizz(?:a|azione).{0,80}(?:sì|si|no|non so|fai tu|scegli tu|confermo)",
-                            messaggi_successivi_nicchia,
-                        ))
-                        richiedi_prima_personalizzazione = (
-                            origine_chat_nicchia and not scelta_personalizzazione_esplicita
+                        richiedi_prima_personalizzazione = not scelta_personalizzazione
+                        richiedi_dettagli_personalizzazione = (
+                            scelta_personalizzazione in {"B", "C"}
+                            and not dettagli_personalizzazione
                         )
-                        conferma_chat = prepara_scheda_chat or bool(re.search(
+                        personalizzazione_completa = (
+                            scelta_personalizzazione in {"A", "D"}
+                            or (
+                                scelta_personalizzazione in {"B", "C"}
+                                and dettagli_personalizzazione
+                            )
+                        )
+                        conferma_esplicita_chat = bool(re.search(
                             r"\b(confermo|conferma|procedi|prosegui|vai|ok|okay|yes|si|sì|continue|go ahead|continúa|continuez|weiter|продолж|افعل|继续)\b",
                             ultimo_messaggio_chat,
                         ))
+                        conferma_chat = (
+                            personalizzazione_completa
+                            and (
+                                prepara_scheda_chat
+                                or conferma_esplicita_chat
+                                or scelta_personalizzazione in {"A", "D"}
+                                or (
+                                    scelta_personalizzazione in {"B", "C"}
+                                    and dettagli_personalizzazione
+                                )
+                            )
+                        )
                         autonomia_creativa_chat = bool(re.search(
                             r"(fai tu|scegli tu|decidi tu|usa la tua immaginazione|fa tu|make it up|you decide|hazlo tú|elige tú|fais[- ]le|choisis|mach du|entscheide du|tu decizi|alege tu|делай сам|реши сам|افعلها أنت|قرر أنت|你来决定|你决定)",
                             ultimo_messaggio_chat,
                         ))
                         istruzione_chiusura_chat = (
-                            "La conversazione contiene un prompt finale della Chat della nicchia, ma manca ancora la scelta di personalizzazione. "
-                            "Non produrre la scheda e non applicare l'opzione D automaticamente: poni adesso, in modo chiaro, la domanda A/B/C/D prevista dal protocollo."
+                            "Manca ancora la scelta obbligatoria di personalizzazione. Non produrre la scheda e non applicare "
+                            "l'opzione D automaticamente: poni adesso, in modo chiaro, la domanda A/B/C/D prevista dal protocollo."
                             if richiedi_prima_personalizzazione else
+                            "L'autore ha scelto una personalizzazione che richiede dettagli. Non produrre ancora la scheda: "
+                            "chiedi in un solo messaggio i dettagli minimi necessari, poi alla risposta successiva prepara la scheda."
+                            if richiedi_dettagli_personalizzazione else
                             "MODALITÀ CONCLUSIVA ATTIVATA DAL PULSANTE: produci ADESSO la scheda finale completa. "
-                            "Non porre domande, non chiedere conferme e non offrire alternative. Se la scelta di "
-                            "personalizzazione non è esplicita nella conversazione, applica automaticamente l'opzione D "
-                            "(personalizzazione editoriale coerente proposta da te, senza inventare fatti personali). "
+                            "Non porre domande, non chiedere conferme e non offrire alternative. Rispetta la scelta di "
+                            "personalizzazione già presente nella conversazione, senza inventare fatti personali. "
                             "La tua intera risposta deve contenere soltanto le etichette della scheda finale e i rispettivi valori."
-                            if prepara_scheda_chat else
-                            "L'ultimo messaggio contiene una conferma o richiesta di procedere: produci ADESSO la scheda finale completa. Non porre domande, non chiedere conferme e non offrire alternative."
                             if conferma_chat else
                             "L'utente non ha ancora dato una conferma conclusiva: segui il protocollo sotto e chiedi soltanto il prossimo dato davvero necessario."
                         )
                         istruzione_autonomia_chat = (
-                            "L'utente ti ha chiesto di scegliere autonomamente: usa immaginazione editoriale coerente con tutta la conversazione e compila tutti i campi descrittivi. Puoi inventare soltanto impostazioni narrative, esempi generici, tono, obiettivo, pubblico plausibile e priorità editoriali; non attribuire mai all'autore esperienze, testimonianze, risultati, biografia, fonti o fatti reali non dichiarati. Produci subito la scheda finale."
-                            if autonomia_creativa_chat else
+                            "L'utente ti ha chiesto di scegliere autonomamente: dopo che avrà espresso la scelta A/B/C/D, tratta questa richiesta come opzione D. Usa immaginazione editoriale coerente con tutta la conversazione e compila i campi descrittivi senza attribuire all'autore esperienze, testimonianze, risultati, biografia, fonti o fatti reali non dichiarati."
+                            if autonomia_creativa_chat and not richiedi_prima_personalizzazione else
                             "Se l'utente non ti chiede di scegliere autonomamente, non inventare informazioni personali o fatti non dichiarati."
                         )
                         fase_personalizzazione_chat = (
-                            "2. È stato incollato un PROMPT FINALE PER CHAT GUIDATA SCRITTORE SITE proveniente dalla Chat della nicchia. "
-                            "Trattalo come brief prioritario, non ripetere la ricerca e non perderne le informazioni. Prima di qualunque scheda poni obbligatoriamente la domanda A/B/C/D sulla personalizzazione. "
+                            "2. Prima di qualunque scheda poni obbligatoriamente la domanda A/B/C/D sulla personalizzazione. "
                             "Neppure il pulsante di preparazione può saltare questa domanda; dopo la risposta dell'utente completa la scheda."
                             if richiedi_prima_personalizzazione else
-                            "2. Il pulsante «Prepara la scheda per la sidebar» è stato premuto. Questo annulla "
-                            "qualsiasi ulteriore fase di domande: considera scelta l'opzione D se non esiste già "
-                            "una scelta esplicita e restituisci immediatamente la scheda finale completa."
-                            if prepara_scheda_chat else
+                            "2. L'autore ha scelto un'opzione che richiede dettagli. Chiedi in un unico messaggio soltanto "
+                            "le informazioni personali indispensabili, poi prepara obbligatoriamente la scheda alla risposta successiva."
+                            if richiedi_dettagli_personalizzazione else
+                            "2. La personalizzazione è completa: restituisci ora la scheda finale completa, senza domande aggiuntive."
+                            if conferma_chat else
                             "2. Dopo la prima descrizione concreta del libro, poni obbligatoriamente la domanda A/B/C/D "
                             "sulla personalizzazione prevista dal prompt principale. Non redigere la scheda e non "
                             "discutere altri argomenti prima di aver ricevuto una scelta."
@@ -9940,19 +9957,12 @@ Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta del
 
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
 Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indica esplicitamente un'altra lingua per il libro, rispetta quella indicazione nel campo LINGUA. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
-                        scelta_personale_deepseek, dettagli_personali_deepseek = (
-                            scelta_personalizzazione_chat_deepseek(messaggi_chat)
-                            if usa_deepseek_chat else ("", False)
-                        )
-                        scelta_finale_deepseek = scelta_personale_deepseek or "D"
+                        scelta_finale_deepseek = scelta_personalizzazione or "D"
                         scheda_finale_deepseek = (
                             usa_deepseek_chat
                             and not richiedi_prima_personalizzazione
-                            and (
-                                prepara_scheda_chat or conferma_chat or autonomia_creativa_chat
-                                or ultimo_messaggio_chat.strip() in {"a", "d"}
-                                or (scelta_personale_deepseek in {"B", "C"} and dettagli_personali_deepseek)
-                            )
+                            and not richiedi_dettagli_personalizzazione
+                            and conferma_chat
                         )
                         istruzioni_da_inviare = (
                             prompt_scheda_chat_guidata_deepseek(

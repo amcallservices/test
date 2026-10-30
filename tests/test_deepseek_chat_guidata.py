@@ -36,6 +36,7 @@ def parser_namespace():
             exec(compile(ast.Module(body=[node], type_ignores=[]), "app.py", "exec"), namespace)
     return load_functions({
         "_valore_scelta_chat_guidata", "estrai_scheda_chat_guidata",
+        "estrai_scheda_chat_guidata_da_cronologia", "scheda_chat_guidata_per_sidebar",
         "scelta_personalizzazione_chat_deepseek", "campi_personalizzazione_deepseek",
         "prompt_scheda_chat_guidata_deepseek", "scheda_finale_deepseek_valida",
     }, namespace)
@@ -91,6 +92,19 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertIn("voce_personale", parsed)
         self.assertIn("priorita_personali", parsed)
         self.assertIn("confini_personali", parsed)
+        self.assertEqual(parsed["ritmo_libro"], "Equilibrato e progressivo")
+
+    def test_existing_card_without_rhythm_remains_transferable(self):
+        card_without_rhythm = re.sub(
+            r"(?m)^7\. RITMO DEL LIBRO:.*\n", "", CARD
+        )
+        conversation = [{"role": "assistant", "content": self._without_numbers(card_without_rhythm)}]
+        parsed = self.app["scheda_chat_guidata_per_sidebar"](
+            conversation, "Italiano", "GPT-5.4 (OpenAI)"
+        )
+        self.assertTrue(
+            self.app["CAMPI_CHAT_GUIDATA_OBBLIGATORI"].issubset(parsed)
+        )
         self.assertEqual(parsed["ritmo_libro"], "Equilibrato e progressivo")
 
     def test_personalization_choice_controls_required_fields(self):
