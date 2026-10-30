@@ -84,13 +84,39 @@ def profilo_struttura_indice(genere: str, titolo: str, trama: str, obiettivo: st
 
 
 def normalizza_indice_generato(indice: str) -> str:
-    """Rimuove solo rumore di formattazione, senza alterare l'architettura proposta."""
+    """Conserva esclusivamente le voci gerarchiche utilizzabili dall'editor.
+
+    Un indice è una mappa del libro, non una sinossi: le spiegazioni che un
+    modello talvolta aggiunge dopo un capitolo (per esempio ``Conflitto:`` o
+    ``Sviluppo emotivo:``) non devono finire né nell'editor né nella coda di
+    stesura. I titoli strutturali restano invece invariati.
+    """
+    intestazione = re.compile(
+        r"(?i)^(?:"
+        r"prefazione|preface|prólogo|prologue|prolog|prologul|пролог|مقدمة|前言|"
+        r"epilogo|epilogue|epílogo|epilog|epilogul|эпилог|خاتمة|尾声|"
+        r"parte|part|partie|teil|partea|часть|الجزء|部分|"
+        r"capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节"
+        r")\b"
+    )
+    # I modelli non usano sempre la stessa convenzione: oltre a 1.1,
+    # accettiamo un capitolo numerato semplice e i comuni titoli cinesi.
+    # Restano fuori le normali frasi esplicative, che non iniziano così.
+    sottocapitolo = re.compile(r"^\d+(?:(?:\.\d+)+(?:\.?\s+|:\s*)|[.)]\s+|\s*[-–—]\s+)")
+    intestazione_cinese = re.compile(r"^第\s*\d+\s*(?:部分|章|节)")
+    titoli_spiegazione = re.compile(
+        r"(?i)^(?:eventi\s+principali|conflitto|sviluppo\s+emotivo|"
+        r"descrizione|sinossi|trama\s+del\s+capitolo|scene|nota\s+editoriale|"
+        r"key\s+events|emotional\s+development|chapter\s+summary|conflict)\s*:"
+    )
     righe = []
     for riga in (indice or "").splitlines():
         pulita = re.sub(r"^\s*[-*#]+\s*", "", riga).strip()
         if pulita.lower() in {"indice", "table of contents", "sommaire", "inhaltsverzeichnis"}:
             continue
-        if pulita:
+        if not pulita or titoli_spiegazione.match(pulita):
+            continue
+        if intestazione.match(pulita) or intestazione_cinese.match(pulita) or sottocapitolo.match(pulita):
             righe.append(pulita)
     return "\n".join(righe).strip()
 

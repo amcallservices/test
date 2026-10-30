@@ -4100,6 +4100,8 @@ def prompt_rigenerazione_chat_indice(indice, messaggi, lingua, limite_voci, budg
 Lavora SOLO sull'indice attuale e sulle richieste esplicite dell'autore nella conversazione. Conserva tutto ciò che è già utile e modifica soltanto ciò che serve per attuare richieste pertinenti, migliorare ordine, copertura e non-ripetizione. Non introdurre temi estranei, capitoli generici, fonti, bibliografie, glossari, ringraziamenti, checklist vuote, Markdown o commenti.
 
 {vincolo_estensione}
+FORMATO OBBLIGATORIO DELL'OUTPUT: ogni riga deve essere esclusivamente una voce di struttura: Prefazione/Prologo/Epilogo, Parte, Capitolo oppure sottocapitolo numerato (ad esempio 1.1). Dopo il numero o il nome scrivi soltanto il titolo breve della voce.
+NON inserire mai sotto o dopo un capitolo spiegazioni, sinossi, riassunti, eventi principali, conflitti, sviluppo emotivo, scene, note editoriali, obiettivi, personaggi, commenti o paragrafi descrittivi. Sono vietate anche righe come “Eventi principali:”, “Conflitto:” e “Sviluppo emotivo:”. Prima di rispondere, controlla che ogni riga rispetti questo formato.
 Usa una gerarchia pulita e leggibile coerente con la lingua dell'indice, per esempio Parte/Capitolo e sottocapitoli numerati. Restituisci SOLO l'indice pronto da sincronizzare.
 
 INDICE ATTUALE
@@ -10282,7 +10284,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                         budget_struttura_indice,
                                         consenti_superamento_limiti,
                                     ),
-                                    "Sei un editor senior: restituisci un solo indice gerarchico pronto da usare, senza commenti.",
+                                    "Sei un editor senior. Restituisci solo voci di Prefazione/Prologo/Epilogo, Parte, Capitolo e sottocapitoli numerati: una riga per voce, con il solo titolo. Sono vietate sinossi, spiegazioni, eventi, conflitti, sviluppi emotivi, scene, note e commenti.",
                                     val_genere, val_titolo, val_trama, val_goal, lingua_sel,
                                     val_stile, val_narrativa, val_pov,
                                     indice_da_superare=indice_base_chat,
@@ -10314,7 +10316,16 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                 (f"\n\n{dettaglio_proposta}" if dettaglio_proposta else "")
                             )
 
-                    proposta_chat_indice = str(st.session_state.get("chat_indice_proposta", "") or "").strip()
+                    proposta_chat_indice_grezza = str(
+                        st.session_state.get("chat_indice_proposta", "") or ""
+                    ).strip()
+                    # Rende leggibili anche proposte create prima di questo
+                    # aggiornamento: l'indice conserva solo la sua gerarchia,
+                    # non le note narrative prodotte accidentalmente dal modello.
+                    proposta_chat_indice = normalizza_indice_generato(proposta_chat_indice_grezza)
+                    if proposta_chat_indice and proposta_chat_indice != proposta_chat_indice_grezza:
+                        st.session_state["chat_indice_proposta"] = proposta_chat_indice
+                        st.session_state["chat_indice_firma_proposta"] = firma_indice(proposta_chat_indice)
                     if proposta_chat_indice:
                         st.success(testi_chat_indice["pronto"])
                         st.markdown(f"**{testi_chat_indice['proposta']}**")
