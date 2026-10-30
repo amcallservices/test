@@ -10219,6 +10219,21 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                         ):
                             indice_base_chat = st.session_state.get("chat_indice_indice_base", indice_da_valutare)
                             with st.spinner("Creazione della proposta migliorata in corso..."):
+                                # La proposta passa da fasi reali (struttura,
+                                # controlli e possibile correzione). Mostriamo
+                                # quindi lo stesso avanzamento dell'indice
+                                # principale, invece di uno spinner generico.
+                                barra_proposta_chat = st.progress(
+                                    4,
+                                    text="Proposta di indice: preparazione in corso...",
+                                )
+
+                                def aggiorna_avanzamento_proposta(percentuale, messaggio):
+                                    barra_proposta_chat.progress(
+                                        max(0, min(100, int(percentuale))),
+                                        text=f"Proposta di indice: {messaggio}",
+                                    )
+
                                 proposta_chat_indice = genera_indice_controllato(
                                     prompt_rigenerazione_chat_indice(
                                         indice_base_chat,
@@ -10239,6 +10254,7 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                     massimo_parti_editoriali=massimo_parti_editoriali,
                                     massimo_capitoli_editoriali=massimo_capitoli_editoriali,
                                     massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
+                                    aggiorna_stato=aggiorna_avanzamento_proposta,
                                     reason_credito="chat_indice_rigenerazione",
                                     reason_chiamata="chat_indice_rigenerazione",
                                 )
