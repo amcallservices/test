@@ -81,6 +81,7 @@ from project_outline import (
 )
 import project_memory as memoria_core
 import narrative_engine as narrative_core
+import emotional_impact as emotional_impact_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 from commercial_layer import (
     AI_REQUEST_CREDITS,
@@ -7527,6 +7528,16 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     profilo_genere = profilo_genere_stesura(genere)
     profilo_tipologia = profilo_tipologia_stesura(stile)
     regola_struttura = profilo_struttura_indice(genere, "", trama, obiettivo)
+    istruzioni_impatto_emotivo = emotional_impact_core.istruzioni_impatto_emotivo(
+        sezione=sezione,
+        genere=genere,
+        tipologia=stile,
+        stile=narrativa,
+        obiettivo=obiettivo,
+        brief_personale=brief_personale,
+        contesto_narrativo=memoria,
+        ruolo_sezione=tipo_sezione,
+    )
     ritmo_libro = st.session_state.get("book_rhythm", "") or "Equilibrato e progressivo"
     direttive_ritmo = {
         "Disteso e immersivo": "Concedi spazio a osservazioni, esempi, atmosfera e passaggi interiori utili. Mantieni comunque una funzione concreta per ogni paragrafo e non aggiungere digressioni.",
@@ -7561,6 +7572,8 @@ DATI EDITORIALI DELLA PREFAZIONE
 - Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}
 
 {brief_personale}
+
+{istruzioni_impatto_emotivo}
 
 AZIONE
 Redigi la sezione iniziale '{sezione}', rigorosamente in {lingua}. Questa
@@ -7637,6 +7650,8 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 - Regole della struttura: {regola_struttura}
 - Tipo della sezione corrente: {tipo_sezione}
 - Profilo di lunghezza scelto: {profilo_lunghezza}
+
+{istruzioni_impatto_emotivo}
 
 AZIONE:
 Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in lingua {lingua}.
