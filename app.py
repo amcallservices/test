@@ -1884,7 +1884,19 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             risposta_deepseek_guidata = response
             scelta = response.choices[0]
             testo = str(scelta.message.content or "").strip()
-            if scelta.finish_reason != "stop" or not testo:
+            # Le chat conversazionali devono concludere la risposta; la
+            # rigenerazione dell'indice, invece, passa poi dal validatore
+            # strutturale che può correggere una bozza anche molto estesa.
+            # Non respingerla qui solo perché ha raggiunto il limite tecnico.
+            richiede_risposta_completa = reason in {
+                "chat_sidebar_guidata",
+                "chat_nicchia_dialogo",
+                "chat_nicchia_report_iniziale",
+                "chat_nicchia_ricerca_approfondita",
+                "chat_nicchia_prompt_finale",
+                "chat_indice_dialogo",
+            }
+            if not testo or (richiede_risposta_completa and scelta.finish_reason != "stop"):
                 raise ValueError("La risposta della chat è incompleta.")
         elif chat_guidata_deepseek or prompt_nicchia_deepseek:
             risposta_deepseek_guidata = response
@@ -10262,7 +10274,13 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                 st.session_state["chat_indice_proposta"] = proposta_chat_indice
                                 st.session_state["chat_indice_firma_proposta"] = firma_indice(proposta_chat_indice)
                                 st.rerun()
-                            st.error(testi_chat_indice["errore"])
+                            dettaglio_proposta = str(
+                                st.session_state.get("ultimo_controllo_indice", "") or ""
+                            ).strip()
+                            st.error(
+                                testi_chat_indice["errore"] +
+                                (f"\n\n{dettaglio_proposta}" if dettaglio_proposta else "")
+                            )
 
                     proposta_chat_indice = str(st.session_state.get("chat_indice_proposta", "") or "").strip()
                     if proposta_chat_indice:
