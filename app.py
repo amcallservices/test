@@ -4082,12 +4082,22 @@ CONVERSAZIONE
 """
 
 
-def prompt_rigenerazione_chat_indice(indice, messaggi, lingua, limite_voci, budget_strutturale):
+def prompt_rigenerazione_chat_indice(indice, messaggi, lingua, limite_voci, budget_strutturale,
+                                     consenti_superamento_limiti=False):
     """Prepara una proposta separata, mai applicata automaticamente."""
+    vincolo_estensione = (
+        "L'autore ha autorizzato espressamente il superamento dei limiti numerici del profilo. "
+        "Quando le sue istruzioni sono chiare e richiedono davvero una struttura più estesa, seguile "
+        "con precisione anche oltre il limite di voci o il budget; non aggiungere comunque riempitivi."
+        if consenti_superamento_limiti else
+        f"La Prefazione viene aggiunta dal software: non inserirla. Mantieni al massimo {limite_voci} "
+        f"voci tra Parti, Capitoli e sottocapitoli. Budget strutturale: {budget_strutturale}. "
+        "Accorpa gli argomenti contigui invece di frammentarli in micro-voci."
+    )
     return f"""Sei un editor senior. Ricrea esclusivamente una proposta completa di indice, rigorosamente nella lingua {lingua}.
 Lavora SOLO sull'indice attuale e sulle richieste esplicite dell'autore nella conversazione. Conserva tutto ciò che è già utile e modifica soltanto ciò che serve per attuare richieste pertinenti, migliorare ordine, copertura e non-ripetizione. Non introdurre temi estranei, capitoli generici, fonti, bibliografie, glossari, ringraziamenti, checklist vuote, Markdown o commenti.
 
-La Prefazione viene aggiunta dal software: non inserirla. Mantieni al massimo {limite_voci} voci tra Parti, Capitoli e sottocapitoli. Budget strutturale: {budget_strutturale}. Accorpa gli argomenti contigui invece di frammentarli in micro-voci.
+{vincolo_estensione}
 Usa una gerarchia pulita e leggibile coerente con la lingua dell'indice, per esempio Parte/Capitolo e sottocapitoli numerati. Restituisci SOLO l'indice pronto da sincronizzare.
 
 INDICE ATTUALE
@@ -10223,6 +10233,21 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                         voce.get("role") == "assistant" for voce in messaggi_indice
                     )
                     if ha_risposta_indice and not st.session_state.get("chat_indice_proposta"):
+                        consenti_superamento_limiti = st.checkbox(
+                            "Consenti di superare i limiti di lunghezza dell'indice",
+                            key="chat_indice_consenti_superamento_limiti",
+                            help=(
+                                "Attivalo solo se le istruzioni dell'autore richiedono "
+                                "chiaramente una struttura più estesa. L'AI seguirà quelle "
+                                "istruzioni, ma non aggiungerà riempitivi."
+                            ),
+                        )
+                        if consenti_superamento_limiti:
+                            st.warning(
+                                "L'autore ha autorizzato il superamento dei limiti di sezioni, "
+                                "capitoli e sottocapitoli per questa proposta. L'indice verrà "
+                                "comunque controllato per coerenza, gerarchia e ripetizioni."
+                            )
                         if pulsante_con_preventivo(
                             "chat_indice_rigenerazione", testi_chat_indice["rigenera"],
                             CREDIT_COSTS["chat_indice_rigenerazione"],
@@ -10253,19 +10278,20 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                         lingua_sel,
                                         limite_voci_indice,
                                         budget_struttura_indice,
+                                        consenti_superamento_limiti,
                                     ),
                                     "Sei un editor senior: restituisci un solo indice gerarchico pronto da usare, senza commenti.",
                                     val_genere, val_titolo, val_trama, val_goal, lingua_sel,
                                     val_stile, val_narrativa, val_pov,
                                     indice_da_superare=indice_base_chat,
-                                    massimo_sezioni=limite_voci_indice,
+                                    massimo_sezioni=None if consenti_superamento_limiti else limite_voci_indice,
                                     minimo_parti=minimi_struttura_indice[0],
                                     minimo_capitoli=minimi_struttura_indice[1],
-                                    budget_strutturale=budget_struttura_indice,
+                                    budget_strutturale="" if consenti_superamento_limiti else budget_struttura_indice,
                                     profilo_lunghezza=val_lunghezza,
-                                    massimo_parti_editoriali=massimo_parti_editoriali,
-                                    massimo_capitoli_editoriali=massimo_capitoli_editoriali,
-                                    massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
+                                    massimo_parti_editoriali=None if consenti_superamento_limiti else massimo_parti_editoriali,
+                                    massimo_capitoli_editoriali=None if consenti_superamento_limiti else massimo_capitoli_editoriali,
+                                    massimo_sottocapitoli=None if consenti_superamento_limiti else massimo_sottocapitoli_per_capitolo,
                                     aggiorna_stato=aggiorna_avanzamento_proposta,
                                     reason_credito="chat_indice_rigenerazione",
                                     reason_chiamata="chat_indice_rigenerazione",
