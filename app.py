@@ -2898,7 +2898,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                               indice_da_superare="", massimo_sezioni=None, minimo_parti=4, minimo_capitoli=None,
                               budget_strutturale="", profilo_lunghezza="Standard KDP",
                               massimo_parti_editoriali=None, massimo_capitoli_editoriali=None,
-                              massimo_sottocapitoli=None, aggiorna_stato=None):
+                              massimo_sottocapitoli=None, aggiorna_stato=None,
+                              reason_credito="genera_indice_controllato", reason_chiamata="genera_indice"):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2909,13 +2910,15 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 # generazione se il browser viene aggiornato nel frattempo.
                 pass
 
-    riferimento = addebita_azione_diretta("genera_indice_controllato", amount=CREDIT_COSTS["indice_generazione_editoriale"])
+    riferimento = addebita_azione_diretta(
+        reason_credito, amount=CREDIT_COSTS["indice_generazione_editoriale"]
+    )
     # L'indice resta affidato al modello editoriale completo, ma un timeout o
     # una risposta non utilizzabile non deve lasciare lo spinner senza esito.
     avanza(42, "Generazione della struttura editoriale in corso...")
     risposta_iniziale = chiedi_gpt(
         prompt, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
-        timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="genera_indice",
+        timeout_seconds=TIMEOUT_INDICE_SECONDI, reason=reason_chiamata,
         riferimento_padre=riferimento,
     )
     if not str(risposta_iniziale or "").strip() or str(risposta_iniziale).startswith("ERRORE:"):
@@ -3109,7 +3112,8 @@ INDICE RIFIUTATO DA CORREGGERE
 """
         risposta_revisione = chiedi_gpt(
             revisione, system_prompt, addebita=False, model=MODELLO_EDITORIALE,
-            timeout_seconds=TIMEOUT_INDICE_SECONDI, reason="correzione_indice",
+            timeout_seconds=TIMEOUT_INDICE_SECONDI,
+            reason=f"{reason_chiamata}_correzione",
             riferimento_padre=riferimento,
         )
         avanza(92, "Correzione completata: validazione finale in corso...")
@@ -3983,6 +3987,83 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
     if mantenuti:
         messaggio += " Campi già compilati mantenuti: " + ", ".join(mantenuti) + "."
     st.session_state["chat_sidebar_esito_applicazione"] = messaggio
+
+
+def _testi_chat_indice(lingua):
+    """Etichette essenziali della chat che migliora solo l'indice corrente."""
+    testi = {
+        "Italiano": {
+            "titolo": "💬 Migliora questo indice", "istruzioni": "Parla con un editor soltanto dell'indice qui sopra. Puoi chiedere di aggiungere, unire, spostare o chiarire argomenti. Il manoscritto e gli altri dati del progetto non vengono modificati.",
+            "avvia": "APRI LA CHAT PER MIGLIORARE L'INDICE", "placeholder": "Es.: Vorrei aggiungere una parte pratica per chi parte da zero.", "invia": "➤ INVIA — 1 CREDITO", "rigenera": "✦ RICREA UNA PROPOSTA DI INDICE — 6 CREDITI", "proposta": "Proposta di indice", "sincronizza": "✅ SINCRONIZZA QUESTO INDICE", "scarta": "↺ SCARTA LA PROPOSTA", "chiudi": "CHIUDI E REIMPOSTA LA CHAT", "pronto": "La proposta è pronta. Confrontala con l'indice attuale e sincronizzala solo se ti convince.", "errore": "La chat non ha restituito una risposta utilizzabile. Nessun credito è stato trattenuto.", "origine_cambiata": "L'indice di partenza è cambiato: la chat precedente è stata chiusa per evitare di applicare una proposta non più coerente.", "sezioni_scritte": "Sono già presenti sezioni scritte: la sincronizzazione non le cancella, ma l'indice nuovo guiderà le prossime sezioni. Controlla le parti già redatte se hai modificato la struttura.",
+        },
+        "English": {
+            "titolo": "💬 Improve this outline", "istruzioni": "Talk to an editor only about the outline above. Ask to add, merge, move or clarify topics. The manuscript and other project data will not be changed.",
+            "avvia": "OPEN OUTLINE IMPROVEMENT CHAT", "placeholder": "Example: I would like a practical part for complete beginners.", "invia": "➤ SEND — 1 CREDIT", "rigenera": "✦ CREATE A NEW OUTLINE PROPOSAL — 6 CREDITS", "proposta": "Outline proposal", "sincronizza": "✅ SYNCHRONISE THIS OUTLINE", "scarta": "↺ DISCARD PROPOSAL", "chiudi": "CLOSE AND RESET CHAT", "pronto": "The proposal is ready. Compare it with the current outline and synchronise it only if you approve it.", "errore": "The chat did not return a usable response. No credit was retained.", "origine_cambiata": "The source outline changed: the earlier chat was closed to avoid applying an outdated proposal.", "sezioni_scritte": "There are already written sections: synchronising will not delete them, but the new outline will guide the next sections. Review existing text if you changed the structure.",
+        },
+        "Español": {"titolo": "💬 Mejora este índice", "istruzioni": "Habla con un editor solo sobre el índice anterior. Puedes añadir, unir, mover o aclarar temas. El manuscrito y los demás datos no se modificarán.", "avvia": "ABRIR CHAT PARA MEJORAR EL ÍNDICE", "placeholder": "Ej.: Quiero añadir una parte práctica para principiantes.", "invia": "➤ ENVIAR — 1 CRÉDITO", "rigenera": "✦ CREAR UNA PROPUESTA DE ÍNDICE — 6 CRÉDITOS", "proposta": "Propuesta de índice", "sincronizza": "✅ SINCRONIZAR ESTE ÍNDICE", "scarta": "↺ DESCARTAR PROPUESTA", "chiudi": "CERRAR Y REINICIAR CHAT", "pronto": "La propuesta está lista. Compárala con el índice actual y sincronízala solo si la apruebas.", "errore": "El chat no devolvió una respuesta utilizable. No se retuvo ningún crédito.", "origine_cambiata": "El índice de origen ha cambiado: se cerró el chat anterior para evitar aplicar una propuesta desactualizada.", "sezioni_scritte": "Ya hay secciones escritas: la sincronización no las elimina, pero el nuevo índice guiará las próximas secciones.",},
+        "Français": {"titolo": "💬 Améliorer ce plan", "istruzioni": "Échangez avec un éditeur uniquement sur le plan ci-dessus. Vous pouvez ajouter, fusionner, déplacer ou clarifier des thèmes. Le manuscrit et les autres données ne seront pas modifiés.", "avvia": "OUVRIR LE CHAT D'AMÉLIORATION", "placeholder": "Ex. : Je voudrais ajouter une partie pratique pour débutants.", "invia": "➤ ENVOYER — 1 CRÉDIT", "rigenera": "✦ CRÉER UNE PROPOSITION DE PLAN — 6 CRÉDITS", "proposta": "Proposition de plan", "sincronizza": "✅ SYNCHRONISER CE PLAN", "scarta": "↺ ABANDONNER LA PROPOSITION", "chiudi": "FERMER ET RÉINITIALISER LE CHAT", "pronto": "La proposition est prête. Comparez-la au plan actuel et synchronisez-la seulement si elle vous convient.", "errore": "Le chat n'a pas fourni de réponse utilisable. Aucun crédit n'a été retenu.", "origine_cambiata": "Le plan source a changé : le chat précédent a été fermé pour éviter une proposition obsolète.", "sezioni_scritte": "Des sections sont déjà écrites : la synchronisation ne les efface pas, mais le nouveau plan guidera les prochaines sections.",},
+        "Deutsch": {"titolo": "💬 Dieses Inhaltsverzeichnis verbessern", "istruzioni": "Sprich nur über das obige Inhaltsverzeichnis mit einem Editor. Du kannst Themen ergänzen, verbinden, verschieben oder präzisieren. Manuskript und andere Projektdaten bleiben unverändert.", "avvia": "CHAT ZUR VERBESSERUNG ÖFFNEN", "placeholder": "Zum Beispiel: Ich möchte einen praktischen Teil für Anfänger ergänzen.", "invia": "➤ SENDEN — 1 CREDIT", "rigenera": "✦ NEUEN VORSCHLAG ERSTELLEN — 6 CREDITS", "proposta": "Vorschlag für das Inhaltsverzeichnis", "sincronizza": "✅ DIESES INHALTSVERZEICHNIS SYNCHRONISIEREN", "scarta": "↺ VORSCHLAG VERWERFEN", "chiudi": "CHAT SCHLIESSEN UND ZURÜCKSETZEN", "pronto": "Der Vorschlag ist bereit. Vergleiche ihn mit dem aktuellen Inhaltsverzeichnis und synchronisiere ihn nur, wenn er überzeugt.", "errore": "Der Chat hat keine verwendbare Antwort geliefert. Es wurde kein Credit einbehalten.", "origine_cambiata": "Das Ausgangsinhaltsverzeichnis wurde geändert. Der frühere Chat wurde geschlossen, damit kein veralteter Vorschlag angewendet wird.", "sezioni_scritte": "Es gibt bereits geschriebene Abschnitte: Die Synchronisierung löscht sie nicht, aber das neue Inhaltsverzeichnis steuert die nächsten Abschnitte.",},
+        "Română": {"titolo": "💬 Îmbunătățește acest cuprins", "istruzioni": "Discută cu un editor doar despre cuprinsul de mai sus. Poți adăuga, uni, muta sau clarifica teme. Manuscrisul și celelalte date ale proiectului nu se modifică.", "avvia": "DESCHIDE CHATUL PENTRU CUPRINS", "placeholder": "De exemplu: Aș vrea să adaug o parte practică pentru începători.", "invia": "➤ TRIMITE — 1 CREDIT", "rigenera": "✦ CREEAZĂ O PROPUNERE NOUĂ — 6 CREDITE", "proposta": "Propunere de cuprins", "sincronizza": "✅ SINCRONIZEAZĂ ACEST CUPRINS", "scarta": "↺ RENUNȚĂ LA PROPUNERE", "chiudi": "ÎNCHIDE ȘI RESETEAZĂ CHATUL", "pronto": "Propunerea este gata. Compar-o cu cuprinsul actual și sincronizeaz-o doar dacă o aprobi.", "errore": "Chatul nu a oferit un răspuns utilizabil. Nu a fost reținut niciun credit.", "origine_cambiata": "Cuprinsul de plecare s-a schimbat: chatul anterior a fost închis pentru a evita aplicarea unei propuneri depășite.", "sezioni_scritte": "Există deja secțiuni scrise: sincronizarea nu le șterge, dar noul cuprins va ghida secțiunile următoare.",},
+        "Русский": {"titolo": "💬 Улучшить это оглавление", "istruzioni": "Обсуждайте с редактором только оглавление выше. Можно добавить, объединить, переместить или уточнить темы. Рукопись и другие данные проекта не изменяются.", "avvia": "ОТКРЫТЬ ЧАТ ДЛЯ УЛУЧШЕНИЯ ОГЛАВЛЕНИЯ", "placeholder": "Например: хочу добавить практическую часть для начинающих.", "invia": "➤ ОТПРАВИТЬ — 1 КРЕДИТ", "rigenera": "✦ СОЗДАТЬ НОВОЕ ПРЕДЛОЖЕНИЕ — 6 КРЕДИТОВ", "proposta": "Предложение оглавления", "sincronizza": "✅ СИНХРОНИЗИРОВАТЬ ЭТО ОГЛАВЛЕНИЕ", "scarta": "↺ ОТКЛОНИТЬ ПРЕДЛОЖЕНИЕ", "chiudi": "ЗАКРЫТЬ И СБРОСИТЬ ЧАТ", "pronto": "Предложение готово. Сравните его с текущим оглавлением и синхронизируйте только после одобрения.", "errore": "Чат не дал пригодного ответа. Кредит не удержан.", "origine_cambiata": "Исходное оглавление изменилось: предыдущий чат закрыт, чтобы не применить устаревшее предложение.", "sezioni_scritte": "Уже есть написанные разделы: синхронизация их не удалит, но новое оглавление будет направлять следующие разделы.",},
+        "العربية": {"titolo": "💬 حسّن هذا الفهرس", "istruzioni": "تحاور مع محرر حول الفهرس أعلاه فقط. يمكنك إضافة الموضوعات أو دمجها أو نقلها أو توضيحها. لن تتغير المخطوطة أو بقية بيانات المشروع.", "avvia": "افتح دردشة تحسين الفهرس", "placeholder": "مثال: أريد إضافة جزء عملي للمبتدئين.", "invia": "➤ إرسال — رصيد واحد", "rigenera": "✦ أنشئ اقتراح فهرس جديداً — 6 أرصدة", "proposta": "اقتراح الفهرس", "sincronizza": "✅ مزامنة هذا الفهرس", "scarta": "↺ تجاهل الاقتراح", "chiudi": "أغلق وأعد ضبط الدردشة", "pronto": "الاقتراح جاهز. قارنه بالفهرس الحالي ولا تزامنه إلا إذا وافقت عليه.", "errore": "لم تُرجع الدردشة نتيجة قابلة للاستخدام. لم يُخصم أي رصيد.", "origine_cambiata": "تغير الفهرس الأساسي، لذا أُغلقت الدردشة السابقة لتجنب تطبيق اقتراح لم يعد متوافقاً.", "sezioni_scritte": "توجد أقسام مكتوبة بالفعل: المزامنة لا تحذفها، لكن الفهرس الجديد سيوجه الأقسام التالية.",},
+        "中文": {"titolo": "💬 改进此目录", "istruzioni": "仅与编辑讨论上方目录。你可以要求增加、合并、调整或澄清主题。不会修改手稿或其他项目数据。", "avvia": "打开目录改进聊天", "placeholder": "例如：我想为初学者增加一个实用部分。", "invia": "➤ 发送 — 1 积分", "rigenera": "✦ 创建新的目录方案 — 6 积分", "proposta": "目录方案", "sincronizza": "✅ 同步此目录", "scarta": "↺ 放弃方案", "chiudi": "关闭并重置聊天", "pronto": "方案已准备好。请与当前目录比较，只有认可后才同步。", "errore": "聊天未返回可用结果，未扣除积分。", "origine_cambiata": "源目录已变更：为避免应用不再匹配的方案，先前的聊天已关闭。", "sezioni_scritte": "已有已写好的章节：同步不会删除它们，但新目录将指导后续写作。",},
+    }
+    return testi.get(str(lingua or "").strip(), testi["Italiano"])
+
+
+def avvia_chat_indice(indice):
+    """Apre una chat isolata: l'indice ufficiale resta immutato fino al consenso."""
+    st.session_state["chat_indice_attiva"] = True
+    st.session_state["chat_indice_messaggi"] = []
+    st.session_state["chat_indice_indice_base"] = str(indice or "")
+    st.session_state["chat_indice_firma_base"] = firma_indice(indice)
+    st.session_state["chat_indice_input_nonce"] = 0
+    st.session_state.pop("chat_indice_proposta", None)
+
+
+def reimposta_chat_indice():
+    for chiave in list(st.session_state):
+        if chiave.startswith("chat_indice_"):
+            st.session_state.pop(chiave, None)
+
+
+def _cronologia_chat_indice(messaggi, limite=14):
+    return "\n\n".join(
+        f"{'AUTORE' if voce.get('role') == 'user' else 'EDITOR'}:\n{voce.get('content', '')}"
+        for voce in list(messaggi or [])[-limite:]
+    )
+
+
+def prompt_dialogo_chat_indice(indice, messaggi, lingua):
+    """Prompt deliberatamente ristretto alla struttura già creata."""
+    return f"""Sei l'editor della chat di revisione dell'indice di Scrittore Site.
+Rispondi rigorosamente nella lingua: {lingua}.
+
+Il tuo perimetro è SOLO questo indice già creato e le richieste dell'autore nella conversazione. Non leggere, citare o dedurre contenuti dal manoscritto, dalle fonti, dalla sidebar, da altri strumenti o da conversazioni esterne.
+Analizza coerenza, ordine, copertura, ripetizioni e opportunità concrete di miglioramento. Puoi chiedere al massimo una domanda utile alla volta oppure proporre interventi chiari. Non creare ancora un nuovo indice completo: l'autore lo richiederà con il pulsante dedicato. Non promettere ricerche web, non cambiare dati e non uscire dal tema dell'indice.
+
+INDICE ATTUALE
+{indice}
+
+CONVERSAZIONE
+{_cronologia_chat_indice(messaggi)}
+"""
+
+
+def prompt_rigenerazione_chat_indice(indice, messaggi, lingua, limite_voci, budget_strutturale):
+    """Prepara una proposta separata, mai applicata automaticamente."""
+    return f"""Sei un editor senior. Ricrea esclusivamente una proposta completa di indice, rigorosamente nella lingua {lingua}.
+Lavora SOLO sull'indice attuale e sulle richieste esplicite dell'autore nella conversazione. Conserva tutto ciò che è già utile e modifica soltanto ciò che serve per attuare richieste pertinenti, migliorare ordine, copertura e non-ripetizione. Non introdurre temi estranei, capitoli generici, fonti, bibliografie, glossari, ringraziamenti, checklist vuote, Markdown o commenti.
+
+La Prefazione viene aggiunta dal software: non inserirla. Mantieni al massimo {limite_voci} voci tra Parti, Capitoli e sottocapitoli. Budget strutturale: {budget_strutturale}. Accorpa gli argomenti contigui invece di frammentarli in micro-voci.
+Usa una gerarchia pulita e leggibile coerente con la lingua dell'indice, per esempio Parte/Capitolo e sottocapitoli numerati. Restituisci SOLO l'indice pronto da sincronizzare.
+
+INDICE ATTUALE
+{indice}
+
+RICHIESTE E DIALOGO DELL'AUTORE
+{_cronologia_chat_indice(messaggi)}
+"""
 
 
 # La chat della nicchia è volutamente separata dalla Chat guidata: non salva
@@ -10036,6 +10117,155 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
             st.rerun()
 
         indice_da_valutare = st.session_state.get("indice_raw", "").strip()
+        if indice_da_valutare:
+            testi_chat_indice = _testi_chat_indice(lingua_sel)
+            firma_indice_corrente = firma_indice(indice_da_valutare)
+            if (
+                st.session_state.get("chat_indice_attiva")
+                and st.session_state.get("chat_indice_firma_base") != firma_indice_corrente
+            ):
+                # Non applicare mai una proposta nata da una versione diversa
+                # dell'indice, neppure se la modifica è stata fatta a mano.
+                reimposta_chat_indice()
+                st.warning(testi_chat_indice["origine_cambiata"])
+
+            with st.expander(testi_chat_indice["titolo"], expanded=bool(st.session_state.get("chat_indice_attiva"))):
+                st.caption(testi_chat_indice["istruzioni"])
+                if not st.session_state.get("chat_indice_attiva"):
+                    if st.button(
+                        testi_chat_indice["avvia"], key="avvia_chat_indice",
+                        use_container_width=True,
+                    ):
+                        avvia_chat_indice(indice_da_valutare)
+                        st.rerun()
+                else:
+                    messaggi_indice = list(st.session_state.get("chat_indice_messaggi", []) or [])
+                    for messaggio in messaggi_indice:
+                        with st.chat_message(messaggio.get("role", "assistant")):
+                            st.markdown(messaggio.get("content", ""))
+
+                    nonce_indice = int(st.session_state.get("chat_indice_input_nonce", 0))
+                    chiave_input_indice = f"chat_indice_input_{nonce_indice}"
+                    testo_indice_chat = st.text_area(
+                        campo_ui("messaggio", lingua_sel), key=chiave_input_indice,
+                        placeholder=testi_chat_indice["placeholder"], height=90,
+                    )
+                    if st.button(
+                        testi_chat_indice["invia"], key=f"invia_chat_indice_{nonce_indice}",
+                        use_container_width=True,
+                    ):
+                        testo_indice_chat = str(testo_indice_chat or "").strip()
+                        if not testo_indice_chat:
+                            st.warning(testi_chat_indice["placeholder"])
+                        else:
+                            messaggi_per_risposta = [
+                                *messaggi_indice,
+                                {"role": "user", "content": testo_indice_chat},
+                            ]
+                            with st.spinner("Analisi dell'indice in corso..."):
+                                risposta_indice = chiedi_gpt(
+                                    prompt_dialogo_chat_indice(
+                                        st.session_state.get("chat_indice_indice_base", indice_da_valutare),
+                                        messaggi_per_risposta, lingua_sel,
+                                    ),
+                                    "Sei un editor di indici chiaro, concreto e rispettoso del perimetro richiesto.",
+                                    addebita=True,
+                                    amount=CREDIT_COSTS["chat_indice_dialogo"],
+                                    max_completion_tokens=1200,
+                                    model=MODELLO_EDITORIALE,
+                                    reason="chat_indice_dialogo",
+                                    timeout_seconds=90,
+                                )
+                            if not str(risposta_indice or "").strip() or str(risposta_indice).startswith("ERRORE:"):
+                                st.error(testi_chat_indice["errore"])
+                            else:
+                                messaggi_per_risposta.append({"role": "assistant", "content": risposta_indice})
+                                st.session_state["chat_indice_messaggi"] = messaggi_per_risposta
+                                st.session_state["chat_indice_input_nonce"] = nonce_indice + 1
+                                st.rerun()
+
+                    ha_risposta_indice = any(
+                        voce.get("role") == "assistant" for voce in messaggi_indice
+                    )
+                    if ha_risposta_indice and not st.session_state.get("chat_indice_proposta"):
+                        if pulsante_con_preventivo(
+                            "chat_indice_rigenerazione", testi_chat_indice["rigenera"],
+                            CREDIT_COSTS["chat_indice_rigenerazione"],
+                            "Ricrea una proposta completa basata soltanto sull'indice attuale e sulle richieste formulate in questa chat. L'indice del progetto non cambia finché non premi Sincronizza indice.",
+                            use_container_width=True,
+                        ):
+                            indice_base_chat = st.session_state.get("chat_indice_indice_base", indice_da_valutare)
+                            with st.spinner("Creazione della proposta migliorata in corso..."):
+                                proposta_chat_indice = genera_indice_controllato(
+                                    prompt_rigenerazione_chat_indice(
+                                        indice_base_chat,
+                                        messaggi_indice,
+                                        lingua_sel,
+                                        limite_voci_indice,
+                                        budget_struttura_indice,
+                                    ),
+                                    "Sei un editor senior: restituisci un solo indice gerarchico pronto da usare, senza commenti.",
+                                    val_genere, val_titolo, val_trama, val_goal, lingua_sel,
+                                    val_stile, val_narrativa, val_pov,
+                                    indice_da_superare=indice_base_chat,
+                                    massimo_sezioni=limite_voci_indice,
+                                    minimo_parti=minimi_struttura_indice[0],
+                                    minimo_capitoli=minimi_struttura_indice[1],
+                                    budget_strutturale=budget_struttura_indice,
+                                    profilo_lunghezza=val_lunghezza,
+                                    massimo_parti_editoriali=massimo_parti_editoriali,
+                                    massimo_capitoli_editoriali=massimo_capitoli_editoriali,
+                                    massimo_sottocapitoli=massimo_sottocapitoli_per_capitolo,
+                                    reason_credito="chat_indice_rigenerazione",
+                                    reason_chiamata="chat_indice_rigenerazione",
+                                )
+                            if proposta_chat_indice:
+                                st.session_state["chat_indice_proposta"] = proposta_chat_indice
+                                st.session_state["chat_indice_firma_proposta"] = firma_indice(proposta_chat_indice)
+                                st.rerun()
+                            st.error(testi_chat_indice["errore"])
+
+                    proposta_chat_indice = str(st.session_state.get("chat_indice_proposta", "") or "").strip()
+                    if proposta_chat_indice:
+                        st.success(testi_chat_indice["pronto"])
+                        st.markdown(f"**{testi_chat_indice['proposta']}**")
+                        st.code(proposta_chat_indice, language=None)
+                        ha_sezioni_scritte = any(
+                            str(testo or "").strip()
+                            for testo in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).values()
+                        )
+                        if ha_sezioni_scritte:
+                            st.warning(testi_chat_indice["sezioni_scritte"])
+                        col_sincronizza, col_scarto = st.columns(2)
+                        with col_sincronizza:
+                            if st.button(
+                                testi_chat_indice["sincronizza"], type="primary",
+                                key="sincronizza_chat_indice", use_container_width=True,
+                            ):
+                                st.session_state["indice_backup_prima_chat_indice"] = indice_da_valutare
+                                imposta_indice_progetto(proposta_chat_indice)
+                                # L'indice cambia solo qui. Le sezioni già scritte
+                                # restano nella memoria del progetto e nel cloud.
+                                salva_stesura_generata_in_cloud(
+                                    opzioni_editor, "indice aggiornato dalla chat"
+                                )
+                                reimposta_chat_indice()
+                                st.rerun()
+                        with col_scarto:
+                            if st.button(
+                                testi_chat_indice["scarta"], key="scarta_chat_indice",
+                                use_container_width=True,
+                            ):
+                                st.session_state.pop("chat_indice_proposta", None)
+                                st.session_state.pop("chat_indice_firma_proposta", None)
+                                st.rerun()
+                    if st.button(
+                        testi_chat_indice["chiudi"], key="reset_chat_indice",
+                        use_container_width=True,
+                    ):
+                        reimposta_chat_indice()
+                        st.rerun()
+
         if indice_da_valutare:
             if pulsante_con_preventivo("voto_indice", "⭐ VOTO INDICE", CREDIT_COSTS["voto_indice"],
                                        "Analizza l'indice rispetto al brief editoriale.", use_container_width=True):

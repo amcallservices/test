@@ -60,6 +60,10 @@ CREDIT_COSTS = {
     # La rigenerazione usa la stessa progettazione editoriale dell'indice,
     # quindi il preventivo deve coincidere con l'addebito reale.
     "rigenera_indice": 6,
+    # La chat dell'indice non modifica mai la struttura corrente durante il
+    # dialogo: la proposta viene pagata e creata solo su richiesta esplicita.
+    "chat_indice_dialogo": 1,
+    "chat_indice_rigenerazione": 6,
     "verifica_fatti_web": 2,
     "audit_fatti_capitolo": 2,
     "controllo_coerenza_iniziale": 10,
@@ -92,6 +96,12 @@ CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     "chat_nicchia_report_iniziale",
     "chat_nicchia_ricerca_approfondita",
     "chat_nicchia_prompt_finale",
+    # La revisione conversazionale dell'indice usa sempre GPT, come la Chat
+    # guidata: deve restituire una struttura completa e coerente anche quando
+    # l'autore ha selezionato DeepSeek per la normale stesura del libro.
+    "chat_indice_dialogo",
+    "chat_indice_rigenerazione",
+    "chat_indice_rigenerazione_correzione",
     "trascrizione_chat_sidebar_guidata",
     "trascrizione_chat_nicchia",
 })
