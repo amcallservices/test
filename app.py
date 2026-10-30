@@ -3691,12 +3691,48 @@ def estrai_scheda_chat_guidata_da_cronologia(messaggi):
 
 
 def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
-    """Ricompone i campi e usa le scelte già confermate nella sidebar."""
+    """Ricompone i campi senza perdere la lingua esplicita del brief.
+
+    La lingua dell'interfaccia è un valore di ripiego: un autore può dialogare
+    in italiano e chiedere esplicitamente, per esempio, un libro in inglese.
+    """
     scheda = estrai_scheda_chat_guidata_da_cronologia(messaggi)
-    if lingua in TRADUZIONI:
+    if not scheda.get("lingua") and lingua in TRADUZIONI:
         scheda["lingua"] = lingua
     scheda["provider_ia"] = provider
     return scheda
+
+
+def brief_vincolante_chat_sidebar(messaggi):
+    """Restituisce il brief utente più ricco, anche dopo molti turni brevi.
+
+    La chat può partire da una frase oppure da un incarico editoriale lungo.
+    In quest'ultimo caso il testo non deve sparire dalla finestra di contesto
+    quando la conversazione prosegue con conferme e personalizzazioni.
+    """
+    candidati = []
+    for messaggio in list(messaggi or []):
+        if messaggio.get("role") != "user":
+            continue
+        contenuto = str(messaggio.get("content", "") or "").strip()
+        if not contenuto or contenuto.startswith(
+            "Prepara ora la scheda finale completa per la sidebar"
+        ):
+            continue
+        candidati.append(contenuto)
+    if not candidati:
+        return ""
+    parole_vincolanti = (
+        "deve", "devono", "evita", "non usare", "includi", "include",
+        "target", "pubblico", "tono", "stile", "lingua", "capitoli",
+        "obiettivo", "vincolo", "brief", "prompt", "must", "avoid",
+    )
+    return max(
+        candidati,
+        key=lambda testo: len(testo) + 80 * sum(
+            parola in testo.casefold() for parola in parole_vincolanti
+        ),
+    )
 
 
 def scelta_personalizzazione_chat_deepseek(messaggi):
@@ -9294,8 +9330,34 @@ PAUSA GUIDATA DURANTE SCRIVI TUTTO IL LIBRO (FACOLTATIVO):"""
         # selezionata; i menu usano i valori reali della sidebar.
         prompt_chat_sidebar += f"""
 
+GESTIONE DI BRIEF DETTAGLIATI — PRIORITÀ ASSOLUTA
+L'utente può incollare un prompt lungo, un brief professionale o istruzioni
+molto specifiche. In quel caso trattalo come un incarico editoriale vincolante,
+non come una semplice idea da semplificare. Leggilo integralmente e conserva
+internamente ogni indicazione esplicita: titolo e autore richiesti, lingua del
+libro, lettore, problema, promessa prudente, tono, stile, genere, livello di
+approfondimento, materiali forniti, esempi ammessi, limiti, elementi da evitare,
+sequenza dei contenuti, cautele e risultato finale desiderato.
+
+Non chiedere all'utente di ripetere elementi già presenti nel brief. Non
+riassumere il brief in modo da perdere vincoli. Non inventare requisiti in
+contrasto con esso. Trasferisci invece ogni indicazione nei campi disponibili:
+- le istruzioni su lettore, problema, beneficio, contenuti, sequenza e confini
+  vanno in OBIETTIVO DEL LIBRO, RISULTATO FINALE DESIDERATO e TRAMA O ARGOMENTO;
+- procedure, casi, esercizi, esempi, avvertenze, fonti da verificare, requisiti
+  di qualità e dettagli da sviluppare vanno in APPROFONDIMENTI;
+- tono, prospettiva, priorità e limiti editoriali vanno nei campi di
+  personalizzazione soltanto quando l'utente li ha chiesti o seleziona B/C/D.
+Se un requisito non ha un campo autonomo, incorporalo nel campo descrittivo più
+pertinente senza aggiungere nuove etichette.
+
+Comunica nella lingua operativa selezionata ({lingua_sel}). Il valore LINGUA
+può però essere diverso se l'autore ha richiesto esplicitamente un libro in una
+delle lingue disponibili: in quel caso usa esattamente quella lingua nel campo
+LINGUA e conserva la lingua selezionata solo per il dialogo con l'autore.
+
 FORMATO OBBLIGATORIO DELLA SCHEDA FINALE
-Scrivi il dialogo e i valori descrittivi in {lingua_sel}. Mantieni invece le etichette
+Scrivi il dialogo in {lingua_sel}. Scrivi i valori descrittivi nella lingua esplicitamente richiesta per il libro, se presente nel brief; altrimenti usa {lingua_sel}. Mantieni invece le etichette
 della scheda finale esattamente come nel modello sopra (TITOLO DEL LIBRO, LINGUA,
 GENERE LETTERARIO ecc.), anche quando dialoghi in un'altra lingua. Per genere,
 tipologia, stile, punto di vista e lunghezza copia esattamente una delle opzioni
@@ -9405,10 +9467,23 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                         st.warning("Scrivi prima un messaggio per la chat.")
                     else:
                         messaggi_chat.append({"role": "user", "content": testo_utente_chat})
-                        cronologia = messaggi_chat[-12:]
-                        conversazione = "\n\n".join(
+                        # L'ultimo scambio è sufficiente per il dialogo, ma un
+                        # brief lungo può trovarsi all'inizio della chat. Lo
+                        # manteniamo quindi esplicitamente anche dopo molte
+                        # risposte brevi, conferme o richieste di modifica.
+                        brief_prioritario_chat = brief_vincolante_chat_sidebar(messaggi_chat)
+                        cronologia = messaggi_chat[-16:]
+                        cronologia_testo = "\n\n".join(
                             f"{'UTENTE' if voce.get('role') == 'user' else 'ASSISTENTE'}:\n{voce.get('content', '')}"
                             for voce in cronologia
+                        )
+                        conversazione = (
+                            "BRIEF PRIORITARIO DELL'AUTORE — conserva tutti i vincoli e usalo come fonte principale:\n"
+                            + brief_prioritario_chat
+                            + "\n\nCRONOLOGIA RECENTE DELLA CHAT:\n"
+                            + cronologia_testo
+                            if brief_prioritario_chat and brief_prioritario_chat not in cronologia_testo
+                            else cronologia_testo
                         )
                         risposte_utente_chat = sum(
                             1 for voce in messaggi_chat
@@ -9490,6 +9565,10 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 MODALITÀ CHAT INTERATTIVA — PRIORITÀ ASSOLUTA
 Il tuo scopo non è intrattenere una conversazione generica: devi accompagnare con naturalezza l'utente fino alla compilazione affidabile della sidebar. In questa conversazione l'utente ha già inviato {risposte_utente_chat} messaggi.
 
+BRIEF VINCOLANTE DA PRESERVARE
+{brief_prioritario_chat or "Nessun brief lungo distinto: usa tutta la cronologia."}
+Se questo brief è dettagliato, non semplificarlo né sostituirlo con predefiniti generici. Prima di rispondere, ricava mentalmente una lista dei suoi requisiti espliciti e verifica che ognuno confluisca nel campo della sidebar più pertinente. Le istruzioni esplicite dell'autore prevalgono sulle tue preferenze editoriali; scegli autonomamente solo ciò che il brief non definisce.
+
 SEGNALI DELL'ULTIMO MESSAGGIO
 {istruzione_chiusura_chat}
 {istruzione_autonomia_chat}
@@ -9508,7 +9587,7 @@ CRITERIO DI CHIUSURA
 Appena esistono argomento, pubblico o lettore plausibile, obiettivo e scelta della personalizzazione, i dati sono sufficienti: non fare altre domande. Produci immediatamente la scheda finale completa, scegliendo in modo coerente tutti i valori ammessi dalla sidebar.
 
 Il cervello AI è già scelto dall'utente nella sidebar: **{cervello_chat}**. Non suggerire di cambiarlo e, nella scheda finale, riporta esattamente questo valore per CERVELLO AI.
-Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
+Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indica esplicitamente un'altra lingua per il libro, rispetta quella indicazione nel campo LINGUA. Quando produci la scheda, restituisci tutte e sole le etichette previste, una per riga, senza blocchi di codice né commenti prima o dopo. Non produrre mai una scheda parziale."""
                         scelta_personale_deepseek, dettagli_personali_deepseek = (
                             scelta_personalizzazione_chat_deepseek(messaggi_chat)
                             if usa_deepseek_chat else ("", False)
@@ -9535,7 +9614,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente. Quando produci l
                                 istruzioni_da_inviare,
                                 addebita=True,
                                 amount=CREDIT_COSTS["chat_sidebar_guidata"],
-                                max_completion_tokens=3000 if usa_deepseek_chat else 1700,
+                                max_completion_tokens=3000 if usa_deepseek_chat else 2400,
                                 model=MODELLO_EDITORIALE,
                                 reason="chat_sidebar_guidata",
                                 timeout_seconds=90,
