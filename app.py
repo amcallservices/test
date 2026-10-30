@@ -6178,45 +6178,72 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     return ""
 
 
+GENERI_NARRATIVI = frozenset({
+    "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza",
+    "Narrativo", "Romanzo Classico", "Contemporaneo", "Biografia",
+})
+
+
+def genere_narrativo(genere):
+    """Distingue una storia da un libro che accompagna il lettore con spiegazioni."""
+    return str(genere or "").strip() in GENERI_NARRATIVI
+
+
 def genera_apertura_di_parte(prompt, system_prompt, sezione, genere, lingua, limite_output):
-    """Genera e valida integralmente le aperture di Parte.
+    """Genera una Parte coerente con il tipo di libro, senza testi meta-narrativi.
 
-    Una Parte è una cornice editoriale breve, non un capitolo normale. Perciò
-    ha una consegna dedicata: il testo deve essere leggibile, concluso e
-    sufficiente a orientare il lettore, ma non viene scartato soltanto perché
-    il modello omette il marcatore tecnico di fine risposta.
+    Nei manuali una Parte può orientare il lettore. In un romanzo è invece una
+    vera soglia della storia: deve contenere azione, situazione o conseguenza,
+    non dire al lettore quale emozione provare o cosa capirà più avanti.
     """
-    istruzione = prompt + f"""
-
+    if genere_narrativo(genere):
+        consegna_parte = f"""
+SCENA NARRATIVA DI APERTURA DELLA PARTE
+Questa è la Parte '{sezione}' di un'opera narrativa. Scrivi una scena autonoma
+di 110-180 parole, rigorosamente nella lingua {lingua} e nel POV già richiesto.
+Inizia dentro un momento concreto della storia: un'azione osservabile, una
+scelta, un dialogo, una scoperta o una conseguenza. Fai avanzare almeno uno fra
+trama, relazione, conflitto, informazione o posta in gioco, restando coerente
+con la memoria dei capitoli precedenti. Mostra attraverso dettagli, azioni e
+dialoghi; non spiegare la morale, non dire cosa il lettore deve provare,
+capire o imparare e non presentare la Parte come guida. Non riassumere né
+anticipare i capitoli successivi. Chiudi la scena con una frase piena,
+definitiva e narrativamente pertinente.
+"""
+    else:
+        consegna_parte = f"""
 APERTURA EDITORIALE DELLA PARTE
 Questa è la Parte '{sezione}'. Scrivi un'apertura autonoma di 70-120 parole.
 Spiega quale passaggio del percorso affronta questa Parte, come il lettore può
 usarla e quale cambiamento concreto prepara. Non elencare né anticipare i
 capitoli successivi. Chiudi con una frase piena e definitiva.
 """
+    istruzione = prompt + "\n\n" + consegna_parte
     ultimo_testo = ""
     for tentativo in range(3):
         correzione = "" if tentativo == 0 else f"""
 
 RISCRITTURA OBBLIGATORIA
 La bozza precedente non era una vera apertura conclusa. Riscrivi integralmente
-la Parte '{sezione}' in 70-120 parole. Non usare elenchi, titoli interni,
-puntini di sospensione o frasi sospese. L'ultima frase deve chiudere davvero
-l'idea, senza rimandare la conclusione a una sezione successiva.
+la Parte '{sezione}' rispettando integralmente la consegna qui sopra. Non usare
+elenchi, titoli interni, puntini di sospensione o frasi sospese. L'ultima frase
+deve chiudere davvero l'idea o la scena, senza rimandare la conclusione a una
+sezione successiva.
 """
         testo, marcatore = genera_bozza_sezione_con_chiusura(
             istruzione + correzione,
             system_prompt,
             sezione,
             lingua,
-            max_completion_tokens=min(max(320, limite_output), 700),
+            max_completion_tokens=min(max(420, limite_output), 760),
             addebita=(tentativo == 0),
         )
         ultimo_testo = pulisci_testo_editoriale(testo)
         testo_concluso = not criticita_specificita(
             ultimo_testo, genere, sezione, "Compatto", ""
         )
-        if len(ultimo_testo.split()) >= 40 and testo_concluso:
+        minimo_parole = 90 if genere_narrativo(genere) else 40
+        if len(ultimo_testo.split()) >= minimo_parole and testo_concluso:
             # Per le Parti il controllo reale è il finale completo; il
             # marcatore tecnico resta preferibile ma non può bloccare il libro.
             return ultimo_testo
@@ -7460,6 +7487,14 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
             "Questo capitolo ha sottocapitoli: scrivi SOLO una cornice iniziale di 70-100 parole. "
             "Non svolgere argomenti, procedure, esempi o conclusioni riservati ai sottocapitoli."
         )
+    elif tipo_sezione == "parte":
+        istruzione_lunghezza = (
+            "Questa Parte narrativa deve essere una scena breve ma completa di 110-180 parole; "
+            "non applicare la lunghezza ordinaria delle sezioni e non trasformarla in una spiegazione per il lettore."
+            if genere_narrativo(genere) else
+            "Questa Parte è una cornice editoriale breve di 70-120 parole; "
+            "non applicare la lunghezza ordinaria delle sezioni."
+        )
     else:
         istruzione_lunghezza = (
             f"Obiettivo: {profilo_lunghezza_dati['parole']}. Tolleranza massima del 5%: non scrivere meno di "
@@ -7475,6 +7510,14 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
 - Se il titolo contiene simulazione, genera solo ciò che il titolo assegna alla sezione; la sezione che contiene domande o esecuzione sarà completata dal generatore in blocchi con quesiti e soluzioni separati.
 - Evita formule generiche sullo studio: ogni paragrafo deve introdurre una competenza d'esame, un errore concreto, una procedura, un quesito o una decisione verificabile.
 """
+    direttiva_parte = (
+        "Se la sezione è una Parte di un romanzo o di un genere narrativo, scrivi una breve scena della storia: "
+        "azioni, dialoghi, dettagli e una conseguenza concreta. Non spiegare cosa il lettore deve provare, capire "
+        "o imparare; non commentare la storia e non anticipare i capitoli successivi."
+        if genere_narrativo(genere) else
+        "Se la sezione è una Parte, scrivi soltanto una breve apertura che spiega lo scopo della Parte e come usarla: "
+        "non sviluppare o riassumere i capitoli che seguono."
+    )
     return f"""
 INDICE GENERALE (STUDIALO PER CAPIRE COSA NON DEVI ANTICIPARE):
 {indice}
@@ -7503,7 +7546,7 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 
 AZIONE:
 Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in lingua {lingua}.
-- Se la sezione è una Parte, scrivi soltanto una breve apertura che spiega lo scopo della Parte e come usarla: non sviluppare o riassumere i capitoli che seguono.
+- {direttiva_parte}
 - Se la sezione è un Capitolo con sottocapitoli nell'indice, non anticipare né risolvere gli argomenti assegnati ai relativi sottocapitoli.
 - Se il genere è Ricettario, ogni Capitolo che porta il nome di un piatto è una sola ricetta completa: non aggiungere sottocapitoli autonomi e non ripetere una ricetta già presente nella Parte o in altre sezioni.
 {direttiva_test_prep}
