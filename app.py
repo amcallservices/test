@@ -103,12 +103,18 @@ from commercial_layer import (
 # nuove voci anche nella sessione transitoria: evita che un indice già aperto
 # vada in errore per un semplice disallineamento temporaneo dei file.
 CREDIT_COSTS.setdefault("chat_indice_dialogo", 1)
-CREDIT_COSTS.setdefault("chat_indice_rigenerazione", 6)
+# Durante un redeploy assegniamo le nuove tariffe anche al modulo commerciale
+# eventualmente ancora residente in memoria, così preventivo e addebito non
+# possono divergere per pochi secondi.
+CREDIT_COSTS["chat_indice_rigenerazione"] = 10
+CREDIT_COSTS["chat_indice_rigenerazione_estesa"] = 15
 CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     *CHAT_SOLO_GPT_OPERAZIONI,
     "chat_indice_dialogo",
     "chat_indice_rigenerazione",
     "chat_indice_rigenerazione_correzione",
+    "chat_indice_rigenerazione_estesa",
+    "chat_indice_rigenerazione_estesa_correzione",
 })
 try:
     import commercial_layer as _commercial_layer_runtime
@@ -2932,7 +2938,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                               massimo_parti_editoriali=None, massimo_capitoli_editoriali=None,
                               massimo_sottocapitoli=None, aggiorna_stato=None,
                               reason_credito="genera_indice_controllato", reason_chiamata="genera_indice",
-                              timeout_richiesta_secondi=None):
+                              timeout_richiesta_secondi=None, costo_crediti=None):
     """Genera, verifica e corregge l'indice con avanzamento leggibile."""
     def avanza(percentuale, testo):
         if callable(aggiorna_stato):
@@ -2943,9 +2949,8 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
                 # generazione se il browser viene aggiornato nel frattempo.
                 pass
 
-    riferimento = addebita_azione_diretta(
-        reason_credito, amount=CREDIT_COSTS["indice_generazione_editoriale"]
-    )
+    costo_effettivo = int(costo_crediti or CREDIT_COSTS["indice_generazione_editoriale"])
+    riferimento = addebita_azione_diretta(reason_credito, amount=costo_effettivo)
     # L'indice resta affidato al modello editoriale completo, ma un timeout o
     # una risposta non utilizzabile non deve lasciare lo spinner senza esito.
     avanza(42, "Generazione della struttura editoriale in corso...")
@@ -2956,7 +2961,7 @@ def genera_indice_controllato(prompt, system_prompt, genere, titolo, trama, obie
         riferimento_padre=riferimento,
     )
     if not str(risposta_iniziale or "").strip() or str(risposta_iniziale).startswith("ERRORE:"):
-        refund_credits(riferimento, reason="genera_indice_fallito", amount=CREDIT_COSTS["indice_generazione_editoriale"])
+        refund_credits(riferimento, reason="genera_indice_fallito", amount=costo_effettivo)
         st.session_state["ultimo_controllo_indice"] = (
             "Indice non generato: il cervello non ha concluso la risposta entro il tempo previsto. "
             "Nessun credito di progettazione è stato trattenuto: riprova tra poco."
@@ -3166,7 +3171,7 @@ INDICE RIFIUTATO DA CORREGGERE
         )
         avanza(100, "Indice salvato con avviso: verifica le criticità nell'editor.")
         return migliore_bozza
-    refund_credits(riferimento, reason="genera_indice_senza_struttura", amount=CREDIT_COSTS["indice_generazione_editoriale"])
+    refund_credits(riferimento, reason="genera_indice_senza_struttura", amount=costo_effettivo)
     st.session_state["ultimo_controllo_indice"] = (
         "Indice non pubblicato: la risposta non contiene capitoli riconoscibili. "
         "Il credito di progettazione è stato riaccreditato; riprova con un brief più preciso."
@@ -10250,12 +10255,29 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                             st.warning(
                                 "L'autore ha autorizzato il superamento dei limiti di sezioni, "
                                 "capitoli e sottocapitoli per questa proposta. L'indice verrà "
-                                "comunque controllato per coerenza, gerarchia e ripetizioni."
+                                "comunque controllato per coerenza, gerarchia e ripetizioni. "
+                                "Questa elaborazione estesa costa 15 crediti."
                             )
+                        costo_rigenerazione_chat = CREDIT_COSTS[
+                            "chat_indice_rigenerazione_estesa"
+                            if consenti_superamento_limiti
+                            else "chat_indice_rigenerazione"
+                        ]
+                        reason_rigenerazione_chat = (
+                            "chat_indice_rigenerazione_estesa"
+                            if consenti_superamento_limiti
+                            else "chat_indice_rigenerazione"
+                        )
                         if pulsante_con_preventivo(
                             "chat_indice_rigenerazione", testi_chat_indice["rigenera"],
-                            CREDIT_COSTS["chat_indice_rigenerazione"],
-                            "Ricrea una proposta completa basata soltanto sull'indice attuale e sulle richieste formulate in questa chat. L'indice del progetto non cambia finché non premi Sincronizza indice.",
+                            costo_rigenerazione_chat,
+                            "Ricrea una proposta completa basata soltanto sull'indice attuale e sulle richieste formulate in questa chat. "
+                            + (
+                                "L'autore ha autorizzato una struttura oltre i limiti del profilo: il costo massimo è 15 crediti. "
+                                if consenti_superamento_limiti else
+                                "Rispetta i limiti del profilo: il costo massimo è 10 crediti. "
+                            )
+                            + "L'indice del progetto non cambia finché non premi Sincronizza indice.",
                             use_container_width=True,
                         ):
                             indice_base_chat = st.session_state.get("chat_indice_indice_base", indice_da_valutare)
@@ -10297,8 +10319,9 @@ REGOLE FONDAMENTALI ED ESCLUSIVE:
                                     massimo_capitoli_editoriali=None if consenti_superamento_limiti else massimo_capitoli_editoriali,
                                     massimo_sottocapitoli=None if consenti_superamento_limiti else massimo_sottocapitoli_per_capitolo,
                                     aggiorna_stato=aggiorna_avanzamento_proposta,
-                                    reason_credito="chat_indice_rigenerazione",
-                                    reason_chiamata="chat_indice_rigenerazione",
+                                    reason_credito=reason_rigenerazione_chat,
+                                    reason_chiamata=reason_rigenerazione_chat,
+                                    costo_crediti=costo_rigenerazione_chat,
                                     # Un indice esteso (per scelta esplicita
                                     # dell'autore) richiede più tempo del
                                     # limite usato per l'indice standard.

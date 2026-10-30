@@ -63,7 +63,12 @@ CREDIT_COSTS = {
     # La chat dell'indice non modifica mai la struttura corrente durante il
     # dialogo: la proposta viene pagata e creata solo su richiesta esplicita.
     "chat_indice_dialogo": 1,
-    "chat_indice_rigenerazione": 6,
+    # Proposta completa dell'indice dalla chat: il costo maggiore copre la
+    # rigenerazione, i controlli strutturali e l'eventuale correzione.
+    "chat_indice_rigenerazione": 10,
+    # L'autore può chiedere esplicitamente una struttura oltre i limiti del
+    # profilo: richiede più contesto, token e tempo di elaborazione.
+    "chat_indice_rigenerazione_estesa": 15,
     "verifica_fatti_web": 2,
     "audit_fatti_capitolo": 2,
     "controllo_coerenza_iniziale": 10,
@@ -102,6 +107,8 @@ CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     "chat_indice_dialogo",
     "chat_indice_rigenerazione",
     "chat_indice_rigenerazione_correzione",
+    "chat_indice_rigenerazione_estesa",
+    "chat_indice_rigenerazione_estesa_correzione",
     "trascrizione_chat_sidebar_guidata",
     "trascrizione_chat_nicchia",
 })
