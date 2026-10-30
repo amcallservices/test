@@ -99,10 +99,11 @@ def normalizza_indice_generato(indice: str) -> str:
         r"capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节"
         r")\b"
     )
-    # I modelli non usano sempre la stessa convenzione: oltre a 1.1,
-    # accettiamo un capitolo numerato semplice e i comuni titoli cinesi.
-    # Restano fuori le normali frasi esplicative, che non iniziano così.
-    sottocapitolo = re.compile(r"^\d+(?:(?:\.\d+)+(?:\.?\s+|:\s*)|[.)]\s+|\s*[-–—]\s+)")
+    # Una sezione senza l'etichetta ``Capitolo`` deve avere una numerazione
+    # gerarchica (1.1, 2.3.1 e simili). Non accettiamo più ``1. ...``: quel
+    # formato è usato molto spesso dal modello per checklist e spiegazioni e
+    # finiva erroneamente nella coda di stesura come se fosse un capitolo.
+    sottocapitolo = re.compile(r"^\d+(?:\.\d+)+(?:\.?\s+|:\s*|\s*[-–—]\s+)")
     intestazione_cinese = re.compile(r"^第\s*\d+\s*(?:部分|章|节)")
     titoli_spiegazione = re.compile(
         r"(?i)^(?:eventi\s+principali|conflitto|sviluppo\s+emotivo|"
@@ -191,7 +192,7 @@ def firma_indice(indice: str) -> str:
 
 
 def conta_sezioni_indice(indice: str) -> int:
-    regex = r"(?i)(Capitolo|Chapter|Kapitel|Capítulo|Chapitre|Capitolul|Глава|الفصل|Раздел|章节|Secţiune|Parte|Part|Partie|Teil|Partea|Часть|الجزء|部分|\d+\.)"
+    regex = r"(?i)(Capitolo|Chapter|Kapitel|Capítulo|Chapitre|Capitolul|Глава|الفصل|Раздел|章节|Secţiune|Parte|Part|Partie|Teil|Partea|Часть|الجزء|部分|\d+(?:\.\d+)+)"
     return sum(1 for riga in (indice or "").splitlines() if re.search(regex, riga.strip()))
 
 
@@ -221,7 +222,7 @@ def superamenti_budget_editoriale(indice: str, massimo_parti: int | None, massim
 def stima_budget_parole_indice(indice: str, profilo_lunghezza: str, *, is_prefazione: Callable[[str], bool], titolo_prefazione: Callable[[], str], classifica: Callable[[str], str], ha_sottocapitoli: Callable[[str, Sequence[str]], bool]) -> dict[str, Any]:
     """Stima la capacità dell'indice, senza creare voci artificiali."""
     profilo = PROFILI_LUNGHEZZA_STESURA.get(profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"])
-    regex = r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+\.)"
+    regex = r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+(?:\.\d+)+)"
     sezioni: list[str] = []
     for riga in str(indice or "").splitlines():
         voce = riga.strip()

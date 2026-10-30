@@ -7,7 +7,7 @@ chiamante e conserva le stesse chiavi usate dalle versioni precedenti.
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 import re
 from typing import Any
 
@@ -394,6 +394,108 @@ def elenco_sezioni_progetto(
         if sezione and not sezione_dismessa(sezione) and sezione not in risultato:
             risultato.append(sezione)
     return risultato
+
+
+def elenco_sezioni_indice_attivo(
+    sezioni_base: Sequence[str], sezione_dismessa: Callable[[str], bool]
+) -> list[str]:
+    """Restituisce solo le voci dell'indice attualmente pubblicato.
+
+    È usata come confine rigido per la scrittura: nessuna copia conservata da
+    una struttura precedente può rientrare nella coda di ``Scrivi tutto il
+    libro`` o nell'esportazione del manoscritto corrente.
+    """
+    risultato: list[str] = []
+    for sezione in sezioni_base or []:
+        voce = str(sezione or "").strip()
+        if voce and not sezione_dismessa(voce) and voce not in risultato:
+            risultato.append(voce)
+    return risultato
+
+
+def rimuovi_sezioni_fuori_indice(
+    stato: MutableMapping[str, Any],
+    sezioni_attive: Sequence[str],
+    chiave_sezione: Callable[[str], str],
+    chiave_precedente: Callable[[str], str],
+) -> list[str]:
+    """Elimina testi e ricevute che non appartengono più all'indice attivo.
+
+    È chiamata solo quando l'autore applica un nuovo indice. Impedisce che
+    capitoli della struttura precedente restino nella coda, nell'anteprima o
+    negli export. Un indice vuoto non viene interpretato come un comando di
+    cancellazione: per quello esiste RESET PROGETTO.
+    """
+    attive_ordinate = list(dict.fromkeys(
+        str(sezione or "").strip()
+        for sezione in (sezioni_attive or [])
+        if str(sezione or "").strip()
+    ))
+    attive = set(attive_ordinate)
+    if not attive_ordinate:
+        return []
+
+    progetto = memoria_progetto_unica(stato)
+    candidate: set[str] = set()
+    for raccolta in (
+        progetto.get("contenuti", {}),
+        progetto.get("immagini", {}),
+        stato.get(CHIAVE_MEMORIA_SEZIONI, {}),
+        stato.get(CHIAVE_MEMORIA_PROTETTA, {}),
+        stato.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}),
+        stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB, {}),
+    ):
+        if isinstance(raccolta, Mapping):
+            candidate.update(str(sezione) for sezione in raccolta.keys())
+    candidate.update(str(sezione) for sezione in (stato.get(CHIAVE_REGISTRO_SEZIONI, []) or []))
+    obsolete = {sezione for sezione in candidate if sezione and sezione not in attive}
+
+    for raccolta in (
+        progetto.get("contenuti", {}),
+        progetto.get("immagini", {}),
+        stato.get("immagini_capitoli", {}),
+        stato.get(CHIAVE_MEMORIA_SEZIONI, {}),
+        stato.get(CHIAVE_MEMORIA_PROTETTA, {}),
+        stato.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}),
+        stato.get(CHIAVE_SEZIONI_CONFERMATE_JOB, {}),
+    ):
+        if isinstance(raccolta, MutableMapping):
+            for sezione in obsolete:
+                raccolta.pop(sezione, None)
+
+    stato[CHIAVE_REGISTRO_SEZIONI] = [
+        sezione for sezione in (stato.get(CHIAVE_REGISTRO_SEZIONI, []) or [])
+        if sezione in attive
+    ]
+    stato[CHIAVE_SEZIONI_DA_REIDRATARE] = [
+        sezione for sezione in (stato.get(CHIAVE_SEZIONI_DA_REIDRATARE, []) or [])
+        if sezione in attive
+    ]
+    for chiave_coda in (
+        "job_scrittura_sezioni", "job_scrittura_coda", "job_scrittura_interrotte",
+    ):
+        if chiave_coda in stato:
+            stato[chiave_coda] = [
+                sezione for sezione in (stato.get(chiave_coda, []) or [])
+                if sezione in attive
+            ]
+
+    for sezione in obsolete:
+        base = chiave_sezione(sezione)
+        stato.pop(base, None)
+        stato.pop(chiave_precedente(sezione), None)
+        for chiave in [chiave for chiave in list(stato) if str(chiave).startswith(base + "_v")]:
+            stato.pop(chiave, None)
+    versioni = stato.get(CHIAVE_VERSIONI_WIDGET_SEZIONI, {})
+    if isinstance(versioni, MutableMapping):
+        for sezione in obsolete:
+            versioni.pop(sezione, None)
+
+    if stato.get(CHIAVE_SELETTORE_EDITOR) not in attive:
+        stato[CHIAVE_SELETTORE_EDITOR] = attive_ordinate[0]
+        stato[CHIAVE_SEZIONE_EDITOR_ATTIVA] = None
+    aggiorna_memoria_editoriale(stato)
+    return sorted(obsolete)
 
 
 def sincronizza_modifica_manuale(

@@ -2529,7 +2529,10 @@ def sync_capitoli():
     if not testo_indice.strip():
         st.session_state["lista_capitoli"] = []
         return []
-    regex = r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+\.)"
+    # Una voce senza il nome del Capitolo deve essere un sottocapitolo (1.1,
+    # 2.3, ...). Un semplice ``1.`` è quasi sempre una lista esplicativa e
+    # non deve diventare una sezione da scrivere.
+    regex = r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|раздел|章节|secţiune|parte|part|partie|teil|partea|часть|الجزء|部分|\d+(?:\.\d+)+)"
     lista = []
     for riga in testo_indice.splitlines():
         voce = riga.strip()
@@ -2553,7 +2556,11 @@ def imposta_indice_progetto(testo_indice):
     st.session_state["indice_raw"] = indice
     st.session_state["indice_editoriale"] = indice
     st.session_state["indice_widget_version"] = int(st.session_state.get("indice_widget_version", 0)) + 1
-    sync_capitoli()
+    sezioni_attive = sync_capitoli()
+    # Un indice sostitutivo diventa l'unica struttura del manoscritto. Le
+    # sezioni che non gli appartengono vengono rimosse da memoria, coda,
+    # anteprima ed export: non possono più ricomparire né essere riscritte.
+    rimuovi_sezioni_fuori_indice(sezioni_attive)
     return indice
 
 
@@ -3472,6 +3479,29 @@ def elenco_sezioni_progetto(sezioni_base):
         if sezione and not sezione_dismessa(sezione) and sezione not in risultato:
             risultato.append(sezione)
     return risultato
+
+
+def elenco_sezioni_indice_attivo(sezioni_base):
+    """Voci scrivibili/esportabili dell'indice attuale, senza archivio storico."""
+    funzione_core = getattr(memoria_core, "elenco_sezioni_indice_attivo", None)
+    if callable(funzione_core):
+        return funzione_core(sezioni_base, sezione_dismessa)
+    risultato = []
+    for sezione in sezioni_base or []:
+        voce = str(sezione or "").strip()
+        if voce and not sezione_dismessa(voce) and voce not in risultato:
+            risultato.append(voce)
+    return risultato
+
+
+def rimuovi_sezioni_fuori_indice(sezioni_attive):
+    """Pulisce le copie del manoscritto che non appartengono al nuovo indice."""
+    funzione_core = getattr(memoria_core, "rimuovi_sezioni_fuori_indice", None)
+    if callable(funzione_core):
+        return funzione_core(
+            st.session_state, sezioni_attive, chiave_sezione, chiave_sezione_precedente
+        )
+    return []
 
 
 def sincronizza_modifica_manuale(sezione, chiave_widget=None):
@@ -8063,10 +8093,7 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
 sync_capitoli()
 lista_cap_base = st.session_state.get("lista_capitoli", [])
 # Il manoscritto segue esclusivamente le sezioni definite nell'indice.
-sezioni_struttura_corrente = [
-    sezione for sezione in lista_cap_base
-    if not sezione_dismessa(sezione)
-]
+sezioni_struttura_corrente = elenco_sezioni_indice_attivo(lista_cap_base)
 # Il registro editoriale mantiene l'ordine e la visibilità delle sezioni già
 # elaborate anche dopo una pausa o un aggiornamento della pagina.
 if lista_cap_base:
@@ -8079,12 +8106,17 @@ if lista_cap_base:
 # sole voci rileggibili dall'indice.
 sezioni_job_protette = [
     sezione for sezione in (st.session_state.get("job_scrittura_sezioni", []) or [])
-    if not sezione_dismessa(sezione)
+    if sezione in sezioni_struttura_corrente
 ]
-opzioni_editor = elenco_sezioni_progetto([
-    *sezioni_struttura_corrente,
-    *sezioni_job_protette,
-])
+# Editor, anteprima ed esportazione mostrano esclusivamente il manoscritto
+# dell'indice pubblicato. Le strutture sostituite non possono riapparire nel
+# libro, nella coda automatica o negli export.
+opzioni_editor = list(sezioni_struttura_corrente)
+# Pulisce anche eventuali copie prodotte dalle versioni precedenti dell'app:
+# al primo caricamento dopo l'aggiornamento il manoscritto torna a coincidere
+# con l'indice pubblicato, senza attendere una nuova generazione.
+if sezioni_struttura_corrente:
+    rimuovi_sezioni_fuori_indice(sezioni_struttura_corrente)
 # Prima di disegnare l'editor, ripristina ogni testo già protetto nella memoria
 # del progetto. Il cambio della sezione selezionata non può quindi svuotare le
 # altre caselle o nasconderle dall'anteprima/esportazione.
@@ -10543,7 +10575,10 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             # generata, salvata e mostrata all'utente prima di autorizzare la
             # successiva. Così pausa e stop operano davvero tra due richieste
             # AI, e nessun testo concluso resta invisibile nel browser.
-            sezioni_intero_libro = elenco_sezioni_progetto(lista_cap_base)
+            # La coda automatica deve usare solo il contratto editoriale
+            # corrente. L'archivio contiene testi di indici precedenti, ma non
+            # è mai autorizzato a generare nuove sezioni o a riaprire capitoli.
+            sezioni_intero_libro = elenco_sezioni_indice_attivo(lista_cap_base)
             # Un indice valido contiene sempre la Prefazione come prima voce.
             # Se una vecchia sessione/importazione ha una lista non aggiornata,
             # la reinseriamo nella coda senza toccare i capitoli già presenti.
@@ -11452,7 +11487,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     # TAB 3: ANTEPRIMA
     with tabs[4]:
         st.subheader(L["preview_tit"])
-        sezioni_anteprima = elenco_sezioni_progetto(opzioni_editor)
+        sezioni_anteprima = list(opzioni_editor)
         contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
         sezioni_con_testo = [s for s, testo in contenuti_libro.items() if pulisci_testo_editoriale(testo).strip()]
         riepilogo_pagine = riepilogo_stima_pagine_manoscritto(
@@ -11958,7 +11993,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.info(st.session_state["report_originalita_web_completa"])
                     st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo completo.")
         st.divider()
-        sezioni_controllo_finale = elenco_sezioni_progetto(lista_cap_base)
+        sezioni_controllo_finale = elenco_sezioni_indice_attivo(lista_cap_base)
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(sezioni_controllo_finale, val_genere)
         # Il controllo finale deve leggere la stessa memoria stabile usata da
         # scrittura, CSV, salvataggio e ripristino; altrimenti le sezioni non
