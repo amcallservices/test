@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 import re
 from typing import Any
+from narrative_engine import costruisci_memoria_narrativa, contesto_narrativo
 
 
 CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
@@ -27,7 +28,7 @@ CHIAVE_VERSIONI_WIDGET_SEZIONI = "versioni_widget_sezioni"
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
 CHIAVE_PROGETTO_UNICO = "progetto_editoriale_unico"
 CHIAVE_MEMORIA_EDITORIALE = "memoria_editoriale_strutturata"
-VERSIONE_MEMORIA_EDITORIALE = 1
+VERSIONE_MEMORIA_EDITORIALE = 2
 
 CAMPI_SALVATAGGIO_PROGETTO = {
     "titolo": "book_title",
@@ -137,6 +138,15 @@ def aggiorna_memoria_editoriale(
         "indice": str(progetto.get("indice", "") or ""),
         "sezioni": schede,
     }
+    # La bussola narrativa è ricostruita solo dai testi già salvati. Non fa
+    # chiamate IA e quindi resta aggiornata anche dopo modifiche manuali,
+    # ripristino della sessione, logout o importazione del progetto.
+    memoria["narrativa"] = costruisci_memoria_narrativa(
+        memoria["indice"],
+        contenuti,
+        profilo.get("genere", ""),
+        precedente.get("narrativa", {}),
+    )
     progetto["memoria_editoriale"] = memoria
     stato[CHIAVE_MEMORIA_EDITORIALE] = memoria
     return memoria
@@ -184,6 +194,9 @@ def contesto_memoria_editoriale(
             )
     if successive:
         righe.append("Sezioni successive da preparare senza anticiparle: " + "; ".join(successive[:5]))
+    bussola = contesto_narrativo(sezione_corrente, ordine, memoria.get("narrativa", {}))
+    if bussola:
+        righe.append(bussola)
     return _testo_memoria_breve("\n".join(righe), 7000)
 
 

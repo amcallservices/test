@@ -67,6 +67,13 @@ class DeepSeekFocusTests(unittest.TestCase):
             "genera_bozza_sezione_con_chiusura": lambda prompt, system, section, lang, **kwargs: repairs.append(kwargs) or (repaired, True),
             "verifica_attinenza_sezione_deepseek": lambda text, *args: audited.append(text) or verdicts.pop(0),
             "scrivi_sezione_stesura_completa": lambda section, text: saved.append(text) or text,
+            "narrative_core": SimpleNamespace(
+                genere_narrativo=lambda _genere: False,
+                controlla_unita_narrativa=lambda *_args: [],
+            ),
+            "memoria_core": SimpleNamespace(
+                memoria_editoriale_progetto=lambda _state: {"narrativa": {}},
+            ),
             "S_PROMPT": "SYSTEM",
         }
         app = load_functions({"scrivi_contenuto_dettagliato"}, namespace)

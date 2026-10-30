@@ -80,6 +80,7 @@ from project_outline import (
     superamenti_budget_editoriale as superamenti_budget_editoriale_core,
 )
 import project_memory as memoria_core
+import narrative_engine as narrative_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 from commercial_layer import (
     AI_REQUEST_CREDITS,
@@ -864,7 +865,7 @@ def notifica_sonora(evento, lingua="Italiano", ripeti=False):
 # Core Update: Integrazione Neuromarketing (Triune Brain Methodology) con Motore Decisionale Dinamico.
 # Identificativo visibile: permette di verificare che Streamlit stia eseguendo l'ultimo deploy.
 VERSIONE_DEPLOY = f"Scrittore Site commerciale — {COMMERCIAL_TEST_VERSION}"
-VERSIONE_AUDIT_COHERENZA = "3"
+VERSIONE_AUDIT_COHERENZA = "4"
 
 # --- CONNESSIONI AI: due cervelli separati, selezionabili dall'utente ---
 client_openai = None
@@ -6733,6 +6734,19 @@ l'indice. Restituisci un testo autonomo di almeno 80 parole.
                 "Il controllo automatico di pertinenza DeepSeek non è riuscito: verifica questa sezione prima dell'esportazione."
             )
 
+    # Controllo locale, gratuito e non bloccante: la bussola viene aggiornata
+    # subito dopo il salvataggio dal modulo di memoria. Gli avvisi non
+    # riscrivono mai il testo dell'autore né attivano cicli di rigenerazione.
+    if narrative_core.genere_narrativo(genere):
+        memoria_prima = memoria_core.memoria_editoriale_progetto(st.session_state)
+        avvisi_narrativi = narrative_core.controlla_unita_narrativa(
+            sezione, testo_pulito, memoria_prima.get("narrativa", {})
+        )
+        if avvisi_narrativi:
+            st.session_state.setdefault("avvisi_qualita_narrativa", {})[sezione] = avvisi_narrativi
+        else:
+            st.session_state.setdefault("avvisi_qualita_narrativa", {}).pop(sezione, None)
+
     # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
     # stabile della stesura completa prima del rerun della coda automatica.
     return scrivi_sezione_stesura_completa(sezione, testo_pulito)
@@ -7514,8 +7528,10 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
     ha_sottocapitoli = bool(individua_sottocapitoli_del_capitolo(sezione, indice.splitlines()))
     if tipo_sezione == "capitolo" and ha_sottocapitoli:
         istruzione_lunghezza = (
-            "Questo capitolo ha sottocapitoli: scrivi SOLO una cornice iniziale di 70-100 parole. "
-            "Non svolgere argomenti, procedure, esempi o conclusioni riservati ai sottocapitoli."
+            "Questo capitolo ha sottocapitoli: scrivi SOLO una soglia narrativa di 70-100 parole, "
+            "ma soltanto se crea una transizione o un cambiamento autonomo. Non mettere in scena, "
+            "spiegare o risolvere l'evento assegnato al primo sottocapitolo; non riassumere né duplicare "
+            "descrizioni, dialoghi o conflitti che saranno sviluppati sotto."
         )
     elif tipo_sezione == "parte":
         istruzione_lunghezza = (
@@ -7578,6 +7594,7 @@ AZIONE:
 Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in lingua {lingua}.
 - {direttiva_parte}
 - Se la sezione è un Capitolo con sottocapitoli nell'indice, non anticipare né risolvere gli argomenti assegnati ai relativi sottocapitoli.
+- Per un libro narrativo, tratta la memoria narrativa come canone: personaggi, luoghi, eventi e relazioni già confermati non possono cambiare senza una causa mostrata nel testo. Ogni sezione deve introdurre un avanzamento reale e non una variante della scena precedente.
 - Se il genere è Ricettario, ogni Capitolo che porta il nome di un piatto è una sola ricetta completa: non aggiungere sottocapitoli autonomi e non ripetere una ricetta già presente nella Parte o in altre sezioni.
 {direttiva_test_prep}
 - Rispetta integralmente i parametri editoriali e usa tassativamente il POV richiesto ({pov}).
@@ -7853,6 +7870,20 @@ Approfondimenti prioritari: {approfondimenti.strip() or "Nessuno"}
     blocchi = blocchi_per_audit_manoscritto(contenuti)
     totale_blocchi = len(blocchi)
     mappa_indice = mappa_capitoli_e_sottocapitoli(indice)
+    memoria_narrativa = memoria_core.memoria_editoriale_progetto(st.session_state).get("narrativa", {})
+    controllo_narrativo = ""
+    if narrative_core.genere_narrativo(genere):
+        scene = dict(memoria_narrativa.get("scene", {}) or {})
+        eventi = list(memoria_narrativa.get("eventi_confermati", []) or [])[-10:]
+        controllo_narrativo = (
+            "\nCONTROLLO NARRATIVO AGGIUNTIVO\n"
+            "Controlla continuità di personaggi, relazioni, luoghi, sequenza temporale, "
+            "rivelazioni, oggetti e conseguenze. Non inventare incongruenze: segnala solo "
+            "quelle dimostrabili nel blocco o nella bussola seguente.\n"
+            f"Scene confermate: {', '.join(scene.keys())[-1800:]}\n"
+            "Esiti recenti già confermati:\n"
+            + "\n".join(f"- {e.get('sezione', '')}: {e.get('esito', '')}" for e in eventi)[:3000]
+        )
     # La versione dell'audit invalida in modo sicuro i vecchi report quando cambiano le regole di valutazione.
     firma_base = hashlib.sha256(
         f"{VERSIONE_AUDIT_COHERENZA}\n{brief}\n{indice}".encode("utf-8")
@@ -7872,10 +7903,12 @@ BRIEF
 INDICE
 {indice}
 
+{controllo_narrativo}
+
 BLOCCO DA VALUTARE
 {blocco}
 
-Valuta soltanto le prove contenute nel blocco: aderenza al titolo e al brief, contributo al risultato finale desiderato, pertinenza, profondità, chiarezza, progressione locale, eventuali ripetizioni e istruzioni mancanti.
+Valuta soltanto le prove contenute nel blocco: aderenza al titolo e al brief, contributo al risultato finale desiderato, pertinenza, profondità, chiarezza, progressione locale, eventuali ripetizioni e istruzioni mancanti. Per opere narrative, controlla anche dialoghi, ritmo, scene, continuità e avanzamento della trama; per opere non narrative, sostituisci questi criteri con chiarezza concettuale, ordine logico e copertura dei contenuti.
 
 IDENTIFICAZIONE OBBLIGATORIA DELLE CORREZIONI
 - Usa sempre il titolo esatto presente nell'indice o nell'intestazione del testo, compreso il numero (per esempio "Capitolo 4: ..." oppure "4.2 ...").
@@ -7886,6 +7919,11 @@ IDENTIFICAZIONE OBBLIGATORIA DELLE CORREZIONI
 Non fare verifiche online e non citare fonti. Restituisci testo semplice, senza Markdown, con queste etichette:
 SEZIONI ESAMINATE:
 PUNTI FORTI:
+COERENZA STRUTTURALE:
+COERENZA NARRATIVA O LOGICA:
+ADERENZA TEMATICA:
+STILE, RITMO E DIALOGHI:
+RIPETIZIONI O RIDONDANZE:
 PROBLEMI SPECIFICI:
 Per ogni problema: SEZIONE ESATTA | PRIORITÀ (alta/media/bassa) | DIFETTO OSSERVATO | INTERVENTO RICHIESTO.
 INTERVENTI PROPOSTI:"""
@@ -7952,14 +7990,19 @@ AUDIT DI TUTTI I BLOCCHI DEL MANOSCRITTO
 MAPPA UFFICIALE CAPITOLI E SOTTOCAPITOLI
 {mappa_indice}
 
+{controllo_narrativo}
+
 Se ci sono sezioni non scritte, dichiara con chiarezza che la valutazione riguarda un manoscritto parziale e non assegnare un voto finale al libro completo. Altrimenti assegna un voto da 1 a 10.
 Non inserire URL, fonti, Markdown o ragionamenti interni. Restituisci esattamente queste voci:
 STATO DEL MANOSCRITTO:
 VOTO COMPLESSIVO DEL LIBRO:
 VERDETTO EDITORIALE:
-ADERENZA ALLA SIDEBAR:
+COERENZA STRUTTURALE:
+COERENZA NARRATIVA O LOGICA:
+ADERENZA ALLA SIDEBAR E AL TEMA:
 PROFONDITÀ DELLE TEMATICHE:
-COERENZA E PROGRESSIONE:
+STILE, RITMO E DIALOGHI:
+RIPETIZIONI O RIDONDANZE:
 SEZIONI DA MIGLIORARE:
 AZIONI PRIORITARIE:
 PROMPT PRONTI PER RIGENERA CON AI:
@@ -8085,6 +8128,9 @@ def analizza_coerenza_libro(indice, contenuti, obiettivo, argomento, genere="", 
     duplicati = len(frasi) - len(set(frasi))
     risultati.append(f"Frasi duplicate identiche rilevate: {max(0, duplicati)}")
     if duplicati == 0: risultati.append("OK: nessuna duplicazione identica rilevata nel testo disponibile")
+    if narrative_core.genere_narrativo(genere):
+        memoria_narrativa = memoria_core.memoria_editoriale_progetto(st.session_state).get("narrativa", {})
+        risultati.extend(narrative_core.rapporto_narrativo_locale(indice, contenuti, memoria_narrativa))
     return "\n".join(risultati)
 
 # ======================================================================================================================
@@ -11266,6 +11312,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 + "</div>",
                 unsafe_allow_html=True,
             )
+            avvisi_narrativi_sezione = (
+                st.session_state.get("avvisi_qualita_narrativa", {}).get(sez_scelta, [])
+            )
+            if avvisi_narrativi_sezione:
+                st.warning(
+                    "Controllo narrativo locale: " + "; ".join(avvisi_narrativi_sezione)
+                    + ". Il testo non è stato modificato automaticamente: puoi valutarlo o rielaborare soltanto questa sezione."
+                )
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
@@ -11654,14 +11708,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 html_p += f"<p>{testo_con_ancore}</p>"
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
-        st.subheader("Controllo del manoscritto")
+        st.subheader("EDITOR AI — CONTROLLO QUALITÀ DEL LIBRO")
         stima_coerenza = (
             CREDIT_COSTS["controllo_coerenza_iniziale"]
             if not st.session_state.get("cache_audit_blocchi")
             else f"{CREDIT_COSTS['controllo_coerenza_blocco_modificato']} per ogni blocco nuovo o modificato"
         )
-        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 CONTROLLO COERENZA COMPLETO", stima_coerenza,
-                                   f"Il primo controllo completo costa {CREDIT_COSTS['controllo_coerenza_iniziale']} crediti. I controlli successivi riutilizzano la cache e consumano solo {CREDIT_COSTS['controllo_coerenza_blocco_modificato']} credito per ogni blocco nuovo o modificato."):
+        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 EDITOR AI — CONTROLLO QUALITÀ DEL LIBRO", stima_coerenza,
+                                   f"Il primo controllo completo costa {CREDIT_COSTS['controllo_coerenza_iniziale']} crediti. I controlli successivi riutilizzano la cache e consumano solo {CREDIT_COSTS['controllo_coerenza_blocco_modificato']} credito per ogni blocco nuovo o modificato. Il report propone correzioni: non modifica mai il manoscritto da solo."):
             barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
             stato_coerenza = st.empty()
 
