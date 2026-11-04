@@ -138,6 +138,26 @@ class DeepSeekCardTests(unittest.TestCase):
         self.assertFalse(self.app["scheda_finale_deepseek_valida"](card, "D"))
 
 
+class EditorialOpinionSamplingTests(unittest.TestCase):
+    def test_long_manuscript_uses_a_distributed_compact_sample(self):
+        app = load_functions(
+            {"campione_manoscritto_per_parere_editoriale"},
+            {"pulisci_testo_editoriale": lambda testo: str(testo or "")},
+        )
+        manuscript = {
+            "Capitolo 1": "A" * 800,
+            "Capitolo 2": "B" * 800,
+            "Capitolo 3": "C" * 800,
+        }
+        sample, complete = app["campione_manoscritto_per_parere_editoriale"](
+            manuscript, limite_caratteri=900
+        )
+        self.assertFalse(complete)
+        self.assertLessEqual(len(sample), 1100)
+        for title in manuscript:
+            self.assertIn(title, sample)
+
+
 class DeepSeekBillingTests(unittest.TestCase):
     def setUp(self):
         self.requests = []

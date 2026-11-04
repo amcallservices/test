@@ -117,6 +117,7 @@ CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     "chat_indice_rigenerazione_correzione",
     "chat_indice_rigenerazione_estesa",
     "chat_indice_rigenerazione_estesa_correzione",
+    "parere_editoriale_libro",
 })
 try:
     import commercial_layer as _commercial_layer_runtime
@@ -7915,6 +7916,101 @@ def chiedi_audit_editoriale(prompt, *, addebita=True):
     )).strip()
 
 
+def campione_manoscritto_per_parere_editoriale(contenuti, limite_caratteri=18000):
+    """Crea una lettura distribuita, economica e rappresentativa del libro."""
+    sezioni = [
+        (str(titolo), pulisci_testo_editoriale(testo).strip())
+        for titolo, testo in (contenuti or {}).items()
+        if pulisci_testo_editoriale(testo).strip()
+    ]
+    completo = "\n\n".join(f"## {titolo}\n{testo}" for titolo, testo in sezioni)
+    if len(completo) <= limite_caratteri:
+        return completo, True
+    # Riserviamo spazio ai titoli e all'indicazione di estratto omesso: il
+    # limite resta prevedibile anche negli indici con moltissime sezioni.
+    budget_sezione = max(
+        80, (limite_caratteri - (100 * len(sezioni))) // max(1, len(sezioni))
+    )
+    estratti = []
+    for titolo, testo in sezioni:
+        if len(testo) <= budget_sezione:
+            estratto = testo
+        else:
+            prima = max(40, int(budget_sezione * 0.62))
+            dopo = max(30, budget_sezione - prima)
+            estratto = f"{testo[:prima].rstrip()}\n[… estratto centrale omesso …]\n{testo[-dopo:].lstrip()}"
+        estratti.append(f"## {titolo}\n{estratto}")
+    return "\n\n".join(estratti), False
+
+
+def parere_editoriale_gpt(indice, contenuti, titolo, trama, genere, stile, narrativa, pov,
+                          obiettivo, risultato_finale, lingua, approfondimenti=""):
+    """Fornisce un solo parere editoriale GPT, senza audit lunghi a blocchi."""
+    sezioni_scritte = [
+        sezione for sezione, testo in (contenuti or {}).items()
+        if pulisci_testo_editoriale(testo).strip()
+    ]
+    sezioni_vuote = [
+        sezione for sezione, testo in (contenuti or {}).items()
+        if not pulisci_testo_editoriale(testo).strip()
+    ]
+    if not sezioni_scritte:
+        return "ERRORE: non è ancora presente testo da analizzare. Genera almeno una sezione e riprova."
+    manoscritto, lettura_completa = campione_manoscritto_per_parere_editoriale(contenuti)
+    copertura = (
+        "Hai ricevuto il manoscritto completo."
+        if lettura_completa else
+        "Hai ricevuto estratti distribuiti di tutte le sezioni: non dichiarare difetti puntuali in parti non visibili."
+    )
+    prompt = f"""Sei un direttore editoriale senior. Dai un parere sincero, concreto e utile sul manoscritto seguente in lingua {lingua}.
+
+BRIEF
+Titolo: {titolo}
+Trama o argomento: {trama}
+Genere: {genere}
+Tipologia di scrittura: {stile}
+Stile di racconto: {narrativa}
+Ritmo previsto: {st.session_state.get('book_rhythm', '') or 'Equilibrato e progressivo'}
+Punto di vista: {pov}
+Obiettivo: {obiettivo}
+Risultato desiderato: {risultato_finale or 'Non dichiarato'}
+Approfondimenti: {approfondimenti.strip() or 'Nessuno'}
+
+INDICE UFFICIALE
+{indice}
+
+STATO OGGETTIVO
+Sezioni scritte: {len(sezioni_scritte)}
+Sezioni ancora vuote: {len(sezioni_vuote)}
+{copertura}
+
+MANOSCRITTO DA LEGGERE
+{manoscritto}
+
+Non svolgere controlli tecnici, non fare ricerche web e non mostrare ragionamenti interni. Valuta solo ciò che è realmente leggibile. Se il manoscritto è parziale, dichiaralo e non assegnare un voto finale al libro completo.
+
+Rispondi nella lingua del manoscritto, in modo compatto, con queste sole voci:
+STATO DELLA LETTURA:
+PARERE DELL'EDITOR:
+PUNTI FORTI:
+PUNTI DA MIGLIORARE:
+COERENZA CON INDICE E BRIEF:
+RITMO, STILE E COINVOLGIMENTO:
+PRIORITÀ EDITORIALI: al massimo 3 interventi, ordinati per importanza.
+SEZIONI DA RIVEDERE: cita una sezione esatta solo quando il problema è osservabile; altrimenti scrivi "Nessuna criticità puntuale rilevata".
+VERDETTO FINALE:"""
+    return pulisci_testo_editoriale(chiedi_gpt(
+        prompt,
+        "Sei un editor letterario ed editor di saggistica rigoroso, diretto e costruttivo. "
+        "Offri un parere umano e leggibile, non un audit tecnico né una lista infinita di difetti.",
+        addebita=False,
+        model=MODELLO_EDITORIALE,
+        reason="parere_editoriale_libro",
+        max_completion_tokens=1200,
+        timeout_seconds=90,
+    )).strip()
+
+
 def mappa_capitoli_e_sottocapitoli(indice):
     """Compatibilità UI: la mappa pura vive in project_checks.py."""
     return mappa_capitoli_e_sottocapitoli_core(indice)
@@ -11799,51 +11895,50 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 html_p += f"<p>{testo_con_ancore}</p>"
         st.markdown(html_p + "</div>", unsafe_allow_html=True)
         st.divider()
-        st.subheader("EDITOR AI — CONTROLLO QUALITÀ DEL LIBRO")
-        stima_coerenza = (
-            CREDIT_COSTS["controllo_coerenza_iniziale"]
-            if not st.session_state.get("cache_audit_blocchi")
-            else f"{CREDIT_COSTS['controllo_coerenza_blocco_modificato']} per ogni blocco nuovo o modificato"
+        st.subheader("EDITOR AI — PARERE SUL LIBRO")
+        st.caption(
+            "Un unico parere editoriale rapido, elaborato sempre da GPT-5.4. "
+            "Legge tutto il manoscritto quando è breve oppure estratti distribuiti quando è lungo; "
+            "non modifica mai il testo."
         )
-        if pulsante_con_preventivo("controllo_coerenza_completo", "🔍 EDITOR AI — CONTROLLO QUALITÀ DEL LIBRO", stima_coerenza,
-                                   f"Il primo controllo completo costa {CREDIT_COSTS['controllo_coerenza_iniziale']} crediti. I controlli successivi riutilizzano la cache e consumano solo {CREDIT_COSTS['controllo_coerenza_blocco_modificato']} credito per ogni blocco nuovo o modificato. Il report propone correzioni: non modifica mai il manoscritto da solo."):
-            barra_coerenza = st.progress(0, text="Preparazione del controllo completo del manoscritto...")
-            stato_coerenza = st.empty()
-
-            def mostra_avanzamento_coerenza(completati, totale, fase):
-                percentuale = int((completati / totale) * 100) if totale else 100
-                barra_coerenza.progress(
-                    percentuale,
-                    text=f"{fase}: {completati} di {totale} blocchi completati ({percentuale}%)"
+        costo_parere = CREDIT_COSTS["controllo_coerenza_iniziale"]
+        testo_costo_parere = f"{costo_parere} crediti"
+        if pulsante_con_preventivo(
+            "parere_editoriale_libro", "🔍 CHIEDI IL PARERE DELL'EDITOR GPT", testo_costo_parere,
+            f"Il parere costa {testo_costo_parere}. Usa una sola chiamata GPT breve e non modifica il manoscritto."
+        ):
+            if not sezioni_con_testo:
+                st.warning("Genera almeno una sezione prima di chiedere un parere editoriale.")
+            else:
+                barra_parere = st.progress(15, text="GPT sta leggendo il manoscritto...")
+                riferimento_parere = addebita_azione_diretta(
+                    "controllo_coerenza", amount=costo_parere
                 )
-                stato_coerenza.caption(f"Controllo in corso — {completati}/{totale} blocchi del manoscritto.")
-
-            with st.spinner("Analisi completa del manoscritto in corso..."):
-                controllo_tecnico = analizza_coerenza_libro(
-                    st.session_state.get("indice_raw", ""), contenuti_libro, val_goal, val_trama, val_genere, val_risultato
-                )
-                valutazione_editoriale = valuta_manoscritto_completo(
-                    st.session_state.get("indice_raw", ""), contenuti_libro, val_titolo,
-                    val_trama, val_genere, val_stile, val_narrativa, val_pov, val_goal,
-                    lingua_sel, val_approfondimenti, mostra_avanzamento_coerenza
-                )
-                st.session_state["report_coerenza_libro"] = (
-                    f"CONTROLLO TECNICO\n{controllo_tecnico}\n\n"
-                    f"VALUTAZIONE EDITORIALE COMPLETA\n{valutazione_editoriale}"
-                )
-                st.session_state["report_coerenza_firma"] = firma_attuale_coerenza
-                notifica_sonora("coerenza_completata", lingua_sel, ripeti=True)
-                barra_coerenza.progress(100, text="Controllo coerenza completato.")
-                stato_coerenza.success("Controllo completo concluso.")
-        if st.session_state.get("report_coerenza_libro"):
-            if st.session_state.get("report_coerenza_firma") != firma_attuale_coerenza:
-                st.warning("Analisi non aggiornata: il testo, l'indice o il brief sono cambiati dopo l'ultimo controllo. Premi di nuovo il pulsante per ottenere il report della versione corrente.")
+                with st.spinner("L'editor GPT sta preparando il suo parere..."):
+                    parere = parere_editoriale_gpt(
+                        st.session_state.get("indice_raw", ""), contenuti_libro, val_titolo,
+                        val_trama, val_genere, val_stile, val_narrativa, val_pov, val_goal,
+                        val_risultato, lingua_sel, val_approfondimenti,
+                    )
+                if str(parere).startswith("ERRORE:"):
+                    refund_credits(
+                        riferimento_parere, reason="parere_editoriale_non_completato", amount=costo_parere
+                    )
+                    st.error("Il parere non è stato completato: nessun credito è stato trattenuto. Riprova tra poco.")
+                else:
+                    st.session_state["report_parere_editoriale_libro"] = parere
+                    st.session_state["report_parere_editoriale_firma"] = firma_attuale_coerenza
+                    notifica_sonora("coerenza_completata", lingua_sel, ripeti=True)
+                    barra_parere.progress(100, text="Parere editoriale GPT pronto.")
+                    st.success("Parere editoriale pronto.")
+        parere_salvato = str(st.session_state.get("report_parere_editoriale_libro", "") or "").strip()
+        if parere_salvato:
+            if st.session_state.get("report_parere_editoriale_firma") != firma_attuale_coerenza:
+                st.warning("Parere non aggiornato: il testo, l'indice o il brief sono cambiati. Chiedi un nuovo parere per questa versione.")
             else:
                 st.text_area(
-                    campo_controllo_ui(2, lingua_sel),
-                    value=st.session_state["report_coerenza_libro"],
-                    height=420,
-                    key="output_report_coerenza_libro"
+                    "Parere dell'editor GPT", value=parere_salvato, height=390,
+                    key="output_parere_editoriale_libro"
                 )
 
     # TAB 4: IMPORTAZIONE / ESPORTAZIONE
