@@ -156,6 +156,7 @@ from project_outline import (
 )
 import project_memory as memoria_core
 import narrative_engine as narrative_core
+import narrative_prompts as narrative_prompts_core
 import emotional_impact as emotional_impact_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 marca_moduli_locali_caricati()
@@ -186,6 +187,10 @@ CREDIT_COSTS.setdefault("chat_indice_dialogo", 1)
 # possono divergere per pochi secondi.
 CREDIT_COSTS["chat_indice_rigenerazione"] = 10
 CREDIT_COSTS["chat_indice_rigenerazione_estesa"] = 15
+# Narrativa: la scaletta legge l'intero indice e produce molti punti, la
+# scheda personaggi legge estratti dei capitoli scritti.
+CREDIT_COSTS.setdefault("scaletta_narrativa", 2)
+CREDIT_COSTS.setdefault("aggiorna_scheda_personaggi", 1)
 CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     *CHAT_SOLO_GPT_OPERAZIONI,
     "chat_indice_dialogo",
@@ -3671,10 +3676,34 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "confini_personali": "book_personal_boundaries",
     "modalita_checkpoint": "book_personal_checkpoint_mode",
     "note_checkpoint": "book_personal_checkpoint_notes",
+    # Narrativa: voce narrante, scaletta per scena e scheda personaggi.
+    "narratore": "book_narrator",
+    "tempo_verbale": "book_tense",
+    "scaletta": "book_scene_outline",
+    "scheda_personaggi": "book_story_bible",
     "lunghezza": "profilo_lunghezza_stesura",
     "provider_ia": "provider_ia",
 }
 CHIAVE_MEMORIA_SIDEBAR = "memoria_sidebar_editor"
+
+
+def ripristina_widget_progetto(nome):
+    """Ridà a un widget il valore salvato nel progetto prima di disegnarlo.
+
+    Streamlit dimentica lo stato dei widget che in un passaggio non vengono
+    mostrati (per esempio i campi dei romanzi quando l'indice non c'è ancora):
+    senza questo ripristino, al ritorno il campo apparirebbe vuoto e
+    sovrascriverebbe il valore salvato.
+    """
+    chiave = CAMPI_SALVATAGGIO_PROGETTO[nome]
+    if chiave in st.session_state:
+        return
+    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    valore = memoria.get(nome)
+    if not valore:
+        progetto = st.session_state.get(CHIAVE_PROGETTO_UNICO, {}) or {}
+        valore = dict(progetto.get("sidebar", {}) or {}).get(nome, "")
+    st.session_state[chiave] = valore or ""
 
 
 # La chat guidata non conserva un secondo progetto: quando l'utente approva
@@ -6243,7 +6272,7 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
         and bool(individua_sottocapitoli_del_capitolo(sezione, (indice or "").splitlines()))
     )
     if profilo_lunghezza and not capitolo_cornice:
-        minimo_parole, _ = vincolo_parole_con_tolleranza(profilo_lunghezza)
+        minimo_parole, _ = vincolo_parole_con_tolleranza(profilo_lunghezza, genere)
         if len(parole) < minimo_parole:
             return (
                 f"testo troppo breve: servono almeno {minimo_parole} parole per il profilo "
@@ -6298,15 +6327,15 @@ def criticita_specificita(testo, genere, sezione, profilo_lunghezza=None, indice
     return ""
 
 
-GENERI_NARRATIVI = frozenset({
-    "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza",
-    "Narrativo", "Romanzo Classico", "Contemporaneo", "Biografia",
-})
+GENERI_NARRATIVI = narrative_core.GENERI_NARRATIVI
 
 
 def genere_narrativo(genere):
-    """Distingue una storia da un libro che accompagna il lettore con spiegazioni."""
-    return str(genere or "").strip() in GENERI_NARRATIVI
+    """Distingue una storia da un libro che accompagna il lettore con spiegazioni.
+
+    L'elenco dei generi narrativi vive solo in narrative_engine.py.
+    """
+    return narrative_core.genere_narrativo(genere)
 
 
 def genera_apertura_di_parte(prompt, system_prompt, sezione, genere, lingua, limite_output):
@@ -6512,10 +6541,17 @@ soltanto una Prefazione completa, con ultima frase conclusa.
     # una bozza che termina a metà non viene mai salvata. I tentativi di
     # riparazione sono a carico del servizio, perché correggono un difetto di
     # generazione e non una nuova richiesta editoriale dell'utente.
-    for tentativo_riparazione in range(2):
+    # Un solo tentativo di revisione (prima erano due): con margini di
+    # lunghezza più ampi le riscritture servono meno e costano meno.
+    narrativa_sezione = genere_narrativo(genere)
+    for tentativo_riparazione in range(1):
         if not criticita:
             return pulisci_testo_editoriale(testo)
-        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza)
+        if narrativa_sezione and criticita.startswith("testo troppo breve"):
+            # In un romanzo una scena completa ma più breve non va gonfiata:
+            # resta salvata e viene solo segnalata nel controllo finale.
+            break
+        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza, genere)
         istruzione_lunghezza = (
             f"Il conteggio automatico della bozza è {len(testo.split())} parole. "
             f"La nuova sezione deve contenere tra {minimo_richiesto} e {massimo_richiesto} parole, "
@@ -6552,7 +6588,7 @@ basta, elimina l'ultimo dettaglio secondario e termina con una conclusione breve
         profilo_riscrittura = PROFILI_LUNGHEZZA_STESURA.get(
             profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
         )
-        massimo_ordinario = vincolo_parole_con_tolleranza(profilo_lunghezza)[1]
+        massimo_ordinario = vincolo_parole_con_tolleranza(profilo_lunghezza, genere)[1]
         massimo_eccezionale = math.ceil(profilo_riscrittura["max_parole"] * 1.10)
         testo, consegna_confermata = genera_bozza_sezione_con_chiusura(
             prompt + f"""
@@ -6579,9 +6615,10 @@ parole: usa tale margine solo per contenuto utile, mai per ripetizioni o riempit
     # scartiamo una buona base e non blocchiamo il libro: chiediamo soltanto
     # l'integrazione strettamente necessaria. È un recupero interno gratuito,
     # usato da GPT e DeepSeek, che mantiene coerente il ragionamento già
-    # scritto e porta davvero la sezione nel margine del 5%.
-    if criticita and "testo troppo breve" in criticita:
-        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza)
+    # scritto e porta davvero la sezione nel margine consentito.
+    # Nei romanzi non si aggiunge una "coda" al testo solo per allungarlo.
+    if criticita and "testo troppo breve" in criticita and not narrativa_sezione:
+        minimo_richiesto, massimo_richiesto = vincolo_parole_con_tolleranza(profilo_lunghezza, genere)
         for _ in range(2):
             parole_attuali = len(testo.split())
             parole_da_aggiungere = max(1, minimo_richiesto - parole_attuali)
@@ -7232,7 +7269,37 @@ with st.sidebar:
         "Noi (Inclusivo, partecipativo e didattico)",
         "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)"
     ]
-    val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+    if genere_narrativo(val_genere):
+        # In un romanzo il «punto di vista» non è il pronome con cui si parla
+        # al lettore, ma chi racconta la storia e in quale tempo verbale.
+        etichette_voce = {
+            "Italiano": ("Chi racconta la storia", "Tempo verbale del racconto"),
+            "English": ("Narrator", "Narrative tense"),
+        }
+        etichetta_narratore, etichetta_tempo = etichette_voce.get(lingua_sel, etichette_voce["Italiano"])
+        for _campo_voce, _predefinito in (
+            ("narratore", narrative_prompts_core.NARRATORE_PREDEFINITO),
+            ("tempo_verbale", narrative_prompts_core.TEMPO_PREDEFINITO),
+        ):
+            ripristina_widget_progetto(_campo_voce)
+            if not st.session_state.get(CAMPI_SALVATAGGIO_PROGETTO[_campo_voce]):
+                st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_voce]] = _predefinito
+        val_narratore = st.selectbox(
+            etichetta_narratore, [""] + list(narrative_prompts_core.NARRATORI), key="book_narrator",
+            format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
+            help="Prima persona: racconta il protagonista («io»). Terza persona vicina: si segue un personaggio alla volta.",
+        )
+        val_tempo_verbale = st.selectbox(
+            etichetta_tempo, [""] + list(narrative_prompts_core.TEMPI_VERBALI), key="book_tense",
+            format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
+        )
+        val_pov = (
+            narrative_prompts_core.descrizione_punto_di_vista(val_narratore, val_tempo_verbale)
+            if val_narratore and val_tempo_verbale else ""
+        )
+    else:
+        val_narratore = val_tempo_verbale = ""
+        val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     # Definizioni disponibili prima del loro primo utilizzo nella UI.
     # Restano presenti anche nel modulo di memoria sottostante per compatibilità.
@@ -7383,7 +7450,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             f"Massimo {PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['max_sezioni']} sezioni totali, "
             f"tutte dedicate ai contenuti dell'indice. Obiettivo indicativo: circa "
             f"{PROFILI_LUNGHEZZA_STESURA[val_lunghezza]['pagine_minime']} pagine nel manoscritto 6×9. "
-            "La singola sezione mantiene una tolleranza del 5%; l'obiettivo di pagine ha una tolleranza del 15%."
+            "La singola sezione ha un margine del 10% (15-20% nei romanzi, dove le scene hanno lunghezze diverse); l'obiettivo di pagine ha una tolleranza del 15%."
         )
     else:
         st.caption("Scegli una lunghezza delle sezioni per completare la sidebar.")
@@ -7636,7 +7703,7 @@ def crea_prompt_stesura_sezione(sezione, indice, trama, genere, stile, narrativa
     profilo_lunghezza_dati = PROFILI_LUNGHEZZA_STESURA.get(
         profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
-    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(profilo_lunghezza)
+    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(profilo_lunghezza, genere)
     riserva_chiusura = max(55, round(profilo_lunghezza_dati["max_parole"] * 0.12))
     soglia_sviluppo = profilo_lunghezza_dati["max_parole"] - riserva_chiusura
     # La Prefazione non è un capitolo breve: è una soglia editoriale. Questo
@@ -7666,9 +7733,7 @@ DATI EDITORIALI DELLA PREFAZIONE
 AZIONE
 Redigi la sezione iniziale '{sezione}', rigorosamente in {lingua}. Questa
 Prefazione deve avere 140-220 parole; non applicare il profilo di lunghezza
-delle sezioni ordinarie. Accogli il lettore, chiarisci il bisogno a cui il
-libro risponde e descrivi il percorso senza elencare, riassumere o anticipare
-i capitoli. Mantieni il POV richiesto, crea un testo originale, non ripetere
+delle sezioni ordinarie. {"Per un romanzo è una breve nota d'apertura: introduci tono, mondo e domanda della storia senza riassumere la trama, senza rivelare svolte e senza spiegare cosa il lettore proverà." if genere_narrativo(genere) else "Accogli il lettore, chiarisci il bisogno a cui il libro risponde e descrivi il percorso senza elencare, riassumere o anticipare i capitoli."} Mantieni il POV richiesto, crea un testo originale, non ripetere
 il titolo come intestazione e non usare Markdown, URL, citazioni, fonti,
 elenchi o promesse garantite. Concludi con una frase completa e definitiva.
 """
@@ -7690,7 +7755,7 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
         )
     else:
         istruzione_lunghezza = (
-            f"Obiettivo: {profilo_lunghezza_dati['parole']}. Tolleranza massima del 5%: non scrivere meno di "
+            f"Obiettivo: {profilo_lunghezza_dati['parole']}. Margine consentito: non scrivere meno di "
             f"{minimo_parole_tolleranza} né più di {massimo_parole_tolleranza} parole. La qualità dipende dalla densità "
             "delle informazioni, non dalla quantità di parole: scegli solo gli esempi, passaggi e dettagli indispensabili al titolo. "
             f"Completa lo sviluppo principale entro circa {soglia_sviluppo} parole e conserva le ultime circa "
@@ -7711,6 +7776,50 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
         "Se la sezione è una Parte, scrivi soltanto una breve apertura che spiega lo scopo della Parte e come usarla: "
         "non sviluppare o riassumere i capitoli che seguono."
     )
+    if genere_narrativo(genere):
+        # Prompt di sezione per romanzi e biografie: niente procedure,
+        # checklist o "profondità passo passo"; al loro posto la scena da
+        # scrivere, la scaletta dell'autore e la scheda personaggi.
+        progetto_sidebar = dict(memoria_progetto_unica().get("sidebar", {}) or {})
+        testo_scaletta = st.session_state.get("book_scene_outline") or progetto_sidebar.get("scaletta", "")
+        testo_scheda = st.session_state.get("book_story_bible") or progetto_sidebar.get("scheda_personaggi", "")
+        blocco_scena = narrative_prompts_core.blocco_sezione_narrativa(
+            sezione=sezione,
+            scaletta_sezione=narrative_prompts_core.scaletta_della_sezione(testo_scaletta, sezione),
+            scheda_personaggi=testo_scheda,
+        )
+        return f"""
+INDICE GENERALE (per sapere dove si trova questa scena e che cosa NON anticipare):
+{indice}
+
+MEMORIA DELLE SEZIONI PRECEDENTI (canone e continuità):
+{memoria}
+
+{blocco_scena}
+
+=== DATI DEL ROMANZO ===
+- Trama e premessa: {trama}
+- Genere: {genere}
+- Voce narrante: {pov}
+- Tipologia di scrittura: {stile}
+- Stile di racconto: {narrativa}
+- Ritmo: {ritmo_libro}. {direttiva_ritmo}
+- Effetto da ottenere: {obiettivo}
+- Indicazioni aggiuntive dell'autore: {approfondimenti.strip() or "Nessuna."}
+
+{brief_personale}
+
+{istruzioni_impatto_emotivo}
+
+AZIONE:
+Scrivi ora la sezione '{sezione}', in {lingua}.
+- {direttiva_parte}
+- {istruzione_lunghezza}
+- Riparti esattamente da dove si chiude la sezione precedente; la scena deve far avanzare la storia.
+- Mantieni la voce narrante indicata, senza cambiare persona o tempo verbale.
+- Non scrivere '{sezione}' come titolo: inizia direttamente con il testo.
+- Nessun Markdown, URL, nota o commento. Chiudi con una frase completa.
+"""
     return f"""
 INDICE GENERALE (STUDIALO PER CAPIRE COSA NON DEVI ANTICIPARE):
 {indice}
@@ -7772,6 +7881,64 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Quando è utile, includi checklist, tabella, caso pratico o criterio verificabile all'interno della spiegazione, senza trasformarli in capitoli separati.
 - Mantieni paragrafi leggibili e sottotitoli brevi solo quando migliorano la consultazione; non usare formule generiche come "semplice", "intuitivo" o "fondamentale" senza spiegare concretamente il perché.
 """
+
+def genera_scaletta_narrativa(sezioni, indice, titolo, genere, trama, obiettivo, voce_narrante, lingua,
+                              scheda_personaggi="", scaletta_esistente=""):
+    """Chiede all'IA 3-6 punti per scena. Restituisce (testo, errore).
+
+    Non modifica il progetto: il chiamante mostra la proposta nel campo
+    della scaletta, dove l'autore può correggerla prima della stesura.
+    """
+    prompt = narrative_prompts_core.prompt_genera_scaletta(
+        sezioni=sezioni, indice=indice, titolo=titolo, genere=genere, trama=trama,
+        obiettivo=obiettivo, scheda_personaggi=scheda_personaggi,
+        voce_narrante=voce_narrante, lingua=lingua, scaletta_esistente=scaletta_esistente,
+    )
+    esito = chiedi_gpt(
+        prompt,
+        "Sei un editor di narrativa che progetta scalette di romanzi coerenti, concrete e senza scene riempitive.",
+        amount=CREDIT_COSTS["scaletta_narrativa"],
+        max_completion_tokens=min(16000, 400 + 180 * max(1, len(sezioni))),
+        model=MODELLO_STESURA,
+        reason="scaletta_narrativa",
+        timeout_seconds=300,
+        restituisci_riferimento=True,
+    )
+    # In caso di errore tecnico chiedi_gpt ha già riaccreditato e restituisce
+    # solo il messaggio d'errore.
+    if isinstance(esito, str):
+        return "", esito
+    risposta, riferimento = esito
+    if not narrative_prompts_core.leggi_scaletta(risposta):
+        refund_credits(riferimento, reason="scaletta_narrativa_illeggibile", amount=CREDIT_COSTS["scaletta_narrativa"])
+        return "", "ERRORE: la risposta non conteneva una scaletta leggibile. I crediti sono stati riaccreditati: riprova."
+    return str(risposta).strip(), ""
+
+
+def aggiorna_scheda_personaggi(sezioni, scheda_attuale, trama, lingua):
+    """Propone una scheda aggiornata leggendo le sezioni già scritte."""
+    capitoli = [
+        (sezione, str(leggi_sezione_memorizzata(sezione) or ""))
+        for sezione in sezioni
+        if str(leggi_sezione_memorizzata(sezione) or "").strip()
+    ]
+    if not capitoli:
+        return "", "Scrivi almeno una sezione prima di aggiornare la scheda."
+    risposta = chiedi_gpt(
+        narrative_prompts_core.prompt_aggiorna_scheda(
+            scheda_attuale=scheda_attuale, capitoli=capitoli, trama=trama, lingua=lingua,
+        ),
+        "Sei un editor di continuità narrativa: registri solo fatti presenti nel testo.",
+        amount=CREDIT_COSTS["aggiorna_scheda_personaggi"],
+        max_completion_tokens=1400,
+        model=MODELLO_STESURA,
+        reason="aggiorna_scheda_personaggi",
+        timeout_seconds=180,
+    )
+    if str(risposta).startswith("ERRORE:"):
+        return "", risposta
+    return pulisci_testo_editoriale(risposta), ""
+
 
 def valuta_indice_editoriale(indice, titolo, trama, genere, stile, narrativa, pov, obiettivo, lingua,
                              approfondimenti="", *, addebita=True, riferimento_padre=""):
@@ -8634,12 +8801,12 @@ dettaglio assegnato senza anticipare o ripetere gli altri sottocapitoli.
     profilo_lunghezza_corrente = PROFILI_LUNGHEZZA_STESURA.get(
         val_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
-    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(val_lunghezza)
+    minimo_parole_tolleranza, massimo_parole_tolleranza = vincolo_parole_con_tolleranza(val_lunghezza, val_genere)
     modulo_lunghezza = f"""
 === LUNGHEZZA E DENSITÀ OBBLIGATORIE ===
 Profilo scelto: {val_lunghezza}.
 - Per una sezione autonoma, l'obiettivo è {profilo_lunghezza_corrente['parole']}.
-- Tolleranza massima consentita: 5%. Non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
+- Margine consentito: non produrre meno di {minimo_parole_tolleranza} parole né più di {massimo_parole_tolleranza} parole.
 - L'obiettivo del manoscritto completo è {profilo_lunghezza_corrente['pagine_minime']} pagine nel formato 6×9, con tolleranza del 15%. Contribuisci con contenuto utile, senza gonfiare il testo; se una sezione è già completa e di qualità, non aggiungere riempitivi solo per aumentare le pagine.
 - Il limite di output dell'AI è configurato in coerenza con questa tolleranza: non aggirarlo con frasi riempitive o elenchi superflui.
 - Prima di iniziare, distribuisci mentalmente lo spazio: sviluppa prima i passaggi essenziali e riserva sempre circa il 12% finale della sezione alla conclusione. Non avviare un nuovo esempio, elenco o periodo se non puoi terminarlo entro il limite.
@@ -8654,6 +8821,7 @@ Profilo scelto: {val_lunghezza}.
     profilo_indice_corrente = profilo_struttura_indice(val_genere, val_titolo, val_trama, val_goal)
 
     # PROMPT POTENZIATO CON COERENZA POV, PULIZIA SINTATTICA E CONFORMITA' DI GENERE
+    # (saggistica e manuali; per romanzi e biografie si usa il prompt narrativo sotto)
     S_PROMPT = f"""
 Sei un esperto Madrelingua in {lingua_sel}, Editor e Luminare mondiale nel campo '{val_genere}'. 
 Stai redigendo l'ebook '{val_titolo}'. 
@@ -8763,6 +8931,32 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 - COMPETENZA VERTICALE (ESPERTO DEL SETTORE): Comportati come un professionista con 30 anni di esperienza reale in questo esatto argomento. Sii chirurgico nei termini tecnici e fornisci dettagli, aneddoti o concetti avanzati che solo un vero "addetto ai lavori" conoscerebbe.
 - NO SUPERFICIALITÀ: Non dare risposte generiche o banali. Ogni paragrafo deve trasudare competenza profonda, spiegando i meccanismi interni, le ragioni nascoste e i dettagli tecnici dell'argomento.
 """
+
+    if genere_narrativo(val_genere):
+        # I romanzi non ricevono le direttive dei manuali (checklist, procedure,
+        # neuromarketing, divieto di ripetere parole chiave): hanno un prompt
+        # di sistema proprio, centrato su scena, voce narrante e continuità.
+        minimo_narr, massimo_narr = vincolo_parole_con_tolleranza(val_lunghezza, val_genere)
+        modulo_lunghezza_narrativa = f"""=== LUNGHEZZA ===
+- Una scena completa vale circa {profilo_lunghezza_corrente['parole']}; puoi restare fra {minimo_narr} e {massimo_narr} parole
+  se la scena lo richiede. Una scena più breve e intensa è meglio di una scena allungata.
+- Non aggiungere descrizioni o riflessioni solo per arrivare alla lunghezza.
+- Riserva il finale alla chiusura della scena: non iniziare un nuovo dialogo o un nuovo evento se non puoi concluderlo."""
+        S_PROMPT = narrative_prompts_core.system_prompt_narrativa(
+            lingua=lingua_sel,
+            titolo=val_titolo,
+            genere=val_genere,
+            tipologia=val_stile,
+            stile_racconto=val_narrativa,
+            ritmo=val_ritmo,
+            descrizione_ritmo=descrizioni_ritmo.get(val_ritmo, descrizioni_ritmo['Equilibrato e progressivo']),
+            obiettivo=val_goal,
+            voce_narrante=narrative_prompts_core.direttiva_voce_narrante(val_narratore, val_tempo_verbale),
+            regole_genere=profilo_genere_corrente,
+            modulo_lunghezza=modulo_lunghezza_narrativa,
+            modulo_fonti=modulo_fonti,
+            specifica_editoriale=specifica_editoriale,
+        )
 
     def esegui_collaudo_automatico():
         """Collauda il flusso reale: Prefazione, salvataggio, pausa e visibilità."""
@@ -10886,6 +11080,89 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[3]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
+            if genere_narrativo(val_genere):
+                # Strumenti dei romanzi: scaletta per scena e scheda personaggi.
+                # Sono campi del progetto: vengono salvati, esportati nel CSV e
+                # usati automaticamente nel prompt di ogni sezione.
+                with st.expander("🧭 Scaletta e personaggi del romanzo", expanded=False):
+                    st.caption(
+                        "Più sono precisi questi due campi, più il romanzo resta coerente. "
+                        "Puoi scriverli a mano o farli proporre all'IA e poi correggerli."
+                    )
+                    sezioni_scaletta = individua_sezioni_da_stendere(lista_cap_base)
+                    for _campo_narr, _attesa in (("scheda_personaggi", "_scheda_personaggi_in_attesa"),
+                                                 ("scaletta", "_scaletta_in_attesa")):
+                        ripristina_widget_progetto(_campo_narr)
+                        if _attesa in st.session_state:
+                            st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_narr]] = st.session_state.pop(_attesa)
+                    messaggio_narrativa = st.session_state.pop("_messaggio_strumenti_narrativa", None)
+                    if messaggio_narrativa:
+                        (st.error if messaggio_narrativa.startswith("ERRORE") else st.success)(messaggio_narrativa)
+
+                    st.markdown("**Personaggi e mondo**")
+                    scheda_corrente = st.text_area(
+                        "Scheda personaggi e mondo",
+                        key="book_story_bible",
+                        height=220,
+                        placeholder=narrative_prompts_core.MODELLO_SCHEDA_PERSONAGGI,
+                        help="Nomi, età, aspetto, carattere, relazioni, luoghi, regole del mondo e fatti già stabiliti. "
+                             "L'IA li tratta come canone in ogni sezione.",
+                        label_visibility="collapsed",
+                    )
+                    if pulsante_con_preventivo(
+                        "aggiorna_scheda_personaggi", "🔄 Aggiorna la scheda dai capitoli scritti",
+                        CREDIT_COSTS["aggiorna_scheda_personaggi"],
+                        "Legge le sezioni già scritte e propone una scheda aggiornata nel campo qui sopra. "
+                        "Non modifica il manoscritto; puoi correggere la proposta prima di continuare.",
+                        use_container_width=True,
+                    ):
+                        with st.spinner("Lettura dei capitoli e aggiornamento della scheda..."):
+                            nuova_scheda, errore_scheda = aggiorna_scheda_personaggi(
+                                sezioni_scaletta, scheda_corrente, val_trama, lingua_sel,
+                            )
+                        if nuova_scheda:
+                            st.session_state["_scheda_personaggi_in_attesa"] = nuova_scheda
+                            st.session_state["_messaggio_strumenti_narrativa"] = "Scheda aggiornata: controllala e correggila se serve."
+                        else:
+                            st.session_state["_messaggio_strumenti_narrativa"] = errore_scheda if errore_scheda.startswith("ERRORE") else f"ERRORE: {errore_scheda}"
+                        st.rerun()
+
+                    st.markdown("**Scaletta delle scene**")
+                    st.caption(
+                        "Formato: il titolo della voce dell'indice tra parentesi quadre, poi i punti della scena. "
+                        "Esempio: [Capitolo 1: Il lago] seguito da - Marco arriva alla casa…"
+                    )
+                    testo_scaletta_corrente = st.text_area(
+                        "Scaletta delle scene",
+                        key="book_scene_outline",
+                        height=320,
+                        label_visibility="collapsed",
+                    )
+                    voci_con_scaletta = sum(
+                        1 for sezione in sezioni_scaletta
+                        if narrative_prompts_core.scaletta_della_sezione(testo_scaletta_corrente, sezione)
+                    )
+                    st.caption(f"Scene con scaletta: {voci_con_scaletta} su {len(sezioni_scaletta)}.")
+                    if pulsante_con_preventivo(
+                        "scaletta_narrativa", "✨ Proponi la scaletta delle scene",
+                        CREDIT_COSTS["scaletta_narrativa"],
+                        "Propone 3-6 punti per ogni scena dell'indice. I punti già scritti da te restano invariati. "
+                        "Non scrive il libro e non modifica le sezioni esistenti.",
+                        use_container_width=True,
+                    ):
+                        with st.spinner("Preparazione della scaletta delle scene..."):
+                            nuova_scaletta, errore_scaletta = genera_scaletta_narrativa(
+                                sezioni_scaletta, st.session_state.get("indice_raw", ""), val_titolo, val_genere,
+                                val_trama, val_goal, val_pov, lingua_sel,
+                                scheda_personaggi=scheda_corrente, scaletta_esistente=testo_scaletta_corrente,
+                            )
+                        if nuova_scaletta:
+                            st.session_state["_scaletta_in_attesa"] = nuova_scaletta
+                            st.session_state["_messaggio_strumenti_narrativa"] = "Scaletta pronta: rileggila e correggila prima di scrivere."
+                        else:
+                            st.session_state["_messaggio_strumenti_narrativa"] = errore_scaletta
+                        st.rerun()
+
             # La stesura completa è una coda controllata: una sezione viene
             # generata, salvata e mostrata all'utente prima di autorizzare la
             # successiva. Così pausa e stop operano davvero tra due richieste

@@ -73,7 +73,8 @@ class EmotionalImpactTests(unittest.TestCase):
         )
         writer_source = ast.get_source_segment(source, writer) or ""
         self.assertEqual(writer_source.count("emotional_impact_core.istruzioni_impatto_emotivo("), 1)
-        self.assertEqual(writer_source.count("{istruzioni_impatto_emotivo}"), 2)
+        # Prefazione, ramo narrativo e ramo saggistica.
+        self.assertEqual(writer_source.count("{istruzioni_impatto_emotivo}"), 3)
 
 
 if __name__ == "__main__":

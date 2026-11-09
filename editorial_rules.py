@@ -14,6 +14,8 @@ import re
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
+from narrative_engine import genere_narrativo
+
 
 PROFILI_LUNGHEZZA_STESURA = {
     "Compatto": {
@@ -49,12 +51,24 @@ PROFILI_LUNGHEZZA_STESURA = {
 }
 
 
-def vincolo_parole_con_tolleranza(profilo_lunghezza: str) -> tuple[int, int]:
-    """Restituisce i limiti editoriali con la tolleranza massima del 5%."""
+# Margini delle singole sezioni. L'obiettivo di pagine del libro resta
+# controllato sul totale (tolleranza_pagine); la singola sezione ha invece un
+# margine più ampio, così il modello non viene richiamato più volte solo per
+# aggiungere o togliere poche decine di parole. Nella narrativa le scene hanno
+# per natura lunghezze diverse: il margine è ancora più ampio.
+MARGINE_SEZIONE_SAGGISTICA = (0.90, 1.10)
+MARGINE_SEZIONE_NARRATIVA = (0.80, 1.15)
+
+
+def vincolo_parole_con_tolleranza(profilo_lunghezza: str, genere: str = "") -> tuple[int, int]:
+    """Restituisce i limiti di parole di una sezione per profilo e genere."""
     profilo = PROFILI_LUNGHEZZA_STESURA.get(
         profilo_lunghezza, PROFILI_LUNGHEZZA_STESURA["Standard KDP"]
     )
-    return math.ceil(profilo["min_parole"] * 0.95), math.floor(profilo["max_parole"] * 1.05)
+    minimo, massimo = (
+        MARGINE_SEZIONE_NARRATIVA if genere and genere_narrativo(genere) else MARGINE_SEZIONE_SAGGISTICA
+    )
+    return math.ceil(profilo["min_parole"] * minimo), math.floor(profilo["max_parole"] * massimo)
 
 
 def classifica_sezione(sezione: str, is_prefazione: Callable[[str], bool]) -> str:

@@ -49,6 +49,11 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "confini_personali": "book_personal_boundaries",
     "modalita_checkpoint": "book_personal_checkpoint_mode",
     "note_checkpoint": "book_personal_checkpoint_notes",
+    # Narrativa: voce narrante, scaletta per scena e scheda personaggi.
+    "narratore": "book_narrator",
+    "tempo_verbale": "book_tense",
+    "scaletta": "book_scene_outline",
+    "scheda_personaggi": "book_story_bible",
     "lunghezza": "profilo_lunghezza_stesura",
     "provider_ia": "provider_ia",
 }
