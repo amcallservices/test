@@ -26,6 +26,79 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import PyPDF2  # Libreria necessaria per leggere i PDF caricati
 from PIL import Image
+import importlib
+import sys
+
+
+# Streamlit Cloud, dopo un aggiornamento da GitHub, riesegue app.py ma può
+# continuare a usare i moduli del progetto già caricati in memoria nella
+# versione precedente: app.py nuovo + moduli vecchi = ImportError. Prima degli
+# import ricarichiamo quindi ogni modulo locale il cui file è cambiato.
+# L'ordine rispetta le dipendenze tra i moduli.
+MODULI_LOCALI_AGGIORNABILI = (
+    "narrative_engine",
+    "editorial_rules",
+    "project_text",
+    "project_outline",
+    "project_checks",
+    "project_csv",
+    "project_documents",
+    "project_metadata",
+    "project_sources",
+    "project_memory",
+    "emotional_impact",
+    "narrative_prompts",
+    "voice_chat",
+)
+
+
+def _firma_file_modulo(modulo):
+    try:
+        with open(modulo.__file__, "rb") as file_modulo:
+            return hashlib.sha256(file_modulo.read()).hexdigest()
+    except (OSError, TypeError, AttributeError):
+        return ""
+
+
+def ricarica_moduli_locali_aggiornati(nomi=MODULI_LOCALI_AGGIORNABILI):
+    """Ricarica solo i moduli locali il cui file non coincide con la versione in memoria."""
+    ricaricati = []
+    for nome in nomi:
+        modulo = sys.modules.get(nome)
+        if modulo is None:
+            continue
+        firma = _firma_file_modulo(modulo)
+        if not firma or getattr(modulo, "_firma_file_caricato", "") == firma:
+            continue
+        # Firma assente (modulo caricato da una versione precedente di app.py)
+        # o diversa (file aggiornato): il modulo in memoria non è affidabile.
+        try:
+            modulo = importlib.reload(modulo)
+        except Exception:
+            continue
+        modulo._firma_file_caricato = firma
+        ricaricati.append(nome)
+    if ricaricati and "commercial_layer" in sys.modules and "project_memory" in sys.modules:
+        # Il modulo commerciale conserva un riferimento ai campi del progetto:
+        # lo allineiamo alla versione appena ricaricata.
+        commerciale = sys.modules["commercial_layer"]
+        memoria = sys.modules["project_memory"]
+        for nome_attributo in ("CAMPI_SALVATAGGIO_PROGETTO", "CHIAVE_MEMORIA_SIDEBAR"):
+            if hasattr(memoria, nome_attributo):
+                setattr(commerciale, nome_attributo, getattr(memoria, nome_attributo))
+    return ricaricati
+
+
+def marca_moduli_locali_caricati(nomi=MODULI_LOCALI_AGGIORNABILI):
+    """Registra la versione dei moduli appena importati, per i passaggi successivi."""
+    for nome in nomi:
+        modulo = sys.modules.get(nome)
+        if modulo is not None and not getattr(modulo, "_firma_file_caricato", ""):
+            modulo._firma_file_caricato = _firma_file_modulo(modulo)
+
+
+ricarica_moduli_locali_aggiornati()
+
 from editorial_rules import (
     PROFILI_LUNGHEZZA_STESURA,
     chiave_sezione,
@@ -85,6 +158,7 @@ import project_memory as memoria_core
 import narrative_engine as narrative_core
 import emotional_impact as emotional_impact_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
+marca_moduli_locali_caricati()
 from commercial_layer import (
     AI_REQUEST_CREDITS,
     CHAT_SOLO_GPT_OPERAZIONI,
