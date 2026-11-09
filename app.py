@@ -64,6 +64,8 @@ from project_sources import (
 )
 from project_text import (
     dividi_blocchi_lettura as dividi_blocchi_lettura_core,
+    estratto_finale,
+    rimuovi_preambolo_ai,
     pulisci_testo_editoriale as pulisci_testo_editoriale_core,
 )
 from project_outline import (
@@ -1938,9 +1940,10 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             riferimenti_sezione = st.session_state.get("_riferimenti_stesura_deepseek_corrente")
             if isinstance(riferimenti_sezione, list):
                 riferimenti_sezione.append(riferimento)
-        prefissi = ["ecco", "certamente", "sicuramente", "ok", "here is", "sure"]
-        righe = [l for l in testo.split("\n") if not any(l.lower().startswith(p) for p in prefissi)]
-        risultato = "\n".join(righe).strip()
+        # Si toglie solo un'eventuale frase di cortesia iniziale ("Ecco il
+        # capitolo:"): le righe del libro che iniziano con "Ok" o "Ecco"
+        # devono restare.
+        risultato = rimuovi_preambolo_ai(testo)
         return (risultato, riferimento) if restituisci_riferimento else risultato
     except CommercialCreditError as e:
         # Non inserisce mai un messaggio d'errore nel manoscritto e ferma
@@ -7483,16 +7486,21 @@ def genera_contesto_avanzato(sezione_corrente, argomento=""):
     else:
         precedenti = sezioni_ordinate
     estratti_recenti = []
-    for sezione_precedente in precedenti[-2:]:
+    # Si passa la FINE delle sezioni precedenti: la nuova sezione deve
+    # ripartire da dove la storia o il ragionamento sono arrivati. La sezione
+    # immediatamente precedente riceve più spazio.
+    ultime = precedenti[-2:]
+    for posizione, sezione_precedente in enumerate(ultime):
         testo_precedente = str(leggi_sezione_memorizzata(sezione_precedente) or "").strip()
         if testo_precedente:
+            limite = 1200 if posizione == len(ultime) - 1 else 650
             estratti_recenti.append(
-                f"- Estratto recente da {sezione_precedente}:\n{testo_precedente[:650]}"
+                f"- Finale di {sezione_precedente}:\n{estratto_finale(testo_precedente, limite)}"
             )
     if estratti_recenti:
         blocchi.append(
             "=== CONTINUITÀ RECENTE DEL MANOSCRITTO ===\n"
-            "Usa questi passaggi solo per evitare ripetizioni e incoerenze; non copiarli.\n"
+            "Riparti da dove si chiudono questi passaggi ed evita ripetizioni e incoerenze; non copiarli.\n"
             + "\n".join(estratti_recenti)
         )
     return "\n\n".join(blocco for blocco in blocchi if str(blocco).strip())[:9000]
