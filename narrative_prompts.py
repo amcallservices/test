@@ -126,41 +126,16 @@ def normalizza_tempo_verbale(valore: str) -> str:
 
 
 def istruzioni_chat_romanzi() -> str:
-    """Regole aggiuntive per la chat guidata che compila la sidebar."""
-    narratori = "\n".join(f"- {opzione}" for opzione in NARRATORI)
-    tempi = "\n".join(f"- {opzione}" for opzione in TEMPI_VERBALI)
-    return f"""ROMANZI E BIOGRAFIE (Romanzo Rosa, Thriller / Noir, Fantasy, Fantascienza, Narrativo,
-Romanzo Classico, Contemporaneo, Biografia)
-
-Per questi generi la sidebar non usa il PUNTO DI VISTA rivolto al lettore (Tu/Voi/Noi):
-scrivi comunque PUNTO DI VISTA: Impersonale / Terza Persona (Distaccato, analitico, oggettivo)
-e compila OBBLIGATORIAMENTE anche queste righe, subito dopo PUNTO DI VISTA.
-
-Per NARRATORE scegli un solo valore tra:
-{narratori}
-
-Per TEMPO VERBALE scegli un solo valore tra:
-{tempi}
-
-Se l'utente non lo ha indicato, scegli tu in modo coerente con il genere (di norma
-«{NARRATORE_PREDEFINITO}» e «{TEMPO_PREDEFINITO}»). Puoi chiederlo con una sola domanda
-breve solo se la storia lo rende davvero decisivo.
-
-Dopo APPROFONDIMENTI aggiungi SEMPRE PERSONAGGI E MONDO, compilato da te senza fare domande:
-conserva i personaggi indicati dall'utente e completa il cast necessario alla trama. Per ognuno, una
-riga nel formato «- Nome Cognome: ruolo, età, lavoro, due tratti fisici, che cosa vuole, che cosa teme,
-che cosa nasconde, modo di parlare». Il protagonista ha un difetto, una ferita e un arco di cambiamento;
-ogni comprimario ha un motivo per agire. Aggiungi i luoghi principali (che non cambiano natura) e, se
-serve, le regole del mondo. Non contraddire mai ciò che l'utente ha detto. Nella Biografia usa soltanto
-persone e fatti reali noti, senza inventare dettagli.
-
-Righe aggiuntive della scheda per questi generi:
-
-NARRATORE:
-
-TEMPO VERBALE:
-
-PERSONAGGI E MONDO (FACOLTATIVO):"""
+    """Regole aggiuntive per la chat guidata che compila la sidebar (versione compatta)."""
+    narratori = "; ".join(NARRATORI)
+    tempi = "; ".join(TEMPI_VERBALI)
+    return f"""ROMANZI E BIOGRAFIE (Romanzo Rosa, Thriller / Noir, Fantasy, Fantascienza, Narrativo, Romanzo Classico, Contemporaneo, Biografia)
+Scrivi PUNTO DI VISTA: Impersonale / Terza Persona (Distaccato, analitico, oggettivo) e, subito dopo, queste righe obbligatorie:
+NARRATORE: una sola opzione tra {narratori}
+TEMPO VERBALE: una sola opzione tra {tempi}
+Se l'utente non li indica, scegli tu (di norma «{NARRATORE_PREDEFINITO}» e «{TEMPO_PREDEFINITO}») senza fare domande.
+PERSONAGGI E MONDO: compilalo sempre tu, una riga per personaggio «- Nome Cognome: ruolo, età, carattere, cosa vuole, cosa teme»,
+più i luoghi principali; conserva ciò che ha detto l'utente. Nella Biografia solo persone e fatti reali noti."""
 
 
 # ---------------------------------------------------------------------------

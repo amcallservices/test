@@ -564,34 +564,11 @@ def blocco_progetto_sezione(
 
 
 def istruzioni_chat_progetto() -> str:
-    """Regole della chat guidata: compila da sola il progetto del libro."""
-    return """PROGETTO DEL LIBRO — COMPILALO SEMPRE TU, IN AUTOMATICO
-
-Non fare domande aggiuntive per questi campi: deducili dal brief e dalla conversazione.
-Aggiungi le righe del tipo di libro scelto dopo APPROFONDIMENTI (e dopo PERSONAGGI E MONDO).
-
-Romanzi (Romanzo Rosa, Thriller / Noir, Fantasy, Fantascienza, Narrativo, Romanzo Classico, Contemporaneo):
-VERITÀ NASCOSTA: premessa in una frase ([protagonista] vuole [obiettivo concreto] ma [ostacolo], altrimenti
-[posta in gioco]); poi che cosa è successo davvero, chi, come, perché, con la cronologia vera. Se la trama si
-basa su un inganno, aggiungi la cronologia fatta credere al lettore. Nel romance: l'ostacolo emotivo vero;
-nel fantasy: anche le regole del mondo e della magia. Una voce per riga.
-MAPPA DEI SEMI: da 5 a 7 misteri, indizi o promesse, uno per riga, nel formato esatto
-- descrizione | compare: Capitolo N | si risolve: Capitolo M
-con N e M tra 1 e 12 (l'indice non esiste ancora): semi nella prima metà, risoluzioni nell'ultimo terzo.
-Nessun seme senza risoluzione.
-
-Biografia: VERITÀ NASCOSTA contiene solo fatti noti e la cronologia reale; non creare MAPPA DEI SEMI inventata.
-
-Saggi (Saggio Scientifico, Religioso / Teologico, Spirituale / Esoterico, Business & Marketing,
-Economia e Finanza, Self-Help, Storico):
-TESI CENTRALE: la tesi in una frase e perché è nuova, utile o controcorrente; il problema del lettore
-(domanda, dolore o curiosità); poi da 5 a 12 idee chiave in ordine logico, una per riga, ognuna che prepara la successiva.
-
-Manuali (Manuale Tecnico, Manuale Pratico, Manuale Psicologico, Ricettario, Test Prep (Preparazione Esami),
-Quiz Scientifico, Meditazione / Mindfulness):
-OBIETTIVI E PREREQUISITI: che cosa saprà FARE il lettore alla fine, in termini concreti e verificabili
-(uno per riga); prerequisiti (conoscenze, strumenti, materiali, versioni dei programmi); apparati utili
-(glossario, checklist, risoluzione problemi, avvertenze di sicurezza).
-
-Regole: mai dati, studi, fonti o fatti reali inventati; i valori descrittivi vanno nella lingua del libro;
-le etichette restano esattamente come scritte qui."""
+    """Regole della chat guidata: compila da sola il progetto del libro (versione compatta)."""
+    return """PROGETTO DEL LIBRO — COMPILALO SEMPRE TU, senza domande aggiuntive, dopo APPROFONDIMENTI:
+- Romanzi: VERITÀ NASCOSTA: premessa in una frase e cosa è successo davvero, con la cronologia (2-5 righe).
+  MAPPA DEI SEMI: 3-5 righe nel formato «- descrizione | compare: Capitolo N | si risolve: Capitolo M» (N e M tra 1 e 12).
+- Biografia: solo VERITÀ NASCOSTA con fatti noti e cronologia reale.
+- Saggi: TESI CENTRALE: tesi in una frase, problema del lettore e 5-8 idee chiave, una per riga.
+- Manuali e Ricettario, Test Prep, Quiz, Meditazione: OBIETTIVI E PREREQUISITI: cosa saprà fare il lettore e cosa serve prima (3-6 righe).
+Sii breve: questi campi si possono arricchire dopo. Mai dati o fatti reali inventati."""

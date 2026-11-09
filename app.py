@@ -10628,22 +10628,34 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                             )
                             if scheda_finale_deepseek else istruzioni_chat_interattiva
                         )
+                        # La scheda finale ora contiene anche il progetto del libro
+                        # (personaggi, verità nascosta, semi, tesi, obiettivi): servono
+                        # più spazio e più tempo. Se la risposta arriva comunque tagliata,
+                        # si riprova una volta con un limite doppio; l'addebito del primo
+                        # tentativo è già stato rimborsato da chiedi_gpt.
+                        limiti_chat = (
+                            (6000, 180),
+                            (12000, 240),
+                        )
                         with st.spinner("La chat sta preparando la risposta..."):
-                            risposta_chat = chiedi_gpt(
-                                conversazione,
-                                istruzioni_da_inviare,
-                                addebita=True,
-                                amount=CREDIT_COSTS["chat_sidebar_guidata"],
-                                max_completion_tokens=3000 if usa_deepseek_chat else 2400,
-                                model=MODELLO_EDITORIALE,
-                                reason="chat_sidebar_guidata",
-                                timeout_seconds=90,
-                                validatore_deepseek=(
-                                    (lambda testo: scheda_finale_deepseek_valida(
-                                        testo, scelta_finale_deepseek
-                                    )) if scheda_finale_deepseek else None
-                                ),
-                            )
+                            for limite_token_chat, attesa_chat in limiti_chat:
+                                risposta_chat = chiedi_gpt(
+                                    conversazione,
+                                    istruzioni_da_inviare,
+                                    addebita=True,
+                                    amount=CREDIT_COSTS["chat_sidebar_guidata"],
+                                    max_completion_tokens=limite_token_chat,
+                                    model=MODELLO_EDITORIALE,
+                                    reason="chat_sidebar_guidata",
+                                    timeout_seconds=attesa_chat,
+                                    validatore_deepseek=(
+                                        (lambda testo: scheda_finale_deepseek_valida(
+                                            testo, scelta_finale_deepseek
+                                        )) if scheda_finale_deepseek else None
+                                    ),
+                                )
+                                if not str(risposta_chat or "").startswith("ERRORE:"):
+                                    break
                         if str(risposta_chat or "").startswith("ERRORE:"):
                             st.error(
                                 "La chat non ha prodotto una risposta. Nessun credito è stato trattenuto; "

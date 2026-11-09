@@ -139,3 +139,14 @@ class TraduzioniProgettoTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IstruzioniChatCompatteTests(unittest.TestCase):
+    def test_le_aggiunte_alla_chat_restano_brevi(self):
+        # La chat guidata scarta le risposte troncate: istruzioni troppo lunghe
+        # la facevano fallire. Le aggiunte per romanzi e progetto restano compatte.
+        import narrative_i18n
+        for lingua in i18n.LINGUE:
+            with self.subTest(lingua=lingua):
+                totale = len(narrative_i18n.istruzioni_chat_romanzi(lingua)) + len(bp.istruzioni_chat_progetto())
+                self.assertLess(totale, 2600)

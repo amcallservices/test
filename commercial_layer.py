@@ -1746,7 +1746,7 @@ def _landing_page() -> None:
             st.download_button(
                 italian_guide_label,
                 data=italian_guide,
-                file_name="Guida-area-riservata-Scrittore-Site-Italiano.pdf",
+                file_name=f"Guida-area-riservata-Scrittore-Site-Italiano-v{COMMERCIAL_VERSION}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
                 key="download_private_area_guide_it",
@@ -1758,7 +1758,7 @@ def _landing_page() -> None:
             st.download_button(
                 english_guide_label,
                 data=english_guide,
-                file_name="Scrittore-Site-Private-Area-Guide-English.pdf",
+                file_name=f"Scrittore-Site-Private-Area-Guide-English-v{COMMERCIAL_VERSION}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
                 key="download_private_area_guide_en",
