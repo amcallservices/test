@@ -10,10 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 
-GENERI_NARRATIVI = frozenset({
-    "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Narrativo",
-    "Romanzo Classico", "Contemporaneo", "Biografia",
-})
+from narrative_engine import GENERI_NARRATIVI, genere_narrativo
 
 
 def _testo(valore: Any, limite: int = 520) -> str:
@@ -21,8 +18,8 @@ def _testo(valore: Any, limite: int = 520) -> str:
 
 
 def _narrativo(genere: str) -> bool:
-    valore = _testo(genere).casefold()
-    return valore in {genere.casefold() for genere in GENERI_NARRATIVI} or "romanzo" in valore
+    # Un'unica definizione dei generi narrativi per tutto il software.
+    return genere_narrativo(_testo(genere))
 
 
 def _profilo_genere(genere: str) -> str:
