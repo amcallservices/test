@@ -516,3 +516,36 @@ La chiave del pozzo | compare: Capitolo 3 | si risolve: Capitolo 11
         prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("English", "DeepSeek V4 Pro", "A")
         self.assertIn("TESI CENTRALE:", prompt)
         self.assertIn("COMPILALO SEMPRE TU", prompt)
+
+
+class SceltaPersonalizzazioneMultilingueTests(unittest.TestCase):
+    DOMANDA = {"role": "assistant", "content": "Vuoi personalizzare questo libro? A/B/C/D"}
+
+    def setUp(self):
+        self.scelta = parser_namespace()["scelta_personalizzazione_chat_deepseek"]
+
+    def risposta(self, testo):
+        return self.scelta([{"role": "user", "content": "Un thriller"}, self.DOMANDA, {"role": "user", "content": testo}])[0]
+
+    def test_lettere_in_ogni_alfabeto(self):
+        casi = {"d": "D", "D)": "D", "b.": "B", "Ｄ": "D", "Д": "D", "В": "B", "د": "D", "أ": "A",
+                "opción C": "C", "Option b": "B", "вариант Д": "D", "选D": "D", "Je choisis A": "A", "ich wähle C": "C"}
+        for testo, atteso in casi.items():
+            with self.subTest(testo=testo):
+                self.assertEqual(self.risposta(testo), atteso)
+
+    def test_frasi_che_valgono_d_in_ogni_lingua(self):
+        for testo in ("fai tu", "no sé, elige tú", "je ne sais pas", "keine Ahnung", "nu știu", "не знаю",
+                      "لا أعرف", "你决定", "up to you", "proponi tu"):
+            with self.subTest(testo=testo):
+                self.assertEqual(self.risposta(testo), "D")
+
+    def test_frasi_che_valgono_a(self):
+        for testo in ("no", "Nein", "нет", "不用", "لا", "non voglio personalizzarlo"):
+            with self.subTest(testo=testo):
+                self.assertEqual(self.risposta(testo), "A")
+
+    def test_frasi_normali_non_sono_scelte(self):
+        for testo in ("a me piacerebbe un thriller", "в книге должен быть детектив", "с удовольствием расскажу"):
+            with self.subTest(testo=testo):
+                self.assertEqual(self.risposta(testo), "")

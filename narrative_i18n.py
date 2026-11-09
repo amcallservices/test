@@ -330,9 +330,5 @@ def istruzioni_chat_romanzi(lingua: str) -> str:
         f"- «{testo('opzioni_tempo', lingua)[i]}» = {valore}" for i, valore in enumerate(TEMPI_VERBALI)
     ]
     return base + f"""
-
-LINGUA DELL'UTENTE: {lingua}
-Quando parli con l'utente di narratore e tempo verbale, usa questi nomi nella sua lingua.
-Nella scheda finale scrivi invece il valore tecnico italiano corrispondente (a destra del segno =):
-""" + "\n".join(corrispondenze) + f"""
-PERSONAGGI E MONDO va scritto in {lingua}, come gli altri valori descrittivi."""
+Parla con l'utente in {lingua} usando questi nomi; nella scheda scrivi il valore tecnico dopo «=»:
+""" + "\n".join(corrispondenze)
