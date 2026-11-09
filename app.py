@@ -9915,180 +9915,18 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             notifica_sonora("test_notifiche", lingua_sel, ripeti=True)
 
         st.divider()
-        guida_chat_sidebar = {
-            "Italiano": {
-                "titolo": "🤖 Crea la tua chat per compilare la sidebar",
-                "nota": "Questa guida non è il prompt. Leggila prima; subito sotto trovi il prompt da copiare nella tua chat personale di ChatGPT.",
-                "passi": """1. Apri una nuova chat nel tuo ChatGPT personale.
-
-2. Copia tutto il testo nel riquadro scuro qui sotto, senza cambiarlo.
-
-3. Incollalo come primo messaggio e invialo.
-
-4. Dopo la tua idea, ChatGPT chiederà sempre se vuoi aggiungere una personalizzazione del libro. Solo dopo la tua risposta preparerà la scheda; se manca un dato davvero decisivo, potrà fare un'ultima domanda breve.
-
-5. Alla fine riceverai una scheda pronta. Copia ogni risposta nel campo con lo stesso nome nella sidebar di Scrittore Site.
-
-6. Non chiedere a quella chat di scrivere il libro completo: serve solo a preparare bene la sidebar e poi Scrittore Site creerà l'indice.""",
-                "etichetta": "PROMPT DA COPIARE NELLA TUA CHAT PERSONALE DI ChatGPT",
-            },
-            "English": {
-                "titolo": "🤖 Create your chat to complete the sidebar",
-                "nota": "This guide is not the prompt. Read it first; immediately below is the prompt to copy into your personal ChatGPT chat.",
-                "passi": """1. Open a new chat in your personal ChatGPT account.
-
-2. Copy all the text in the dark box below, without changing it.
-
-3. Paste it as the first message and send it.
-
-4. ChatGPT will begin with one simple question about the book you want to create. If the information is already clear, it will prepare the form immediately; otherwise, it will ask one short question about the most important choice.
-
-5. At the end you will receive a ready-to-use form. Copy each answer into the field with the same name in the Scrittore Site sidebar.
-
-6. Do not ask that chat to write the complete book: it only prepares the sidebar, then Scrittore Site creates the index.""",
-                "etichetta": "PROMPT TO COPY INTO YOUR PERSONAL ChatGPT CHAT",
-            },
-            "Español": {
-                "titolo": "🤖 Crea tu chat para completar la barra lateral",
-                "nota": "Esta guía no es el prompt. Léela primero; justo debajo está el prompt que debes copiar en tu chat personal de ChatGPT.",
-                "passi": """1. Abre un chat nuevo en tu cuenta personal de ChatGPT.
-
-2. Copia todo el texto del recuadro oscuro de abajo, sin cambiarlo.
-
-3. Pégalo como primer mensaje y envíalo.
-
-4. ChatGPT empezará con una pregunta sencilla sobre el libro que quieres crear. Si la información ya está clara, preparará la ficha enseguida; si no, hará una sola pregunta breve sobre la decisión más importante.
-
-5. Al final recibirás una ficha lista. Copia cada respuesta en el campo con el mismo nombre de la barra lateral de Scrittore Site.
-
-6. No pidas a ese chat que escriba el libro completo: solo prepara la barra lateral y después Scrittore Site creará el índice.""",
-                "etichetta": "PROMPT PARA COPIAR EN TU CHAT PERSONAL DE ChatGPT",
-            },
-            "Français": {
-                "titolo": "🤖 Créez votre chat pour remplir la barre latérale",
-                "nota": "Ce guide n’est pas le prompt. Lisez-le d’abord ; le prompt à copier dans votre chat ChatGPT personnel se trouve juste dessous.",
-                "passi": """1. Ouvrez une nouvelle conversation dans votre compte ChatGPT personnel.
-
-2. Copiez tout le texte du cadre sombre ci-dessous, sans le modifier.
-
-3. Collez-le comme premier message et envoyez-le.
-
-4. ChatGPT commencera par une question simple sur le livre à créer. Si les informations sont déjà claires, il préparera directement la fiche ; sinon, il posera une seule question courte sur le choix le plus important.
-
-5. À la fin, vous recevrez une fiche prête à l’emploi. Copiez chaque réponse dans le champ du même nom de la barre latérale de Scrittore Site.
-
-6. Ne demandez pas à ce chat d’écrire le livre complet : il prépare seulement la barre latérale, puis Scrittore Site créera l’index.""",
-                "etichetta": "PROMPT À COPIER DANS VOTRE CHAT ChatGPT PERSONNEL",
-            },
-            "Deutsch": {
-                "titolo": "🤖 Erstellen Sie Ihren Chat zum Ausfüllen der Seitenleiste",
-                "nota": "Diese Anleitung ist nicht der Prompt. Lesen Sie sie zuerst; darunter finden Sie den Prompt zum Kopieren in Ihren persönlichen ChatGPT-Chat.",
-                "passi": """1. Öffnen Sie einen neuen Chat in Ihrem persönlichen ChatGPT-Konto.
-
-2. Kopieren Sie den gesamten Text im dunklen Feld unten, ohne ihn zu ändern.
-
-3. Fügen Sie ihn als erste Nachricht ein und senden Sie ihn ab.
-
-4. ChatGPT beginnt mit einer einfachen Frage zu dem Buch, das Sie erstellen möchten. Wenn die Angaben bereits klar sind, erstellt es sofort die Vorlage; andernfalls stellt es eine kurze Frage zur wichtigsten Entscheidung.
-
-5. Am Ende erhalten Sie eine fertige Vorlage. Kopieren Sie jede Antwort in das gleichnamige Feld der Scrittore-Site-Seitenleiste.
-
-6. Bitten Sie diesen Chat nicht, das ganze Buch zu schreiben: Er bereitet nur die Seitenleiste vor, danach erstellt Scrittore Site den Index.""",
-                "etichetta": "PROMPT ZUM KOPIEREN IN IHREN PERSÖNLICHEN CHATGPT-CHAT",
-            },
-            "Română": {
-                "titolo": "🤖 Creează chatul tău pentru completarea barei laterale",
-                "nota": "Acest ghid nu este promptul. Citește-l mai întâi; imediat mai jos găsești promptul de copiat în chatul tău personal ChatGPT.",
-                "passi": """1. Deschide un chat nou în contul tău personal ChatGPT.
-
-2. Copiază tot textul din caseta întunecată de mai jos, fără să îl modifici.
-
-3. Lipește-l ca primul mesaj și trimite-l.
-
-4. ChatGPT va începe cu o întrebare simplă despre cartea pe care vrei să o creezi. Dacă informațiile sunt deja clare, va pregăti imediat fișa; altfel, va pune o singură întrebare scurtă despre alegerea cea mai importantă.
-
-5. La final vei primi o fișă pregătită. Copiază fiecare răspuns în câmpul cu același nume din bara laterală Scrittore Site.
-
-6. Nu cere acelui chat să scrie cartea completă: el pregătește doar bara laterală, apoi Scrittore Site va crea indexul.""",
-                "etichetta": "PROMPT DE COPIAT ÎN CHATUL TĂU PERSONAL ChatGPT",
-            },
-            "Русский": {
-                "titolo": "🤖 Создайте чат для заполнения боковой панели",
-                "nota": "Это руководство — не промпт. Сначала прочитайте его; ниже находится промпт для копирования в ваш личный чат ChatGPT.",
-                "passi": """1. Откройте новый чат в своём личном аккаунте ChatGPT.
-
-2. Скопируйте весь текст из тёмного блока ниже, ничего не меняя.
-
-3. Вставьте его первым сообщением и отправьте.
-
-4. ChatGPT начнёт с простого вопроса о книге, которую вы хотите создать. Если информации достаточно, он сразу подготовит карточку; иначе задаст один короткий вопрос о самом важном выборе.
-
-5. В конце вы получите готовую карточку. Скопируйте каждый ответ в поле с таким же названием на боковой панели Scrittore Site.
-
-6. Не просите этот чат написать всю книгу: он только готовит боковую панель, после чего Scrittore Site создаст оглавление.""",
-                "etichetta": "ПРОМПТ ДЛЯ КОПИРОВАНИЯ В ВАШ ЛИЧНЫЙ ЧАТ ChatGPT",
-            },
-            "العربية": {
-                "titolo": "🤖 أنشئ محادثتك لملء الشريط الجانبي",
-                "nota": "هذا الدليل ليس هو الموجّه. اقرأه أولاً؛ ستجد أسفله مباشرة الموجّه لنسخه في محادثتك الشخصية مع ChatGPT.",
-                "passi": """1. افتح محادثة جديدة في حسابك الشخصي على ChatGPT.
-
-2. انسخ كل النص الموجود في المربع الداكن أدناه دون تغييره.
-
-3. الصقه كأول رسالة ثم أرسله.
-
-4. سيبدأ ChatGPT بسؤال بسيط عن الكتاب الذي تريد إنشاءه. إذا كانت المعلومات واضحة، فسيُعدّ البطاقة مباشرة؛ وإلا فسيسأل سؤالاً قصيراً واحداً عن أهم اختيار.
-
-5. في النهاية ستحصل على بطاقة جاهزة. انسخ كل إجابة إلى الحقل الذي يحمل الاسم نفسه في الشريط الجانبي لـ Scrittore Site.
-
-6. لا تطلب من تلك المحادثة كتابة الكتاب كاملاً: دورها فقط إعداد الشريط الجانبي، وبعد ذلك ينشئ Scrittore Site الفهرس.""",
-                "etichetta": "موجّه لنسخه في محادثتك الشخصية مع ChatGPT",
-            },
-            "中文": {
-                "titolo": "🤖 创建聊天以填写侧边栏",
-                "nota": "这不是提示词本身。请先阅读本说明；下面就是可复制到你个人 ChatGPT 聊天中的提示词。",
-                "passi": """1. 在你的个人 ChatGPT 账户中打开一个新聊天。
-
-2. 完整复制下方深色框中的所有文字，不要修改。
-
-3. 将它作为第一条消息粘贴并发送。
-
-4. ChatGPT 会先询问一个有关你想创作的图书的简单问题。如果信息已足够清晰，它会立即准备好资料卡；否则只会就最重要的选择再问一个简短问题。
-
-5. 最后你会得到一张可直接使用的资料卡。将每项答案复制到 Scrittore Site 侧边栏中同名的字段。
-
-6. 不要让该聊天直接写完整本书：它只负责准备侧边栏，然后 Scrittore Site 会生成目录。""",
-                "etichetta": "复制到你的个人 ChatGPT 聊天中的提示词",
-            },
-        }
-        guida_chat = guida_chat_sidebar.get(lingua_sel, guida_chat_sidebar["Italiano"])
         etichette_tendine_chat = {
-            "Italiano": {"manuale": "📋 Crea la tua chat per compilare la sidebar", "guidata": "Chat guidata per compilare la sidebar (opzionale)"},
-            "English": {"manuale": "📋 Create your chat to complete the sidebar", "guidata": "Guided chat to complete the sidebar (optional)"},
-            "Español": {"manuale": "📋 Crea tu chat para completar la barra lateral", "guidata": "Chat guiado para completar la barra lateral (opcional)"},
-            "Français": {"manuale": "📋 Créez votre chat pour remplir la barre latérale", "guidata": "Chat guidé pour remplir la barre latérale (facultatif)"},
-            "Deutsch": {"manuale": "📋 Erstellen Sie Ihren Chat zum Ausfüllen der Seitenleiste", "guidata": "Geführter Chat zum Ausfüllen der Seitenleiste (optional)"},
-            "Română": {"manuale": "📋 Creează chatul tău pentru completarea barei laterale", "guidata": "Chat ghidat pentru completarea barei laterale (opțional)"},
-            "Русский": {"manuale": "📋 Создайте чат для заполнения боковой панели", "guidata": "Управляемый чат для заполнения боковой панели (необязательно)"},
-            "العربية": {"manuale": "📋 أنشئ محادثتك لملء الشريط الجانبي", "guidata": "دردشة موجّهة لملء الشريط الجانبي (اختياري)"},
-            "中文": {"manuale": "📋 创建聊天以填写侧边栏", "guidata": "引导式聊天填写侧边栏（可选）"},
+            "Italiano": {"guidata": "Chat guidata per compilare la sidebar (opzionale)"},
+            "English": {"guidata": "Guided chat to complete the sidebar (optional)"},
+            "Español": {"guidata": "Chat guiado para completar la barra lateral (opcional)"},
+            "Français": {"guidata": "Chat guidé pour remplir la barre latérale (facultatif)"},
+            "Deutsch": {"guidata": "Geführter Chat zum Ausfüllen der Seitenleiste (optional)"},
+            "Română": {"guidata": "Chat ghidat pentru completarea barei laterale (opțional)"},
+            "Русский": {"guidata": "Управляемый чат для заполнения боковой панели (необязательно)"},
+            "العربية": {"guidata": "دردشة موجّهة لملء الشريط الجانبي (اختياري)"},
+            "中文": {"guidata": "引导式聊天填写侧边栏（可选）"},
         }
         etichette_chat = etichette_tendine_chat.get(lingua_sel, etichette_tendine_chat["Italiano"])
-        st.subheader(guida_chat["titolo"])
-        st.info(guida_chat["nota"])
-        st.markdown(guida_chat["passi"])
-        istruzioni_chat_guidata = {
-            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto. Risponde nella lingua selezionata e usa sempre il cervello costoso, anche se per il libro hai scelto il cervello economico. L'avvio è gratuito; ogni risposta costa 1 credito. Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
-            "English": "**Optional alternative:** open the guided chat below. It replies in the selected language and always uses the expensive brain, even if you selected the economy brain for the book. Starting is free; each reply costs 1 credit. At the end you may fill only empty fields automatically or replace existing ones.",
-            "Español": "**Alternativa opcional:** abre el chat guiado de abajo. Responde en el idioma elegido y siempre usa el cerebro caro, aunque hayas elegido el cerebro económico para el libro. Iniciar es gratuito; cada respuesta cuesta 1 crédito. Al final puedes completar solo campos vacíos o sustituir los existentes.",
-            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous. Il répond dans la langue choisie et utilise toujours le cerveau coûteux, même si vous avez choisi le cerveau économique pour le livre. Le démarrage est gratuit ; chaque réponse coûte 1 crédit. À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
-            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat. Er antwortet in der gewählten Sprache und verwendet immer „Teures Gehirn“, auch wenn für das Buch „Sparsames Gehirn“ ausgewählt wurde. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt. Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
-            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos. Răspunde în limba selectată și folosește întotdeauna „Creier scump”, chiar dacă ai ales „Creier economic” pentru carte. Pornirea este gratuită; fiecare răspuns costă 1 credit. La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
-            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже. Он отвечает на выбранном языке и всегда использует «Дорогой мозг», даже если для книги выбран «Экономный мозг». Запуск бесплатен; каждый ответ стоит 1 кредит. В конце можно заполнить только пустые поля или заменить существующие.",
-            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه. ترد باللغة المحددة وتستخدم العقل المكلف دائمًا، حتى إذا اخترت العقل الاقتصادي للكتاب. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا. في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
-            "中文": "**可选方式：** 打开下方的引导式聊天。它会用所选语言回复，并始终使用高价大脑，即使图书选择了经济大脑。启动免费；每次回复消耗 1 积分。最后可自动仅填写空字段，或替换已有字段。",
-        }
-        st.info(istruzioni_chat_guidata.get(lingua_sel, istruzioni_chat_guidata["Italiano"]))
         istruzione_lingua_prompt = {
             "Italiano": f"LINGUA OPERATIVA OBBLIGATORIA: comunica sempre con l'utente e restituisci la scheda finale esclusivamente in {lingua_sel}. Non tradurre i nomi esatti delle opzioni di Scrittore Site indicate sotto.",
             "English": f"MANDATORY WORKING LANGUAGE: communicate with the user and return the final form only in {lingua_sel}. Do not translate the exact Scrittore Site option names shown below.",
@@ -10435,15 +10273,9 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
             "\n\n" + narrative_i18n_core.istruzioni_chat_romanzi(lingua_sel)
             + "\n\n" + book_project_core.istruzioni_chat_progetto()
         )
-        # Il prompt manuale resta disponibile per chi vuole usarlo nella
-        # propria ChatGPT, ma non occupa più tutta la pagina.
-        with st.expander(etichette_chat["manuale"], expanded=False):
-            st.caption(guida_chat["etichetta"])
-            st.code(prompt_chat_sidebar, language=None)
-
-        # Alternativa facoltativa al copia/incolla: una conversazione interna
-        # che usa il cervello già selezionato nella sidebar. L'avvio è gratuito;
-        # si scala credito soltanto quando il cervello restituisce una risposta.
+        # Il testo prompt_chat_sidebar non viene più mostrato da copiare: resta
+        # la base delle istruzioni della Chat guidata qui sotto. L'avvio è
+        # gratuito; si scala credito soltanto quando la chat risponde.
         with st.expander(
             f"🟢 {etichette_chat['guidata']}",
             expanded=bool(st.session_state.get("chat_sidebar_attiva")),
