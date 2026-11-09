@@ -52,6 +52,7 @@ MODULI_LOCALI_AGGIORNABILI = (
     "book_project",
     "book_project_i18n",
     "brain_names",
+    "chat_i18n",
     "voice_chat",
 )
 
@@ -163,6 +164,7 @@ import narrative_engine as narrative_core
 import narrative_prompts as narrative_prompts_core
 import narrative_i18n as narrative_i18n_core
 import brain_names as brain_names_core
+import chat_i18n as chat_i18n_core
 import book_project as book_project_core
 import book_project_i18n as book_project_i18n_core
 import emotional_impact as emotional_impact_core
@@ -3871,6 +3873,16 @@ OPZIONI_CHAT_GUIDATA = {
 }
 
 
+def nome_campo_chat_guidata(campo, lingua):
+    """Nome leggibile di un campo della scheda nella lingua dell'utente."""
+    ordine = ("English", "Español", "Français", "Deutsch", "Română", "Русский", "العربية", "中文")
+    traduzioni = CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE.get(campo, ())
+    if lingua in ordine and len(traduzioni) > ordine.index(lingua):
+        return traduzioni[ordine.index(lingua)]
+    etichetta = next((nome for nome, chiave in CAMPI_CHAT_GUIDATA_SIDEBAR.items() if chiave == campo), "")
+    return etichetta.capitalize() if etichetta else campo.replace("_", " ").capitalize()
+
+
 def campi_obbligatori_chat_guidata(genere=""):
     """Campi indispensabili della scheda: nei romanzi la voce narrante
     sostituisce il punto di vista rivolto al lettore."""
@@ -4031,37 +4043,75 @@ def brief_vincolante_chat_sidebar(messaggi):
 
 
 def scelta_personalizzazione_chat_deepseek(messaggi):
-    """Ricorda la scelta A/B/C/D e se B/C ha già ricevuto dettagli successivi."""
+    """Ricorda la scelta A/B/C/D e se B/C ha già ricevuto dettagli successivi.
+
+    Riconosce la risposta in tutte le lingue del sito: lettere latine,
+    cirilliche (А В С Д), arabe (أ ب ج د) e a larghezza piena (Ｄ), con o senza
+    parole come «opzione», «option», «вариант», «选», oppure frasi come
+    «fai tu», «no sé», «не знаю», «你决定» (opzione D) e «no», «nein», «不用»
+    (opzione A). Senza questo riconoscimento la chat continuava a ripetere
+    la domanda sulla personalizzazione.
+    """
+    import unicodedata
+
+    lettere_equivalenti = str.maketrans({
+        "а": "a", "в": "b", "с": "c", "д": "d",  # cirillico (anche omografi)
+        "أ": "a", "ا": "a", "ب": "b", "ج": "c", "د": "d",  # arabo
+    })
+    parole_opzione = (
+        r"(?:scelgo|scelta|opzione|choice|option|opción|opcion|elijo|je choisis|choisis l'option|"
+        r"ich wähle|wähle|auswahl|aleg|opțiunea|optiunea|varianta|выбираю|вариант|ответ|"
+        r"أختار|اختار|الخيار|خيار|选择|选项|我选|选)"
+    )
+    frasi_d = (
+        r"fai tu|scegli tu|decidi tu|proponi tu|non so|fa tu|you decide|you choose|i don't know|i dont know|up to you|"
+        r"no sé|no se|elige tú|elige tu|decide tú|decide tu|hazlo tú|hazlo tu|"
+        r"je ne sais pas|je sais pas|choisis|décide|decide toi|à toi de|"
+        r"weiß nicht|weiss nicht|keine ahnung|entscheide du|mach du|du entscheidest|"
+        r"nu știu|nu stiu|alege tu|decide tu|"
+        r"не знаю|реши сам|решай|выбери сам|на ваше усмотрение|на твоё усмотрение|"
+        r"لا أعرف|لا اعرف|اختر أنت|قرر أنت|كما تريد|"
+        r"不知道|你决定|你来定|你来决定|随便|你选"
+    )
+    risposte_a = {
+        "no", "non voglio personalizzare", "no personalization", "no grazie", "no, grazie", "no thanks",
+        "non", "non merci", "nein", "nein danke", "nu", "nu, mulțumesc", "нет", "не надо", "لا", "لا شكرا",
+        "不", "不用", "不要", "不需要",
+    }
     scelta, posizione_scelta = "", -1
     domanda_personalizzazione = False
     for indice, messaggio in enumerate(messaggi):
         if messaggio.get("role") == "assistant":
             risposta = str(messaggio.get("content", "") or "").casefold()
             domanda_personalizzazione = domanda_personalizzazione or bool(re.search(
-                r"personalizz|personaliz|personnal|persönlich|персонал|تخصيص|个性化|a/b/c/d",
+                r"personalizz|personaliz|personalis|personnal|persönlich|персонал|تخصيص|个性化|a/b/c/d",
                 risposta,
             ))
             continue
         if messaggio.get("role") != "user":
             continue
-        testo = str(messaggio.get("content", "") or "").strip().casefold()
+        testo = unicodedata.normalize("NFKC", str(messaggio.get("content", "") or "")).strip().casefold()
         if testo.startswith("prepara ora la scheda finale completa per la sidebar"):
             continue
+        # La conversione cirillico/arabo → latino vale solo per la lettera della
+        # scelta, non per le parole (altrimenti «вариант» diventerebbe illeggibile).
         opzione = re.match(
-            r"^(?:scelgo|scelta|opzione|choice|option)\s+([abcd])(?:\b|[.)])", testo
+            rf"^{parole_opzione}\s*[:：]?\s*(\w)(?!\w)", testo
         ) or (
-            re.match(r"^([abcd])(?:\b|[.)])", testo)
+            # Lettera da sola o seguita da punteggiatura: «a me piacerebbe…»
+            # o il russo «в книге…» non sono una scelta.
+            re.match(r"^(\w)\s*(?:$|[.):,;!\-–—])", testo)
             if domanda_personalizzazione else None
         )
-        nuova_scelta = opzione.group(1).upper() if opzione else ""
-        if not nuova_scelta and re.search(
-            r"\b(fai tu|scegli tu|decidi tu|non so|you decide|you choose|i don't know|hazlo tú|choisis|entscheide du)\b",
-            testo,
-        ):
+        lettera = opzione.group(1).translate(lettere_equivalenti) if opzione else ""
+        nuova_scelta = lettera.upper() if lettera in {"a", "b", "c", "d"} else ""
+        if not nuova_scelta and re.search(rf"(?:^|\W)(?:{frasi_d})(?:$|\W)", testo):
             nuova_scelta = "D"
         if not nuova_scelta and (
-            testo in {"no", "non voglio personalizzare", "no personalization"}
+            testo.strip(" .!。！") in risposte_a
             or "non voglio personalizz" in testo
+            or "no quiero personaliz" in testo
+            or "don't want to personali" in testo
         ):
             nuova_scelta = "A"
         if nuova_scelta:
@@ -4274,9 +4324,9 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
         )
         if sovrascrivi or not valore_corrente or predefinito:
             st.session_state[chiave_sidebar] = valore
-            applicati.append(campo.replace("_", " "))
+            applicati.append(campo)
         else:
-            mantenuti.append(campo.replace("_", " "))
+            mantenuti.append(campo)
     if applicati:
         # Mantiene la memoria unica coerente già nel callback, senza attendere
         # che il render successivo della sidebar ricostruisca i suoi widget.
@@ -4288,9 +4338,15 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
         st.session_state[CHIAVE_MEMORIA_SIDEBAR] = memoria
         progetto = memoria_progetto_unica()
         progetto["sidebar"] = dict(memoria)
-    messaggio = "Scheda applicata: " + (", ".join(applicati) if applicati else "nessun campo da aggiornare") + "."
+    lingua_chat = st.session_state.get("editor_language") or "Italiano"
+    separatore = {"中文": "、", "العربية": "، "}.get(lingua_chat, ", ")
+    nomi = lambda campi: separatore.join(nome_campo_chat_guidata(campo, lingua_chat) for campo in campi)
+    messaggio = chat_i18n_core.testo(
+        "applicata", lingua_chat,
+        campi=nomi(applicati) if applicati else chat_i18n_core.testo("nessun_campo", lingua_chat),
+    )
     if mantenuti:
-        messaggio += " Campi già compilati mantenuti: " + ", ".join(mantenuti) + "."
+        messaggio += chat_i18n_core.testo("mantenuti", lingua_chat, campi=nomi(mantenuti))
     st.session_state["chat_sidebar_esito_applicazione"] = messaggio
 
 
@@ -10416,20 +10472,19 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                     height=0,
                 )
             usa_deepseek_chat = False
-            costo_chat_visibile = f"{CREDIT_COSTS['chat_sidebar_guidata']} credito"
+            t_chat = lambda chiave, **valori: chat_i18n_core.testo(chiave, lingua_sel, **valori)
+            costo_chat_visibile = t_chat("credito", n=CREDIT_COSTS["chat_sidebar_guidata"])
             cervello_chat = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
-            st.info(
-                "La Chat guidata usa sempre **Cervello costoso**, indipendentemente dal cervello scelto per il libro. "
-                f"L'avvio e i tuoi messaggi sono gratuiti; ogni risposta della chat costa "
-                f"**{costo_chat_visibile}**."
-            )
-            st.caption(
-                f"Per indice e stesura resta selezionato **{brain_names_core.nome_cervello(cervello_chat, lingua_sel)}**: la chat non cambia questa scelta."
-            )
+            st.info(t_chat(
+                "info_costo",
+                cervello=brain_names_core.nome_cervello(brain_names_core.VALORE_COSTOSO, lingua_sel),
+                costo=costo_chat_visibile,
+            ))
+            st.caption(t_chat("cervello_libro", cervello=brain_names_core.nome_cervello(cervello_chat, lingua_sel)))
 
             if not st.session_state.get("chat_sidebar_attiva"):
                 st.button(
-                    "💬 AVVIA CHAT GUIDATA",
+                    t_chat("avvia"),
                     key="avvia_chat_sidebar_guidata",
                     on_click=avvia_chat_sidebar_guidata,
                     use_container_width=True,
@@ -10448,26 +10503,23 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                 testo_utente_chat = st.text_area(
                     campo_ui("messaggio", lingua_sel),
                     key=chiave_input_chat,
-                    placeholder="Descrivi l'idea del libro oppure rispondi alla domanda della chat.",
+                    placeholder=t_chat("placeholder"),
                     height=90,
                 )
                 ha_messaggi_utente_chat = any(
                     messaggio.get("role") == "user" for messaggio in messaggi_chat
                 )
                 prepara_scheda_chat = st.button(
-                    "✨ PREPARA LA SCHEDA PER LA SIDEBAR",
+                    t_chat("prepara"),
                     key=f"prepara_scheda_chat_sidebar_{nonce_chat}",
-                    help=(
-                        "Usa tutta la conversazione già svolta per creare ora i campi "
-                        "da inserire nella sidebar."
-                    ),
+                    help=t_chat("prepara_help"),
                     disabled=not ha_messaggi_utente_chat,
                     use_container_width=True,
                 )
                 if not ha_messaggi_utente_chat:
-                    st.caption("Descrivi prima l'idea del libro: poi potrai chiedere alla chat di preparare la scheda.")
+                    st.caption(t_chat("prima_idea"))
                 invia_messaggio_chat = st.button(
-                    f"➤ INVIA — risposta IA: {costo_chat_visibile}",
+                    t_chat("invia", costo=costo_chat_visibile),
                     key=f"invia_chat_sidebar_{nonce_chat}",
                     use_container_width=True,
                 )
@@ -10479,7 +10531,7 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
                         str(testo_utente_chat or "").strip()
                     )
                     if not testo_utente_chat:
-                        st.warning("Scrivi prima un messaggio per la chat.")
+                        st.warning(t_chat("scrivi_prima"))
                     else:
                         messaggi_chat.append({"role": "user", "content": testo_utente_chat})
                         # L'ultimo scambio è sufficiente per il dialogo, ma un
@@ -10637,7 +10689,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                             (6000, 180),
                             (12000, 240),
                         )
-                        with st.spinner("La chat sta preparando la risposta..."):
+                        with st.spinner(t_chat("attesa")):
                             for limite_token_chat, attesa_chat in limiti_chat:
                                 risposta_chat = chiedi_gpt(
                                     conversazione,
@@ -10657,10 +10709,12 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                                 if not str(risposta_chat or "").startswith("ERRORE:"):
                                     break
                         if str(risposta_chat or "").startswith("ERRORE:"):
-                            st.error(
-                                "La chat non ha prodotto una risposta. Nessun credito è stato trattenuto; "
-                                "puoi inviare di nuovo il messaggio."
-                            )
+                            st.error(t_chat("errore"))
+                            # Dettaglio breve per capire la causa (tempo scaduto, risposta
+                            # incompleta, servizio non raggiungibile), senza dati riservati.
+                            dettaglio_errore = re.sub(r"sk-[\w-]+", "sk-…", str(risposta_chat)[len("ERRORE:"):].strip())[:220]
+                            if dettaglio_errore:
+                                st.caption(t_chat("dettaglio", dettaglio=dettaglio_errore))
                         else:
                             messaggi_chat.append({"role": "assistant", "content": risposta_chat})
                             st.session_state["chat_sidebar_messaggi"] = messaggi_chat
@@ -10675,12 +10729,10 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                                 mancanti = sorted(
                                     obbligatori_scheda - set(scheda_estratta)
                                 )
-                                st.session_state["chat_sidebar_esito_scheda"] = (
-                                    "La chat non ha ancora restituito una scheda trasferibile. "
-                                    "Campi non riconosciuti: "
-                                    + ", ".join(campo.replace("_", " ") for campo in mancanti)
-                                    + ". Puoi premere di nuovo «Prepara la scheda per la sidebar»: "
-                                    "la conversazione resta conservata."
+                                st.session_state["chat_sidebar_esito_scheda"] = t_chat(
+                                    "scheda_incompleta",
+                                    campi=", ".join(nome_campo_chat_guidata(campo, lingua_sel) for campo in mancanti),
+                                    pulsante=t_chat("prepara").replace("✨", "").strip(),
                                 )
                             st.session_state["chat_sidebar_input_nonce"] = nonce_chat + 1
                             st.rerun()
@@ -10696,34 +10748,38 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                 if esito_scheda_chat and not scheda_chat_pronta:
                     st.warning(esito_scheda_chat)
                 if scheda_chat_pronta:
-                    st.success("La scheda è pronta. Puoi applicarla alla sidebar senza copiare i singoli campi.")
-                    with st.expander("Vedi i dati che verranno applicati", expanded=False):
+                    st.success(t_chat("scheda_pronta"))
+                    with st.expander(t_chat("vedi_dati"), expanded=False):
                         for campo, valore in scheda_chat_pronta.items():
                             if campo != "provider_ia":
-                                st.write(f"**{campo.replace('_', ' ').capitalize()}:** {valore}")
-                        st.caption(f"Cervello AI mantenuto: {brain_names_core.nome_cervello(cervello_chat, lingua_sel)}")
+                                if campo == "narratore":
+                                    valore = narrative_i18n_core.etichetta_narratore(valore, lingua_sel)
+                                elif campo == "tempo_verbale":
+                                    valore = narrative_i18n_core.etichetta_tempo(valore, lingua_sel)
+                                st.write(f"**{nome_campo_chat_guidata(campo, lingua_sel)}:** {valore}")
+                        st.caption(t_chat("cervello_mantenuto", cervello=brain_names_core.nome_cervello(cervello_chat, lingua_sel)))
                     st.button(
-                        "✍️ COMPILA SOLO I CAMPI VUOTI",
+                        t_chat("solo_vuoti"),
                         key="applica_chat_sidebar_solo_vuoti",
                         on_click=applica_scheda_chat_guidata,
                         args=(False,),
                         use_container_width=True,
                     )
-                    st.caption("Questa scelta conserva tutti i campi della sidebar già compilati.")
+                    st.caption(t_chat("solo_vuoti_nota"))
                     st.button(
-                        "⚠️ SOSTITUISCI I CAMPI GIÀ COMPILATI",
+                        t_chat("sostituisci"),
                         key="applica_chat_sidebar_sovrascrivi",
                         on_click=applica_scheda_chat_guidata,
                         args=(True,),
                         use_container_width=True,
                     )
-                    st.caption("Sostituisce i dati editoriali già presenti, ma non cambia il cervello scelto nella sidebar.")
+                    st.caption(t_chat("sostituisci_nota"))
 
                 esito_applicazione_chat = st.session_state.get("chat_sidebar_esito_applicazione", "")
                 if esito_applicazione_chat:
                     st.success(esito_applicazione_chat)
                 st.button(
-                    "↺ CHIUDI E REIMPOSTA QUESTA CHAT",
+                    t_chat("reimposta"),
                     key="reset_chat_sidebar_guidata",
                     on_click=reimposta_chat_sidebar_guidata,
                     use_container_width=True,
