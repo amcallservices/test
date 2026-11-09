@@ -85,13 +85,24 @@ def normalizza_narratore(valore: str) -> str:
     for opzione in NARRATORI:
         if testo == opzione.casefold():
             return opzione
-    if "prima persona" in testo or "first person" in testo or "primera persona" in testo:
+    # Forme brevi in tutte le lingue del sito (la chat può rispondere
+    # con le parole dell'utente invece del valore tecnico).
+    prima = ("prima persona", "first person", "primera persona", "première personne", "premiere personne",
+             "ich-erzähler", "ich-erzahler", "erste person", "persoana întâi", "persoana intai",
+             "первое лицо", "первого лица", "ضمير المتكلم", "第一人称")
+    onnisciente = ("onniscien", "omniscien", "allwissend", "всезнающ", "عليم", "全知")
+    multipli = ("più punti", "piu punti", "multipl", "alterna", "varios puntos", "plusieurs points",
+                "mehrere perspektiv", "mehreren perspektiv", "mai multe perspective", "нескольк", "متعدد", "多视角", "多个视角")
+    terza = ("terza persona", "third person", "tercera persona", "troisième personne", "troisieme personne",
+             "er-erzähl", "sie-erzähl", "personale", "dritte person", "persoana a treia", "третье лицо",
+             "третьего лица", "ضمير الغائب", "第三人称")
+    if any(chiave in testo for chiave in prima):
         return NARRATORI[1]
-    if "onniscien" in testo or "omniscien" in testo:
+    if any(chiave in testo for chiave in onnisciente):
         return NARRATORI[2]
-    if "più punti" in testo or "piu punti" in testo or "multipl" in testo or "alterna" in testo:
+    if any(chiave in testo for chiave in multipli):
         return NARRATORI[3]
-    if "terza persona" in testo or "third person" in testo or "tercera persona" in testo:
+    if any(chiave in testo for chiave in terza):
         return NARRATORI[0]
     return ""
 
@@ -104,9 +115,12 @@ def normalizza_tempo_verbale(valore: str) -> str:
     for opzione in TEMPI_VERBALI:
         if testo == opzione.casefold():
             return opzione
-    if testo.startswith("present"):
+    presente = ("present", "présent", "gegenwart", "präsens", "prasens", "prezent", "настоящ", "المضارع", "الحاضر", "现在时", "现在")
+    passato = ("passat", "past", "remoto", "pasado", "pretérito", "passé", "passe", "vergangen", "präteritum",
+               "prateritum", "trecut", "прошедш", "الماضي", "过去")
+    if any(testo.startswith(chiave) or chiave in testo for chiave in presente):
         return TEMPI_VERBALI[1]
-    if testo.startswith("passat") or testo.startswith("past") or "remoto" in testo:
+    if any(testo.startswith(chiave) or chiave in testo for chiave in passato):
         return TEMPI_VERBALI[0]
     return ""
 
@@ -289,7 +303,8 @@ salvo che i capitoli mostrino chiaramente un'evoluzione):
 CAPITOLI GIÀ SCRITTI:
 {capitoli_testo}
 
-Restituisci la scheda completa aggiornata, nello stesso formato:
+Restituisci la scheda completa aggiornata, nello stesso formato, con intestazioni e contenuti
+scritti in {lingua}:
 {MODELLO_SCHEDA_PERSONAGGI}
 
 Regole: aggiungi solo personaggi, relazioni, luoghi e fatti che compaiono davvero nei capitoli;
