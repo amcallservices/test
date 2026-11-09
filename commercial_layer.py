@@ -15,9 +15,10 @@ import requests
 import streamlit as st
 import streamlit.components.v1 as components
 from project_memory import CAMPI_SALVATAGGIO_PROGETTO, CHIAVE_MEMORIA_SIDEBAR
+from brain_names import nome_cervello
 
 
-COMMERCIAL_VERSION = "beta 7a"
+COMMERCIAL_VERSION = "7x"
 # Alias mantenuto per compatibilità con l'app commerciale già predisposta.
 COMMERCIAL_TEST_VERSION = COMMERCIAL_VERSION
 DEMO_INITIAL_CREDITS = 50
@@ -210,14 +211,14 @@ LEGACY_PACKAGES = {
 # crediti che l'utente potrebbe scegliere di usare diversamente.
 PACKAGE_BOOK_ESTIMATES = {
     "prova_15": "15 crediti per provare le funzioni principali",
-    "base_150": "1 libro standard con GPT oppure 5 con DeepSeek",
-    "creator_375": "4 libri standard con GPT oppure 13 con DeepSeek",
-    "studio_750": "8 libri standard con GPT oppure 26 con DeepSeek",
-    "professionale_1500": "17 libri standard con GPT oppure 52 con DeepSeek",
+    "base_150": "1 libro standard con il cervello costoso oppure 5 con il cervello economico",
+    "creator_375": "4 libri standard con il cervello costoso oppure 13 con il cervello economico",
+    "studio_750": "8 libri standard con il cervello costoso oppure 26 con il cervello economico",
+    "professionale_1500": "17 libri standard con il cervello costoso oppure 52 con il cervello economico",
 }
 PACKAGE_ESTIMATE_NOTE = (
     "Calcolo trasparente: un libro standard usa 75 crediti per le sezioni e 10 "
-    "per l'indice, quindi 85 crediti con GPT-5.4. Con DeepSeek V4 Pro il rapporto "
+    "per l'indice, quindi 85 crediti con il cervello costoso. Con il cervello economico il rapporto "
     "è 1:3: 85 unità interne, cioè 28⅓ crediti. Rigenerazioni, immagini, verifiche "
     "online e strumenti opzionali vengono sempre preventivati a parte."
 )
@@ -231,19 +232,19 @@ PACKAGE_HOME_GUIDE = {
     },
     "base_150": {
         "ideal": "Ideale per: il primo manuale o progetto editoriale completo.",
-        "estimate": "1 libro standard con GPT oppure 5 con DeepSeek.",
+        "estimate": "1 libro standard con il cervello costoso oppure 5 con il cervello economico.",
     },
     "creator_375": {
         "ideal": "Ideale per: chi pubblica più guide, manuali o Test Prep.",
-        "estimate": "4 libri standard con GPT oppure 13 con DeepSeek.",
+        "estimate": "4 libri standard con il cervello costoso oppure 13 con il cervello economico.",
     },
     "studio_750": {
         "ideal": "Ideale per: creator, docenti e progetti editoriali continuativi.",
-        "estimate": "8 libri standard con GPT oppure 26 con DeepSeek.",
+        "estimate": "8 libri standard con il cervello costoso oppure 26 con il cervello economico.",
     },
     "professionale_1500": {
         "ideal": "Ideale per: professionisti, scuole e cataloghi di più libri.",
-        "estimate": "17 libri standard con GPT oppure 52 con DeepSeek.",
+        "estimate": "17 libri standard con il cervello costoso oppure 52 con il cervello economico.",
     },
 }
 
@@ -260,15 +261,15 @@ PACKAGE_ENGINE_BOOKS = {
 }
 
 HOME_ENGINE_ESTIMATE_COPY = {
-    "Italiano": ("libri standard", "GPT-5.4 / DeepSeek: prova indice e prime sezioni.", "Calcolo preciso: libro standard = 75 crediti per le sezioni + 10 per l'indice. Totale GPT-5.4: 85 crediti; DeepSeek V4 Pro: 85 unità interne, pari a 28⅓ crediti. Rigenerazioni, immagini, verifiche online e strumenti opzionali restano esclusi."),
-    "English": ("standard books", "GPT-5.4 / DeepSeek: try the outline and first sections.", "Exact calculation: a standard book uses 75 credits for sections plus 10 for the outline. GPT-5.4 total: 85 credits; DeepSeek V4 Pro: 85 internal units, equal to 28⅓ credits. Regenerations, images, online checks and optional tools are excluded."),
-    "Español": ("libros estándar", "GPT-5.4 / DeepSeek: prueba el índice y las primeras secciones.", "Cálculo exacto: un libro estándar usa 75 créditos para las secciones y 10 para el índice. Total GPT-5.4: 85 créditos; DeepSeek V4 Pro: 85 unidades internas, equivalentes a 28⅓ créditos. Regeneraciones, imágenes, verificaciones online y herramientas opcionales no se incluyen."),
-    "Français": ("livres standard", "GPT-5.4 / DeepSeek : essayez le plan et les premières sections.", "Calcul précis : un livre standard utilise 75 crédits pour les sections et 10 pour le plan. Total GPT-5.4 : 85 crédits ; DeepSeek V4 Pro : 85 unités internes, soit 28⅓ crédits. Les régénérations, images, vérifications en ligne et outils facultatifs sont exclus."),
-    "Deutsch": ("Standardbücher", "GPT-5.4 / DeepSeek: Gliederung und erste Abschnitte ausprobieren.", "Genaue Berechnung: Ein Standardbuch benötigt 75 Credits für die Abschnitte und 10 für die Gliederung. GPT-5.4 insgesamt: 85 Credits; DeepSeek V4 Pro: 85 interne Einheiten, entsprechend 28⅓ Credits. Regenerierungen, Bilder, Online-Prüfungen und optionale Werkzeuge sind nicht enthalten."),
-    "Română": ("cărți standard", "GPT-5.4 / DeepSeek: testează cuprinsul și primele secțiuni.", "Calcul exact: o carte standard folosește 75 de credite pentru secțiuni și 10 pentru cuprins. Total GPT-5.4: 85 de credite; DeepSeek V4 Pro: 85 de unități interne, adică 28⅓ credite. Regenerările, imaginile, verificările online și instrumentele opționale nu sunt incluse."),
-    "Русский": ("стандартных книг", "GPT-5.4 / DeepSeek: попробуйте оглавление и первые разделы.", "Точный расчёт: стандартная книга использует 75 кредитов на разделы и 10 на оглавление. Всего GPT-5.4: 85 кредитов; DeepSeek V4 Pro: 85 внутренних единиц, то есть 28⅓ кредита. Повторные генерации, изображения, онлайн-проверки и дополнительные инструменты не включены."),
-    "العربية": ("كتب قياسية", "GPT-5.4 / DeepSeek: جرّب الفهرس والأقسام الأولى.", "حساب دقيق: يستخدم الكتاب القياسي 75 رصيداً للأقسام و10 أرصدة للفهرس. إجمالي GPT-5.4: 85 رصيداً؛ DeepSeek V4 Pro: 85 وحدة داخلية، أي 28⅓ رصيداً. لا يشمل ذلك إعادة التوليد أو الصور أو التحقق عبر الإنترنت أو الأدوات الاختيارية."),
-    "中文": ("标准图书", "GPT-5.4 / DeepSeek：可试用目录和前几节。", "精确计算：一本标准图书的章节需要 75 积分，目录需要 10 积分。GPT-5.4 总计 85 积分；DeepSeek V4 Pro 为 85 个内部单位，即 28⅓ 积分。不包括重新生成、图片、在线核查和可选工具。"),
+    "Italiano": ("libri standard", "Cervello costoso / cervello economico: prova indice e prime sezioni.", "Calcolo preciso: libro standard = 75 crediti per le sezioni + 10 per l'indice. Totale del cervello costoso: 85 crediti; Cervello economico: 85 unità interne, pari a 28⅓ crediti. Rigenerazioni, immagini, verifiche online e strumenti opzionali restano esclusi."),
+    "English": ("standard books", "Expensive brain / economy brain: try the outline and first sections.", "Exact calculation: a standard book uses 75 credits for sections plus 10 for the outline. Expensive brain total: 85 credits; Economy brain: 85 internal units, equal to 28⅓ credits. Regenerations, images, online checks and optional tools are excluded."),
+    "Español": ("libros estándar", "Cerebro caro / cerebro económico: prueba el índice y las primeras secciones.", "Cálculo exacto: un libro estándar usa 75 créditos para las secciones y 10 para el índice. Total del cerebro caro: 85 créditos; Cerebro económico: 85 unidades internas, equivalentes a 28⅓ créditos. Regeneraciones, imágenes, verificaciones online y herramientas opcionales no se incluyen."),
+    "Français": ("livres standard", "Cerveau coûteux / cerveau économique : essayez le plan et les premières sections.", "Calcul précis : un livre standard utilise 75 crédits pour les sections et 10 pour le plan. Total du cerveau coûteux : 85 crédits ; Cerveau économique : 85 unités internes, soit 28⅓ crédits. Les régénérations, images, vérifications en ligne et outils facultatifs sont exclus."),
+    "Deutsch": ("Standardbücher", "„Teures Gehirn“ / „Sparsames Gehirn“: Gliederung und erste Abschnitte ausprobieren.", "Genaue Berechnung: Ein Standardbuch benötigt 75 Credits für die Abschnitte und 10 für die Gliederung. „Teures Gehirn“ insgesamt: 85 Credits; „Sparsames Gehirn“: 85 interne Einheiten, entsprechend 28⅓ Credits. Regenerierungen, Bilder, Online-Prüfungen und optionale Werkzeuge sind nicht enthalten."),
+    "Română": ("cărți standard", "„Creier scump” / „Creier economic”: testează cuprinsul și primele secțiuni.", "Calcul exact: o carte standard folosește 75 de credite pentru secțiuni și 10 pentru cuprins. Total „Creier scump”: 85 de credite; „Creier economic”: 85 de unități interne, adică 28⅓ credite. Regenerările, imaginile, verificările online și instrumentele opționale nu sunt incluse."),
+    "Русский": ("стандартных книг", "«Дорогой мозг» / «Экономный мозг»: попробуйте оглавление и первые разделы.", "Точный расчёт: стандартная книга использует 75 кредитов на разделы и 10 на оглавление. Всего «Дорогой мозг»: 85 кредитов; «Экономный мозг»: 85 внутренних единиц, то есть 28⅓ кредита. Повторные генерации, изображения, онлайн-проверки и дополнительные инструменты не включены."),
+    "العربية": ("كتب قياسية", "العقل المكلف / العقل الاقتصادي: جرّب الفهرس والأقسام الأولى.", "حساب دقيق: يستخدم الكتاب القياسي 75 رصيداً للأقسام و10 أرصدة للفهرس. إجمالي العقل المكلف: 85 رصيداً؛ العقل الاقتصادي: 85 وحدة داخلية، أي 28⅓ رصيداً. لا يشمل ذلك إعادة التوليد أو الصور أو التحقق عبر الإنترنت أو الأدوات الاختيارية."),
+    "中文": ("标准图书", "高价大脑 / 经济大脑：可试用目录和前几节。", "精确计算：一本标准图书的章节需要 75 积分，目录需要 10 积分。高价大脑总计 85 积分；经济大脑为 85 个内部单位，即 28⅓ 积分。不包括重新生成、图片、在线核查和可选工具。"),
 }
 
 CONTACT_LABELS = {
@@ -1102,15 +1103,15 @@ def _render_password_recovery() -> bool:
 
 
 HOME_AI_ENGINES_COPY = {
-    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "GPT-5.4 · OpenAI", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 10 crediti · Coerenza completa: 10 crediti.", "DeepSeek V4 Pro", "Cervello autonomo per ricerca web con fonti visibili, indice, fonti caricate, scrittura e controlli editoriali.", "Rapporto 1:3 con GPT · Scrittura: 1 credito ogni 3 operazioni · Indice completo: 10 unità interne (3⅓ crediti).", "La verifica copyright sul web resta disponibile con GPT; puoi caricare immagini esterne nel progetto."),
-    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "GPT-5.4 · OpenAI", "The complete brain: writing, web research, sources, web copyright checks and review tools.", "Writing: 1 credit per operation · Full outline: 10 credits · Full coherence check: 10 credits.", "DeepSeek V4 Pro", "An independent brain for web research with visible sources, outlines, uploaded sources, writing and editorial checks.", "1:3 ratio with GPT · Writing: 1 credit every 3 operations · Full outline: 10 internal units (3⅓ credits).", "Web copyright checks remain available with GPT; you can upload external images to the project."),
-    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "GPT-5.4 · OpenAI", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web y revisión.", "Redacción: 1 crédito por operación · Índice completo: 10 créditos · Coherencia completa: 10 créditos.", "DeepSeek V4 Pro", "Cerebro independiente para búsqueda web con fuentes visibles, índices, fuentes cargadas, redacción y controles editoriales.", "Relación 1:3 con GPT · Redacción: 1 crédito cada 3 operaciones · Índice completo: 10 unidades internas (3⅓ créditos).", "El control de copyright web sigue disponible con GPT; puedes cargar imágenes externas en el proyecto."),
-    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "GPT-5.4 · OpenAI", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web et révision.", "Rédaction : 1 crédit par opération · Plan complet : 10 crédits · Cohérence complète : 10 crédits.", "DeepSeek V4 Pro", "Cerveau indépendant pour recherche web avec sources visibles, plans, sources importées, rédaction et contrôles éditoriaux.", "Rapport 1:3 avec GPT · Rédaction : 1 crédit toutes les 3 opérations · Plan complet : 10 unités internes (3⅓ crédits).", "Le contrôle de copyright web reste disponible avec GPT ; vous pouvez importer des images externes dans le projet."),
-    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "GPT-5.4 · OpenAI", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung und redaktionelle Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 10 Credits · Kohärenzprüfung: 10 Credits.", "DeepSeek V4 Pro", "Eigenständiges Gehirn für Webrecherche mit sichtbaren Quellen, Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen.", "Verhältnis 1:3 zu GPT · Schreiben: 1 Credit je 3 Vorgänge · Vollständige Gliederung: 10 interne Einheiten (3⅓ Credits).", "Die Web-Urheberrechtsprüfung bleibt mit GPT verfügbar; externe Bilder können ins Projekt hochgeladen werden."),
-    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "GPT-5.4 · OpenAI", "Creierul complet: scriere, cercetare web, surse, control copyright web și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 10 credite · Coerență completă: 10 credite.", "DeepSeek V4 Pro", "Creier independent pentru cercetare web cu surse vizibile, cuprins, surse încărcate, scriere și controale editoriale.", "Raport 1:3 cu GPT · Scriere: 1 credit la 3 operațiuni · Cuprins complet: 10 unități interne (3⅓ credite).", "Controlul copyright web rămâne disponibil cu GPT; poți încărca imagini externe în proiect."),
-    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "GPT-5.4 · OpenAI", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 10 кредитов · Полная проверка: 10 кредитов.", "DeepSeek V4 Pro", "Отдельный движок для веб-поиска с видимыми источниками, оглавления, загруженных источников, текста и редакторских проверок.", "Соотношение 1:3 с GPT · Текст: 1 кредит за 3 операции · Полное оглавление: 10 внутренних единиц (3⅓ кредита).", "Веб-проверка авторских прав остаётся доступной с GPT; внешние изображения можно загрузить в проект."),
-    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "GPT-5.4 · OpenAI", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 10 أرصدة · فحص الاتساق: 10 أرصدة.", "DeepSeek V4 Pro", "عقل مستقل للبحث على الويب مع مصادر ظاهرة، والفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية.", "نسبة 1:3 مع GPT · الكتابة: رصيد واحد لكل 3 عمليات · الفهرس الكامل: 10 وحدات داخلية (3⅓ رصيد).", "فحص حقوق الويب متاح مع GPT؛ ويمكنك رفع صور خارجية إلى المشروع."),
-    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "GPT-5.4 · OpenAI", "完整引擎：写作、网页研究、资料来源、网页版权检查和编辑检查。", "写作：每次操作 1 积分 · 完整目录：10 积分 · 完整一致性检查：10 积分。", "DeepSeek V4 Pro", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与 GPT 的比例为 1:3 · 写作：每 3 次操作 1 积分 · 完整目录：10 个内部单位（3⅓ 积分）。", "网页版权检查仍由 GPT 提供；你可以向项目上传外部图片。"),
+    "Italiano": ("Due cervelli AI, una scelta chiara", "Scegli il motore prima di iniziare il progetto. I pacchetti restano uguali; cambia il consumo delle elaborazioni.", "Cervello costoso", "Il cervello completo: scrittura, ricerca web, fonti, verifica copyright web e controlli.", "Scrittura: 1 credito per operazione · Indice completo: 10 crediti · Coerenza completa: 10 crediti.", "Cervello economico", "Cervello autonomo per ricerca web con fonti visibili, indice, fonti caricate, scrittura e controlli editoriali.", "Rapporto 1:3 con il cervello costoso · Scrittura: 1 credito ogni 3 operazioni · Indice completo: 10 unità interne (3⅓ crediti).", "La verifica copyright sul web resta disponibile con il cervello costoso; puoi caricare immagini esterne nel progetto."),
+    "English": ("Two AI brains, one clear choice", "Choose the engine before starting. Credit packages stay the same; AI consumption changes.", "Expensive brain", "The complete brain: writing, web research, sources, web copyright checks and review tools.", "Writing: 1 credit per operation · Full outline: 10 credits · Full coherence check: 10 credits.", "Economy brain", "An independent brain for web research with visible sources, outlines, uploaded sources, writing and editorial checks.", "1:3 ratio with the expensive brain · Writing: 1 credit every 3 operations · Full outline: 10 internal units (3⅓ credits).", "Web copyright checks remain available with the expensive brain; you can upload external images to the project."),
+    "Español": ("Dos cerebros de IA, una elección clara", "Elige el motor antes de empezar. Los paquetes no cambian; cambia el consumo de IA.", "Cerebro caro", "El cerebro completo: redacción, búsqueda web, fuentes, control de copyright web y revisión.", "Redacción: 1 crédito por operación · Índice completo: 10 créditos · Coherencia completa: 10 créditos.", "Cerebro económico", "Cerebro independiente para búsqueda web con fuentes visibles, índices, fuentes cargadas, redacción y controles editoriales.", "Relación 1:3 con el cerebro caro · Redacción: 1 crédito cada 3 operaciones · Índice completo: 10 unidades internas (3⅓ créditos).", "El control de copyright web sigue disponible con el cerebro caro; puedes cargar imágenes externas en el proyecto."),
+    "Français": ("Deux cerveaux IA, un choix clair", "Choisissez le moteur avant de commencer. Les forfaits restent identiques ; la consommation IA change.", "Cerveau coûteux", "Le cerveau complet : rédaction, recherche web, sources, contrôle de copyright web et révision.", "Rédaction : 1 crédit par opération · Plan complet : 10 crédits · Cohérence complète : 10 crédits.", "Cerveau économique", "Cerveau indépendant pour recherche web avec sources visibles, plans, sources importées, rédaction et contrôles éditoriaux.", "Rapport 1:3 avec le cerveau coûteux · Rédaction : 1 crédit toutes les 3 opérations · Plan complet : 10 unités internes (3⅓ crédits).", "Le contrôle de copyright web reste disponible avec le cerveau coûteux ; vous pouvez importer des images externes dans le projet."),
+    "Deutsch": ("Zwei KI-Gehirne, eine klare Wahl", "Wählen Sie die Engine vor Projektbeginn. Die Pakete bleiben gleich, der KI-Verbrauch ändert sich.", "„Teures Gehirn“", "Das vollständige Gehirn: Schreiben, Webrecherche, Quellen, Web-Urheberrechtsprüfung und redaktionelle Prüfung.", "Schreiben: 1 Credit je Vorgang · Vollständige Gliederung: 10 Credits · Kohärenzprüfung: 10 Credits.", "„Sparsames Gehirn“", "Eigenständiges Gehirn für Webrecherche mit sichtbaren Quellen, Gliederung, hochgeladene Quellen, Schreiben und redaktionelle Prüfungen.", "Verhältnis 1:3 zu „Teures Gehirn“ · Schreiben: 1 Credit je 3 Vorgänge · Vollständige Gliederung: 10 interne Einheiten (3⅓ Credits).", "Die Web-Urheberrechtsprüfung bleibt mit „Teures Gehirn“ verfügbar; externe Bilder können ins Projekt hochgeladen werden."),
+    "Română": ("Două creiere AI, o alegere clară", "Alege motorul înainte de proiect. Pachetele rămân la fel; consumul AI se schimbă.", "„Creier scump”", "Creierul complet: scriere, cercetare web, surse, control copyright web și verificări.", "Scriere: 1 credit per operațiune · Cuprins complet: 10 credite · Coerență completă: 10 credite.", "„Creier economic”", "Creier independent pentru cercetare web cu surse vizibile, cuprins, surse încărcate, scriere și controale editoriale.", "Raport 1:3 cu „Creier scump” · Scriere: 1 credit la 3 operațiuni · Cuprins complet: 10 unități interne (3⅓ credite).", "Controlul copyright web rămâne disponibil cu „Creier scump”; poți încărca imagini externe în proiect."),
+    "Русский": ("Два ИИ-движка — понятный выбор", "Выберите движок до начала проекта. Пакеты не меняются, меняется расход ИИ.", "«Дорогой мозг»", "Полный движок: текст, веб-поиск, источники, веб-проверка авторских прав и редактура.", "Текст: 1 кредит за операцию · Полное оглавление: 10 кредитов · Полная проверка: 10 кредитов.", "«Экономный мозг»", "Отдельный движок для веб-поиска с видимыми источниками, оглавления, загруженных источников, текста и редакторских проверок.", "Соотношение 1:3 с «Дорогой мозг» · Текст: 1 кредит за 3 операции · Полное оглавление: 10 внутренних единиц (3⅓ кредита).", "Веб-проверка авторских прав остаётся доступной с «Дорогой мозг»; внешние изображения можно загрузить в проект."),
+    "العربية": ("عقلان للذكاء الاصطناعي، اختيار واضح", "اختر المحرك قبل بدء المشروع. تبقى الباقات نفسها ويتغير استهلاك الذكاء الاصطناعي.", "العقل المكلف", "العقل الكامل: كتابة وبحث ويب ومصادر وفحص حقوق الويب ومراجعة.", "الكتابة: رصيد واحد لكل عملية · الفهرس الكامل: 10 أرصدة · فحص الاتساق: 10 أرصدة.", "العقل الاقتصادي", "عقل مستقل للبحث على الويب مع مصادر ظاهرة، والفهرس والمصادر المرفوعة والكتابة والفحوص التحريرية.", "نسبة 1:3 مع العقل المكلف · الكتابة: رصيد واحد لكل 3 عمليات · الفهرس الكامل: 10 وحدات داخلية (3⅓ رصيد).", "فحص حقوق الويب متاح مع العقل المكلف؛ ويمكنك رفع صور خارجية إلى المشروع."),
+    "中文": ("两种 AI 引擎，清晰选择", "在开始项目前选择引擎。积分包不变，AI 消耗不同。", "高价大脑", "完整引擎：写作、网页研究、资料来源、网页版权检查和编辑检查。", "写作：每次操作 1 积分 · 完整目录：10 积分 · 完整一致性检查：10 积分。", "经济大脑", "独立引擎，提供可见来源的网页研究、目录、上传资料、写作和编辑检查。", "与高价大脑的比例为 1:3 · 写作：每 3 次操作 1 积分 · 完整目录：10 个内部单位（3⅓ 积分）。", "网页版权检查仍由高价大脑提供；你可以向项目上传外部图片。"),
 }
 
 # Funzione editoriale opzionale, presentata nella home senza promettere che
@@ -1699,8 +1700,8 @@ def _landing_page() -> None:
         etichetta_deepseek = "libro standard" if home_language == "Italiano" and stima_deepseek == 1 else stima_etichetta
         stima_cervelli = (
             stima_prova if not stima_gpt else
-            f"🧠 GPT-5.4: {stima_gpt} {etichetta_gpt} · 85 {C['credit_word']} / {stima_etichetta.rstrip('s')}<br>"
-            f"⚡ DeepSeek: {stima_deepseek} {etichetta_deepseek} · 28⅓ {C['credit_word']} / {stima_etichetta.rstrip('s')}"
+            f"🧠 Cervello costoso: {stima_gpt} {etichetta_gpt} · 85 {C['credit_word']} / {stima_etichetta.rstrip('s')}<br>"
+            f"⚡ Cervello economico: {stima_deepseek} {etichetta_deepseek} · 28⅓ {C['credit_word']} / {stima_etichetta.rstrip('s')}"
         )
         with column:
             st.markdown(
@@ -1882,7 +1883,7 @@ def _landing_page() -> None:
     st.markdown("<div class='ss-trust'>CSV serve a salvare e ripristinare il progetto editoriale completo. Word e PDF servono invece a leggere, revisionare, stampare o pubblicare il manoscritto.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='ss-section'><h2>Crediti chiari, controllo totale</h2></div>", unsafe_allow_html=True)
-    st.markdown("<div class='ss-credit-note'>Un libro standard usa 75 crediti per la stesura delle sezioni e 10 per l'indice: 85 crediti con GPT-5.4. Con DeepSeek V4 Pro lo stesso calcolo equivale a 85 unità interne, cioè 28⅓ crediti. Le funzioni opzionali vengono sempre mostrate con un preventivo separato.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-credit-note'>Un libro standard usa 75 crediti per la stesura delle sezioni e 10 per l'indice: 85 crediti con il cervello costoso. Con il cervello economico lo stesso calcolo equivale a 85 unità interne, cioè 28⅓ crediti. Le funzioni opzionali vengono sempre mostrate con un preventivo separato.</div>", unsafe_allow_html=True)
     st.markdown("<div class='ss-trust'>Il libro resta sotto il tuo controllo: puoi fermare la scrittura, rivedere ogni sezione e decidere tu cosa esportare o pubblicare.</div>", unsafe_allow_html=True)
     invito_a, invito_b = st.columns([1.35, 0.65])
     with invito_a:
@@ -1896,7 +1897,7 @@ def _landing_page() -> None:
             st.session_state["commercial_auth_hint"] = "login"
             st.rerun()
 
-    st.markdown("<div class='ss-section'><h2>Pacchetti crediti chiari</h2><p class='ss-muted'>Stima basata su libri standard completi: 75 crediti di sezioni + 10 di indice. GPT-5.4 richiede 85 crediti per libro; DeepSeek V4 Pro 28⅓ crediti. Le attività opzionali restano escluse dal conteggio.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='ss-section'><h2>Pacchetti crediti chiari</h2><p class='ss-muted'>Stima basata su libri standard completi: 75 crediti di sezioni + 10 di indice. Cervello costoso richiede 85 crediti per libro; Cervello economico 28⅓ crediti. Le attività opzionali restano escluse dal conteggio.</p></div>", unsafe_allow_html=True)
     price_columns = st.columns(len(PACKAGES))
     for column, (package_key, package) in zip(price_columns, PACKAGES.items()):
         price = f"€ {package['amount_cents'] / 100:.2f}".replace(".", ",")
@@ -2878,6 +2879,7 @@ def _commerce_sidebar() -> None:
                     "Cervello da collaudare",
                     ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
                     key="commercial_admin_test_provider",
+                    format_func=nome_cervello,
                 )
                 if st.button(
                     "🧪 TESTA SOFTWARE CON PROGETTO BREVE",

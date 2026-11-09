@@ -51,6 +51,7 @@ MODULI_LOCALI_AGGIORNABILI = (
     "narrative_i18n",
     "book_project",
     "book_project_i18n",
+    "brain_names",
     "voice_chat",
 )
 
@@ -161,6 +162,7 @@ import project_memory as memoria_core
 import narrative_engine as narrative_core
 import narrative_prompts as narrative_prompts_core
 import narrative_i18n as narrative_i18n_core
+import brain_names as brain_names_core
 import book_project as book_project_core
 import book_project_i18n as book_project_i18n_core
 import emotional_impact as emotional_impact_core
@@ -623,7 +625,7 @@ TESTO PRECEDENTE DA SUPERARE (non copiarne la forma):
 def verifica_originalita_web_con_ai(testo_libro, registro_fonti):
     """Schermo supplementare sul web: segnala rischi, non certifica diritti."""
     if usa_deepseek_pro():
-        return "La verifica copyright sul web è disponibile solo con il cervello GPT: DeepSeek Pro resta separato e non usa strumenti GPT. Puoi comunque usare gratuitamente il controllo locale sulle fonti caricate."
+        return "La verifica copyright sul web è disponibile solo con il cervello costoso: Cervello economico resta separato e non usa strumenti del cervello costoso. Puoi comunque usare gratuitamente il controllo locale sulle fonti caricate."
     testo_libro = (testo_libro or "").strip()
     if len(testo_libro.split()) < 80:
         return "Servono almeno una sezione sostanziale già scritta per la verifica web."
@@ -714,7 +716,7 @@ def esito_copyright_web_concluso(esito):
         return False
     esiti_non_conclusi = (
         "non è riuscita", "non ha prodotto un esito", "servono sezioni",
-        "disponibile solo con il cervello gpt", "verifica non completata",
+        "disponibile solo con il cervello gpt", "disponibile solo con il cervello costoso", "verifica non completata",
         "nessun credito è stato addebitato",
     )
     return not any(indicatore in testo for indicatore in esiti_non_conclusi)
@@ -723,7 +725,7 @@ def esito_copyright_web_concluso(esito):
 def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
     """Analizza tutto il manoscritto: mini su ogni lotto, completo solo sui dubbi."""
     if usa_deepseek_pro():
-        return "La verifica copyright completa sul web è disponibile solo con il cervello GPT. DeepSeek Pro non utilizza il motore web GPT.", 0
+        return "La verifica copyright completa sul web è disponibile solo con il cervello costoso. Cervello economico non utilizza il motore web del cervello costoso.", 0
     blocchi = prepara_blocchi_verifica_web_completa(sezioni)
     if not blocchi:
         return "Servono sezioni già scritte per eseguire la verifica completa.", 0
@@ -765,7 +767,7 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                     model=MODELLO_CONTROLLO_COPYRIGHT_COMPLETO,
                 )
                 crediti_effettivi += CREDIT_COSTS["copyright_lotto_screening_mini"]
-                esito_finale = f"Screening GPT-5.4 mini\n{esito}"
+                esito_finale = f"Screening del cervello costoso (modello rapido)\n{esito}"
                 if richiede_revisione_copyright(esito):
                     riferimento_revisione = addebita_azione_diretta(
                         "verifica_copyright_web_revisione_gpt54",
@@ -796,7 +798,7 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                                 amount=CREDIT_COSTS["copyright_lotto_revisione_gpt54"],
                                 model=MODELLO_CONTROLLO_COPYRIGHT_APPROFONDITO,
                             )
-                            esito_finale += f"\n\nRevisione mirata GPT-5.4\n{esito_revisione}"
+                            esito_finale += f"\n\nRevisione mirata del cervello costoso\n{esito_revisione}"
                             revisioni_approfondite += 1
                             crediti_effettivi += CREDIT_COSTS["copyright_lotto_revisione_gpt54"]
                         else:
@@ -831,7 +833,7 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
                             rimborsata=True,
                             errore=type(errore_revisione).__name__,
                         )
-                        esito_finale += "\n\nRevisione mirata GPT-5.4 non disponibile: conserva lo screening mini e valuta manualmente il lotto."
+                        esito_finale += "\n\nRevisione mirata del cervello costoso non disponibile: conserva lo screening mini e valuta manualmente il lotto."
                 esiti.append(f"LOTTO {numero_lotto}/{len(lotti)}\n{esito_finale}")
                 completati += 1
             else:
@@ -871,10 +873,10 @@ def verifica_originalita_web_completa(sezioni, registro_fonti, aggiorna=None):
         aggiorna(len(lotti), len(lotti))
     intestazione = (
         f"VERIFICA WEB COMPLETA — {len(blocchi)} blocchi controllati in {len(lotti)} lotti; "
-        f"{completati} lotti completati; {revisioni_approfondite} revisioni mirate GPT-5.4; "
+        f"{completati} lotti completati; {revisioni_approfondite} revisioni mirate del cervello costoso; "
         f"{crediti_effettivi} crediti effettivamente addebitati.\n\n"
-        "Metodo e costi: GPT-5.4 mini analizza tutti i lotti (1 credito ciascuno); "
-        "GPT-5.4 viene usato solo per i lotti segnalati (2 crediti aggiuntivi per revisione completata).\n\n"
+        "Metodo e costi: Cervello costoso (modello rapido) analizza tutti i lotti (1 credito ciascuno); "
+        "Cervello costoso viene usato solo per i lotti segnalati (2 crediti aggiuntivi per revisione completata).\n\n"
         "Questo è uno screening di rischio sul web, non una certificazione legale né una verifica antiplagio universale.\n\n"
     )
     return intestazione + "\n\n".join(esiti), len(lotti)
@@ -1890,10 +1892,10 @@ def _client_e_modello_testuale(modello_richiesto=None, *, forza_gpt=False):
     """Restituisce uno solo dei due cervelli, senza fallback nascosti."""
     if usa_deepseek_pro() and not forza_gpt:
         if not client_deepseek:
-            raise RuntimeError("DeepSeek Pro non è configurato. Aggiungi DEEPSEEK_API_KEY nei Secrets di Streamlit oppure seleziona GPT-5.4.")
+            raise RuntimeError("Cervello economico non è configurato. Aggiungi DEEPSEEK_API_KEY nei Secrets di Streamlit oppure seleziona il cervello costoso.")
         return client_deepseek, MODELLO_DEEPSEEK_PRO
     if not client_openai:
-        raise RuntimeError("GPT non è configurato. Aggiungi OPENAI_API_KEY nei Secrets di Streamlit oppure seleziona DeepSeek Pro.")
+        raise RuntimeError("Cervello costoso non è configurato. Aggiungi OPENAI_API_KEY nei Secrets di Streamlit oppure seleziona il cervello economico.")
     return client_openai, (modello_richiesto or MODELLO_STESURA)
 
 
@@ -2003,13 +2005,13 @@ def chiedi_gpt(prompt, system_prompt, *, addebita=True, amount=AI_REQUEST_CREDIT
             scelta = response.choices[0]
             testo = str(scelta.message.content or "").strip()
             if scelta.finish_reason != "stop" or not testo:
-                raise ValueError("La risposta DeepSeek è incompleta.")
+                raise ValueError("La risposta del cervello economico è incompleta.")
             if chat_guidata_deepseek:
                 # DeepSeek talvolta numera le etichette della scheda; la sidebar
                 # accetta le stesse etichette senza il numero iniziale.
                 testo = re.sub(r"(?m)^(\s*)\d{1,2}[.)]\s+(?=[^\n:]{2,90}:)", r"\1", testo)
                 if validatore_deepseek is not None and not validatore_deepseek(testo):
-                    raise ValueError("La scheda DeepSeek non contiene tutti i campi della sidebar.")
+                    raise ValueError("La scheda del cervello economico non contiene tutti i campi della sidebar.")
         else:
             testo = response.choices[0].message.content.strip()
         registra_esito_chiamata_ai(
@@ -2090,7 +2092,7 @@ def stima_crediti_per_cervello(azione_id, stima_gpt):
     if any(parola in azione for parola in ("report_sintattico", "metadati", "controlla_fatti")):
         return "1 ogni 3 controlli equivalenti"
     if "copyright" in azione or "immagine" in azione:
-        return "non disponibile con DeepSeek Pro"
+        return "non disponibile con il cervello economico"
     return stima_gpt
 
 
@@ -2177,7 +2179,7 @@ def pulsante_con_preventivo(azione_id, etichetta, stima_crediti, descrizione, *,
         st.caption("**Cosa resterà invariato**")
         st.write(tutela_azione_preventivo(azione_id))
     st.caption(
-        f"**Cervello selezionato:** {motore_preventivo}. "
+        f"**Cervello selezionato:** {brain_names_core.nome_cervello(motore_preventivo, st.session_state.get('editor_language') or 'Italiano')}. "
         "Se una richiesta non restituisce un risultato utilizzabile, il costo della fase non completata non viene trattenuto oppure viene riaccreditato."
     )
     col_conferma, col_annulla = st.columns(2)
@@ -2205,7 +2207,7 @@ def addebita_azione_diretta(reason, amount):
 def verifica_e_correggi_fatti_online(testo, sezione, lingua):
     """Verifica soltanto i fatti aggiornabili che meritano una ricerca online."""
     if usa_deepseek_pro():
-        st.info("Il controllo fatti online richiede GPT perché utilizza ricerca web. Con DeepSeek Pro il testo resta invariato.")
+        st.info("Il controllo fatti online richiede il cervello costoso perché utilizza ricerca web. Con il cervello economico il testo resta invariato.")
         return pulisci_testo_editoriale(testo)
     riferimento = None
     try:
@@ -2266,7 +2268,7 @@ def richiede_verifica_fatti(testo, sezione=""):
 def audit_fatti_capitolo(capitolo, contenuti, lingua):
     """Esegue un solo controllo online sul capitolo completo, senza riscrivere le singole sezioni."""
     if usa_deepseek_pro():
-        return "Controllo fatti online disponibile con il cervello GPT. DeepSeek Pro rimane separato e non usa la ricerca web GPT."
+        return "Controllo fatti online disponibile con il cervello costoso. Cervello economico rimane separato e non usa la ricerca web del cervello costoso."
     testo = "\n\n".join(f"SEZIONE: {nome}\n{contenuto}" for nome, contenuto in contenuti if contenuto.strip())
     if not testo or not richiede_verifica_fatti(testo, capitolo):
         return "Controllo fatti del capitolo non necessario: nessun dato variabile rilevato."
@@ -2543,7 +2545,7 @@ def mostra_lettore_vocale_gratuito(testo_libro, lingua, sezioni=None):
 def genera_immagine_capitolo(sezione, titolo, genere, trama, contenuto, lingua):
     """GPT-4o-mini prepara il brief; GPT-Image-1 Mini genera il visual economico."""
     if usa_deepseek_pro():
-        st.warning("La generazione immagini richiede il cervello GPT. Seleziona GPT-5.4 per creare immagini del capitolo.")
+        st.warning("La generazione immagini richiede il cervello costoso. Seleziona il cervello costoso per creare immagini del capitolo.")
         return None, ""
     contesto_basso = f"{titolo} {trama} {sezione}".lower()
     if "fusion 360" in contesto_basso:
@@ -4469,7 +4471,7 @@ def _ricerca_web_chat_nicchia(cronologia, lingua, fase):
         )
     try:
         if not client_openai:
-            raise RuntimeError("GPT non configurato")
+            raise RuntimeError("Cervello costoso non configurato")
         risposta = client_openai.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0).responses.create(
             model=MODELLO_ANALISI_FONTI,
             tools=[{"type": "web_search_preview"}], input=f"{consegna}\n\nCONVERSAZIONE:\n{cronologia}",
@@ -5089,6 +5091,9 @@ def mostra_memoria_visiva_progetto():
     with st.expander("Visualizza dati salvati", expanded=False):
         for nome in CAMPI_SALVATAGGIO_PROGETTO:
             valore = str(sidebar.get(nome, "")).strip() or "—"
+            if nome == "provider_ia" and valore != "—":
+                # Il cervello si mostra con il suo nome visibile, non con il valore tecnico.
+                valore = brain_names_core.nome_cervello(valore, st.session_state.get("editor_language") or "Italiano")
             st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
         if st.session_state.get("indice_raw", "").strip():
             st.text_area(campo_ui("indice_salvato"), value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
@@ -7013,7 +7018,7 @@ l'indice. Restituisci un testo autonomo di almeno 80 parole.
                 )
         elif attinente is None:
             st.session_state.setdefault("avvisi_qualita_sezioni", {})[sezione] = (
-                "Il controllo automatico di pertinenza DeepSeek non è riuscito: verifica questa sezione prima dell'esportazione."
+                "Il controllo automatico di pertinenza del cervello economico non è riuscito: verifica questa sezione prima dell'esportazione."
             )
 
     # Controllo locale, gratuito e non bloccante: la bussola viene aggiornata
@@ -7142,7 +7147,9 @@ with st.sidebar:
         testo_ui("cervello", lingua_sel),
         ["GPT-5.4 (OpenAI)", "DeepSeek V4 Pro"],
         key="provider_ia",
-        help="GPT conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; DeepSeek Pro usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
+        # Il valore salvato resta tecnico; l'utente vede «Cervello costoso / economico».
+        format_func=lambda valore: brain_names_core.nome_cervello(valore, lingua_sel),
+        help="Cervello costoso conserva ricerca web e verifica copyright web. Le immagini vengono esclusivamente caricate dall'utente; Cervello economico usa un motore separato per ricerca fonti con registro visibile, indice, fonti caricate, scrittura e controlli editoriali, con consumi più leggeri.",
     )
     # Il contenitore viene riempito dopo la scelta della lingua, ma conserva
     # questa posizione: tariffario e cervello restano sempre uno sotto l'altro.
@@ -7163,44 +7170,44 @@ with st.sidebar:
     st.markdown(f"#### 1 · {intestazioni_sidebar[1]}")
     tariffari_sidebar = {
         "Italiano": {
-            "gpt_info": "GPT-5.4 attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.",
-            "gpt_title": "Tariffario GPT-5.4",
+            "gpt_info": "Cervello costoso attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.",
+            "gpt_title": "Tariffario del cervello costoso",
             "gpt": ["Scrittura, rigenerazione, quiz ed esempi: 1 credito per ogni operazione.", "Indice completo: 5 crediti (2 ricerca web + 3 progettazione editoriale).", "Voto indice: 1 credito; rigenerazione indice: 3 crediti.", "Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.", "Coerenza completa: 10 crediti; controllo successivo: 1 credito per blocco modificato.", "10 ricette: 10 crediti; immagine di capitolo: 5 crediti; copyright web: da 2 crediti."],
-            "ds_info": "DeepSeek Pro attivo: scrittura, indice, ricerca fonti e controlli editoriali usano DeepSeek. Il copyright web e le immagini richiedono GPT e restano disattivati.",
-            "ds_title": "Tariffario DeepSeek Pro",
-            "ds": ["Rapporto DeepSeek/GPT: 1 a 3. Tre operazioni equivalenti da 1 credito GPT consumano 1 credito DeepSeek.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti web nativa + indice completo: circa 2 crediti in totale.", "Voto indice, report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Copyright web e immagini sono disponibili solo con GPT."],
+            "ds_info": "Cervello economico attivo: scrittura, indice, ricerca fonti e controlli editoriali usano il cervello economico. Il copyright web e le immagini richiedono il cervello costoso e restano disattivati.",
+            "ds_title": "Tariffario del cervello economico",
+            "ds": ["Rapporto cervello economico/costoso: 1 a 3. Tre operazioni equivalenti da 1 credito del cervello costoso consumano 1 credito del cervello economico.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti web nativa + indice completo: circa 2 crediti in totale.", "Voto indice, report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Copyright web e immagini sono disponibili solo con il cervello costoso."],
         },
         "English": {
-            "gpt_info": "GPT-5.4 is active: it uses the complete engine, including web research, web copyright checks and image generation.", "gpt_title": "GPT-5.4 pricing", "gpt": ["Writing, rewriting, quizzes and examples: 1 credit per action.", "Complete outline: 5 credits (2 web research + 3 editorial design).", "Outline review: 1 credit; outline rewrite: 3 credits.", "Fact check: 2 credits; syntax report and KDP metadata: 1 credit each.", "Full consistency check: 10 credits; later checks: 1 credit per changed block.", "10 recipes: 10 credits; chapter image: 5 credits; web copyright: from 2 credits."],
-            "ds_info": "DeepSeek Pro is active: writing, outlines, source research and editorial checks use DeepSeek. Web copyright and images require GPT and are disabled.", "ds_title": "DeepSeek Pro pricing", "ds": ["DeepSeek/GPT ratio: 1 to 3. Three equivalent 1-credit GPT actions use 1 DeepSeek credit.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native web source research + complete outline: about 2 credits total.", "Outline review, syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. Web copyright and images are available with GPT only."],
+            "gpt_info": "Expensive brain is active: it uses the complete engine, including web research, web copyright checks and image generation.", "gpt_title": "Expensive brain pricing", "gpt": ["Writing, rewriting, quizzes and examples: 1 credit per action.", "Complete outline: 5 credits (2 web research + 3 editorial design).", "Outline review: 1 credit; outline rewrite: 3 credits.", "Fact check: 2 credits; syntax report and KDP metadata: 1 credit each.", "Full consistency check: 10 credits; later checks: 1 credit per changed block.", "10 recipes: 10 credits; chapter image: 5 credits; web copyright: from 2 credits."],
+            "ds_info": "Economy brain is active: writing, outlines, source research and editorial checks use the economy brain. Web copyright and images require the expensive brain and are disabled.", "ds_title": "Economy brain pricing", "ds": ["Economy/expensive brain ratio: 1 to 3. Three equivalent 1-credit expensive brain actions use 1 economy brain credit.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native web source research + complete outline: about 2 credits total.", "Outline review, syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. Web copyright and images are available with the expensive brain only."],
         },
         "Español": {
-            "gpt_info": "GPT-5.4 está activo: utiliza el motor completo, incluida la investigación web, la comprobación de copyright web y la generación de imágenes.", "gpt_title": "Tarifas de GPT-5.4", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 5 créditos (2 de investigación web + 3 de diseño editorial).", "Evaluación del índice: 1 crédito; regeneración: 3 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; imagen de capítulo: 5 créditos; copyright web: desde 2 créditos."],
-            "ds_info": "DeepSeek Pro está activo: escritura, índice, investigación de fuentes y controles editoriales usan DeepSeek. El copyright web y las imágenes requieren GPT y están desactivados.", "ds_title": "Tarifas de DeepSeek Pro", "ds": ["Relación DeepSeek/GPT: 1 a 3. Tres operaciones GPT equivalentes de 1 crédito consumen 1 crédito DeepSeek.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Investigación nativa de fuentes web + índice completo: unos 2 créditos en total.", "Evaluación del índice, informe sintáctico y metadatos: 1 crédito cada 3 controles equivalentes.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "10 recetas: unos 4 créditos. Copyright web e imágenes solo con GPT."],
+            "gpt_info": "Cerebro caro está activo: utiliza el motor completo, incluida la investigación web, la comprobación de copyright web y la generación de imágenes.", "gpt_title": "Tarifas del cerebro caro", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 5 créditos (2 de investigación web + 3 de diseño editorial).", "Evaluación del índice: 1 crédito; regeneración: 3 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; imagen de capítulo: 5 créditos; copyright web: desde 2 créditos."],
+            "ds_info": "Cerebro económico está activo: escritura, índice, investigación de fuentes y controles editoriales usan el cerebro económico. El copyright web y las imágenes requieren el cerebro caro y están desactivados.", "ds_title": "Tarifas del cerebro económico", "ds": ["Relación cerebro económico/caro: 1 a 3. Tres operaciones del cerebro caro equivalentes de 1 crédito consumen 1 crédito del cerebro económico.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Investigación nativa de fuentes web + índice completo: unos 2 créditos en total.", "Evaluación del índice, informe sintáctico y metadatos: 1 crédito cada 3 controles equivalentes.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "10 recetas: unos 4 créditos. Copyright web e imágenes solo con el cerebro caro."],
         },
         "Français": {
-            "gpt_info": "GPT-5.4 est actif : il utilise le moteur complet, avec recherche web, contrôle de copyright web et génération d’images.", "gpt_title": "Tarifs GPT-5.4", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 5 crédits (2 recherche web + 3 conception éditoriale).", "Évaluation du plan : 1 crédit ; régénération : 3 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "10 recettes : 10 crédits ; image de chapitre : 5 crédits ; copyright web : dès 2 crédits."],
-            "ds_info": "DeepSeek Pro est actif : rédaction, plan, recherche de sources et contrôles éditoriaux utilisent DeepSeek. Le copyright web et les images nécessitent GPT et sont désactivés.", "ds_title": "Tarifs DeepSeek Pro", "ds": ["Rapport DeepSeek/GPT : 1 pour 3. Trois opérations GPT équivalentes à 1 crédit consomment 1 crédit DeepSeek.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 opérations.", "Recherche native de sources web + plan complet : environ 2 crédits au total.", "Évaluation du plan, rapport syntaxique et métadonnées : 1 crédit tous les 3 contrôles équivalents.", "Cohérence complète : environ 4 crédits ; mises à jour : 1 crédit tous les 3 blocs.", "10 recettes : environ 4 crédits. Copyright web et images uniquement avec GPT."],
+            "gpt_info": "Cerveau coûteux est actif : il utilise le moteur complet, avec recherche web, contrôle de copyright web et génération d’images.", "gpt_title": "Tarifs du cerveau coûteux", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 5 crédits (2 recherche web + 3 conception éditoriale).", "Évaluation du plan : 1 crédit ; régénération : 3 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "10 recettes : 10 crédits ; image de chapitre : 5 crédits ; copyright web : dès 2 crédits."],
+            "ds_info": "Cerveau économique est actif : rédaction, plan, recherche de sources et contrôles éditoriaux utilisent le cerveau économique. Le copyright web et les images nécessitent le cerveau coûteux et sont désactivés.", "ds_title": "Tarifs du cerveau économique", "ds": ["Rapport cerveau économique/coûteux : 1 pour 3. Trois opérations du cerveau coûteux équivalentes à 1 crédit consomment 1 crédit du cerveau économique.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 opérations.", "Recherche native de sources web + plan complet : environ 2 crédits au total.", "Évaluation du plan, rapport syntaxique et métadonnées : 1 crédit tous les 3 contrôles équivalents.", "Cohérence complète : environ 4 crédits ; mises à jour : 1 crédit tous les 3 blocs.", "10 recettes : environ 4 crédits. Copyright web et images uniquement avec le cerveau coûteux."],
         },
         "Deutsch": {
-            "gpt_info": "GPT-5.4 ist aktiv: Es nutzt die vollständige Engine einschließlich Webrecherche, Web-Copyright-Prüfung und Bildgenerierung.", "gpt_title": "GPT-5.4 Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 5 Credits (2 Webrecherche + 3 redaktionelle Planung).", "Gliederungsbewertung: 1 Credit; Neugenerierung: 3 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "10 Rezepte: 10 Credits; Kapitelbild: 5 Credits; Web-Copyright: ab 2 Credits."],
-            "ds_info": "DeepSeek Pro ist aktiv: Schreiben, Gliederung, Quellenrecherche und redaktionelle Kontrollen nutzen DeepSeek. Web-Copyright und Bilder benötigen GPT und sind deaktiviert.", "ds_title": "DeepSeek Pro Preise", "ds": ["DeepSeek/GPT-Verhältnis: 1 zu 3. Drei gleichwertige GPT-Vorgänge zu 1 Credit verbrauchen 1 DeepSeek-Credit.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Webquellen-Recherche + vollständige Gliederung: insgesamt etwa 2 Credits.", "Gliederungsbewertung, Syntaxbericht und Metadaten: 1 Credit je 3 gleichwertige Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits; Updates: 1 Credit je 3 Blöcke.", "10 Rezepte: etwa 4 Credits. Web-Copyright und Bilder nur mit GPT."],
+            "gpt_info": "„Teures Gehirn“ ist aktiv: Es nutzt die vollständige Engine einschließlich Webrecherche, Web-Copyright-Prüfung und Bildgenerierung.", "gpt_title": "„Teures Gehirn“ Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 5 Credits (2 Webrecherche + 3 redaktionelle Planung).", "Gliederungsbewertung: 1 Credit; Neugenerierung: 3 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "10 Rezepte: 10 Credits; Kapitelbild: 5 Credits; Web-Copyright: ab 2 Credits."],
+            "ds_info": "„Sparsames Gehirn“ ist aktiv: Schreiben, Gliederung, Quellenrecherche und redaktionelle Kontrollen nutzen „Sparsames Gehirn“. Web-Copyright und Bilder benötigen „Teures Gehirn“ und sind deaktiviert.", "ds_title": "„Sparsames Gehirn“ Preise", "ds": ["Sparsames/Teures Gehirn-Verhältnis: 1 zu 3. Drei gleichwertige „Teures Gehirn“-Vorgänge zu 1 Credit verbrauchen 1 „Sparsames Gehirn“-Credit.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Webquellen-Recherche + vollständige Gliederung: insgesamt etwa 2 Credits.", "Gliederungsbewertung, Syntaxbericht und Metadaten: 1 Credit je 3 gleichwertige Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits; Updates: 1 Credit je 3 Blöcke.", "10 Rezepte: etwa 4 Credits. Web-Copyright und Bilder nur mit „Teures Gehirn“."],
         },
         "Română": {
-            "gpt_info": "GPT-5.4 este activ: folosește motorul complet, inclusiv cercetare web, verificare copyright web și generare de imagini.", "gpt_title": "Tarife GPT-5.4", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per acțiune.", "Cuprins complet: 5 credite (2 cercetare web + 3 proiectare editorială).", "Evaluarea cuprinsului: 1 credit; regenerare: 3 credite.", "Verificarea faptelor: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; controale ulterioare: 1 credit per bloc modificat.", "10 rețete: 10 credite; imagine de capitol: 5 credite; copyright web: de la 2 credite."],
-            "ds_info": "DeepSeek Pro este activ: scrierea, cuprinsul, cercetarea surselor și controalele editoriale folosesc DeepSeek. Copyright-ul web și imaginile necesită GPT și sunt dezactivate.", "ds_title": "Tarife DeepSeek Pro", "ds": ["Raport DeepSeek/GPT: 1 la 3. Trei operațiuni GPT echivalente de 1 credit consumă 1 credit DeepSeek.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Cercetare nativă de surse web + cuprins complet: circa 2 credite în total.", "Evaluare cuprins, raport sintactic și metadate: 1 credit la 3 controale echivalente.", "Coerență completă: circa 4 credite; actualizări: 1 credit la 3 blocuri.", "10 rețete: circa 4 credite. Copyright web și imagini doar cu GPT."],
+            "gpt_info": "„Creier scump” este activ: folosește motorul complet, inclusiv cercetare web, verificare copyright web și generare de imagini.", "gpt_title": "Tarife „Creier scump”", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per acțiune.", "Cuprins complet: 5 credite (2 cercetare web + 3 proiectare editorială).", "Evaluarea cuprinsului: 1 credit; regenerare: 3 credite.", "Verificarea faptelor: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; controale ulterioare: 1 credit per bloc modificat.", "10 rețete: 10 credite; imagine de capitol: 5 credite; copyright web: de la 2 credite."],
+            "ds_info": "„Creier economic” este activ: scrierea, cuprinsul, cercetarea surselor și controalele editoriale folosesc „Creier economic”. Copyright-ul web și imaginile necesită „Creier scump” și sunt dezactivate.", "ds_title": "Tarife „Creier economic”", "ds": ["Raport creier economic/scump: 1 la 3. Trei operațiuni „Creier scump” echivalente de 1 credit consumă 1 credit „Creier economic”.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Cercetare nativă de surse web + cuprins complet: circa 2 credite în total.", "Evaluare cuprins, raport sintactic și metadate: 1 credit la 3 controale echivalente.", "Coerență completă: circa 4 credite; actualizări: 1 credit la 3 blocuri.", "10 rețete: circa 4 credite. Copyright web și imagini doar cu „Creier scump”."],
         },
         "Русский": {
-            "gpt_info": "GPT-5.4 активен: используется полный движок, включая веб-поиск, проверку авторских прав в сети и генерацию изображений.", "gpt_title": "Тарифы GPT-5.4", "gpt": ["Написание, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 5 кредитов (2 веб-поиск + 3 редакционное проектирование).", "Оценка структуры: 1 кредит; регенерация: 3 кредита.", "Проверка фактов: 2 кредита; синтаксический отчёт и метаданные KDP: по 1 кредиту.", "Полная проверка связности: 10 кредитов; следующие проверки: 1 кредит за изменённый блок.", "10 рецептов: 10 кредитов; изображение главы: 5 кредитов; веб-copyright: от 2 кредитов."],
-            "ds_info": "DeepSeek Pro активен: написание, структура, поиск источников и редакционные проверки используют DeepSeek. Веб-copyright и изображения требуют GPT и отключены.", "ds_title": "Тарифы DeepSeek Pro", "ds": ["Соотношение DeepSeek/GPT: 1 к 3. Три эквивалентных действия GPT по 1 кредиту используют 1 кредит DeepSeek.", "Написание, переработка, тесты и примеры: 1 кредит за 3 действия.", "Нативный поиск веб-источников + полная структура: около 2 кредитов всего.", "Оценка структуры, синтаксический отчёт и метаданные: 1 кредит за 3 эквивалентные проверки.", "Полная связность: около 4 кредитов; обновления: 1 кредит за 3 блока.", "10 рецептов: около 4 кредитов. Веб-copyright и изображения доступны только с GPT."],
+            "gpt_info": "«Дорогой мозг» активен: используется полный движок, включая веб-поиск, проверку авторских прав в сети и генерацию изображений.", "gpt_title": "Тарифы «Дорогой мозг»", "gpt": ["Написание, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 5 кредитов (2 веб-поиск + 3 редакционное проектирование).", "Оценка структуры: 1 кредит; регенерация: 3 кредита.", "Проверка фактов: 2 кредита; синтаксический отчёт и метаданные KDP: по 1 кредиту.", "Полная проверка связности: 10 кредитов; следующие проверки: 1 кредит за изменённый блок.", "10 рецептов: 10 кредитов; изображение главы: 5 кредитов; веб-copyright: от 2 кредитов."],
+            "ds_info": "«Экономный мозг» активен: написание, структура, поиск источников и редакционные проверки используют «Экономный мозг». Веб-copyright и изображения требуют «Дорогой мозг» и отключены.", "ds_title": "Тарифы «Экономный мозг»", "ds": ["Соотношение «Экономный»/«Дорогой мозг»: 1 к 3. Три эквивалентных действия «Дорогой мозг» по 1 кредиту используют 1 кредит «Экономный мозг».", "Написание, переработка, тесты и примеры: 1 кредит за 3 действия.", "Нативный поиск веб-источников + полная структура: около 2 кредитов всего.", "Оценка структуры, синтаксический отчёт и метаданные: 1 кредит за 3 эквивалентные проверки.", "Полная связность: около 4 кредитов; обновления: 1 кредит за 3 блока.", "10 рецептов: около 4 кредитов. Веб-copyright и изображения доступны только с «Дорогой мозг»."],
         },
         "العربية": {
-            "gpt_info": "GPT-5.4 نشط: يستخدم المحرك الكامل، بما في ذلك البحث على الويب وفحص حقوق النشر وتوليد الصور.", "gpt_title": "أسعار GPT-5.4", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد لكل عملية.", "فهرس كامل: 5 أرصدة (2 للبحث على الويب + 3 للتخطيط التحريري).", "تقييم الفهرس: رصيد واحد؛ إعادة التوليد: 3 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد واحد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ الفحوصات اللاحقة: رصيد لكل كتلة معدلة.", "10 وصفات: 10 أرصدة؛ صورة الفصل: 5 أرصدة؛ حقوق النشر على الويب: من رصيدين."],
-            "ds_info": "DeepSeek Pro نشط: الكتابة والفهرس وبحث المصادر والفحوصات التحريرية تستخدم DeepSeek. حقوق النشر على الويب والصور تحتاج GPT وهي معطلة.", "ds_title": "أسعار DeepSeek Pro", "ds": ["نسبة DeepSeek/GPT هي 1 إلى 3. ثلاث عمليات GPT مكافئة لرصيد واحد تستهلك رصيد DeepSeek واحداً.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد كل 3 عمليات.", "بحث أصلي في مصادر الويب + فهرس كامل: نحو رصيدين إجمالاً.", "تقييم الفهرس والتقرير النحوي والبيانات: رصيد واحد كل 3 فحوصات مكافئة.", "اتساق كامل: نحو 4 أرصدة؛ التحديثات: رصيد واحد كل 3 كتل.", "10 وصفات: نحو 4 أرصدة. حقوق النشر على الويب والصور متاحة مع GPT فقط."],
+            "gpt_info": "العقل المكلف نشط: يستخدم المحرك الكامل، بما في ذلك البحث على الويب وفحص حقوق النشر وتوليد الصور.", "gpt_title": "أسعار العقل المكلف", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد لكل عملية.", "فهرس كامل: 5 أرصدة (2 للبحث على الويب + 3 للتخطيط التحريري).", "تقييم الفهرس: رصيد واحد؛ إعادة التوليد: 3 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد واحد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ الفحوصات اللاحقة: رصيد لكل كتلة معدلة.", "10 وصفات: 10 أرصدة؛ صورة الفصل: 5 أرصدة؛ حقوق النشر على الويب: من رصيدين."],
+            "ds_info": "العقل الاقتصادي نشط: الكتابة والفهرس وبحث المصادر والفحوصات التحريرية تستخدم العقل الاقتصادي. حقوق النشر على الويب والصور تحتاج العقل المكلف وهي معطلة.", "ds_title": "أسعار العقل الاقتصادي", "ds": ["نسبة العقل الاقتصادي/المكلف هي 1 إلى 3. ثلاث عمليات العقل المكلف مكافئة لرصيد واحد تستهلك رصيد العقل الاقتصادي واحداً.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد واحد كل 3 عمليات.", "بحث أصلي في مصادر الويب + فهرس كامل: نحو رصيدين إجمالاً.", "تقييم الفهرس والتقرير النحوي والبيانات: رصيد واحد كل 3 فحوصات مكافئة.", "اتساق كامل: نحو 4 أرصدة؛ التحديثات: رصيد واحد كل 3 كتل.", "10 وصفات: نحو 4 أرصدة. حقوق النشر على الويب والصور متاحة مع العقل المكلف فقط."],
         },
         "中文": {
-            "gpt_info": "GPT-5.4 已启用：使用完整引擎，包括网页研究、网页版权检查和图片生成。", "gpt_title": "GPT-5.4 价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：5 积分（2 积分网页研究 + 3 积分编辑规划）。", "目录评估：1 积分；重新生成：3 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续检查：每个修改区块 1 积分。", "10 道食谱：10 积分；章节图片：5 积分；网页版权：2 积分起。"],
-            "ds_info": "DeepSeek Pro 已启用：写作、目录、来源研究和编辑检查使用 DeepSeek。网页版权和图片需要 GPT，现已禁用。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。三项相当于 1 GPT 积分的操作消耗 1 DeepSeek 积分。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生网页来源研究 + 完整目录：总计约 2 积分。", "目录评估、句法报告和元数据：每 3 项等效检查 1 积分。", "完整一致性：约 4 积分；更新：每 3 个区块 1 积分。", "10 道食谱：约 4 积分。网页版权和图片仅可使用 GPT。"],
+            "gpt_info": "高价大脑已启用：使用完整引擎，包括网页研究、网页版权检查和图片生成。", "gpt_title": "高价大脑价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：5 积分（2 积分网页研究 + 3 积分编辑规划）。", "目录评估：1 积分；重新生成：3 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续检查：每个修改区块 1 积分。", "10 道食谱：10 积分；章节图片：5 积分；网页版权：2 积分起。"],
+            "ds_info": "经济大脑已启用：写作、目录、来源研究和编辑检查使用经济大脑。网页版权和图片需要高价大脑，现已禁用。", "ds_title": "经济大脑价格", "ds": ["经济大脑/高价大脑比例为 1:3。三项相当于 1 高价大脑积分的操作消耗 1 经济大脑积分。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生网页来源研究 + 完整目录：总计约 2 积分。", "目录评估、句法报告和元数据：每 3 项等效检查 1 积分。", "完整一致性：约 4 积分；更新：每 3 个区块 1 积分。", "10 道食谱：约 4 积分。网页版权和图片仅可使用高价大脑。"],
         },
     }
     # Questa seconda definizione è il tariffario effettivo dell'app. Mantiene
@@ -7208,26 +7215,26 @@ with st.sidebar:
     # più immagini generate: il software accetta soltanto file esterni.
     tariffari_sidebar.update({
         "Italiano": {
-            "gpt_info": "GPT-5.4 attivo: ricerca web, controlli editoriali e verifica copyright web. Le immagini si caricano dall'esterno.",
-            "gpt_title": "Tariffario GPT-5.4",
+            "gpt_info": "Cervello costoso attivo: ricerca web, controlli editoriali e verifica copyright web. Le immagini si caricano dall'esterno.",
+            "gpt_title": "Tariffario del cervello costoso",
             "gpt": ["Scrittura, rigenerazione, quiz ed esempi: 1 credito per operazione.", "Indice completo: 10 crediti (4 ricerca fonti + 6 progettazione editoriale).", "Voto indice: 2 crediti; rigenerazione indice: 6 crediti.", "Verifica fatti: 2 crediti; report sintattico e metadati KDP: 1 credito ciascuno.", "Coerenza completa: 10 crediti; controllo successivo: 1 credito per blocco modificato.", "10 ricette: 10 crediti; immagini esterne: gratuite da caricare; copyright web: da 2 crediti."],
-            "ds_info": "DeepSeek Pro attivo: scrittura, indice, ricerca fonti e controlli editoriali usano DeepSeek. Le immagini restano esclusivamente esterne.",
-            "ds_title": "Tariffario DeepSeek Pro",
-            "ds": ["Rapporto DeepSeek/GPT: 1 a 3.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti nativa + indice completo: circa 3⅓ crediti.", "Voto indice: 1 credito; report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Le immagini esterne non consumano crediti."],
+            "ds_info": "Cervello economico attivo: scrittura, indice, ricerca fonti e controlli editoriali usano il cervello economico. Le immagini restano esclusivamente esterne.",
+            "ds_title": "Tariffario del cervello economico",
+            "ds": ["Rapporto cervello economico/costoso: 1 a 3.", "Scrittura, rigenerazione, quiz ed esempi: 1 credito ogni 3 operazioni.", "Ricerca fonti nativa + indice completo: circa 3⅓ crediti.", "Voto indice: 1 credito; report sintattico e metadati: 1 credito ogni 3 controlli equivalenti.", "Coerenza completa: circa 4 crediti; aggiornamenti: 1 credito ogni 3 blocchi.", "10 ricette: circa 4 crediti. Le immagini esterne non consumano crediti."],
         },
         "English": {
-            "gpt_info": "GPT-5.4 is active: web research, editorial checks and web copyright screening. Images are uploaded externally.", "gpt_title": "GPT-5.4 pricing",
+            "gpt_info": "Expensive brain is active: web research, editorial checks and web copyright screening. Images are uploaded externally.", "gpt_title": "Expensive brain pricing",
             "gpt": ["Writing, rewriting, quizzes and examples: 1 credit per action.", "Complete outline: 10 credits (4 source research + 6 editorial design).", "Outline review: 2 credits; outline rewrite: 6 credits.", "Fact check: 2 credits; syntax report and KDP metadata: 1 credit each.", "Full consistency check: 10 credits; later checks: 1 credit per changed block.", "10 recipes: 10 credits; external image upload is free; web copyright: from 2 credits."],
-            "ds_info": "DeepSeek Pro is active for writing, outlines, source research and editorial checks. Images remain external uploads only.", "ds_title": "DeepSeek Pro pricing",
-            "ds": ["DeepSeek/GPT ratio: 1 to 3.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native source research + complete outline: about 3⅓ credits.", "Outline review: 1 credit; syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. External images use no credits."],
+            "ds_info": "Economy brain is active for writing, outlines, source research and editorial checks. Images remain external uploads only.", "ds_title": "Economy brain pricing",
+            "ds": ["Economy/expensive brain ratio: 1 to 3.", "Writing, rewriting, quizzes and examples: 1 credit every 3 actions.", "Native source research + complete outline: about 3⅓ credits.", "Outline review: 1 credit; syntax report and metadata: 1 credit every 3 equivalent checks.", "Full consistency: about 4 credits; updates: 1 credit every 3 blocks.", "10 recipes: about 4 credits. External images use no credits."],
         },
-        "Español": {"gpt_info": "GPT-5.4 activo: investigación web, controles editoriales y copyright web. Las imágenes se cargan externamente.", "gpt_title": "Tarifas de GPT-5.4", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 10 créditos (4 investigación + 6 diseño editorial).", "Evaluación del índice: 2 créditos; regeneración: 6 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; carga externa de imágenes gratuita; copyright web: desde 2 créditos."], "ds_info": "DeepSeek Pro activo para escritura, índice, fuentes y controles. Las imágenes son solo cargas externas.", "ds_title": "Tarifas de DeepSeek Pro", "ds": ["Relación DeepSeek/GPT: 1 a 3.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Fuentes nativas + índice completo: unos 3⅓ créditos.", "Evaluación del índice: 1 crédito; informe sintáctico y metadatos: 1 crédito cada 3 controles.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "Las imágenes externas no consumen créditos."]},
-        "Français": {"gpt_info": "GPT-5.4 actif : recherche web, contrôles éditoriaux et copyright web. Les images sont importées de l’extérieur.", "gpt_title": "Tarifs GPT-5.4", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 10 crédits (4 recherche + 6 conception éditoriale).", "Évaluation du plan : 2 crédits ; régénération : 6 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "Import d’images externes gratuit ; copyright web : dès 2 crédits."], "ds_info": "DeepSeek Pro actif pour rédaction, plan, sources et contrôles. Images externes uniquement.", "ds_title": "Tarifs DeepSeek Pro", "ds": ["Rapport DeepSeek/GPT : 1 pour 3.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 actions.", "Sources natives + plan complet : environ 3⅓ crédits.", "Évaluation du plan : 1 crédit ; rapport et métadonnées : 1 crédit tous les 3 contrôles.", "Cohérence complète : environ 4 crédits.", "Les images externes ne consomment aucun crédit."]},
-        "Deutsch": {"gpt_info": "GPT-5.4 aktiv: Webrecherche, redaktionelle Prüfungen und Web-Copyright. Bilder werden extern hochgeladen.", "gpt_title": "GPT-5.4 Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 10 Credits (4 Recherche + 6 Redaktion).", "Gliederungsbewertung: 2 Credits; Neugenerierung: 6 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "Externe Bilder kostenlos hochladen; Web-Copyright: ab 2 Credits."], "ds_info": "DeepSeek Pro aktiv für Text, Gliederung, Quellen und Prüfungen. Bilder sind ausschließlich externe Uploads.", "ds_title": "DeepSeek Pro Preise", "ds": ["DeepSeek/GPT-Verhältnis: 1 zu 3.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Quellenrecherche + Gliederung: etwa 3⅓ Credits.", "Gliederungsbewertung: 1 Credit; Bericht und Metadaten: 1 Credit je 3 Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits.", "Externe Bilder verbrauchen keine Credits."]},
-        "Română": {"gpt_info": "GPT-5.4 activ: cercetare web, controale editoriale și copyright web. Imaginile sunt încărcate extern.", "gpt_title": "Tarife GPT-5.4", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per operațiune.", "Cuprins complet: 10 credite (4 cercetare + 6 proiectare editorială).", "Evaluare cuprins: 2 credite; regenerare: 6 credite.", "Verificare fapte: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; ulterior 1 credit per bloc modificat.", "Încărcarea imaginilor externe este gratuită; copyright web: de la 2 credite."], "ds_info": "DeepSeek Pro activ pentru scriere, cuprins, surse și controale. Imagini externe numai.", "ds_title": "Tarife DeepSeek Pro", "ds": ["Raport DeepSeek/GPT: 1 la 3.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Surse native + cuprins complet: circa 3⅓ credite.", "Evaluare cuprins: 1 credit; raport și metadate: 1 credit la 3 controale.", "Coerență completă: circa 4 credite.", "Imaginile externe nu consumă credite."]},
-        "Русский": {"gpt_info": "GPT-5.4 активен: веб-поиск, редакторские проверки и веб-copyright. Изображения загружаются извне.", "gpt_title": "Тарифы GPT-5.4", "gpt": ["Текст, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 10 кредитов (4 поиск + 6 редактура).", "Оценка структуры: 2 кредита; регенерация: 6 кредитов.", "Проверка фактов: 2 кредита; синтаксический отчёт и KDP-метаданные: по 1 кредиту.", "Полная проверка связности: 10 кредитов; далее 1 кредит за блок.", "Внешняя загрузка изображений бесплатна; веб-copyright: от 2 кредитов."], "ds_info": "DeepSeek Pro активен для текста, структуры, источников и проверок. Только внешние изображения.", "ds_title": "Тарифы DeepSeek Pro", "ds": ["Соотношение DeepSeek/GPT: 1 к 3.", "Текст, переработка, тесты и примеры: 1 кредит за 3 действия.", "Источники + структура: около 3⅓ кредита.", "Оценка структуры: 1 кредит; отчёт и метаданные: 1 кредит за 3 проверки.", "Полная связность: около 4 кредитов.", "Внешние изображения не расходуют кредиты."]},
-        "العربية": {"gpt_info": "GPT-5.4 نشط: بحث ويب وفحوص تحريرية وحقوق نشر على الويب. تُرفع الصور من الخارج.", "gpt_title": "أسعار GPT-5.4", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد لكل عملية.", "فهرس كامل: 10 أرصدة (4 بحث + 6 تخطيط تحريري).", "تقييم الفهرس: رصيدان؛ إعادة التوليد: 6 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ ثم رصيد لكل كتلة معدلة.", "رفع الصور الخارجية مجاني؛ حقوق النشر على الويب: من رصيدين."], "ds_info": "DeepSeek Pro نشط للكتابة والفهرس والمصادر والفحوص. الصور خارجية فقط.", "ds_title": "أسعار DeepSeek Pro", "ds": ["نسبة DeepSeek/GPT هي 1 إلى 3.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد كل 3 عمليات.", "مصادر أصلية + فهرس كامل: نحو 3⅓ أرصدة.", "تقييم الفهرس: رصيد واحد؛ التقرير والبيانات: رصيد كل 3 فحوص.", "اتساق كامل: نحو 4 أرصدة.", "الصور الخارجية لا تستهلك أرصدة."]},
-        "中文": {"gpt_info": "GPT-5.4 已启用：网页研究、编辑检查和网页版权检查。图片从外部上传。", "gpt_title": "GPT-5.4 价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：10 积分（4 积分研究 + 6 积分编辑规划）。", "目录评估：2 积分；重新生成：6 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续每个修改区块 1 积分。", "外部图片上传免费；网页版权检查：2 积分起。"], "ds_info": "DeepSeek Pro 用于写作、目录、资料和检查。图片仅可从外部上传。", "ds_title": "DeepSeek Pro 价格", "ds": ["DeepSeek/GPT 比例为 1:3。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生资料研究 + 完整目录：约 3⅓ 积分。", "目录评估：1 积分；报告和元数据：每 3 次检查 1 积分。", "完整一致性检查：约 4 积分。", "外部图片不消耗积分。"]},
+        "Español": {"gpt_info": "Cerebro caro activo: investigación web, controles editoriales y copyright web. Las imágenes se cargan externamente.", "gpt_title": "Tarifas del cerebro caro", "gpt": ["Escritura, reescritura, cuestionarios y ejemplos: 1 crédito por acción.", "Índice completo: 10 créditos (4 investigación + 6 diseño editorial).", "Evaluación del índice: 2 créditos; regeneración: 6 créditos.", "Verificación de hechos: 2 créditos; informe sintáctico y metadatos KDP: 1 crédito cada uno.", "Coherencia completa: 10 créditos; controles posteriores: 1 crédito por bloque modificado.", "10 recetas: 10 créditos; carga externa de imágenes gratuita; copyright web: desde 2 créditos."], "ds_info": "Cerebro económico activo para escritura, índice, fuentes y controles. Las imágenes son solo cargas externas.", "ds_title": "Tarifas del cerebro económico", "ds": ["Relación cerebro económico/caro: 1 a 3.", "Escritura, reescritura, cuestionarios y ejemplos: 1 crédito cada 3 operaciones.", "Fuentes nativas + índice completo: unos 3⅓ créditos.", "Evaluación del índice: 1 crédito; informe sintáctico y metadatos: 1 crédito cada 3 controles.", "Coherencia completa: unos 4 créditos; actualizaciones: 1 crédito cada 3 bloques.", "Las imágenes externas no consumen créditos."]},
+        "Français": {"gpt_info": "Cerveau coûteux actif : recherche web, contrôles éditoriaux et copyright web. Les images sont importées de l’extérieur.", "gpt_title": "Tarifs du cerveau coûteux", "gpt": ["Rédaction, réécriture, quiz et exemples : 1 crédit par action.", "Plan complet : 10 crédits (4 recherche + 6 conception éditoriale).", "Évaluation du plan : 2 crédits ; régénération : 6 crédits.", "Vérification des faits : 2 crédits ; rapport syntaxique et métadonnées KDP : 1 crédit chacun.", "Cohérence complète : 10 crédits ; contrôles suivants : 1 crédit par bloc modifié.", "Import d’images externes gratuit ; copyright web : dès 2 crédits."], "ds_info": "Cerveau économique actif pour rédaction, plan, sources et contrôles. Images externes uniquement.", "ds_title": "Tarifs du cerveau économique", "ds": ["Rapport cerveau économique/coûteux : 1 pour 3.", "Rédaction, réécriture, quiz et exemples : 1 crédit toutes les 3 actions.", "Sources natives + plan complet : environ 3⅓ crédits.", "Évaluation du plan : 1 crédit ; rapport et métadonnées : 1 crédit tous les 3 contrôles.", "Cohérence complète : environ 4 crédits.", "Les images externes ne consomment aucun crédit."]},
+        "Deutsch": {"gpt_info": "„Teures Gehirn“ aktiv: Webrecherche, redaktionelle Prüfungen und Web-Copyright. Bilder werden extern hochgeladen.", "gpt_title": "„Teures Gehirn“ Preise", "gpt": ["Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit pro Vorgang.", "Vollständige Gliederung: 10 Credits (4 Recherche + 6 Redaktion).", "Gliederungsbewertung: 2 Credits; Neugenerierung: 6 Credits.", "Faktenprüfung: 2 Credits; Syntaxbericht und KDP-Metadaten: je 1 Credit.", "Vollständige Kohärenzprüfung: 10 Credits; weitere Prüfungen: 1 Credit pro geändertem Block.", "Externe Bilder kostenlos hochladen; Web-Copyright: ab 2 Credits."], "ds_info": "„Sparsames Gehirn“ aktiv für Text, Gliederung, Quellen und Prüfungen. Bilder sind ausschließlich externe Uploads.", "ds_title": "„Sparsames Gehirn“ Preise", "ds": ["Sparsames/Teures Gehirn-Verhältnis: 1 zu 3.", "Schreiben, Überarbeiten, Quiz und Beispiele: 1 Credit je 3 Vorgänge.", "Native Quellenrecherche + Gliederung: etwa 3⅓ Credits.", "Gliederungsbewertung: 1 Credit; Bericht und Metadaten: 1 Credit je 3 Prüfungen.", "Vollständige Kohärenz: etwa 4 Credits.", "Externe Bilder verbrauchen keine Credits."]},
+        "Română": {"gpt_info": "„Creier scump” activ: cercetare web, controale editoriale și copyright web. Imaginile sunt încărcate extern.", "gpt_title": "Tarife „Creier scump”", "gpt": ["Scriere, rescriere, quiz-uri și exemple: 1 credit per operațiune.", "Cuprins complet: 10 credite (4 cercetare + 6 proiectare editorială).", "Evaluare cuprins: 2 credite; regenerare: 6 credite.", "Verificare fapte: 2 credite; raport sintactic și metadate KDP: câte 1 credit.", "Coerență completă: 10 credite; ulterior 1 credit per bloc modificat.", "Încărcarea imaginilor externe este gratuită; copyright web: de la 2 credite."], "ds_info": "„Creier economic” activ pentru scriere, cuprins, surse și controale. Imagini externe numai.", "ds_title": "Tarife „Creier economic”", "ds": ["Raport creier economic/scump: 1 la 3.", "Scriere, rescriere, quiz-uri și exemple: 1 credit la 3 operațiuni.", "Surse native + cuprins complet: circa 3⅓ credite.", "Evaluare cuprins: 1 credit; raport și metadate: 1 credit la 3 controale.", "Coerență completă: circa 4 credite.", "Imaginile externe nu consumă credite."]},
+        "Русский": {"gpt_info": "«Дорогой мозг» активен: веб-поиск, редакторские проверки и веб-copyright. Изображения загружаются извне.", "gpt_title": "Тарифы «Дорогой мозг»", "gpt": ["Текст, переработка, тесты и примеры: 1 кредит за действие.", "Полная структура: 10 кредитов (4 поиск + 6 редактура).", "Оценка структуры: 2 кредита; регенерация: 6 кредитов.", "Проверка фактов: 2 кредита; синтаксический отчёт и KDP-метаданные: по 1 кредиту.", "Полная проверка связности: 10 кредитов; далее 1 кредит за блок.", "Внешняя загрузка изображений бесплатна; веб-copyright: от 2 кредитов."], "ds_info": "«Экономный мозг» активен для текста, структуры, источников и проверок. Только внешние изображения.", "ds_title": "Тарифы «Экономный мозг»", "ds": ["Соотношение «Экономный»/«Дорогой мозг»: 1 к 3.", "Текст, переработка, тесты и примеры: 1 кредит за 3 действия.", "Источники + структура: около 3⅓ кредита.", "Оценка структуры: 1 кредит; отчёт и метаданные: 1 кредит за 3 проверки.", "Полная связность: около 4 кредитов.", "Внешние изображения не расходуют кредиты."]},
+        "العربية": {"gpt_info": "العقل المكلف نشط: بحث ويب وفحوص تحريرية وحقوق نشر على الويب. تُرفع الصور من الخارج.", "gpt_title": "أسعار العقل المكلف", "gpt": ["الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد لكل عملية.", "فهرس كامل: 10 أرصدة (4 بحث + 6 تخطيط تحريري).", "تقييم الفهرس: رصيدان؛ إعادة التوليد: 6 أرصدة.", "التحقق من الحقائق: رصيدان؛ التقرير النحوي وبيانات KDP: رصيد لكل منهما.", "فحص الاتساق الكامل: 10 أرصدة؛ ثم رصيد لكل كتلة معدلة.", "رفع الصور الخارجية مجاني؛ حقوق النشر على الويب: من رصيدين."], "ds_info": "العقل الاقتصادي نشط للكتابة والفهرس والمصادر والفحوص. الصور خارجية فقط.", "ds_title": "أسعار العقل الاقتصادي", "ds": ["نسبة العقل الاقتصادي/المكلف هي 1 إلى 3.", "الكتابة وإعادة الصياغة والاختبارات والأمثلة: رصيد كل 3 عمليات.", "مصادر أصلية + فهرس كامل: نحو 3⅓ أرصدة.", "تقييم الفهرس: رصيد واحد؛ التقرير والبيانات: رصيد كل 3 فحوص.", "اتساق كامل: نحو 4 أرصدة.", "الصور الخارجية لا تستهلك أرصدة."]},
+        "中文": {"gpt_info": "高价大脑已启用：网页研究、编辑检查和网页版权检查。图片从外部上传。", "gpt_title": "高价大脑价格", "gpt": ["写作、改写、测验和示例：每项操作 1 积分。", "完整目录：10 积分（4 积分研究 + 6 积分编辑规划）。", "目录评估：2 积分；重新生成：6 积分。", "事实核查：2 积分；句法报告和 KDP 元数据：各 1 积分。", "完整一致性检查：10 积分；后续每个修改区块 1 积分。", "外部图片上传免费；网页版权检查：2 积分起。"], "ds_info": "经济大脑用于写作、目录、资料和检查。图片仅可从外部上传。", "ds_title": "经济大脑价格", "ds": ["经济大脑/高价大脑比例为 1:3。", "写作、改写、测验和示例：每 3 项操作 1 积分。", "原生资料研究 + 完整目录：约 3⅓ 积分。", "目录评估：1 积分；报告和元数据：每 3 次检查 1 积分。", "完整一致性检查：约 4 积分。", "外部图片不消耗积分。"]},
     })
     # La rigenerazione completa dal voto costa 10 crediti GPT in ogni lingua.
     # Centralizzare le sostituzioni evita che il tariffario localizzato resti
@@ -7266,15 +7273,15 @@ with st.sidebar:
     tariffario = tariffari_sidebar.get(lingua_sel, tariffari_sidebar["Italiano"])
     motore_tariffario = "ds" if usa_deepseek_pro() else "gpt"
     costo_kdp_tariffario = {
-        "Italiano": "Controllo conformità KDP: 18 crediti con GPT · 6 crediti con DeepSeek.",
-        "English": "KDP compliance check: 18 credits with GPT · 6 credits with DeepSeek.",
-        "Español": "Control de conformidad KDP: 18 créditos con GPT · 6 créditos con DeepSeek.",
-        "Français": "Contrôle de conformité KDP : 18 crédits avec GPT · 6 crédits avec DeepSeek.",
-        "Deutsch": "KDP-Konformitätsprüfung: 18 Credits mit GPT · 6 Credits mit DeepSeek.",
-        "Română": "Control de conformitate KDP: 18 credite cu GPT · 6 credite cu DeepSeek.",
-        "Русский": "Проверка соответствия KDP: 18 кредитов с GPT · 6 кредитов с DeepSeek.",
-        "العربية": "فحص توافق KDP: 18 رصيدًا مع GPT · 6 أرصدة مع DeepSeek.",
-        "中文": "KDP 合规检查：GPT 为 18 积分 · DeepSeek 为 6 积分。",
+        "Italiano": "Controllo conformità KDP: 18 crediti con il cervello costoso · 6 crediti con il cervello economico.",
+        "English": "KDP compliance check: 18 credits with the expensive brain · 6 credits with the economy brain.",
+        "Español": "Control de conformidad KDP: 18 créditos con el cerebro caro · 6 créditos con el cerebro económico.",
+        "Français": "Contrôle de conformité KDP : 18 crédits avec le cerveau coûteux · 6 crédits avec le cerveau économique.",
+        "Deutsch": "KDP-Konformitätsprüfung: 18 Credits mit „Teures Gehirn“ · 6 Credits mit „Sparsames Gehirn“.",
+        "Română": "Control de conformitate KDP: 18 credite cu „Creier scump” · 6 credite cu „Creier economic”.",
+        "Русский": "Проверка соответствия KDP: 18 кредитов с «Дорогой мозг» · 6 кредитов с «Экономный мозг».",
+        "العربية": "فحص توافق KDP: 18 رصيدًا مع العقل المكلف · 6 أرصدة مع العقل الاقتصادي.",
+        "中文": "KDP 合规检查：高价大脑为 18 积分 · 经济大脑为 6 积分。",
     }
     with tariffario_sotto_cervello:
         st.info(tariffario[f"{motore_tariffario}_info"])
@@ -7307,7 +7314,7 @@ with st.sidebar:
                 st.session_state["firma_fonti"] = firma_fonti
         if st.session_state.get("conoscenza_extra"):
             st.success(f"Studiati {len(file_caricati)} documenti. La mappa concettuale originale guiderà indice e stesura.")
-            st.caption(f"Analisi fonti: {'DeepSeek V4 Pro' if usa_deepseek_pro() else MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
+            st.caption(f"Analisi fonti: {'Cervello economico' if usa_deepseek_pro() else MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
     elif st.session_state.get("conoscenza_extra"):
         st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
 
@@ -8848,7 +8855,7 @@ reidrata_sezioni_memorizzate(opzioni_editor)
 # scrittura. I pulsanti operativi restano nelle rispettive sezioni, così non
 # cambiano il flusso o la logica esistente dell'editor.
 titolo_workspace = html.escape((val_titolo or "Editor professionale").strip())
-motore_workspace = html.escape(provider_ia.replace(" (OpenAI)", ""))
+motore_workspace = html.escape(brain_names_core.nome_cervello(provider_ia, lingua_sel))
 sezioni_con_testo_workspace = sum(
     1 for contenuto in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).values()
     if str(contenuto).strip()
@@ -8890,7 +8897,7 @@ if st.session_state.get("admin_test_mode"):
     # stessi pulsanti e gli stessi prompt dell'app pubblica.
     st.warning(
         f"🧪 **Laboratorio amministratore attivo** — {st.session_state.get('admin_test_profile', 'Collaudo breve')} "
-        f"con **{st.session_state.get('admin_test_provider', provider_ia)}**. "
+        f"con **{brain_names_core.nome_cervello(st.session_state.get('admin_test_provider', provider_ia), lingua_sel)}**. "
         "I crediti utente non vengono addebitati; le chiamate AI sono reali. Il progetto è isolato e non sovrascrive la bozza cloud."
     )
     indice_test = str(st.session_state.get("indice_raw", "") or "").strip()
@@ -9125,7 +9132,7 @@ PARAMETRI DI BASE (DA APPLICARE TASSATIVAMENTE IN OGNI SEZIONE):
 - Riserva una parte dello spazio disponibile alla chiusura: non iniziare un nuovo esempio o un nuovo passaggio se non
   puoi terminarlo. Se sei vicino al limite di lunghezza, elimina prima un dettaglio secondario e chiudi con una frase
   breve, grammaticale e significativa che completi l'idea della sezione.
-- Questa regola vale indistintamente per GPT-5.4 e DeepSeek V4 Pro, per stesura singola, capitolo, sottocapitoli,
+- Questa regola vale indistintamente per il cervello costoso e il cervello economico, per stesura singola, capitolo, sottocapitoli,
   rigenerazioni e scrittura dell'intero libro.
 
 === REGOLA AUREA: GERARCHIA E NON-RIPETIZIONE (CAPITOLO VS SOTTOCAPITOLO) ===
@@ -9306,7 +9313,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
                     st.session_state["admin_test_prefazione_pausa_verificata"] = True
             barra.progress(100, text="Collaudo automatico completato: controlla ora le funzioni del browser.")
             st.session_state["admin_test_run_report"] = (
-                f"Collaudo automatico completato con {st.session_state.get('admin_test_provider', provider_ia)}: "
+                f"Collaudo automatico completato con {brain_names_core.nome_cervello(st.session_state.get('admin_test_provider', provider_ia), lingua_sel)}: "
                 "fonti, indice, Prefazione e una sezione ordinaria sono stati prodotti e riletti con il motore reale."
             )
         except Exception as errore:
@@ -9315,7 +9322,7 @@ Per Test Prep includi quiz o domande, simulazione e soluzioni separati. Per narr
             st.session_state.pop("admin_test_run_requested", None)
 
     guide_localizzate = {
-        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. GPT-5.4 include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. DeepSeek V4 Pro usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa GPT. La verifica copyright web e le immagini restano disponibili solo con GPT. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori. In Personalizza il tuo libro puoi aggiungere voce, casi, priorità e confini personali: sono facoltativi, non consumano crediti, vengono salvati nel progetto/CSV e guidano ricerca, indice e testo in modo originale.
+        "Italiano": ("Come usare Scrittore Site", """1. Scegli prima il Cervello AI nella barra laterale. Cervello costoso include tutte le funzioni, comprese ricerca web, verifica copyright web e immagini. Cervello economico usa invece un cervello distinto per ricerca delle fonti con registro visibile, indice, fonti caricate, stesura e controlli editoriali; non usa il cervello costoso. La verifica copyright web e le immagini restano disponibili solo con il cervello costoso. Poi compila titolo, autore, lingua, genere, stile, obiettivo, argomento e risultato finale. Usa Approfondimenti per priorità, vincoli ed esempi obbligatori. In Personalizza il tuo libro puoi aggiungere voce, casi, priorità e confini personali: sono facoltativi, non consumano crediti, vengono salvati nel progetto/CSV e guidano ricerca, indice e testo in modo originale.
 
 2. Scegli Lunghezza delle sezioni: Compatto produce circa 480-560 parole per sezione, con massimo 65 sezioni totali e obiettivo di 75 pagine; Standard KDP (consigliato) circa 620-700 parole, con massimo 110 sezioni e obiettivo di 150 pagine; Approfondito circa 700-800 parole, con massimo 160 sezioni e obiettivo di 220 pagine. La Prefazione è inclusa in questi massimi. I riferimenti alle pagine si basano sul manoscritto Word 6×9 e hanno una tolleranza del 15%, perché immagini, tabelle e impaginazione possono modificarli. Il modello seleziona soltanto le fonti online più pertinenti al brief e costruisce l'indice con il minor numero di voci necessario: non aggiunge riempitivi e una struttura di qualità può essere pubblicata anche sotto la soglia. La scelta regola sia la dimensione del testo sia il tetto dell'indice. Un capitolo con sottocapitoli viene usato come breve cornice; il contenuto completo è sviluppato nei sottocapitoli, così il libro non ripete gli stessi argomenti.
 
@@ -9520,15 +9527,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         "中文": "🛡️ **已付费内容保护：** 每次 AI 成功生成或改写的内容都会自动保存到你的账户。**保存会话** 仍适用于手动修改、图片和未使用 AI 的其他变更。",
     }
     avviso_cervelli_ia = {
-        "Italiano": "🧠 **Due cervelli separati.** **GPT-5.4** include tutte le funzioni e il tariffario GPT. **DeepSeek V4 Pro** svolge ricerca delle fonti con registro visibile, indice, analisi delle fonti caricate, scrittura e controlli editoriali senza usare GPT: scrittura, quiz ed esempi costano 1 credito ogni 3 operazioni; indice circa 2 crediti; coerenza e dieci ricette circa 4. Il controllo copyright web e le immagini richiedono GPT.",
-        "English": "🧠 **Two separate AI engines.** **GPT-5.4** includes every feature and the GPT pricing. **DeepSeek V4 Pro** performs source research with a visible register, outlines, uploaded-source analysis, writing and editorial checks without using GPT: writing, quizzes and examples cost 1 credit every 3 operations; an outline is about 2 credits; consistency and ten recipes are about 4. Web copyright checks and images require GPT.",
-        "Español": "🧠 **Dos motores de IA separados.** **GPT-5.4** incluye todas las funciones y tarifas GPT. **DeepSeek V4 Pro** realiza investigación de fuentes con registro visible, índice, análisis de fuentes cargadas, escritura y controles editoriales sin usar GPT: escritura, cuestionarios y ejemplos cuestan 1 crédito cada 3 operaciones; el índice cuesta unos 2 créditos; coherencia y diez recetas, unos 4. El control de copyright web y las imágenes requieren GPT.",
-        "Français": "🧠 **Deux moteurs IA séparés.** **GPT-5.4** inclut toutes les fonctions et le tarif GPT. **DeepSeek V4 Pro** effectue la recherche de sources avec registre visible, le plan, l’analyse des sources importées, la rédaction et les contrôles éditoriaux sans GPT : rédaction, quiz et exemples coûtent 1 crédit toutes les 3 opérations ; le plan coûte environ 2 crédits ; cohérence et dix recettes, environ 4. Le contrôle de copyright web et les images nécessitent GPT.",
-        "Deutsch": "🧠 **Zwei getrennte KI-Engines.** **GPT-5.4** umfasst alle Funktionen und GPT-Tarife. **DeepSeek V4 Pro** recherchiert Quellen mit sichtbarem Register, erstellt die Gliederung, analysiert hochgeladene Quellen, schreibt und prüft redaktionell ohne GPT: Schreiben, Quiz und Beispiele kosten 1 Kredit je 3 Vorgänge; die Gliederung etwa 2 Kredite; Kohärenz und zehn Rezepte etwa 4. Web-Copyrightprüfung und Bilder erfordern GPT.",
-        "Română": "🧠 **Două motoare IA separate.** **GPT-5.4** include toate funcțiile și tarifele GPT. **DeepSeek V4 Pro** face cercetare de surse cu registru vizibil, cuprins, analiză a surselor încărcate, scriere și controale editoriale fără GPT: scrierea, testele și exemplele costă 1 credit la 3 operațiuni; cuprinsul aproximativ 2 credite; coerența și zece rețete aproximativ 4. Controlul copyright web și imaginile necesită GPT.",
-        "Русский": "🧠 **Два отдельных ИИ-движка.** **GPT-5.4** включает все функции и тариф GPT. **DeepSeek V4 Pro** ищет источники с видимым реестром, создаёт оглавление, анализирует загруженные источники, пишет и выполняет редакторские проверки без GPT: текст, тесты и примеры стоят 1 кредит за 3 операции; оглавление — около 2 кредитов; согласованность и десять рецептов — около 4. Проверка copyright в интернете и изображения требуют GPT.",
-        "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يشمل **GPT-5.4** كل الوظائف وتسعيرة GPT. ينفذ **DeepSeek V4 Pro** بحث المصادر مع سجل ظاهر والفهرس وتحليل المصادر المرفوعة والكتابة والفحوص التحريرية دون GPT: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل 3 عمليات؛ الفهرس نحو رصيدين؛ الاتساق وعشر وصفات نحو 4. فحص حقوق النشر على الويب والصور يتطلبان GPT.",
-        "中文": "🧠 **两个独立的 AI 引擎。** **GPT-5.4** 包含所有功能及 GPT 计费。**DeepSeek V4 Pro** 不使用 GPT 即可进行带可见记录的来源研究、目录、已上传来源分析、写作和编辑检查：写作/测验/示例每 3 次操作消耗 1 积分；目录约 2 积分；一致性检查和 10 道食谱约 4 积分。网页版权检查和图片需要 GPT。",
+        "Italiano": "🧠 **Due cervelli separati.** **Cervello costoso** include tutte le funzioni e il tariffario del cervello costoso. **Cervello economico** svolge ricerca delle fonti con registro visibile, indice, analisi delle fonti caricate, scrittura e controlli editoriali senza usare il cervello costoso: scrittura, quiz ed esempi costano 1 credito ogni 3 operazioni; indice circa 2 crediti; coerenza e dieci ricette circa 4. Il controllo copyright web e le immagini richiedono il cervello costoso.",
+        "English": "🧠 **Two separate AI engines.** **Expensive brain** includes every feature and the expensive brain pricing. **Economy brain** performs source research with a visible register, outlines, uploaded-source analysis, writing and editorial checks without using the expensive brain: writing, quizzes and examples cost 1 credit every 3 operations; an outline is about 2 credits; consistency and ten recipes are about 4. Web copyright checks and images require the expensive brain.",
+        "Español": "🧠 **Dos motores de IA separados.** **Cerebro caro** incluye todas las funciones y tarifas del cerebro caro. **Cerebro económico** realiza investigación de fuentes con registro visible, índice, análisis de fuentes cargadas, escritura y controles editoriales sin usar del cerebro caro: escritura, cuestionarios y ejemplos cuestan 1 crédito cada 3 operaciones; el índice cuesta unos 2 créditos; coherencia y diez recetas, unos 4. El control de copyright web y las imágenes requieren el cerebro caro.",
+        "Français": "🧠 **Deux moteurs IA séparés.** **Cerveau coûteux** inclut toutes les fonctions et le tarif du cerveau coûteux. **Cerveau économique** effectue la recherche de sources avec registre visible, le plan, l’analyse des sources importées, la rédaction et les contrôles éditoriaux sans le cerveau coûteux : rédaction, quiz et exemples coûtent 1 crédit toutes les 3 opérations ; le plan coûte environ 2 crédits ; cohérence et dix recettes, environ 4. Le contrôle de copyright web et les images nécessitent le cerveau coûteux.",
+        "Deutsch": "🧠 **Zwei getrennte KI-Engines.** **„Teures Gehirn“** umfasst alle Funktionen und „Teures Gehirn“-Tarife. **„Sparsames Gehirn“** recherchiert Quellen mit sichtbarem Register, erstellt die Gliederung, analysiert hochgeladene Quellen, schreibt und prüft redaktionell ohne „Teures Gehirn“: Schreiben, Quiz und Beispiele kosten 1 Kredit je 3 Vorgänge; die Gliederung etwa 2 Kredite; Kohärenz und zehn Rezepte etwa 4. Web-Copyrightprüfung und Bilder erfordern „Teures Gehirn“.",
+        "Română": "🧠 **Două motoare IA separate.** **„Creier scump”** include toate funcțiile și tarifele „Creier scump”. **„Creier economic”** face cercetare de surse cu registru vizibil, cuprins, analiză a surselor încărcate, scriere și controale editoriale fără „Creier scump”: scrierea, testele și exemplele costă 1 credit la 3 operațiuni; cuprinsul aproximativ 2 credite; coerența și zece rețete aproximativ 4. Controlul copyright web și imaginile necesită „Creier scump”.",
+        "Русский": "🧠 **Два отдельных ИИ-движка.** **«Дорогой мозг»** включает все функции и тариф «Дорогой мозг». **«Экономный мозг»** ищет источники с видимым реестром, создаёт оглавление, анализирует загруженные источники, пишет и выполняет редакторские проверки без «Дорогой мозг»: текст, тесты и примеры стоят 1 кредит за 3 операции; оглавление — около 2 кредитов; согласованность и десять рецептов — около 4. Проверка copyright в интернете и изображения требуют «Дорогой мозг».",
+        "العربية": "🧠 **محركان منفصلان للذكاء الاصطناعي.** يشمل **العقل المكلف** كل الوظائف وتسعيرة العقل المكلف. ينفذ **العقل الاقتصادي** بحث المصادر مع سجل ظاهر والفهرس وتحليل المصادر المرفوعة والكتابة والفحوص التحريرية دون العقل المكلف: الكتابة والاختبارات والأمثلة تكلف رصيداً واحداً لكل 3 عمليات؛ الفهرس نحو رصيدين؛ الاتساق وعشر وصفات نحو 4. فحص حقوق النشر على الويب والصور يتطلبان العقل المكلف.",
+        "中文": "🧠 **两个独立的 AI 引擎。** **高价大脑** 包含所有功能及高价大脑计费。**经济大脑** 不使用高价大脑即可进行带可见记录的来源研究、目录、已上传来源分析、写作和编辑检查：写作/测验/示例每 3 次操作消耗 1 积分；目录约 2 积分；一致性检查和 10 道食谱约 4 积分。网页版权检查和图片需要高价大脑。",
     }
     percorso_rapido = {
         "Italiano": """### ⭐ Percorso consigliato: fatti aiutare dalla Chat guidata
@@ -9855,147 +9862,147 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         guida_chat_sidebar = {
             "Italiano": {
                 "titolo": "🤖 Crea la tua chat per compilare la sidebar",
-                "nota": "Questa guida non è il prompt. Leggila prima; subito sotto trovi il prompt da copiare nella tua chat personale di GPT.",
-                "passi": """1. Apri una nuova chat nel tuo GPT personale.
+                "nota": "Questa guida non è il prompt. Leggila prima; subito sotto trovi il prompt da copiare nella tua chat personale di ChatGPT.",
+                "passi": """1. Apri una nuova chat nel tuo ChatGPT personale.
 
 2. Copia tutto il testo nel riquadro scuro qui sotto, senza cambiarlo.
 
 3. Incollalo come primo messaggio e invialo.
 
-4. Dopo la tua idea, GPT chiederà sempre se vuoi aggiungere una personalizzazione del libro. Solo dopo la tua risposta preparerà la scheda; se manca un dato davvero decisivo, potrà fare un'ultima domanda breve.
+4. Dopo la tua idea, ChatGPT chiederà sempre se vuoi aggiungere una personalizzazione del libro. Solo dopo la tua risposta preparerà la scheda; se manca un dato davvero decisivo, potrà fare un'ultima domanda breve.
 
 5. Alla fine riceverai una scheda pronta. Copia ogni risposta nel campo con lo stesso nome nella sidebar di Scrittore Site.
 
 6. Non chiedere a quella chat di scrivere il libro completo: serve solo a preparare bene la sidebar e poi Scrittore Site creerà l'indice.""",
-                "etichetta": "PROMPT DA COPIARE NELLA TUA CHAT PERSONALE DI GPT",
+                "etichetta": "PROMPT DA COPIARE NELLA TUA CHAT PERSONALE DI ChatGPT",
             },
             "English": {
                 "titolo": "🤖 Create your chat to complete the sidebar",
-                "nota": "This guide is not the prompt. Read it first; immediately below is the prompt to copy into your personal GPT chat.",
-                "passi": """1. Open a new chat in your personal GPT account.
+                "nota": "This guide is not the prompt. Read it first; immediately below is the prompt to copy into your personal ChatGPT chat.",
+                "passi": """1. Open a new chat in your personal ChatGPT account.
 
 2. Copy all the text in the dark box below, without changing it.
 
 3. Paste it as the first message and send it.
 
-4. GPT will begin with one simple question about the book you want to create. If the information is already clear, it will prepare the form immediately; otherwise, it will ask one short question about the most important choice.
+4. ChatGPT will begin with one simple question about the book you want to create. If the information is already clear, it will prepare the form immediately; otherwise, it will ask one short question about the most important choice.
 
 5. At the end you will receive a ready-to-use form. Copy each answer into the field with the same name in the Scrittore Site sidebar.
 
 6. Do not ask that chat to write the complete book: it only prepares the sidebar, then Scrittore Site creates the index.""",
-                "etichetta": "PROMPT TO COPY INTO YOUR PERSONAL GPT CHAT",
+                "etichetta": "PROMPT TO COPY INTO YOUR PERSONAL ChatGPT CHAT",
             },
             "Español": {
                 "titolo": "🤖 Crea tu chat para completar la barra lateral",
-                "nota": "Esta guía no es el prompt. Léela primero; justo debajo está el prompt que debes copiar en tu chat personal de GPT.",
-                "passi": """1. Abre un chat nuevo en tu cuenta personal de GPT.
+                "nota": "Esta guía no es el prompt. Léela primero; justo debajo está el prompt que debes copiar en tu chat personal de ChatGPT.",
+                "passi": """1. Abre un chat nuevo en tu cuenta personal de ChatGPT.
 
 2. Copia todo el texto del recuadro oscuro de abajo, sin cambiarlo.
 
 3. Pégalo como primer mensaje y envíalo.
 
-4. GPT empezará con una pregunta sencilla sobre el libro que quieres crear. Si la información ya está clara, preparará la ficha enseguida; si no, hará una sola pregunta breve sobre la decisión más importante.
+4. ChatGPT empezará con una pregunta sencilla sobre el libro que quieres crear. Si la información ya está clara, preparará la ficha enseguida; si no, hará una sola pregunta breve sobre la decisión más importante.
 
 5. Al final recibirás una ficha lista. Copia cada respuesta en el campo con el mismo nombre de la barra lateral de Scrittore Site.
 
 6. No pidas a ese chat que escriba el libro completo: solo prepara la barra lateral y después Scrittore Site creará el índice.""",
-                "etichetta": "PROMPT PARA COPIAR EN TU CHAT PERSONAL DE GPT",
+                "etichetta": "PROMPT PARA COPIAR EN TU CHAT PERSONAL DE ChatGPT",
             },
             "Français": {
                 "titolo": "🤖 Créez votre chat pour remplir la barre latérale",
-                "nota": "Ce guide n’est pas le prompt. Lisez-le d’abord ; le prompt à copier dans votre chat GPT personnel se trouve juste dessous.",
-                "passi": """1. Ouvrez une nouvelle conversation dans votre compte GPT personnel.
+                "nota": "Ce guide n’est pas le prompt. Lisez-le d’abord ; le prompt à copier dans votre chat ChatGPT personnel se trouve juste dessous.",
+                "passi": """1. Ouvrez une nouvelle conversation dans votre compte ChatGPT personnel.
 
 2. Copiez tout le texte du cadre sombre ci-dessous, sans le modifier.
 
 3. Collez-le comme premier message et envoyez-le.
 
-4. GPT commencera par une question simple sur le livre à créer. Si les informations sont déjà claires, il préparera directement la fiche ; sinon, il posera une seule question courte sur le choix le plus important.
+4. ChatGPT commencera par une question simple sur le livre à créer. Si les informations sont déjà claires, il préparera directement la fiche ; sinon, il posera une seule question courte sur le choix le plus important.
 
 5. À la fin, vous recevrez une fiche prête à l’emploi. Copiez chaque réponse dans le champ du même nom de la barre latérale de Scrittore Site.
 
 6. Ne demandez pas à ce chat d’écrire le livre complet : il prépare seulement la barre latérale, puis Scrittore Site créera l’index.""",
-                "etichetta": "PROMPT À COPIER DANS VOTRE CHAT GPT PERSONNEL",
+                "etichetta": "PROMPT À COPIER DANS VOTRE CHAT ChatGPT PERSONNEL",
             },
             "Deutsch": {
                 "titolo": "🤖 Erstellen Sie Ihren Chat zum Ausfüllen der Seitenleiste",
-                "nota": "Diese Anleitung ist nicht der Prompt. Lesen Sie sie zuerst; darunter finden Sie den Prompt zum Kopieren in Ihren persönlichen GPT-Chat.",
-                "passi": """1. Öffnen Sie einen neuen Chat in Ihrem persönlichen GPT-Konto.
+                "nota": "Diese Anleitung ist nicht der Prompt. Lesen Sie sie zuerst; darunter finden Sie den Prompt zum Kopieren in Ihren persönlichen ChatGPT-Chat.",
+                "passi": """1. Öffnen Sie einen neuen Chat in Ihrem persönlichen ChatGPT-Konto.
 
 2. Kopieren Sie den gesamten Text im dunklen Feld unten, ohne ihn zu ändern.
 
 3. Fügen Sie ihn als erste Nachricht ein und senden Sie ihn ab.
 
-4. GPT beginnt mit einer einfachen Frage zu dem Buch, das Sie erstellen möchten. Wenn die Angaben bereits klar sind, erstellt es sofort die Vorlage; andernfalls stellt es eine kurze Frage zur wichtigsten Entscheidung.
+4. ChatGPT beginnt mit einer einfachen Frage zu dem Buch, das Sie erstellen möchten. Wenn die Angaben bereits klar sind, erstellt es sofort die Vorlage; andernfalls stellt es eine kurze Frage zur wichtigsten Entscheidung.
 
 5. Am Ende erhalten Sie eine fertige Vorlage. Kopieren Sie jede Antwort in das gleichnamige Feld der Scrittore-Site-Seitenleiste.
 
 6. Bitten Sie diesen Chat nicht, das ganze Buch zu schreiben: Er bereitet nur die Seitenleiste vor, danach erstellt Scrittore Site den Index.""",
-                "etichetta": "PROMPT ZUM KOPIEREN IN IHREN PERSÖNLICHEN GPT-CHAT",
+                "etichetta": "PROMPT ZUM KOPIEREN IN IHREN PERSÖNLICHEN CHATGPT-CHAT",
             },
             "Română": {
                 "titolo": "🤖 Creează chatul tău pentru completarea barei laterale",
-                "nota": "Acest ghid nu este promptul. Citește-l mai întâi; imediat mai jos găsești promptul de copiat în chatul tău personal GPT.",
-                "passi": """1. Deschide un chat nou în contul tău personal GPT.
+                "nota": "Acest ghid nu este promptul. Citește-l mai întâi; imediat mai jos găsești promptul de copiat în chatul tău personal ChatGPT.",
+                "passi": """1. Deschide un chat nou în contul tău personal ChatGPT.
 
 2. Copiază tot textul din caseta întunecată de mai jos, fără să îl modifici.
 
 3. Lipește-l ca primul mesaj și trimite-l.
 
-4. GPT va începe cu o întrebare simplă despre cartea pe care vrei să o creezi. Dacă informațiile sunt deja clare, va pregăti imediat fișa; altfel, va pune o singură întrebare scurtă despre alegerea cea mai importantă.
+4. ChatGPT va începe cu o întrebare simplă despre cartea pe care vrei să o creezi. Dacă informațiile sunt deja clare, va pregăti imediat fișa; altfel, va pune o singură întrebare scurtă despre alegerea cea mai importantă.
 
 5. La final vei primi o fișă pregătită. Copiază fiecare răspuns în câmpul cu același nume din bara laterală Scrittore Site.
 
 6. Nu cere acelui chat să scrie cartea completă: el pregătește doar bara laterală, apoi Scrittore Site va crea indexul.""",
-                "etichetta": "PROMPT DE COPIAT ÎN CHATUL TĂU PERSONAL GPT",
+                "etichetta": "PROMPT DE COPIAT ÎN CHATUL TĂU PERSONAL ChatGPT",
             },
             "Русский": {
                 "titolo": "🤖 Создайте чат для заполнения боковой панели",
-                "nota": "Это руководство — не промпт. Сначала прочитайте его; ниже находится промпт для копирования в ваш личный чат GPT.",
-                "passi": """1. Откройте новый чат в своём личном аккаунте GPT.
+                "nota": "Это руководство — не промпт. Сначала прочитайте его; ниже находится промпт для копирования в ваш личный чат ChatGPT.",
+                "passi": """1. Откройте новый чат в своём личном аккаунте ChatGPT.
 
 2. Скопируйте весь текст из тёмного блока ниже, ничего не меняя.
 
 3. Вставьте его первым сообщением и отправьте.
 
-4. GPT начнёт с простого вопроса о книге, которую вы хотите создать. Если информации достаточно, он сразу подготовит карточку; иначе задаст один короткий вопрос о самом важном выборе.
+4. ChatGPT начнёт с простого вопроса о книге, которую вы хотите создать. Если информации достаточно, он сразу подготовит карточку; иначе задаст один короткий вопрос о самом важном выборе.
 
 5. В конце вы получите готовую карточку. Скопируйте каждый ответ в поле с таким же названием на боковой панели Scrittore Site.
 
 6. Не просите этот чат написать всю книгу: он только готовит боковую панель, после чего Scrittore Site создаст оглавление.""",
-                "etichetta": "ПРОМПТ ДЛЯ КОПИРОВАНИЯ В ВАШ ЛИЧНЫЙ ЧАТ GPT",
+                "etichetta": "ПРОМПТ ДЛЯ КОПИРОВАНИЯ В ВАШ ЛИЧНЫЙ ЧАТ ChatGPT",
             },
             "العربية": {
                 "titolo": "🤖 أنشئ محادثتك لملء الشريط الجانبي",
-                "nota": "هذا الدليل ليس هو الموجّه. اقرأه أولاً؛ ستجد أسفله مباشرة الموجّه لنسخه في محادثتك الشخصية مع GPT.",
-                "passi": """1. افتح محادثة جديدة في حسابك الشخصي على GPT.
+                "nota": "هذا الدليل ليس هو الموجّه. اقرأه أولاً؛ ستجد أسفله مباشرة الموجّه لنسخه في محادثتك الشخصية مع ChatGPT.",
+                "passi": """1. افتح محادثة جديدة في حسابك الشخصي على ChatGPT.
 
 2. انسخ كل النص الموجود في المربع الداكن أدناه دون تغييره.
 
 3. الصقه كأول رسالة ثم أرسله.
 
-4. سيبدأ GPT بسؤال بسيط عن الكتاب الذي تريد إنشاءه. إذا كانت المعلومات واضحة، فسيُعدّ البطاقة مباشرة؛ وإلا فسيسأل سؤالاً قصيراً واحداً عن أهم اختيار.
+4. سيبدأ ChatGPT بسؤال بسيط عن الكتاب الذي تريد إنشاءه. إذا كانت المعلومات واضحة، فسيُعدّ البطاقة مباشرة؛ وإلا فسيسأل سؤالاً قصيراً واحداً عن أهم اختيار.
 
 5. في النهاية ستحصل على بطاقة جاهزة. انسخ كل إجابة إلى الحقل الذي يحمل الاسم نفسه في الشريط الجانبي لـ Scrittore Site.
 
 6. لا تطلب من تلك المحادثة كتابة الكتاب كاملاً: دورها فقط إعداد الشريط الجانبي، وبعد ذلك ينشئ Scrittore Site الفهرس.""",
-                "etichetta": "موجّه لنسخه في محادثتك الشخصية مع GPT",
+                "etichetta": "موجّه لنسخه في محادثتك الشخصية مع ChatGPT",
             },
             "中文": {
                 "titolo": "🤖 创建聊天以填写侧边栏",
-                "nota": "这不是提示词本身。请先阅读本说明；下面就是可复制到你个人 GPT 聊天中的提示词。",
-                "passi": """1. 在你的个人 GPT 账户中打开一个新聊天。
+                "nota": "这不是提示词本身。请先阅读本说明；下面就是可复制到你个人 ChatGPT 聊天中的提示词。",
+                "passi": """1. 在你的个人 ChatGPT 账户中打开一个新聊天。
 
 2. 完整复制下方深色框中的所有文字，不要修改。
 
 3. 将它作为第一条消息粘贴并发送。
 
-4. GPT 会先询问一个有关你想创作的图书的简单问题。如果信息已足够清晰，它会立即准备好资料卡；否则只会就最重要的选择再问一个简短问题。
+4. ChatGPT 会先询问一个有关你想创作的图书的简单问题。如果信息已足够清晰，它会立即准备好资料卡；否则只会就最重要的选择再问一个简短问题。
 
 5. 最后你会得到一张可直接使用的资料卡。将每项答案复制到 Scrittore Site 侧边栏中同名的字段。
 
 6. 不要让该聊天直接写完整本书：它只负责准备侧边栏，然后 Scrittore Site 会生成目录。""",
-                "etichetta": "复制到你的个人 GPT 聊天中的提示词",
+                "etichetta": "复制到你的个人 ChatGPT 聊天中的提示词",
             },
         }
         guida_chat = guida_chat_sidebar.get(lingua_sel, guida_chat_sidebar["Italiano"])
@@ -10015,15 +10022,15 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         st.info(guida_chat["nota"])
         st.markdown(guida_chat["passi"])
         istruzioni_chat_guidata = {
-            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto. Risponde nella lingua selezionata e usa sempre GPT, anche se per il libro hai scelto DeepSeek. L'avvio è gratuito; ogni risposta costa 1 credito. Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
-            "English": "**Optional alternative:** open the guided chat below. It replies in the selected language and always uses GPT, even if you selected DeepSeek for the book. Starting is free; each reply costs 1 credit. At the end you may fill only empty fields automatically or replace existing ones.",
-            "Español": "**Alternativa opcional:** abre el chat guiado de abajo. Responde en el idioma elegido y siempre usa GPT, aunque hayas elegido DeepSeek para el libro. Iniciar es gratuito; cada respuesta cuesta 1 crédito. Al final puedes completar solo campos vacíos o sustituir los existentes.",
-            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous. Il répond dans la langue choisie et utilise toujours GPT, même si vous avez choisi DeepSeek pour le livre. Le démarrage est gratuit ; chaque réponse coûte 1 crédit. À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
-            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat. Er antwortet in der gewählten Sprache und verwendet immer GPT, auch wenn für das Buch DeepSeek ausgewählt wurde. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt. Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
-            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos. Răspunde în limba selectată și folosește întotdeauna GPT, chiar dacă ai ales DeepSeek pentru carte. Pornirea este gratuită; fiecare răspuns costă 1 credit. La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
-            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже. Он отвечает на выбранном языке и всегда использует GPT, даже если для книги выбран DeepSeek. Запуск бесплатен; каждый ответ стоит 1 кредит. В конце можно заполнить только пустые поля или заменить существующие.",
-            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه. ترد باللغة المحددة وتستخدم GPT دائمًا، حتى إذا اخترت DeepSeek للكتاب. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا. في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
-            "中文": "**可选方式：** 打开下方的引导式聊天。它会用所选语言回复，并始终使用 GPT，即使图书选择了 DeepSeek。启动免费；每次回复消耗 1 积分。最后可自动仅填写空字段，或替换已有字段。",
+            "Italiano": "**Alternativa opzionale:** apri la chat guidata qui sotto. Risponde nella lingua selezionata e usa sempre il cervello costoso, anche se per il libro hai scelto il cervello economico. L'avvio è gratuito; ogni risposta costa 1 credito. Alla fine puoi compilare automaticamente solo i campi vuoti oppure sostituire quelli già presenti.",
+            "English": "**Optional alternative:** open the guided chat below. It replies in the selected language and always uses the expensive brain, even if you selected the economy brain for the book. Starting is free; each reply costs 1 credit. At the end you may fill only empty fields automatically or replace existing ones.",
+            "Español": "**Alternativa opcional:** abre el chat guiado de abajo. Responde en el idioma elegido y siempre usa el cerebro caro, aunque hayas elegido el cerebro económico para el libro. Iniciar es gratuito; cada respuesta cuesta 1 crédito. Al final puedes completar solo campos vacíos o sustituir los existentes.",
+            "Français": "**Alternative facultative :** ouvrez le chat guidé ci-dessous. Il répond dans la langue choisie et utilise toujours le cerveau coûteux, même si vous avez choisi le cerveau économique pour le livre. Le démarrage est gratuit ; chaque réponse coûte 1 crédit. À la fin, vous pouvez remplir seulement les champs vides ou remplacer ceux qui existent.",
+            "Deutsch": "**Optionale Alternative:** Öffnen Sie unten den geführten Chat. Er antwortet in der gewählten Sprache und verwendet immer „Teures Gehirn“, auch wenn für das Buch „Sparsames Gehirn“ ausgewählt wurde. Der Start ist kostenlos; jede Antwort kostet 1 Guthabenpunkt. Am Ende können Sie nur leere Felder füllen oder vorhandene ersetzen.",
+            "Română": "**Alternativă opțională:** deschide chatul ghidat de mai jos. Răspunde în limba selectată și folosește întotdeauna „Creier scump”, chiar dacă ai ales „Creier economic” pentru carte. Pornirea este gratuită; fiecare răspuns costă 1 credit. La final poți completa doar câmpurile goale sau le poți înlocui pe cele existente.",
+            "Русский": "**Необязательная альтернатива:** откройте управляемый чат ниже. Он отвечает на выбранном языке и всегда использует «Дорогой мозг», даже если для книги выбран «Экономный мозг». Запуск бесплатен; каждый ответ стоит 1 кредит. В конце можно заполнить только пустые поля или заменить существующие.",
+            "العربية": "**بديل اختياري:** افتح الدردشة الموجّهة أدناه. ترد باللغة المحددة وتستخدم العقل المكلف دائمًا، حتى إذا اخترت العقل الاقتصادي للكتاب. البدء مجاني؛ كل رد يكلف رصيدًا واحدًا. في النهاية يمكنك ملء الحقول الفارغة فقط أو استبدال الحقول الموجودة.",
+            "中文": "**可选方式：** 打开下方的引导式聊天。它会用所选语言回复，并始终使用高价大脑，即使图书选择了经济大脑。启动免费；每次回复消耗 1 积分。最后可自动仅填写空字段，或替换已有字段。",
         }
         st.info(istruzioni_chat_guidata.get(lingua_sel, istruzioni_chat_guidata["Italiano"]))
         istruzione_lingua_prompt = {
@@ -10169,10 +10176,10 @@ Usa esattamente i nomi delle opzioni qui riportate. Non modificarli e non crearn
 
 Per CERVELLO AI scegli un solo valore tra:
 
-- GPT-5.4 (OpenAI)
-- DeepSeek V4 Pro
+- Cervello costoso
+- Cervello economico
 
-Scegli GPT-5.4 (OpenAI) come valore predefinito. Scegli DeepSeek V4 Pro soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di verifica copyright web o generazione immagini. Con DeepSeek è disponibile la ricerca delle fonti con registro visibile. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
+Scegli il cervello costoso come valore predefinito. Scegli il cervello economico soltanto se il lettore vuole ridurre il consumo di crediti e non ha bisogno di verifica copyright web o generazione immagini. Con il cervello economico è disponibile la ricerca delle fonti con registro visibile. Il Cervello AI non modifica lingua, genere, stile o contenuto del libro: indica solo il motore che Scrittore Site utilizzerà.
 
 PERSONALIZZAZIONE DEL LIBRO (SCELTA OBBLIGATORIA PRIMA DELLA SCHEDA)
 
@@ -10262,7 +10269,7 @@ Non aggiungere testo dopo l'ultima etichetta."""
         }
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
-            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nRITMO DEL LIBRO: Disteso e immersivo; Equilibrato e progressivo; Serrato e dinamico. Choose Equilibrato e progressivo by default and make it coherent with genre, writing type and narrative style.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nNARRATORE (novels and biographies only): Terza persona vicina a un personaggio; Prima persona (il protagonista racconta); Terza persona onnisciente; Terza persona a più punti di vista (uno per scena).\nTEMPO VERBALE (novels and biographies only): Passato (passato remoto e imperfetto); Presente.\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nRITMO DEL LIBRO: Disteso e immersivo; Equilibrato e progressivo; Serrato e dinamico. Choose Equilibrato e progressivo by default and make it coherent with genre, writing type and narrative style.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nNARRATORE (novels and biographies only): Terza persona vicina a un personaggio; Prima persona (il protagonista racconta); Terza persona onnisciente; Terza persona a più punti di vista (uno per scena).\nTEMPO VERBALE (novels and biographies only): Passato (passato remoto e imperfetto); Presente.\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: Expensive brain; Economy brain. Choose the expensive brain by default. Choose the economy brain only when lower credit consumption is preferred and web copyright checks or image generation are not required. Economy brain performs source research with a visible register."""
             personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION — Before drafting the final form, always ask explicitly whether the user wants to personalize the book: A. no, proceed with a general editorial project; B. yes, add personal voice, episodes, examples, materials or reader priorities; C. yes, mainly define boundaries or guided pauses. If A is selected, omit all optional personalization fields. If B or C is selected, ask in one message only for the indispensable details, then formulate the relevant fields concretely. Never invent personal experiences, testimonials or facts. Append personalization fields after APPROFONDIMENTI only when the user has chosen personalization and supplied relevant details. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
@@ -10412,12 +10419,12 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
             costo_chat_visibile = f"{CREDIT_COSTS['chat_sidebar_guidata']} credito"
             cervello_chat = st.session_state.get("provider_ia", "GPT-5.4 (OpenAI)")
             st.info(
-                "La Chat guidata usa sempre **GPT-5.4**, indipendentemente dal cervello scelto per il libro. "
+                "La Chat guidata usa sempre **Cervello costoso**, indipendentemente dal cervello scelto per il libro. "
                 f"L'avvio e i tuoi messaggi sono gratuiti; ogni risposta della chat costa "
                 f"**{costo_chat_visibile}**."
             )
             st.caption(
-                f"Per indice e stesura resta selezionato **{cervello_chat}**: la chat non cambia questa scelta."
+                f"Per indice e stesura resta selezionato **{brain_names_core.nome_cervello(cervello_chat, lingua_sel)}**: la chat non cambia questa scelta."
             )
 
             if not st.session_state.get("chat_sidebar_attiva"):
@@ -10682,7 +10689,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                         for campo, valore in scheda_chat_pronta.items():
                             if campo != "provider_ia":
                                 st.write(f"**{campo.replace('_', ' ').capitalize()}:** {valore}")
-                        st.caption(f"Cervello AI mantenuto: {cervello_chat}")
+                        st.caption(f"Cervello AI mantenuto: {brain_names_core.nome_cervello(cervello_chat, lingua_sel)}")
                     st.button(
                         "✍️ COMPILA SOLO I CAMPI VUOTI",
                         key="applica_chat_sidebar_solo_vuoti",
@@ -10718,7 +10725,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
         st.info(testi_nicchia["istruzioni"])
         costo_dialogo_nicchia = "1 credito"
         st.caption(
-            "La Chat della nicchia usa sempre **GPT-5.4**, anche per ricerca e prompt finale. Avvio e messaggi dell'utente gratuiti; "
+            "La Chat della nicchia usa sempre **Cervello costoso**, anche per ricerca e prompt finale. Avvio e messaggi dell'utente gratuiti; "
             f"ogni risposta di dialogo costa **{costo_dialogo_nicchia}**. Le fasi di ricerca mostrano un preventivo prima dell'avvio."
         )
         if not st.session_state.get("chat_nicchia_attiva"):
@@ -10827,7 +10834,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                 "Mancano: " + ", ".join(campi_sidebar_mancanti) + "."
             )
         descrizione_indice = (
-            "DeepSeek Pro studia il brief, svolge la ricerca delle fonti con registro visibile e analizza le fonti caricate; poi genera, valuta e corregge l'indice senza usare GPT."
+            "Cervello economico studia il brief, svolge la ricerca delle fonti con registro visibile e analizza le fonti caricate; poi genera, valuta e corregge l'indice senza usare il cervello costoso."
             if usa_deepseek_pro() else
             "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice."
         )
@@ -12607,24 +12614,24 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.divider()
         st.subheader("EDITOR AI — PARERE SUL LIBRO")
         st.caption(
-            "Un unico parere editoriale rapido, elaborato sempre da GPT-5.4. "
+            "Un unico parere editoriale rapido, elaborato sempre dal cervello costoso. "
             "Legge tutto il manoscritto quando è breve oppure estratti distribuiti quando è lungo; "
             "non modifica mai il testo."
         )
         costo_parere = CREDIT_COSTS["controllo_coerenza_iniziale"]
         testo_costo_parere = f"{costo_parere} crediti"
         if pulsante_con_preventivo(
-            "parere_editoriale_libro", "🔍 CHIEDI IL PARERE DELL'EDITOR GPT", testo_costo_parere,
-            f"Il parere costa {testo_costo_parere}. Usa una sola chiamata GPT breve e non modifica il manoscritto."
+            "parere_editoriale_libro", "🔍 CHIEDI IL PARERE DELL'EDITOR (CERVELLO COSTOSO)", testo_costo_parere,
+            f"Il parere costa {testo_costo_parere}. Usa una sola chiamata breve del cervello costoso e non modifica il manoscritto."
         ):
             if not sezioni_con_testo:
                 st.warning("Genera almeno una sezione prima di chiedere un parere editoriale.")
             else:
-                barra_parere = st.progress(15, text="GPT sta leggendo il manoscritto...")
+                barra_parere = st.progress(15, text="Cervello costoso sta leggendo il manoscritto...")
                 riferimento_parere = addebita_azione_diretta(
                     "controllo_coerenza", amount=costo_parere
                 )
-                with st.spinner("L'editor GPT sta preparando il suo parere..."):
+                with st.spinner("L'editor del cervello costoso sta preparando il suo parere..."):
                     parere = parere_editoriale_gpt(
                         st.session_state.get("indice_raw", ""), contenuti_libro, val_titolo,
                         val_trama, val_genere, val_stile, val_narrativa, val_pov, val_goal,
@@ -12639,7 +12646,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     st.session_state["report_parere_editoriale_libro"] = parere
                     st.session_state["report_parere_editoriale_firma"] = firma_attuale_coerenza
                     notifica_sonora("coerenza_completata", lingua_sel, ripeti=True)
-                    barra_parere.progress(100, text="Parere editoriale GPT pronto.")
+                    barra_parere.progress(100, text="Parere editoriale del cervello costoso pronto.")
                     st.success("Parere editoriale pronto.")
         parere_salvato = str(st.session_state.get("report_parere_editoriale_libro", "") or "").strip()
         if parere_salvato:
@@ -12647,7 +12654,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 st.warning("Parere non aggiornato: il testo, l'indice o il brief sono cambiati. Chiedi un nuovo parere per questa versione.")
             else:
                 st.text_area(
-                    "Parere dell'editor GPT", value=parere_salvato, height=390,
+                    "Parere dell'editor del cervello costoso", value=parere_salvato, height=390,
                     key="output_parere_editoriale_libro"
                 )
 
@@ -12786,7 +12793,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             registro_web = st.session_state.get("registro_fonti_web", "").strip()
             if registro_web:
                 if usa_deepseek_pro():
-                    st.info("Le verifiche copyright sul web sono sospese in modalità DeepSeek Pro: richiedono il cervello GPT con ricerca web. Il controllo locale sulle fonti caricate resta disponibile e gratuito.")
+                    st.info("Le verifiche copyright sul web sono sospese in modalità cervello economico: richiedono il cervello costoso con ricerca web. Il controllo locale sulle fonti caricate resta disponibile e gratuito.")
                 st.caption("La verifica web costa 2 crediti e non modifica il manoscritto.")
                 if pulsante_con_preventivo(
                     "verifica_originalita_web", "🌐 VERIFICA COPYRIGHT SUL WEB", CREDIT_COSTS["copyright_web_rapido"],
@@ -12815,7 +12822,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if pulsante_con_preventivo(
                     "verifica_originalita_web_completa", "🛡️ VERIFICA COPYRIGHT WEB COMPLETA",
                     f"da {costo_verifica_completa} a {costo_massimo_verifica_completa}",
-                    "GPT-5.4 mini controlla tutti i lotti a 1 credito ciascuno. Solo se un lotto è segnalato, GPT-5.4 esegue una revisione mirata a 2 crediti aggiuntivi. Paghi solo le revisioni effettivamente completate.",
+                    "Cervello costoso (modello rapido) controlla tutti i lotti a 1 credito ciascuno. Solo se un lotto è segnalato, il cervello costoso esegue una revisione mirata a 2 crediti aggiuntivi. Paghi solo le revisioni effettivamente completate.",
                     use_container_width=True,
                     disabled=(not blocchi_completi) or usa_deepseek_pro(),
                 ):
