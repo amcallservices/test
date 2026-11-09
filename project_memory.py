@@ -54,6 +54,11 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "tempo_verbale": "book_tense",
     "scaletta": "book_scene_outline",
     "scheda_personaggi": "book_story_bible",
+    "verita_nascosta": "book_hidden_truth",
+    "mappa_semi": "book_setup_map",
+    "tesi_centrale": "book_thesis",
+    "obiettivi_prerequisiti": "book_learning_goals",
+    "registro_coerenza": "book_continuity_log",
     "lunghezza": "profilo_lunghezza_stesura",
     "provider_ia": "provider_ia",
 }

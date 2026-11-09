@@ -75,6 +75,8 @@ class DeepSeekFocusTests(unittest.TestCase):
                 memoria_editoriale_progetto=lambda _state: {"narrativa": {}},
             ),
             "S_PROMPT": "SYSTEM",
+            # Scheda di coerenza automatica: qui registra solo la chiamata.
+            "aggiorna_registro_coerenza_automatico": lambda *args: None,
         }
         app = load_functions({"scrivi_contenuto_dettagliato"}, namespace)
         args = ("1.1 Controlli documentali", "Indice", "Auto usate", "Manuale Pratico", "Pratico", "Diretto", "Tu", "Acquisto sicuro", "Italiano", "", "Standard KDP")

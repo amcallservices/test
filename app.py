@@ -49,6 +49,8 @@ MODULI_LOCALI_AGGIORNABILI = (
     "emotional_impact",
     "narrative_prompts",
     "narrative_i18n",
+    "book_project",
+    "book_project_i18n",
     "voice_chat",
 )
 
@@ -159,6 +161,8 @@ import project_memory as memoria_core
 import narrative_engine as narrative_core
 import narrative_prompts as narrative_prompts_core
 import narrative_i18n as narrative_i18n_core
+import book_project as book_project_core
+import book_project_i18n as book_project_i18n_core
 import emotional_impact as emotional_impact_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 marca_moduli_locali_caricati()
@@ -193,6 +197,9 @@ CREDIT_COSTS["chat_indice_rigenerazione_estesa"] = 15
 # scheda personaggi legge estratti dei capitoli scritti.
 CREDIT_COSTS.setdefault("scaletta_narrativa", 2)
 CREDIT_COSTS.setdefault("aggiorna_scheda_personaggi", 1)
+# Progetto completo del libro (campi vuoti + scaletta) e revisione di un capitolo.
+CREDIT_COSTS.setdefault("progetto_libro", 2)
+CREDIT_COSTS.setdefault("revisione_capitolo", 1)
 CHAT_SOLO_GPT_OPERAZIONI = frozenset({
     *CHAT_SOLO_GPT_OPERAZIONI,
     "chat_indice_dialogo",
@@ -3683,6 +3690,13 @@ CAMPI_SALVATAGGIO_PROGETTO = {
     "tempo_verbale": "book_tense",
     "scaletta": "book_scene_outline",
     "scheda_personaggi": "book_story_bible",
+    # Progetto del libro: verità nascosta e semi (romanzi), tesi (saggi),
+    # obiettivi e prerequisiti (manuali), scheda di coerenza automatica.
+    "verita_nascosta": "book_hidden_truth",
+    "mappa_semi": "book_setup_map",
+    "tesi_centrale": "book_thesis",
+    "obiettivi_prerequisiti": "book_learning_goals",
+    "registro_coerenza": "book_continuity_log",
     "lunghezza": "profilo_lunghezza_stesura",
     "provider_ia": "provider_ia",
 }
@@ -3708,6 +3722,49 @@ def ripristina_widget_progetto(nome):
     st.session_state[chiave] = valore or ""
 
 
+def valore_campo_progetto(nome):
+    """Valore corrente di un campo del progetto, anche se il widget non è visibile.
+
+    Ordine: aggiornamento in attesa (scritto dopo che il widget era già stato
+    disegnato), widget, memoria della sidebar, progetto salvato.
+    """
+    attesa = st.session_state.get(f"_{nome}_in_attesa")
+    if attesa is not None:
+        return str(attesa)
+    chiave = CAMPI_SALVATAGGIO_PROGETTO.get(nome, "")
+    if chiave and chiave in st.session_state:
+        return str(st.session_state.get(chiave) or "")
+    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    if memoria.get(nome):
+        return str(memoria[nome])
+    progetto = st.session_state.get(CHIAVE_PROGETTO_UNICO, {}) or {}
+    return str(dict(progetto.get("sidebar", {}) or {}).get(nome, "") or "")
+
+
+def imposta_campo_progetto(nome, valore):
+    """Aggiorna un campo del progetto in qualunque momento del rerun.
+
+    Il widget riceve il valore al passaggio successivo (Streamlit non permette
+    di cambiarlo dopo averlo disegnato); memoria e prompt lo usano subito.
+    """
+    valore = str(valore or "")
+    st.session_state[f"_{nome}_in_attesa"] = valore
+    memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
+    memoria[nome] = valore
+    st.session_state[CHIAVE_MEMORIA_SIDEBAR] = memoria
+    progetto = st.session_state.setdefault(CHIAVE_PROGETTO_UNICO, {})
+    if isinstance(progetto, dict):
+        progetto.setdefault("sidebar", {})[nome] = valore
+
+
+def campi_progetto_correnti():
+    """Campi del progetto usati nei prompt di stesura."""
+    return {
+        nome: valore_campo_progetto(nome)
+        for nome in ("scheda_personaggi", "verita_nascosta", "mappa_semi", "tesi_centrale", "obiettivi_prerequisiti")
+    }
+
+
 # La chat guidata non conserva un secondo progetto: quando l'utente approva
 # la scheda, scrive direttamente nelle stesse chiavi della sidebar. Le funzioni
 # sono fuori dalla UI perché i pulsanti usano callback Streamlit sicure anche
@@ -3731,6 +3788,11 @@ CAMPI_CHAT_GUIDATA_SIDEBAR = {
     "TRAMA O ARGOMENTO": "argomento",
     "APPROFONDIMENTI": "approfondimenti",
     "PERSONAGGI E MONDO": "scheda_personaggi",
+    # Progetto del libro compilato in automatico dalla chat.
+    "VERITÀ NASCOSTA": "verita_nascosta",
+    "MAPPA DEI SEMI": "mappa_semi",
+    "TESI CENTRALE": "tesi_centrale",
+    "OBIETTIVI E PREREQUISITI": "obiettivi_prerequisiti",
     "VOCE O PROSPETTIVA PERSONALE": "voce_personale",
     "MATERIALI PERSONALI": "materiale_personale",
     "PRIORITÀ PERSONALI PER IL LETTORE": "priorita_personali",
@@ -3752,6 +3814,10 @@ CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
     "punto_di_vista": ("Point of view", "Punto de vista", "Point de vue", "Erzählperspektive", "Punct de vedere", "Точка зрения", "وجهة النظر", "叙述视角"),
     "narratore": ("Narrator", "Narrador", "Narrateur", "Erzähler", "Narator", "Рассказчик", "الراوي", "叙述者"),
     "tempo_verbale": ("Narrative tense", "Tiempo verbal", "Temps du récit", "Erzählzeit", "Timpul verbal", "Время повествования", "زمن السرد", "叙事时态"),
+    "verita_nascosta": ("Hidden truth", "Verdad oculta", "Vérité cachée", "Verborgene Wahrheit", "Adevărul ascuns", "Скрытая правда", "الحقيقة الخفية", "隐藏真相"),
+    "mappa_semi": ("Setup map", "Mapa de semillas", "Carte des graines", "Saat-Karte", "Harta semințelor", "Карта завязок", "خريطة البذور", "伏笔地图"),
+    "tesi_centrale": ("Central thesis", "Tesis central", "Thèse centrale", "Zentrale These", "Teza centrală", "Главный тезис", "الأطروحة المركزية", "核心论点"),
+    "obiettivi_prerequisiti": ("Objectives and prerequisites", "Objetivos y requisitos previos", "Objectifs et prérequis", "Lernziele und Voraussetzungen", "Obiective și cerințe preliminare", "Цели и требования", "الأهداف والمتطلبات المسبقة", "目标与前提条件"),
     "scheda_personaggi": ("Characters and world", "Personajes y mundo", "Personnages et monde", "Figuren und Welt", "Personaje și lume", "Персонажи и мир", "الشخصيات والعالم", "人物与世界"),
     "lunghezza": ("Section length", "Longitud de las secciones", "Longueur des sections", "Abschnittslänge", "Lungimea secțiunilor", "Длина разделов", "طول الأقسام", "章节长度"),
     "provider_ia": ("AI engine", "Motor de IA", "Moteur IA", "KI-Modell", "Motor IA", "Модель ИИ", "محرك الذكاء الاصطناعي", "AI 模型"),
@@ -3813,11 +3879,13 @@ def campi_obbligatori_chat_guidata(genere=""):
 
 def _valore_scelta_chat_guidata(campo, valore):
     """Normalizza solo le selezioni tecniche; i testi editoriali restano liberi."""
-    if campo == "scheda_personaggi":
-        # Elenco di personaggi: una voce per riga, come nella scheda del romanzo.
+    if campo in {"scheda_personaggi", "mappa_semi", "verita_nascosta", "tesi_centrale", "obiettivi_prerequisiti"}:
+        # Campi del progetto su più righe: si conservano gli a capo. Personaggi
+        # e semi sono elenchi, una voce per riga.
         righe = [re.sub(r"[ \t]+", " ", riga).strip() for riga in str(valore or "").splitlines()]
-        righe = [riga if riga.startswith(("-", "•")) or riga.isupper() else f"- {riga}" for riga in righe if riga]
-        return "\n".join(righe)
+        if campo in {"scheda_personaggi", "mappa_semi"}:
+            righe = [riga if riga.startswith(("-", "•")) or riga.isupper() else f"- {riga}" for riga in righe if riga]
+        return "\n".join(riga for riga in righe if riga)
     valore = re.sub(r"\s+", " ", str(valore or "")).strip()
     # I modelli possono evidenziare una scelta con Markdown. La formattazione
     # non deve impedire alla chat di trasferire una scheda corretta nella sidebar.
@@ -4028,7 +4096,10 @@ def prompt_scheda_chat_guidata_deepseek(lingua, provider, scelta="D"):
         for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
         if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
     )
-    blocco_romanzi = narrative_i18n_core.istruzioni_chat_romanzi(lingua)
+    blocco_romanzi = (
+        narrative_i18n_core.istruzioni_chat_romanzi(lingua)
+        + "\n\n" + book_project_core.istruzioni_chat_progetto()
+    )
     campi_personali = campi_personalizzazione_deepseek(scelta)
     etichette_personali = "\n".join(
         f"{etichetta}:"
@@ -5870,11 +5941,43 @@ def controllo_finale_pre_export(indice, sezioni, contenuti, titolo, trama, gener
         esiti_test = audit_simulazioni_test_prep(indice, contenuti, obiettivo, trama)
         problemi.extend(esito for esito in esiti_test if esito.startswith("ERRORE"))
 
+    # Progetto del libro: dati da verificare (bloccano la versione finale),
+    # semi aperti, ripetizioni e frasi fatte (solo consigli, gratuiti e locali).
+    lingua_libro = st.session_state.get("editor_language") or "Italiano"
+    t_prog = lambda chiave, **valori: book_project_i18n_core.testo(chiave, lingua_libro, **valori)
+    testi_libro = {sezione: str(contenuti.get(sezione, "") or "") for sezione in sezioni}
+    marcatori = book_project_core.trova_marcatori_verifica(testi_libro)
+    if marcatori:
+        problemi.append(t_prog(
+            "problema_dati", n=len(marcatori), marcatore=book_project_core.marcatore_verifica(lingua_libro)
+        ))
+    avvisi = []
+    tipo = book_project_core.tipo_opera(genere)
+    if tipo == "narrativa":
+        for esito in book_project_core.controllo_semi(valore_campo_progetto("mappa_semi"), sezioni, testi_libro):
+            chiave = {"senza_risoluzione": "avviso_seme_senza", "voce_inesistente": "avviso_seme_inesistente"}.get(
+                esito["problema"], "avviso_seme_non_scritto"
+            )
+            avvisi.append(t_prog(chiave, seme=esito["seme"], voce=esito["voce"]))
+        if book_project_core.dialoghi_senza_caporali(testi_libro, lingua_libro):
+            avvisi.append(t_prog("avviso_caporali"))
+    aperti = book_project_core.punti_aperti_registro(valore_campo_progetto("registro_coerenza"))
+    if aperti and all(testo.strip() for testo in testi_libro.values()):
+        avvisi.append(t_prog("avviso_semi_aperti", elenco="; ".join(aperti[:6])))
+    ripetute = book_project_core.ripetizioni_nel_libro(testi_libro)
+    if ripetute:
+        avvisi.append(t_prog("avviso_ripetizioni", elenco="; ".join(f"«{frase}» ×{n}" for frase, n in ripetute[:6])))
+    frasi_fatte = book_project_core.frasi_fatte_nel_libro(testi_libro)
+    if frasi_fatte:
+        avvisi.append(t_prog("avviso_frasi_fatte", elenco="; ".join(f"«{frase}» ×{n}" for frase, n in frasi_fatte[:6])))
+
     return {
         "pronto": not problemi,
         "problemi": problemi,
         "prompt_correzione": prompt_correzione,
         "stati": stati,
+        "avvisi": avvisi,
+        "dati_da_verificare": marcatori,
     }
 
 
@@ -6004,6 +6107,15 @@ def mostra_report_prontezza_pubblicazione(esito_finale, sezioni, contenuti, ling
             st.write("- " + str(azione))
     else:
         st.success("✓ Nessun intervento tecnico richiesto dai controlli già eseguiti.")
+    avvisi_editoriali = list(esito_finale.get("avvisi", []) or [])
+    if avvisi_editoriali:
+        st.markdown(f"**{book_project_i18n_core.testo('avvisi_titolo', lingua)}**")
+        for avviso in avvisi_editoriali[:10]:
+            st.info(avviso)
+    dati_da_verificare = list(esito_finale.get("dati_da_verificare", []) or [])
+    if dati_da_verificare:
+        with st.expander(book_project_core.marcatore_verifica(lingua), expanded=False):
+            st.dataframe(dati_da_verificare, hide_index=True, use_container_width=True)
 
     with st.expander(et_dettagli, expanded=False):
         st.caption("Questo riepilogo non sostituisce la rilettura editoriale né una certificazione legale.")
@@ -6917,6 +7029,10 @@ l'indice. Restituisci un testo autonomo di almeno 80 parole.
         else:
             st.session_state.setdefault("avvisi_qualita_narrativa", {}).pop(sezione, None)
 
+    # Scheda di coerenza automatica (tutti i generi): passaggio interno,
+    # gratuito per l'utente, che non può bloccare la stesura.
+    aggiorna_registro_coerenza_automatico(sezione, testo_pulito, genere, lingua)
+
     # Ogni sezione, inclusa la prima Prefazione, entra subito nella memoria
     # stabile della stesura completa prima del rerun della coda automatica.
     return scrivi_sezione_stesura_completa(sezione, testo_pulito)
@@ -7818,13 +7934,27 @@ elenchi o promesse garantite. Concludi con una frase completa e definitiva.
         "Se la sezione è una Parte, scrivi soltanto una breve apertura che spiega lo scopo della Parte e come usarla: "
         "non sviluppare o riassumere i capitoli che seguono."
     )
+    # Progetto del libro (tutti i generi): campi del tipo d'opera, scaletta
+    # della sezione, scheda di coerenza e struttura di apertura/chiusura.
+    tipo_opera_sezione = book_project_core.tipo_opera(genere)
+    ordine_indice = list(st.session_state.get("lista_capitoli", []) or []) or indice.splitlines()
+    apre_capitolo, chiude_capitolo = book_project_core.posizione_nel_capitolo(sezione, ordine_indice)
+    testo_scaletta = valore_campo_progetto("scaletta")
+    blocco_progetto = book_project_core.blocco_progetto_sezione(
+        tipo=tipo_opera_sezione,
+        sezione=sezione,
+        campi=campi_progetto_correnti(),
+        scaletta_sezione=narrative_prompts_core.scaletta_della_sezione(testo_scaletta, sezione),
+        registro=valore_campo_progetto("registro_coerenza"),
+        apre=apre_capitolo,
+        chiude=chiude_capitolo,
+        marcatore=book_project_core.marcatore_verifica(lingua),
+    )
     if genere_narrativo(genere):
         # Prompt di sezione per romanzi e biografie: niente procedure,
         # checklist o "profondità passo passo"; al loro posto la scena da
         # scrivere, la scaletta dell'autore e la scheda personaggi.
-        progetto_sidebar = dict(memoria_progetto_unica().get("sidebar", {}) or {})
-        testo_scaletta = st.session_state.get("book_scene_outline") or progetto_sidebar.get("scaletta", "")
-        testo_scheda = st.session_state.get("book_story_bible") or progetto_sidebar.get("scheda_personaggi", "")
+        testo_scheda = valore_campo_progetto("scheda_personaggi")
         blocco_scena = narrative_prompts_core.blocco_sezione_narrativa(
             sezione=sezione,
             scaletta_sezione=narrative_prompts_core.scaletta_della_sezione(testo_scaletta, sezione),
@@ -7838,6 +7968,8 @@ MEMORIA DELLE SEZIONI PRECEDENTI (canone e continuità):
 {memoria}
 
 {blocco_scena}
+
+{blocco_progetto}
 
 === DATI DEL ROMANZO ===
 - Trama e premessa: {trama}
@@ -7858,7 +7990,7 @@ Scrivi ora la sezione '{sezione}', in {lingua}.
 - {direttiva_parte}
 - {istruzione_lunghezza}
 - Riparti esattamente da dove si chiude la sezione precedente; la scena deve far avanzare la storia.
-- Mantieni la voce narrante indicata, senza cambiare persona o tempo verbale.
+- Mantieni la voce narrante indicata, senza cambiare persona o tempo verbale.{chr(10) + "- Dialoghi con le caporali «…», sempre." if lingua == "Italiano" else ""}
 - Non scrivere '{sezione}' come titolo: inizia direttamente con il testo.
 - Nessun Markdown, URL, nota o commento. Chiudi con una frase completa.
 """
@@ -7892,6 +8024,8 @@ MEMORIA CONTENUTI PRECEDENTI (Per non ripetersi):
 
 {istruzioni_impatto_emotivo}
 
+{blocco_progetto}
+
 AZIONE:
 Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in lingua {lingua}.
 - {direttiva_parte}
@@ -7924,40 +8058,6 @@ Scrivi ora la sezione ESATTA: '{sezione}'. Il testo deve essere rigorosamente in
 - Mantieni paragrafi leggibili e sottotitoli brevi solo quando migliorano la consultazione; non usare formule generiche come "semplice", "intuitivo" o "fondamentale" senza spiegare concretamente il perché.
 """
 
-def genera_scaletta_narrativa(sezioni, indice, titolo, genere, trama, obiettivo, voce_narrante, lingua,
-                              scheda_personaggi="", scaletta_esistente=""):
-    """Chiede all'IA 3-6 punti per scena. Restituisce (testo, errore).
-
-    Non modifica il progetto: il chiamante mostra la proposta nel campo
-    della scaletta, dove l'autore può correggerla prima della stesura.
-    """
-    prompt = narrative_prompts_core.prompt_genera_scaletta(
-        sezioni=sezioni, indice=indice, titolo=titolo, genere=genere, trama=trama,
-        obiettivo=obiettivo, scheda_personaggi=scheda_personaggi,
-        voce_narrante=voce_narrante, lingua=lingua, scaletta_esistente=scaletta_esistente,
-    )
-    esito = chiedi_gpt(
-        prompt,
-        "Sei un editor di narrativa che progetta scalette di romanzi coerenti, concrete e senza scene riempitive.",
-        amount=CREDIT_COSTS["scaletta_narrativa"],
-        max_completion_tokens=min(16000, 400 + 180 * max(1, len(sezioni))),
-        model=MODELLO_STESURA,
-        reason="scaletta_narrativa",
-        timeout_seconds=300,
-        restituisci_riferimento=True,
-    )
-    # In caso di errore tecnico chiedi_gpt ha già riaccreditato e restituisce
-    # solo il messaggio d'errore.
-    # Il secondo valore è un codice d'errore tradotto dall'interfaccia.
-    if isinstance(esito, str):
-        return "", "err_tecnico"
-    risposta, riferimento = esito
-    if not narrative_prompts_core.leggi_scaletta(risposta):
-        refund_credits(riferimento, reason="scaletta_narrativa_illeggibile", amount=CREDIT_COSTS["scaletta_narrativa"])
-        return "", "err_scaletta"
-    return str(risposta).strip(), ""
-
-
 def aggiorna_scheda_personaggi(sezioni, scheda_attuale, trama, lingua):
     """Propone una scheda aggiornata leggendo le sezioni già scritte."""
     capitoli = [
@@ -7976,6 +8076,122 @@ def aggiorna_scheda_personaggi(sezioni, scheda_attuale, trama, lingua):
         max_completion_tokens=1400,
         model=MODELLO_STESURA,
         reason="aggiorna_scheda_personaggi",
+        timeout_seconds=180,
+    )
+    if str(risposta).startswith("ERRORE:"):
+        return "", "err_tecnico"
+    return pulisci_testo_editoriale(risposta), ""
+
+
+def genera_progetto_libro(sezioni, indice, titolo, genere, trama, obiettivo, risultato, voce_narrante, lingua):
+    """Propone in una sola chiamata i campi vuoti del progetto e la scaletta.
+
+    Restituisce (blocchi, codice_errore). Non modifica il progetto: i blocchi
+    vengono applicati da applica_progetto_proposto solo ai campi vuoti.
+    """
+    tipo = book_project_core.tipo_opera(genere)
+    campi = campi_progetto_correnti()
+    prompt = book_project_core.prompt_genera_progetto(
+        tipo=tipo, sezioni=sezioni, indice=indice, titolo=titolo, genere=genere, trama=trama,
+        obiettivo=obiettivo, risultato=risultato, voce_narrante=voce_narrante, lingua=lingua,
+        campi_esistenti={c: v for c, v in campi.items() if c in book_project_core.CAMPI_PER_TIPO.get(tipo, ())},
+        scaletta_esistente=valore_campo_progetto("scaletta"),
+    )
+    esito = chiedi_gpt(
+        prompt,
+        "Sei un editor senior che progetta libri coerenti dall'inizio alla fine, senza inventare fatti reali.",
+        amount=CREDIT_COSTS["progetto_libro"],
+        max_completion_tokens=min(16000, 1500 + 180 * max(1, len(sezioni))),
+        model=MODELLO_STESURA,
+        reason="progetto_libro",
+        timeout_seconds=300,
+        restituisci_riferimento=True,
+    )
+    # In caso di errore tecnico chiedi_gpt ha già riaccreditato.
+    if isinstance(esito, str):
+        return {}, "err_tecnico"
+    risposta, riferimento = esito
+    blocchi = book_project_core.leggi_blocchi_progetto(risposta)
+    if not blocchi.get("scaletta") and narrative_prompts_core.leggi_scaletta(risposta):
+        blocchi["scaletta"] = str(risposta).strip()  # risposta senza intestazioni: solo scaletta
+    if not blocchi or not narrative_prompts_core.leggi_scaletta(blocchi.get("scaletta", "")):
+        refund_credits(riferimento, reason="progetto_libro_illeggibile", amount=CREDIT_COSTS["progetto_libro"])
+        return {}, "err_progetto"
+    return blocchi, ""
+
+
+def applica_progetto_proposto(blocchi, genere):
+    """Scrive la proposta solo nei campi vuoti; la scaletta conserva i punti dell'autore."""
+    tipo = book_project_core.tipo_opera(genere)
+    for campo in book_project_core.CAMPI_PER_TIPO.get(tipo, ()):
+        if blocchi.get(campo) and not valore_campo_progetto(campo).strip():
+            imposta_campo_progetto(campo, blocchi[campo])
+    scaletta_attuale = valore_campo_progetto("scaletta")
+    proposta = blocchi.get("scaletta", "")
+    if proposta:
+        punti_autore = narrative_prompts_core.leggi_scaletta(scaletta_attuale)
+        if punti_autore:
+            # Le voci già scritte dall'autore restano, si aggiungono solo le nuove.
+            aggiunte = [
+                blocco for blocco in re.split(r"\n(?=\s*[#*_\s]*\[)", proposta)
+                if (titolo := re.match(r"^[\s#*_]*\[(.+?)\]", blocco.strip()))
+                and re.sub(r"\s+", " ", titolo.group(1)).strip().casefold() not in punti_autore
+            ]
+            proposta = (scaletta_attuale.rstrip() + "\n\n" + "\n".join(a.strip() for a in aggiunte)).strip()
+        imposta_campo_progetto("scaletta", proposta)
+
+
+def aggiorna_registro_coerenza_automatico(sezione, testo, genere, lingua):
+    """Dopo ogni sezione salvata aggiorna la scheda di coerenza (passaggio interno, senza crediti).
+
+    Un errore non blocca mai la stesura: la scheda resta quella precedente.
+    """
+    if not str(testo or "").strip() or tipo_sezione_editoriale(sezione) == "prefazione":
+        return
+    try:
+        risposta = chiedi_gpt(
+            book_project_core.prompt_aggiorna_registro(
+                tipo=book_project_core.tipo_opera(genere),
+                registro_attuale=valore_campo_progetto("registro_coerenza"),
+                sezione=sezione, testo_sezione=testo, lingua=lingua,
+            ),
+            "Sei un editor di continuità: registri solo ciò che il testo afferma, in modo breve e preciso.",
+            addebita=False,
+            max_completion_tokens=900,
+            model=MODELLO_STESURA,
+            reason="registro_coerenza",
+            timeout_seconds=60,
+        )
+    except Exception:
+        return
+    if risposta and not str(risposta).startswith("ERRORE:"):
+        imposta_campo_progetto("registro_coerenza", pulisci_testo_editoriale(risposta))
+
+
+def revisione_capitolo_libro(capitolo, sezioni, genere, lingua):
+    """Autorevisione del capitolo: restituisce (rapporto, codice_errore). Non modifica il testo."""
+    figli = individua_sottocapitoli_del_capitolo(capitolo, sezioni)
+    testi = [(voce, str(leggi_sezione_memorizzata(voce) or "")) for voce in [capitolo, *figli]]
+    if not any(testo.strip() for _voce, testo in testi):
+        return "", "err_revisione_vuoto"
+    scaletta = valore_campo_progetto("scaletta")
+    scaletta_capitolo = "\n".join(
+        f"[{voce}]\n" + "\n".join(f"- {p}" for p in narrative_prompts_core.scaletta_della_sezione(scaletta, voce))
+        for voce in [capitolo, *figli]
+        if narrative_prompts_core.scaletta_della_sezione(scaletta, voce)
+    )
+    risposta = chiedi_gpt(
+        book_project_core.prompt_revisione_capitolo(
+            tipo=book_project_core.tipo_opera(genere), capitolo=capitolo, testi=testi,
+            progetto=book_project_core.progetto_come_testo(campi_progetto_correnti()),
+            scaletta_capitolo=scaletta_capitolo, registro=valore_campo_progetto("registro_coerenza"),
+            lingua=lingua,
+        ),
+        "Sei un editor senior: rigoroso, concreto, citi sempre il punto preciso del testo.",
+        amount=CREDIT_COSTS["revisione_capitolo"],
+        max_completion_tokens=2200,
+        model=MODELLO_STESURA,
+        reason="revisione_capitolo",
         timeout_seconds=180,
     )
     if str(risposta).startswith("ERRORE:"):
@@ -8971,7 +9187,7 @@ L'intelligenza artificiale DEVE effettuare un controllo lessicale e grammaticale
 
 === MAESTRIA LINGUISTICA E PROFONDITÀ DA LUMINARE (CRITICO) ===
 - LIVELLO MADRELINGUA ASSOLUTO: Scrivi in {lingua_sel} con la naturalezza, il ritmo e la ricchezza di vocabolario di un autore locale di altissimo livello. Evita categoricamente frasi robotiche, traduzioni letterali o costrutti tipici dell'IA. Usa le sfumature linguistiche, le metafore e le espressioni idiomatiche proprie della lingua {lingua_sel}.
-- COMPETENZA VERTICALE (ESPERTO DEL SETTORE): Comportati come un professionista con 30 anni di esperienza reale in questo esatto argomento. Sii chirurgico nei termini tecnici e fornisci dettagli, aneddoti o concetti avanzati che solo un vero "addetto ai lavori" conoscerebbe.
+- COMPETENZA VERTICALE (ESPERTO DEL SETTORE): Comportati come un professionista con 30 anni di esperienza reale in questo esatto argomento. Sii chirurgico nei termini tecnici e fornisci dettagli e concetti avanzati da vero "addetto ai lavori". Non inventare mai aneddoti, dati, studi, citazioni o fonti: se un dato non è certo formulalo con prudenza o scrivi subito dopo {book_project_core.marcatore_verifica(lingua_sel)}.
 - NO SUPERFICIALITÀ: Non dare risposte generiche o banali. Ogni paragrafo deve trasudare competenza profonda, spiegando i meccanismi interni, le ragioni nascoste e i dettagli tecnici dell'argomento.
 """
 
@@ -10090,7 +10306,15 @@ TRAMA O ARGOMENTO:
 
 APPROFONDIMENTI (FACOLTATIVO):
 
-PERSONAGGI E MONDO (novels and biographies only, optional):
+PERSONAGGI E MONDO (novels and biographies only):
+
+VERITÀ NASCOSTA (novels and biographies only):
+
+MAPPA DEI SEMI (novels only):
+
+TESI CENTRALE (essays only):
+
+OBIETTIVI E PREREQUISITI (manuals only):
 
 If the user has provided relevant personalization details, append only then:
 
@@ -10144,7 +10368,10 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 """
         # Romanzi: voce narrante, tempo verbale e personaggi passano dalla
         # chat alla sidebar e alla scheda «Scaletta e personaggi».
-        prompt_chat_sidebar += "\n\n" + narrative_i18n_core.istruzioni_chat_romanzi(lingua_sel)
+        prompt_chat_sidebar += (
+            "\n\n" + narrative_i18n_core.istruzioni_chat_romanzi(lingua_sel)
+            + "\n\n" + book_project_core.istruzioni_chat_progetto()
+        )
         # Il prompt manuale resta disponibile per chi vuole usarlo nella
         # propria ChatGPT, ma non occupa più tutta la pagina.
         with st.expander(etichette_chat["manuale"], expanded=False):
@@ -10654,6 +10881,14 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
 
                 # PROMPT BLINDATO PER L'INDICE: Ora prende in carico TUTTI i parametri della sidebar per coerenza assoluta.
                 # E include i termini tradotti (f-string per iniezione variabili)
+                # Il progetto compilato dalla chat guidata (verità, semi, tesi,
+                # obiettivi) entra nell'indice, così capitoli e semi coincidono.
+                progetto_per_indice = book_project_core.progetto_come_testo(campi_progetto_correnti())
+                blocco_progetto_indice = (
+                    "=== PROGETTO DEL LIBRO GIÀ DEFINITO (canone: l'indice deve rispettarlo) ===\n"
+                    + progetto_per_indice
+                    + "\nSe c'è una MAPPA DEI SEMI, i capitoli indicati per comparsa e risoluzione devono esistere e contenere quelle scene."
+                ) if progetto_per_indice else ""
                 prompt_idx = f"""Crea l'indice per il libro '{val_titolo}' rigorosamente in lingua {lingua_sel}. 
 
 PARAMETRI EDITORIALI (L'indice deve essere costruito su misura e strettamente attinente a queste caratteristiche):
@@ -10679,6 +10914,8 @@ Tipologia selezionata: {val_stile}
 
 === ARCHITETTURA ADATTIVA AL GENERE ===
 {profilo_struttura_indice(val_genere, val_titolo, val_trama, val_goal)}
+
+{blocco_progetto_indice}
 
 === REGOLA DI STESURA DEL GENERE ===
 {profilo_genere_stesura(val_genere)}
@@ -11133,82 +11370,127 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     with tabs[3]:
         if not lista_cap_base: st.warning(L["msg_err_idx"])
         else:
-            if genere_narrativo(val_genere):
-                # Strumenti dei romanzi: scaletta per scena e scheda personaggi.
-                # Sono campi del progetto: vengono salvati, esportati nel CSV e
-                # usati automaticamente nel prompt di ogni sezione.
-                t_narr = lambda chiave, **valori: narrative_i18n_core.testo(chiave, lingua_sel, **valori)
-                with st.expander(t_narr("riquadro"), expanded=False):
-                    st.caption(t_narr("intro"))
-                    sezioni_scaletta = individua_sezioni_da_stendere(lista_cap_base)
-                    for _campo_narr, _attesa in (("scheda_personaggi", "_scheda_personaggi_in_attesa"),
-                                                 ("scaletta", "_scaletta_in_attesa")):
-                        ripristina_widget_progetto(_campo_narr)
-                        if _attesa in st.session_state:
-                            st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_narr]] = st.session_state.pop(_attesa)
-                    # (tipo, codice del testo): il messaggio viene tradotto al momento.
-                    messaggio_narrativa = st.session_state.pop("_messaggio_strumenti_narrativa", None)
-                    if isinstance(messaggio_narrativa, tuple):
-                        tipo_messaggio, codice_messaggio = messaggio_narrativa
-                        (st.error if tipo_messaggio == "errore" else st.success)(t_narr(codice_messaggio))
+            # Progetto del libro, per tutti i generi: campi del tipo d'opera,
+            # scaletta, scheda di coerenza automatica e revisione del capitolo.
+            # Sono campi del progetto: salvati, esportati nel CSV e usati in
+            # automatico nel prompt di ogni sezione.
+            tipo_opera_corrente = book_project_core.tipo_opera(val_genere)
+            t_prog = lambda chiave, **valori: book_project_i18n_core.testo(chiave, lingua_sel, **valori)
+            t_narr = lambda chiave, **valori: narrative_i18n_core.testo(chiave, lingua_sel, **valori)
 
-                    st.markdown(f"**{t_narr('titolo_personaggi')}**")
-                    scheda_corrente = st.text_area(
-                        t_narr("titolo_personaggi"),
-                        key="book_story_bible",
-                        height=220,
-                        placeholder=t_narr("modello_scheda"),
-                        help=t_narr("help_personaggi"),
-                        label_visibility="collapsed",
+            def t_codice_progetto(codice):
+                """Traduce un codice d'errore restituito dalle funzioni del progetto."""
+                if codice in book_project_i18n_core.TESTI["Italiano"]:
+                    return t_prog(codice)
+                if codice in narrative_i18n_core.TESTI["Italiano"]:
+                    return t_narr(codice)
+                return str(codice or "")
+
+            campi_tipo_corrente = book_project_core.CAMPI_PER_TIPO.get(tipo_opera_corrente, ())
+            for _campo_prog in (*campi_tipo_corrente, "scaletta", "registro_coerenza"):
+                ripristina_widget_progetto(_campo_prog)
+                _chiave_attesa = f"_{_campo_prog}_in_attesa"
+                if _chiave_attesa in st.session_state:
+                    st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_prog]] = st.session_state.pop(_chiave_attesa)
+            sezioni_scaletta = individua_sezioni_da_stendere(lista_cap_base)
+            with st.expander(t_prog("riquadro"), expanded=False):
+                st.caption(t_prog("intro"))
+                messaggio_progetto = st.session_state.pop("_messaggio_progetto_libro", None)
+                if isinstance(messaggio_progetto, tuple):
+                    tipo_messaggio, testo_messaggio = messaggio_progetto
+                    (st.error if tipo_messaggio == "errore" else st.success)(testo_messaggio)
+                if pulsante_con_preventivo(
+                    "progetto_libro", t_prog("btn_progetto"), CREDIT_COSTS["progetto_libro"],
+                    t_prog("desc_progetto"), use_container_width=True, tipo="primary",
+                ):
+                    with st.spinner(t_prog("attesa_progetto")):
+                        blocchi_progetto, errore_progetto = genera_progetto_libro(
+                            sezioni_scaletta, st.session_state.get("indice_raw", ""), val_titolo, val_genere,
+                            val_trama, val_goal, val_risultato, val_pov, lingua_sel,
+                        )
+                    if blocchi_progetto:
+                        applica_progetto_proposto(blocchi_progetto, val_genere)
+                        st.session_state["_messaggio_progetto_libro"] = ("ok", t_prog("ok_progetto"))
+                    else:
+                        st.session_state["_messaggio_progetto_libro"] = ("errore", t_codice_progetto(errore_progetto))
+                    st.rerun()
+
+                etichette_campi_progetto = {
+                    "scheda_personaggi": (t_narr("titolo_personaggi"), t_narr("help_personaggi"), t_narr("modello_scheda"), 220),
+                    "verita_nascosta": (t_prog("titolo_verita"), t_prog("help_verita"), t_prog("modello_verita"), 200),
+                    "mappa_semi": (t_prog("titolo_semi"), t_prog("help_semi"), t_prog("modello_semi"), 160),
+                    "tesi_centrale": (t_prog("titolo_tesi"), t_prog("help_tesi"), t_prog("modello_tesi"), 200),
+                    "obiettivi_prerequisiti": (t_prog("titolo_obiettivi"), t_prog("help_obiettivi"), t_prog("modello_obiettivi"), 200),
+                }
+                for campo_progetto in campi_tipo_corrente:
+                    titolo_campo, aiuto_campo, modello_campo, altezza_campo = etichette_campi_progetto[campo_progetto]
+                    st.markdown(f"**{titolo_campo}**")
+                    st.text_area(
+                        titolo_campo, key=CAMPI_SALVATAGGIO_PROGETTO[campo_progetto], height=altezza_campo,
+                        placeholder=modello_campo, help=aiuto_campo, label_visibility="collapsed",
                     )
-                    if pulsante_con_preventivo(
+                    if campo_progetto == "scheda_personaggi" and pulsante_con_preventivo(
                         "aggiorna_scheda_personaggi", t_narr("btn_scheda"),
-                        CREDIT_COSTS["aggiorna_scheda_personaggi"],
-                        t_narr("desc_scheda"),
+                        CREDIT_COSTS["aggiorna_scheda_personaggi"], t_narr("desc_scheda"),
                         use_container_width=True,
                     ):
                         with st.spinner(t_narr("attesa_scheda")):
                             nuova_scheda, errore_scheda = aggiorna_scheda_personaggi(
-                                sezioni_scaletta, scheda_corrente, val_trama, lingua_sel,
+                                sezioni_scaletta, valore_campo_progetto("scheda_personaggi"), val_trama, lingua_sel,
                             )
                         if nuova_scheda:
-                            st.session_state["_scheda_personaggi_in_attesa"] = nuova_scheda
-                            st.session_state["_messaggio_strumenti_narrativa"] = ("ok", "ok_scheda")
+                            imposta_campo_progetto("scheda_personaggi", nuova_scheda)
+                            st.session_state["_messaggio_progetto_libro"] = ("ok", t_narr("ok_scheda"))
                         else:
-                            st.session_state["_messaggio_strumenti_narrativa"] = ("errore", errore_scheda)
+                            st.session_state["_messaggio_progetto_libro"] = ("errore", t_codice_progetto(errore_scheda))
                         st.rerun()
 
-                    st.markdown(f"**{t_narr('titolo_scaletta')}**")
-                    st.caption(t_narr("formato_scaletta"))
-                    testo_scaletta_corrente = st.text_area(
-                        t_narr("titolo_scaletta"),
-                        key="book_scene_outline",
-                        height=320,
-                        label_visibility="collapsed",
+                st.markdown(f"**{t_prog('titolo_scaletta')}**")
+                st.caption(t_narr("formato_scaletta") if tipo_opera_corrente == "narrativa" else t_prog("formato_scaletta"))
+                testo_scaletta_corrente = st.text_area(
+                    t_prog("titolo_scaletta"), key="book_scene_outline", height=320, label_visibility="collapsed",
+                )
+                voci_con_scaletta = sum(
+                    1 for sezione in sezioni_scaletta
+                    if narrative_prompts_core.scaletta_della_sezione(testo_scaletta_corrente, sezione)
+                )
+                st.caption(t_prog("conteggio", n=voci_con_scaletta, totale=len(sezioni_scaletta)))
+
+                st.markdown(f"**{t_prog('titolo_registro')}**")
+                st.caption(t_prog("help_registro"))
+                st.text_area(
+                    t_prog("titolo_registro"), key="book_continuity_log", height=200, label_visibility="collapsed",
+                )
+
+                capitoli_rivedibili = [
+                    voce for voce in lista_cap_base
+                    if re.match(r"(?i)^(?:capitolo|chapter|kapitel|capítulo|chapitre|capitolul|глава|الفصل|章节)\s+\d+", str(voce).strip())
+                ]
+                if capitoli_rivedibili:
+                    st.markdown(f"**{t_prog('titolo_revisione')}**")
+                    capitolo_da_rivedere = st.selectbox(
+                        t_prog("scegli_capitolo"), capitoli_rivedibili, key="capitolo_revisione_progetto",
                     )
-                    voci_con_scaletta = sum(
-                        1 for sezione in sezioni_scaletta
-                        if narrative_prompts_core.scaletta_della_sezione(testo_scaletta_corrente, sezione)
-                    )
-                    st.caption(t_narr("conteggio", n=voci_con_scaletta, totale=len(sezioni_scaletta)))
                     if pulsante_con_preventivo(
-                        "scaletta_narrativa", t_narr("btn_scaletta"),
-                        CREDIT_COSTS["scaletta_narrativa"],
-                        t_narr("desc_scaletta"),
-                        use_container_width=True,
+                        "revisione_capitolo", t_prog("btn_revisione"), CREDIT_COSTS["revisione_capitolo"],
+                        t_prog("desc_revisione"), use_container_width=True,
                     ):
-                        with st.spinner(t_narr("attesa_scaletta")):
-                            nuova_scaletta, errore_scaletta = genera_scaletta_narrativa(
-                                sezioni_scaletta, st.session_state.get("indice_raw", ""), val_titolo, val_genere,
-                                val_trama, val_goal, val_pov, lingua_sel,
-                                scheda_personaggi=scheda_corrente, scaletta_esistente=testo_scaletta_corrente,
+                        with st.spinner(t_prog("attesa_revisione")):
+                            rapporto, errore_revisione = revisione_capitolo_libro(
+                                capitolo_da_rivedere, lista_cap_base, val_genere, lingua_sel,
                             )
-                        if nuova_scaletta:
-                            st.session_state["_scaletta_in_attesa"] = nuova_scaletta
-                            st.session_state["_messaggio_strumenti_narrativa"] = ("ok", "ok_scaletta")
+                        if rapporto:
+                            st.session_state.setdefault("report_revisione_capitoli", {})[capitolo_da_rivedere] = rapporto
+                            st.session_state["_messaggio_progetto_libro"] = ("ok", t_prog("ok_revisione"))
                         else:
-                            st.session_state["_messaggio_strumenti_narrativa"] = ("errore", errore_scaletta)
+                            st.session_state["_messaggio_progetto_libro"] = ("errore", t_codice_progetto(errore_revisione))
                         st.rerun()
+                    rapporto_salvato = st.session_state.get("report_revisione_capitoli", {}).get(capitolo_da_rivedere)
+                    if rapporto_salvato:
+                        st.text_area(
+                            t_prog("titolo_revisione"), value=rapporto_salvato, height=320,
+                            key=f"rapporto_revisione_{chiave_sezione(capitolo_da_rivedere)}", disabled=True,
+                        )
 
             # La stesura completa è una coda controllata: una sezione viene
             # generata, salvata e mostrata all'utente prima di autorizzare la
@@ -11283,14 +11565,36 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 stima_massima_crediti_stesura(sezione, st.session_state["indice_raw"], val_trama, val_goal, val_genere)
                 for sezione in da_generare_libro
             )
+            # Tutto automatico: se manca la scaletta, il progetto del libro
+            # viene preparato prima della stesura e incluso nel preventivo.
+            manca_progetto_libro = bool(da_generare_libro) and not narrative_prompts_core.leggi_scaletta(
+                valore_campo_progetto("scaletta")
+            )
+            nota_progetto_libro = (
+                " " + t_prog("nota_auto_progetto", n=CREDIT_COSTS["progetto_libro"]) if manca_progetto_libro else ""
+            )
+            if manca_progetto_libro:
+                stima_libro += CREDIT_COSTS["progetto_libro"]
             if pulsante_con_preventivo(
                 "scrivi_tutto_libro", "📚 SCRIVI TUTTO IL LIBRO", f"fino a {stima_libro}",
-                f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati.",
+                f"Saranno scritte {len(da_generare_libro)} sezioni ancora vuote; i contenuti già presenti non verranno modificati."
+                + nota_progetto_libro,
                 use_container_width=True,
             ):
                 if not da_generare_libro:
                     st.info("Il libro risulta già scritto: nessun contenuto è stato sovrascritto.")
                 else:
+                    if manca_progetto_libro:
+                        with st.spinner(t_prog("attesa_progetto")):
+                            blocchi_auto, errore_auto = genera_progetto_libro(
+                                individua_sezioni_da_stendere(lista_cap_base), st.session_state.get("indice_raw", ""),
+                                val_titolo, val_genere, val_trama, val_goal, val_risultato, val_pov, lingua_sel,
+                            )
+                        if blocchi_auto:
+                            applica_progetto_proposto(blocchi_auto, val_genere)
+                        else:
+                            # La stesura parte comunque: il progetto si può proporre anche dopo.
+                            st.warning(t_codice_progetto(errore_auto))
                     st.session_state["job_scrittura_sezioni"] = list(sezioni_intero_libro)
                     st.session_state["job_scrittura_coda"] = list(da_generare_libro)
                     st.session_state["job_scrittura_totale"] = len(da_generare_libro)
@@ -12386,7 +12690,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         if img:
                             doc.add_picture(BytesIO(img["bytes"]), width=Inches(4.3))
                             doc.add_paragraph(img.get("caption", ""))
-                        doc.add_paragraph(pulisci_testo_editoriale(st.session_state[ke]))
+                        # I marcatori [DA VERIFICARE] restano nell'editor, non nel libro esportato.
+                        doc.add_paragraph(book_project_core.rimuovi_marcatori_verifica(pulisci_testo_editoriale(st.session_state[ke])))
                 bw = BytesIO(); doc.save(bw); bw.seek(0)
                 notifica_sonora("word_pronto", lingua_sel, ripeti=True)
                 st.download_button(
@@ -12402,7 +12707,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                     if st.session_state.get(kd, "").strip():
                         img = st.session_state.get("immagini_capitoli", {}).get(s)
                         pdf.add_content(
-                            s.upper(), pulisci_testo_editoriale(st.session_state[kd]),
+                            s.upper(), book_project_core.rimuovi_marcatori_verifica(pulisci_testo_editoriale(st.session_state[kd])),
                             image_bytes=img.get("bytes") if img else None,
                             image_caption=img.get("caption") if img else None
                         )

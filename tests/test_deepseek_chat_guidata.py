@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
+import book_project
 import narrative_i18n
 import narrative_prompts
 from project_text import rimuovi_preambolo_ai
@@ -33,6 +34,7 @@ def parser_namespace():
         "re": re,
         "narrative_prompts_core": narrative_prompts,
         "narrative_i18n_core": narrative_i18n,
+        "book_project_core": book_project,
         "TRADUZIONI": {name: {} for name in ("Italiano", "English", "Español", "Français", "Deutsch")},
     }
     for node in TREE.body:
@@ -485,3 +487,32 @@ class ChatGuidataRomanziTests(unittest.TestCase):
         prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("Italiano", "DeepSeek V4 Pro", "A")
         self.assertIn("NARRATORE:", prompt)
         self.assertIn("PERSONAGGI E MONDO", prompt)
+
+
+class ChatGuidataProgettoTests(unittest.TestCase):
+    def setUp(self):
+        self.app = parser_namespace()
+
+    def test_romanzo_compila_verita_e_semi(self):
+        card = CARD_ROMANZO + """VERITÀ NASCOSTA:
+PREMESSA: Marco vuole scoprire chi ha ucciso il padre ma la sorella mente, altrimenti perderà la casa.
+- Il padre è stato ucciso dal socio nel 1998.
+MAPPA DEI SEMI:
+- La lettera del padre | compare: Capitolo 1 | si risolve: Capitolo 10
+La chiave del pozzo | compare: Capitolo 3 | si risolve: Capitolo 11
+"""
+        scheda = self.app["estrai_scheda_chat_guidata"](card)
+        self.assertEqual(len(scheda["verita_nascosta"].splitlines()), 2)
+        self.assertEqual(scheda["mappa_semi"].splitlines()[1], "- La chiave del pozzo | compare: Capitolo 3 | si risolve: Capitolo 11")
+        self.assertEqual(len(book_project.leggi_semi(scheda["mappa_semi"])), 2)
+
+    def test_saggio_e_manuale(self):
+        saggio = self.app["estrai_scheda_chat_guidata"]("TESI CENTRALE: Comprare usato è più sicuro se si segue un metodo.\n- Idea 1\n- Idea 2\nAPPROFONDIMENTI: x")
+        self.assertIn("- Idea 2", saggio["tesi_centrale"])
+        manuale = self.app["estrai_scheda_chat_guidata"]("Objectives and prerequisites: - You will be able to inspect a car\n- Prerequisite: a torch")
+        self.assertIn("inspect a car", manuale["obiettivi_prerequisiti"])
+
+    def test_istruzioni_chat_contengono_il_progetto(self):
+        prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("English", "DeepSeek V4 Pro", "A")
+        self.assertIn("TESI CENTRALE:", prompt)
+        self.assertIn("COMPILALO SEMPRE TU", prompt)
