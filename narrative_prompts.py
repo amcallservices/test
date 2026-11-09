@@ -146,10 +146,13 @@ Se l'utente non lo ha indicato, scegli tu in modo coerente con il genere (di nor
 «{NARRATORE_PREDEFINITO}» e «{TEMPO_PREDEFINITO}»). Puoi chiederlo con una sola domanda
 breve solo se la storia lo rende davvero decisivo.
 
-Dopo APPROFONDIMENTI aggiungi PERSONAGGI E MONDO soltanto con i personaggi, le relazioni,
-i luoghi e le regole del mondo che l'utente ha indicato o che derivano direttamente dalla trama,
-nel formato «- Nome: ruolo, carattere, che cosa vuole». Non inventare età, aspetto o passato
-non dichiarati. Se non ci sono elementi sufficienti, ometti la riga.
+Dopo APPROFONDIMENTI aggiungi SEMPRE PERSONAGGI E MONDO, compilato da te senza fare domande:
+conserva i personaggi indicati dall'utente e completa il cast necessario alla trama. Per ognuno, una
+riga nel formato «- Nome Cognome: ruolo, età, lavoro, due tratti fisici, che cosa vuole, che cosa teme,
+che cosa nasconde, modo di parlare». Il protagonista ha un difetto, una ferita e un arco di cambiamento;
+ogni comprimario ha un motivo per agire. Aggiungi i luoghi principali (che non cambiano natura) e, se
+serve, le regole del mondo. Non contraddire mai ciò che l'utente ha detto. Nella Biografia usa soltanto
+persone e fatti reali noti, senza inventare dettagli.
 
 Righe aggiuntive della scheda per questi generi:
 
