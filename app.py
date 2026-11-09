@@ -3719,12 +3719,16 @@ CAMPI_CHAT_GUIDATA_SIDEBAR = {
     "STILE DI RACCONTO": "stile_racconto",
     "RITMO DEL LIBRO": "ritmo_libro",
     "PUNTO DI VISTA": "punto_di_vista",
+    # Solo romanzi e biografie: voce narrante e scheda personaggi.
+    "NARRATORE": "narratore",
+    "TEMPO VERBALE": "tempo_verbale",
     "LUNGHEZZA DELLE SEZIONI": "lunghezza",
     "CERVELLO AI": "provider_ia",
     "OBIETTIVO DEL LIBRO": "obiettivo",
     "RISULTATO FINALE DESIDERATO": "risultato_finale",
     "TRAMA O ARGOMENTO": "argomento",
     "APPROFONDIMENTI": "approfondimenti",
+    "PERSONAGGI E MONDO": "scheda_personaggi",
     "VOCE O PROSPETTIVA PERSONALE": "voce_personale",
     "MATERIALI PERSONALI": "materiale_personale",
     "PRIORITÀ PERSONALI PER IL LETTORE": "priorita_personali",
@@ -3744,6 +3748,9 @@ CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
     "stile_racconto": ("Narrative style", "Estilo narrativo", "Style narratif", "Erzählstil", "Stil narativ", "Стиль повествования", "أسلوب السرد", "叙事风格"),
     "ritmo_libro": ("Book pacing", "Ritmo del libro", "Rythme du livre", "Buchrhythmus", "Ritmul cărții", "Ритм книги", "إيقاع الكتاب", "图书节奏"),
     "punto_di_vista": ("Point of view", "Punto de vista", "Point de vue", "Erzählperspektive", "Punct de vedere", "Точка зрения", "وجهة النظر", "叙述视角"),
+    "narratore": ("Narrator", "Narrador", "Narrateur", "Erzähler", "Narator", "Рассказчик", "الراوي", "叙述者"),
+    "tempo_verbale": ("Narrative tense", "Tiempo verbal", "Temps du récit", "Erzählzeit", "Timpul verbal", "Время повествования", "زمن السرد", "叙事时态"),
+    "scheda_personaggi": ("Characters and world", "Personajes y mundo", "Personnages et monde", "Figuren und Welt", "Personaje și lume", "Персонажи и мир", "الشخصيات والعالم", "人物与世界"),
     "lunghezza": ("Section length", "Longitud de las secciones", "Longueur des sections", "Abschnittslänge", "Lungimea secțiunilor", "Длина разделов", "طول الأقسام", "章节长度"),
     "provider_ia": ("AI engine", "Motor de IA", "Moteur IA", "KI-Modell", "Motor IA", "Модель ИИ", "محرك الذكاء الاصطناعي", "AI 模型"),
     "obiettivo": ("Book goal", "Objetivo del libro", "Objectif du livre", "Ziel des Buches", "Obiectivul cărții", "Цель книги", "هدف الكتاب", "图书目标"),
@@ -3789,11 +3796,26 @@ OPZIONI_CHAT_GUIDATA = {
         "Impersonale / Terza Persona (Distaccato, analitico, oggettivo)",
     },
     "lunghezza": {"Compatto", "Standard KDP", "Approfondito"},
+    "narratore": set(narrative_prompts_core.NARRATORI),
+    "tempo_verbale": set(narrative_prompts_core.TEMPI_VERBALI),
 }
+
+
+def campi_obbligatori_chat_guidata(genere=""):
+    """Campi indispensabili della scheda: nei romanzi la voce narrante
+    sostituisce il punto di vista rivolto al lettore."""
+    if narrative_prompts_core.genere_narrativo(genere):
+        return (CAMPI_CHAT_GUIDATA_OBBLIGATORI - {"punto_di_vista"}) | {"narratore", "tempo_verbale"}
+    return set(CAMPI_CHAT_GUIDATA_OBBLIGATORI)
 
 
 def _valore_scelta_chat_guidata(campo, valore):
     """Normalizza solo le selezioni tecniche; i testi editoriali restano liberi."""
+    if campo == "scheda_personaggi":
+        # Elenco di personaggi: una voce per riga, come nella scheda del romanzo.
+        righe = [re.sub(r"[ \t]+", " ", riga).strip() for riga in str(valore or "").splitlines()]
+        righe = [riga if riga.startswith(("-", "•")) or riga.isupper() else f"- {riga}" for riga in righe if riga]
+        return "\n".join(righe)
     valore = re.sub(r"\s+", " ", str(valore or "")).strip()
     # I modelli possono evidenziare una scelta con Markdown. La formattazione
     # non deve impedire alla chat di trasferire una scheda corretta nella sidebar.
@@ -3807,6 +3829,10 @@ def _valore_scelta_chat_guidata(campo, valore):
             return "Standard KDP"
         if valore_basso.startswith("approfondito"):
             return "Approfondito"
+    if campo == "narratore":
+        return narrative_prompts_core.normalizza_narratore(valore)
+    if campo == "tempo_verbale":
+        return narrative_prompts_core.normalizza_tempo_verbale(valore)
     if campo == "modalita_checkpoint":
         valore_basso = valore.casefold()
         if not valore_basso or valore_basso.startswith("continua"):
@@ -3889,6 +3915,11 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
     # trasferibili, senza costringere l'autore a rifare tutta la chat.
     if not scheda.get("ritmo_libro"):
         scheda["ritmo_libro"] = "Equilibrato e progressivo"
+    # Romanzi: una chat che non ha indicato la voce narrante resta
+    # trasferibile con le stesse scelte predefinite della sidebar.
+    if narrative_prompts_core.genere_narrativo(scheda.get("genere", "")):
+        scheda.setdefault("narratore", narrative_prompts_core.NARRATORE_PREDEFINITO)
+        scheda.setdefault("tempo_verbale", narrative_prompts_core.TEMPO_PREDEFINITO)
     if not scheda.get("lingua") and lingua in TRADUZIONI:
         scheda["lingua"] = lingua
     scheda["provider_ia"] = provider
@@ -3995,6 +4026,7 @@ def prompt_scheda_chat_guidata_deepseek(lingua, provider, scelta="D"):
         for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
         if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
     )
+    blocco_romanzi = narrative_prompts_core.istruzioni_chat_romanzi()
     campi_personali = campi_personalizzazione_deepseek(scelta)
     etichette_personali = "\n".join(
         f"{etichetta}:"
@@ -4039,13 +4071,15 @@ MATERIALI PERSONALI va aggiunto obbligatoriamente se l'utente ha davvero fornito
 materiali, episodi o casi personali; altrimenti omettilo. Non creare esempi autobiografici fittizi.
 CONFINI PERSONALI indica limiti editoriali proposti, non fatti attribuiti all'autore.
 La PAUSA GUIDATA va indicata soltanto se richiesta esplicitamente.
-Non lasciare mai righe vuote."""
+Non lasciare mai righe vuote.
+
+{blocco_romanzi}"""
 
 
 def scheda_finale_deepseek_valida(testo, scelta="D"):
     """La sola risposta finale DeepSeek deve contenere tutti i campi trasferibili."""
     campi = estrai_scheda_chat_guidata(testo)
-    richiesti = CAMPI_CHAT_GUIDATA_OBBLIGATORI | campi_personalizzazione_deepseek(scelta)
+    richiesti = campi_obbligatori_chat_guidata(campi.get("genere", "")) | campi_personalizzazione_deepseek(scelta)
     return richiesti.issubset(campi)
 
 
@@ -4157,7 +4191,13 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
         if not chiave_sidebar or not str(valore).strip():
             continue
         valore_corrente = str(st.session_state.get(chiave_sidebar, "")).strip()
-        if sovrascrivi or not valore_corrente:
+        # Narratore e tempo predefiniti non sono una scelta dell'autore:
+        # la scheda della chat può sostituirli anche senza «sovrascrivi».
+        predefinito = (
+            (campo == "narratore" and valore_corrente == narrative_prompts_core.NARRATORE_PREDEFINITO)
+            or (campo == "tempo_verbale" and valore_corrente == narrative_prompts_core.TEMPO_PREDEFINITO)
+        )
+        if sovrascrivi or not valore_corrente or predefinito:
             st.session_state[chiave_sidebar] = valore
             applicati.append(campo.replace("_", " "))
         else:
@@ -4167,7 +4207,9 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
         # che il render successivo della sidebar ricostruisca i suoi widget.
         memoria = dict(st.session_state.get(CHIAVE_MEMORIA_SIDEBAR, {}) or {})
         for nome, chiave in CAMPI_SALVATAGGIO_PROGETTO.items():
-            memoria[nome] = st.session_state.get(chiave, "")
+            # Un campo non mostrato in questo passaggio (per esempio la
+            # scaletta) conserva il valore salvato invece di essere svuotato.
+            memoria[nome] = st.session_state.get(chiave, memoria.get(nome, ""))
         st.session_state[CHIAVE_MEMORIA_SIDEBAR] = memoria
         progetto = memoria_progetto_unica()
         progetto["sidebar"] = dict(memoria)
@@ -10093,6 +10135,9 @@ tipologia, stile, ritmo, punto di vista e lunghezza copia esattamente una delle 
 italiane elencate sopra: sono i valori tecnici effettivi dei menu. Scrivi un campo
 per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 """
+        # Romanzi: voce narrante, tempo verbale e personaggi passano dalla
+        # chat alla sidebar e alla scheda «Scaletta e personaggi».
+        prompt_chat_sidebar += "\n\n" + narrative_prompts_core.istruzioni_chat_romanzi()
         # Il prompt manuale resta disponibile per chi vuole usarlo nella
         # propria ChatGPT, ma non occupa più tutta la pagina.
         with st.expander(etichette_chat["manuale"], expanded=False):
@@ -10369,12 +10414,13 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                             scheda_estratta = scheda_chat_guidata_per_sidebar(
                                 messaggi_chat, lingua_sel, cervello_chat
                             )
-                            if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_estratta):
+                            obbligatori_scheda = campi_obbligatori_chat_guidata(scheda_estratta.get("genere", ""))
+                            if obbligatori_scheda.issubset(scheda_estratta):
                                 st.session_state["chat_sidebar_scheda_pronta"] = scheda_estratta
                                 st.session_state.pop("chat_sidebar_esito_scheda", None)
                             elif prepara_scheda_chat:
                                 mancanti = sorted(
-                                    CAMPI_CHAT_GUIDATA_OBBLIGATORI - set(scheda_estratta)
+                                    obbligatori_scheda - set(scheda_estratta)
                                 )
                                 st.session_state["chat_sidebar_esito_scheda"] = (
                                     "La chat non ha ancora restituito una scheda trasferibile. "
@@ -10390,7 +10436,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                     st.session_state.get("chat_sidebar_messaggi", []),
                     lingua_sel, cervello_chat,
                 )
-                if CAMPI_CHAT_GUIDATA_OBBLIGATORI.issubset(scheda_da_cronologia):
+                if campi_obbligatori_chat_guidata(scheda_da_cronologia.get("genere", "")).issubset(scheda_da_cronologia):
                     st.session_state["chat_sidebar_scheda_pronta"] = scheda_da_cronologia
                 scheda_chat_pronta = dict(st.session_state.get("chat_sidebar_scheda_pronta", {}) or {})
                 esito_scheda_chat = str(st.session_state.get("chat_sidebar_esito_scheda", "") or "").strip()
