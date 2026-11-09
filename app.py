@@ -48,6 +48,7 @@ MODULI_LOCALI_AGGIORNABILI = (
     "project_memory",
     "emotional_impact",
     "narrative_prompts",
+    "narrative_i18n",
     "voice_chat",
 )
 
@@ -157,6 +158,7 @@ from project_outline import (
 import project_memory as memoria_core
 import narrative_engine as narrative_core
 import narrative_prompts as narrative_prompts_core
+import narrative_i18n as narrative_i18n_core
 import emotional_impact as emotional_impact_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 marca_moduli_locali_caricati()
@@ -4026,7 +4028,7 @@ def prompt_scheda_chat_guidata_deepseek(lingua, provider, scelta="D"):
         for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
         if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
     )
-    blocco_romanzi = narrative_prompts_core.istruzioni_chat_romanzi()
+    blocco_romanzi = narrative_i18n_core.istruzioni_chat_romanzi(lingua)
     campi_personali = campi_personalizzazione_deepseek(scelta)
     etichette_personali = "\n".join(
         f"{etichetta}:"
@@ -7314,11 +7316,8 @@ with st.sidebar:
     if genere_narrativo(val_genere):
         # In un romanzo il «punto di vista» non è il pronome con cui si parla
         # al lettore, ma chi racconta la storia e in quale tempo verbale.
-        etichette_voce = {
-            "Italiano": ("Chi racconta la storia", "Tempo verbale del racconto"),
-            "English": ("Narrator", "Narrative tense"),
-        }
-        etichetta_narratore, etichetta_tempo = etichette_voce.get(lingua_sel, etichette_voce["Italiano"])
+        etichetta_narratore = narrative_i18n_core.testo("narratore", lingua_sel)
+        etichetta_tempo = narrative_i18n_core.testo("tempo", lingua_sel)
         for _campo_voce, _predefinito in (
             ("narratore", narrative_prompts_core.NARRATORE_PREDEFINITO),
             ("tempo_verbale", narrative_prompts_core.TEMPO_PREDEFINITO),
@@ -7328,12 +7327,13 @@ with st.sidebar:
                 st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_voce]] = _predefinito
         val_narratore = st.selectbox(
             etichetta_narratore, [""] + list(narrative_prompts_core.NARRATORI), key="book_narrator",
-            format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
-            help="Prima persona: racconta il protagonista («io»). Terza persona vicina: si segue un personaggio alla volta.",
+            # Il valore salvato resta quello tecnico italiano; l'utente vede la sua lingua.
+            format_func=lambda valore: narrative_i18n_core.etichetta_narratore(valore, lingua_sel) or testo_ui("seleziona", lingua_sel),
+            help=narrative_i18n_core.testo("narratore_help", lingua_sel),
         )
         val_tempo_verbale = st.selectbox(
             etichetta_tempo, [""] + list(narrative_prompts_core.TEMPI_VERBALI), key="book_tense",
-            format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel),
+            format_func=lambda valore: narrative_i18n_core.etichetta_tempo(valore, lingua_sel) or testo_ui("seleziona", lingua_sel),
         )
         val_pov = (
             narrative_prompts_core.descrizione_punto_di_vista(val_narratore, val_tempo_verbale)
@@ -7948,12 +7948,13 @@ def genera_scaletta_narrativa(sezioni, indice, titolo, genere, trama, obiettivo,
     )
     # In caso di errore tecnico chiedi_gpt ha già riaccreditato e restituisce
     # solo il messaggio d'errore.
+    # Il secondo valore è un codice d'errore tradotto dall'interfaccia.
     if isinstance(esito, str):
-        return "", esito
+        return "", "err_tecnico"
     risposta, riferimento = esito
     if not narrative_prompts_core.leggi_scaletta(risposta):
         refund_credits(riferimento, reason="scaletta_narrativa_illeggibile", amount=CREDIT_COSTS["scaletta_narrativa"])
-        return "", "ERRORE: la risposta non conteneva una scaletta leggibile. I crediti sono stati riaccreditati: riprova."
+        return "", "err_scaletta"
     return str(risposta).strip(), ""
 
 
@@ -7965,7 +7966,7 @@ def aggiorna_scheda_personaggi(sezioni, scheda_attuale, trama, lingua):
         if str(leggi_sezione_memorizzata(sezione) or "").strip()
     ]
     if not capitoli:
-        return "", "Scrivi almeno una sezione prima di aggiornare la scheda."
+        return "", "err_nessuna_sezione"
     risposta = chiedi_gpt(
         narrative_prompts_core.prompt_aggiorna_scheda(
             scheda_attuale=scheda_attuale, capitoli=capitoli, trama=trama, lingua=lingua,
@@ -7978,7 +7979,7 @@ def aggiorna_scheda_personaggi(sezioni, scheda_attuale, trama, lingua):
         timeout_seconds=180,
     )
     if str(risposta).startswith("ERRORE:"):
-        return "", risposta
+        return "", "err_tecnico"
     return pulisci_testo_editoriale(risposta), ""
 
 
@@ -10045,7 +10046,7 @@ Non aggiungere testo dopo l'ultima etichetta."""
         }
         # Funzione mantenuta inattiva: il prompt mostrato resta quello precedente finché non verrà richiesta una revisione multilingue completa.
         if os.getenv("ENABLE_MULTILINGUAL_SIDEBAR_PROMPT", "0") == "1" and lingua_sel in istruzioni_multilingue:
-            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nRITMO DEL LIBRO: Disteso e immersivo; Equilibrato e progressivo; Serrato e dinamico. Choose Equilibrato e progressivo by default and make it coherent with genre, writing type and narrative style.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
+            opzioni_esatte = """Use exclusively these exact sidebar option values; do not translate or invent them.\nGENERE LETTERARIO: Saggio Scientifico; Quiz Scientifico; Manuale Tecnico; Religioso / Teologico; Spirituale / Esoterico; Meditazione / Mindfulness; Business & Marketing; Economia e Finanza; Romanzo Rosa; Thriller / Noir; Fantasy; Fantascienza; Manuale Psicologico; Biografia; Ricettario; Test Prep (Preparazione Esami); Narrativo; Romanzo Classico; Contemporaneo; Self-Help; Manuale Pratico; Storico.\nTIPOLOGIA SCRITTURA: Standard; Professionale Accademico; Persuasivo (Neuromarketing Applicato); Conversazionale ed Empatico; Scientifico Divulgativo; Storytelling Immersivo; Giornalistico d'Inchiesta; Socratico (Dialogico / Riflessivo); Epico ed Evocativo; Minimalista ed Essenziale.\nSTILE DI RACCONTO: Coinvolgente e Narrativo; Tecnico e Analitico; Ispirazionale e Motivante; Socratico (Domanda/Risposta); Storytelling Emozionale; Diretto e Pratico (Action-oriented); Storico e Documentale.\nRITMO DEL LIBRO: Disteso e immersivo; Equilibrato e progressivo; Serrato e dinamico. Choose Equilibrato e progressivo by default and make it coherent with genre, writing type and narrative style.\nPUNTO DI VISTA: Tu (Diretto, confidenziale e personale); Voi (Plurale, autorevole e rispettoso); Noi (Inclusivo, partecipativo e didattico); Impersonale / Terza Persona (Distaccato, analitico, oggettivo).\nNARRATORE (novels and biographies only): Terza persona vicina a un personaggio; Prima persona (il protagonista racconta); Terza persona onnisciente; Terza persona a più punti di vista (uno per scena).\nTEMPO VERBALE (novels and biographies only): Passato (passato remoto e imperfetto); Presente.\nLUNGHEZZA DELLE SEZIONI: Compatto (480-560 words, max 50 sections); Standard KDP (620-700 words, max 80 sections); Approfondito (700-800 words, max 110 sections). Choose Standard KDP by default; Compatto for short guides and Approfondito for technical subjects, exams, or procedures.\nCERVELLO AI: GPT-5.4 (OpenAI); DeepSeek V4 Pro. Choose GPT-5.4 (OpenAI) by default. Choose DeepSeek V4 Pro only when lower credit consumption is preferred and web copyright checks or image generation are not required. DeepSeek performs source research with a visible register."""
             personalizzazione_prompt_multilingue = """OPTIONAL PERSONALIZATION — Before drafting the final form, always ask explicitly whether the user wants to personalize the book: A. no, proceed with a general editorial project; B. yes, add personal voice, episodes, examples, materials or reader priorities; C. yes, mainly define boundaries or guided pauses. If A is selected, omit all optional personalization fields. If B or C is selected, ask in one message only for the indispensable details, then formulate the relevant fields concretely. Never invent personal experiences, testimonials or facts. Append personalization fields after APPROFONDIMENTI only when the user has chosen personalization and supplied relevant details. Guided-pause mode can only be: Continue automatically; Pause before every Part; Pause before the conclusion; Pause before Parts and conclusion."""
             prompt_chat_sidebar = f"""{istruzione_lingua_prompt[lingua_sel]}
 
@@ -10073,6 +10074,10 @@ RITMO DEL LIBRO:
 
 PUNTO DI VISTA:
 
+NARRATORE (novels and biographies only):
+
+TEMPO VERBALE (novels and biographies only):
+
 LUNGHEZZA DELLE SEZIONI:
 
 CERVELLO AI:
@@ -10084,6 +10089,8 @@ RISULTATO FINALE DESIDERATO:
 TRAMA O ARGOMENTO:
 
 APPROFONDIMENTI (FACOLTATIVO):
+
+PERSONAGGI E MONDO (novels and biographies only, optional):
 
 If the user has provided relevant personalization details, append only then:
 
@@ -10137,7 +10144,7 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
 """
         # Romanzi: voce narrante, tempo verbale e personaggi passano dalla
         # chat alla sidebar e alla scheda «Scaletta e personaggi».
-        prompt_chat_sidebar += "\n\n" + narrative_prompts_core.istruzioni_chat_romanzi()
+        prompt_chat_sidebar += "\n\n" + narrative_i18n_core.istruzioni_chat_romanzi(lingua_sel)
         # Il prompt manuale resta disponibile per chi vuole usarlo nella
         # propria ChatGPT, ma non occupa più tutta la pagina.
         with st.expander(etichette_chat["manuale"], expanded=False):
@@ -11130,56 +11137,51 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 # Strumenti dei romanzi: scaletta per scena e scheda personaggi.
                 # Sono campi del progetto: vengono salvati, esportati nel CSV e
                 # usati automaticamente nel prompt di ogni sezione.
-                with st.expander("🧭 Scaletta e personaggi del romanzo", expanded=False):
-                    st.caption(
-                        "Più sono precisi questi due campi, più il romanzo resta coerente. "
-                        "Puoi scriverli a mano o farli proporre all'IA e poi correggerli."
-                    )
+                t_narr = lambda chiave, **valori: narrative_i18n_core.testo(chiave, lingua_sel, **valori)
+                with st.expander(t_narr("riquadro"), expanded=False):
+                    st.caption(t_narr("intro"))
                     sezioni_scaletta = individua_sezioni_da_stendere(lista_cap_base)
                     for _campo_narr, _attesa in (("scheda_personaggi", "_scheda_personaggi_in_attesa"),
                                                  ("scaletta", "_scaletta_in_attesa")):
                         ripristina_widget_progetto(_campo_narr)
                         if _attesa in st.session_state:
                             st.session_state[CAMPI_SALVATAGGIO_PROGETTO[_campo_narr]] = st.session_state.pop(_attesa)
+                    # (tipo, codice del testo): il messaggio viene tradotto al momento.
                     messaggio_narrativa = st.session_state.pop("_messaggio_strumenti_narrativa", None)
-                    if messaggio_narrativa:
-                        (st.error if messaggio_narrativa.startswith("ERRORE") else st.success)(messaggio_narrativa)
+                    if isinstance(messaggio_narrativa, tuple):
+                        tipo_messaggio, codice_messaggio = messaggio_narrativa
+                        (st.error if tipo_messaggio == "errore" else st.success)(t_narr(codice_messaggio))
 
-                    st.markdown("**Personaggi e mondo**")
+                    st.markdown(f"**{t_narr('titolo_personaggi')}**")
                     scheda_corrente = st.text_area(
-                        "Scheda personaggi e mondo",
+                        t_narr("titolo_personaggi"),
                         key="book_story_bible",
                         height=220,
-                        placeholder=narrative_prompts_core.MODELLO_SCHEDA_PERSONAGGI,
-                        help="Nomi, età, aspetto, carattere, relazioni, luoghi, regole del mondo e fatti già stabiliti. "
-                             "L'IA li tratta come canone in ogni sezione.",
+                        placeholder=t_narr("modello_scheda"),
+                        help=t_narr("help_personaggi"),
                         label_visibility="collapsed",
                     )
                     if pulsante_con_preventivo(
-                        "aggiorna_scheda_personaggi", "🔄 Aggiorna la scheda dai capitoli scritti",
+                        "aggiorna_scheda_personaggi", t_narr("btn_scheda"),
                         CREDIT_COSTS["aggiorna_scheda_personaggi"],
-                        "Legge le sezioni già scritte e propone una scheda aggiornata nel campo qui sopra. "
-                        "Non modifica il manoscritto; puoi correggere la proposta prima di continuare.",
+                        t_narr("desc_scheda"),
                         use_container_width=True,
                     ):
-                        with st.spinner("Lettura dei capitoli e aggiornamento della scheda..."):
+                        with st.spinner(t_narr("attesa_scheda")):
                             nuova_scheda, errore_scheda = aggiorna_scheda_personaggi(
                                 sezioni_scaletta, scheda_corrente, val_trama, lingua_sel,
                             )
                         if nuova_scheda:
                             st.session_state["_scheda_personaggi_in_attesa"] = nuova_scheda
-                            st.session_state["_messaggio_strumenti_narrativa"] = "Scheda aggiornata: controllala e correggila se serve."
+                            st.session_state["_messaggio_strumenti_narrativa"] = ("ok", "ok_scheda")
                         else:
-                            st.session_state["_messaggio_strumenti_narrativa"] = errore_scheda if errore_scheda.startswith("ERRORE") else f"ERRORE: {errore_scheda}"
+                            st.session_state["_messaggio_strumenti_narrativa"] = ("errore", errore_scheda)
                         st.rerun()
 
-                    st.markdown("**Scaletta delle scene**")
-                    st.caption(
-                        "Formato: il titolo della voce dell'indice tra parentesi quadre, poi i punti della scena. "
-                        "Esempio: [Capitolo 1: Il lago] seguito da - Marco arriva alla casa…"
-                    )
+                    st.markdown(f"**{t_narr('titolo_scaletta')}**")
+                    st.caption(t_narr("formato_scaletta"))
                     testo_scaletta_corrente = st.text_area(
-                        "Scaletta delle scene",
+                        t_narr("titolo_scaletta"),
                         key="book_scene_outline",
                         height=320,
                         label_visibility="collapsed",
@@ -11188,15 +11190,14 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         1 for sezione in sezioni_scaletta
                         if narrative_prompts_core.scaletta_della_sezione(testo_scaletta_corrente, sezione)
                     )
-                    st.caption(f"Scene con scaletta: {voci_con_scaletta} su {len(sezioni_scaletta)}.")
+                    st.caption(t_narr("conteggio", n=voci_con_scaletta, totale=len(sezioni_scaletta)))
                     if pulsante_con_preventivo(
-                        "scaletta_narrativa", "✨ Proponi la scaletta delle scene",
+                        "scaletta_narrativa", t_narr("btn_scaletta"),
                         CREDIT_COSTS["scaletta_narrativa"],
-                        "Propone 3-6 punti per ogni scena dell'indice. I punti già scritti da te restano invariati. "
-                        "Non scrive il libro e non modifica le sezioni esistenti.",
+                        t_narr("desc_scaletta"),
                         use_container_width=True,
                     ):
-                        with st.spinner("Preparazione della scaletta delle scene..."):
+                        with st.spinner(t_narr("attesa_scaletta")):
                             nuova_scaletta, errore_scaletta = genera_scaletta_narrativa(
                                 sezioni_scaletta, st.session_state.get("indice_raw", ""), val_titolo, val_genere,
                                 val_trama, val_goal, val_pov, lingua_sel,
@@ -11204,9 +11205,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                             )
                         if nuova_scaletta:
                             st.session_state["_scaletta_in_attesa"] = nuova_scaletta
-                            st.session_state["_messaggio_strumenti_narrativa"] = "Scaletta pronta: rileggila e correggila prima di scrivere."
+                            st.session_state["_messaggio_strumenti_narrativa"] = ("ok", "ok_scaletta")
                         else:
-                            st.session_state["_messaggio_strumenti_narrativa"] = errore_scaletta
+                            st.session_state["_messaggio_strumenti_narrativa"] = ("errore", errore_scaletta)
                         st.rerun()
 
             # La stesura completa è una coda controllata: una sezione viene

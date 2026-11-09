@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
+import narrative_i18n
 import narrative_prompts
 from project_text import rimuovi_preambolo_ai
 
@@ -31,6 +32,7 @@ def parser_namespace():
     namespace = {
         "re": re,
         "narrative_prompts_core": narrative_prompts,
+        "narrative_i18n_core": narrative_i18n,
         "TRADUZIONI": {name: {} for name in ("Italiano", "English", "Español", "Français", "Deutsch")},
     }
     for node in TREE.body:
