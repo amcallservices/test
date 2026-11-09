@@ -8,6 +8,8 @@ import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
+from project_text import rimuovi_preambolo_ai
+
 
 TREE = ast.parse((Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8"))
 COMMERCIAL_TREE = ast.parse((Path(__file__).resolve().parents[1] / "commercial_layer.py").read_text(encoding="utf-8"))
@@ -188,6 +190,7 @@ class DeepSeekBillingTests(unittest.TestCase):
             "uuid": uuid,
             "time": time,
             "re": re,
+            "rimuovi_preambolo_ai": rimuovi_preambolo_ai,
             "usa_deepseek_pro": lambda: self.deepseek,
             "charge_credits": lambda *args, **kwargs: "charged-reference",
             "refund_credits": lambda *args, **kwargs: self.refunds.append((args, kwargs)),
