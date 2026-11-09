@@ -77,6 +77,75 @@ def _pulito(valore, limite: int) -> str:
     return testo[:limite].rstrip() + ("…" if len(testo) > limite else "")
 
 
+def normalizza_narratore(valore: str) -> str:
+    """Riconosce il narratore anche se la chat lo scrive in forma breve."""
+    testo = re.sub(r"[*_`]", "", str(valore or "")).strip().casefold()
+    if not testo:
+        return ""
+    for opzione in NARRATORI:
+        if testo == opzione.casefold():
+            return opzione
+    if "prima persona" in testo or "first person" in testo or "primera persona" in testo:
+        return NARRATORI[1]
+    if "onniscien" in testo or "omniscien" in testo:
+        return NARRATORI[2]
+    if "più punti" in testo or "piu punti" in testo or "multipl" in testo or "alterna" in testo:
+        return NARRATORI[3]
+    if "terza persona" in testo or "third person" in testo or "tercera persona" in testo:
+        return NARRATORI[0]
+    return ""
+
+
+def normalizza_tempo_verbale(valore: str) -> str:
+    """Riconosce il tempo verbale anche se la chat lo scrive in forma breve."""
+    testo = re.sub(r"[*_`]", "", str(valore or "")).strip().casefold()
+    if not testo:
+        return ""
+    for opzione in TEMPI_VERBALI:
+        if testo == opzione.casefold():
+            return opzione
+    if testo.startswith("present"):
+        return TEMPI_VERBALI[1]
+    if testo.startswith("passat") or testo.startswith("past") or "remoto" in testo:
+        return TEMPI_VERBALI[0]
+    return ""
+
+
+def istruzioni_chat_romanzi() -> str:
+    """Regole aggiuntive per la chat guidata che compila la sidebar."""
+    narratori = "\n".join(f"- {opzione}" for opzione in NARRATORI)
+    tempi = "\n".join(f"- {opzione}" for opzione in TEMPI_VERBALI)
+    return f"""ROMANZI E BIOGRAFIE (Romanzo Rosa, Thriller / Noir, Fantasy, Fantascienza, Narrativo,
+Romanzo Classico, Contemporaneo, Biografia)
+
+Per questi generi la sidebar non usa il PUNTO DI VISTA rivolto al lettore (Tu/Voi/Noi):
+scrivi comunque PUNTO DI VISTA: Impersonale / Terza Persona (Distaccato, analitico, oggettivo)
+e compila OBBLIGATORIAMENTE anche queste righe, subito dopo PUNTO DI VISTA.
+
+Per NARRATORE scegli un solo valore tra:
+{narratori}
+
+Per TEMPO VERBALE scegli un solo valore tra:
+{tempi}
+
+Se l'utente non lo ha indicato, scegli tu in modo coerente con il genere (di norma
+«{NARRATORE_PREDEFINITO}» e «{TEMPO_PREDEFINITO}»). Puoi chiederlo con una sola domanda
+breve solo se la storia lo rende davvero decisivo.
+
+Dopo APPROFONDIMENTI aggiungi PERSONAGGI E MONDO soltanto con i personaggi, le relazioni,
+i luoghi e le regole del mondo che l'utente ha indicato o che derivano direttamente dalla trama,
+nel formato «- Nome: ruolo, carattere, che cosa vuole». Non inventare età, aspetto o passato
+non dichiarati. Se non ci sono elementi sufficienti, ometti la riga.
+
+Righe aggiuntive della scheda per questi generi:
+
+NARRATORE:
+
+TEMPO VERBALE:
+
+PERSONAGGI E MONDO (FACOLTATIVO):"""
+
+
 # ---------------------------------------------------------------------------
 # Scaletta per sezione
 # ---------------------------------------------------------------------------
@@ -337,6 +406,7 @@ def blocco_sezione_narrativa(
 __all__ = [
     "MODELLO_SCHEDA_PERSONAGGI", "NARRATORE_PREDEFINITO", "NARRATORI", "TEMPI_VERBALI", "TEMPO_PREDEFINITO",
     "blocco_sezione_narrativa", "descrizione_punto_di_vista", "direttiva_voce_narrante", "genere_narrativo",
+    "istruzioni_chat_romanzi", "normalizza_narratore", "normalizza_tempo_verbale",
     "leggi_scaletta", "prompt_aggiorna_scheda", "prompt_genera_scaletta", "scaletta_della_sezione",
     "system_prompt_narrativa",
 ]

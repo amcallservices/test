@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
+import narrative_prompts
 from project_text import rimuovi_preambolo_ai
 
 
@@ -29,6 +30,7 @@ def parser_namespace():
     }
     namespace = {
         "re": re,
+        "narrative_prompts_core": narrative_prompts,
         "TRADUZIONI": {name: {} for name in ("Italiano", "English", "Español", "Français", "Deutsch")},
     }
     for node in TREE.body:
@@ -41,6 +43,7 @@ def parser_namespace():
         "estrai_scheda_chat_guidata_da_cronologia", "scheda_chat_guidata_per_sidebar",
         "scelta_personalizzazione_chat_deepseek", "campi_personalizzazione_deepseek",
         "prompt_scheda_chat_guidata_deepseek", "scheda_finale_deepseek_valida",
+        "campi_obbligatori_chat_guidata",
     }, namespace)
 
 
@@ -419,3 +422,64 @@ class GptOnlyChatIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+CARD_ROMANZO = """TITOLO DEL LIBRO: Il lago
+NOME AUTORE: [Inserisci il tuo nome]
+LINGUA: Italiano
+GENERE LETTERARIO: Thriller / Noir
+TIPOLOGIA SCRITTURA: Storytelling Immersivo
+STILE DI RACCONTO: Coinvolgente e Narrativo
+RITMO DEL LIBRO: Serrato e dinamico
+NARRATORE: **Prima persona**
+TEMPO VERBALE: presente
+LUNGHEZZA DELLE SEZIONI: Standard KDP
+CERVELLO AI: GPT-5.4 (OpenAI)
+OBIETTIVO DEL LIBRO: Tenere il lettore in tensione fino all'ultima pagina.
+RISULTATO FINALE DESIDERATO: Un thriller completo e coerente.
+TRAMA O ARGOMENTO: Marco torna nella casa del padre sul lago e trova una lettera.
+APPROFONDIMENTI (FACOLTATIVO): Indizi distribuiti con equilibrio.
+PERSONAGGI E MONDO (FACOLTATIVO):
+- Marco: ingegnere, ostinato, vuole la verità sul padre
+- Giulia: sorella di Marco, protettiva
+"""
+
+
+class ChatGuidataRomanziTests(unittest.TestCase):
+    def setUp(self):
+        self.app = parser_namespace()
+
+    def test_scheda_romanzo_compila_voce_e_personaggi(self):
+        scheda = self.app["estrai_scheda_chat_guidata"](CARD_ROMANZO)
+        self.assertEqual(scheda["narratore"], narrative_prompts.NARRATORI[1])
+        self.assertEqual(scheda["tempo_verbale"], narrative_prompts.TEMPI_VERBALI[1])
+        self.assertEqual(scheda["scheda_personaggi"].splitlines(), [
+            "- Marco: ingegnere, ostinato, vuole la verità sul padre",
+            "- Giulia: sorella di Marco, protettiva",
+        ])
+        self.assertNotIn("PERSONAGGI", scheda["approfondimenti"])
+
+    def test_romanzo_non_richiede_il_pronome_rivolto_al_lettore(self):
+        self.assertTrue(self.app["scheda_finale_deepseek_valida"](CARD_ROMANZO, "A"))
+
+    def test_chat_vecchia_senza_narratore_resta_trasferibile(self):
+        vecchia = "\n".join(
+            riga for riga in CARD_ROMANZO.splitlines()
+            if not riga.startswith(("NARRATORE", "TEMPO VERBALE"))
+        )
+        scheda = self.app["scheda_chat_guidata_per_sidebar"](
+            [{"role": "assistant", "content": vecchia}], "Italiano", "GPT-5.4 (OpenAI)"
+        )
+        self.assertEqual(scheda["narratore"], narrative_prompts.NARRATORE_PREDEFINITO)
+        obbligatori = self.app["campi_obbligatori_chat_guidata"](scheda["genere"])
+        self.assertTrue(obbligatori.issubset(scheda))
+
+    def test_manuale_richiede_ancora_il_punto_di_vista(self):
+        obbligatori = self.app["campi_obbligatori_chat_guidata"]("Manuale Pratico")
+        self.assertIn("punto_di_vista", obbligatori)
+        self.assertNotIn("narratore", obbligatori)
+
+    def test_prompt_deepseek_spiega_i_campi_dei_romanzi(self):
+        prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("Italiano", "DeepSeek V4 Pro", "A")
+        self.assertIn("NARRATORE:", prompt)
+        self.assertIn("PERSONAGGI E MONDO", prompt)
