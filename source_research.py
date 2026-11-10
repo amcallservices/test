@@ -335,3 +335,42 @@ def schede_per_sezione(schede: list[dict], sezione: str, argomento: str = "",
 def domande_scoperte(domande: list[str], schede: list[dict]) -> list[str]:
     """Domande che nessuna scheda trovata copre: servono al secondo giro."""
     return [d for d in domande if not any(punteggio_scheda(s, d) >= 2 for s in schede)]
+
+
+# --- Chat guidata: scelta automatica della profondità di ricerca -----------
+
+_GENERI_APPROFONDITA = {
+    "Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Manuale Psicologico",
+    "Economia e Finanza", "Business & Marketing", "Biografia", "Storico",
+    "Test Prep (Preparazione Esami)", "Religioso / Teologico",
+}
+
+
+def livello_consigliato(genere: str) -> str:
+    """Approfondita per i generi pieni di fatti, dati o norme da verificare."""
+    return "approfondita" if str(genere or "").strip() in _GENERI_APPROFONDITA else "standard"
+
+
+def normalizza_livello_chat(valore: str) -> str:
+    """Legge la scelta della chat in qualsiasi lingua; '' se non riconosciuta."""
+    testo = str(valore or "").strip().casefold()
+    if not testo:
+        return ""
+    if any(parola in testo for parola in (
+        "approfond", "in-depth", "in depth", "deep", "profund", "approfondie", "gründlich", "grundlich",
+        "aprofund", "углубл", "معمق", "معمّق", "深入",
+    )):
+        return "approfondita"
+    if any(parola in testo for parola in ("standard", "estándar", "estandar", "стандарт", "قياسي", "标准")):
+        return "standard"
+    return ""
+
+
+def istruzione_chat_profondita() -> str:
+    return (
+        "PROFONDITÀ RICERCA FONTI — sceglila TU, senza chiedere: «Approfondita» per saggi scientifici, "
+        "manuali tecnici o psicologici, economia, business, biografie, storia, test prep e ogni tema con dati, "
+        "norme o fatti da verificare; «Standard» negli altri casi. Nella scheda, dopo CERVELLO AI, scrivi la riga "
+        "«PROFONDITÀ RICERCA FONTI: Standard» oppure «PROFONDITÀ RICERCA FONTI: Approfondita» "
+        "(valore tecnico invariato in ogni lingua)."
+    )
