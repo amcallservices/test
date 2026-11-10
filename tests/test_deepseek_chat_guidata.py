@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import book_project
+import source_research
 import narrative_i18n
 import narrative_prompts
 from project_text import rimuovi_preambolo_ai
@@ -35,6 +36,7 @@ def parser_namespace():
         "narrative_prompts_core": narrative_prompts,
         "narrative_i18n_core": narrative_i18n,
         "book_project_core": book_project,
+        "ricerca_fonti_core": source_research,
         "TRADUZIONI": {name: {} for name in ("Italiano", "English", "Español", "Français", "Deutsch")},
     }
     for node in TREE.body:
@@ -549,3 +551,37 @@ class SceltaPersonalizzazioneMultilingueTests(unittest.TestCase):
         for testo in ("a me piacerebbe un thriller", "в книге должен быть детектив", "с удовольствием расскажу"):
             with self.subTest(testo=testo):
                 self.assertEqual(self.risposta(testo), "")
+
+
+class ChatGuidataProfonditaRicercaTests(unittest.TestCase):
+    def setUp(self):
+        self.app = parser_namespace()
+
+    def test_profondita_letta_in_ogni_lingua(self):
+        estrai = self.app["estrai_scheda_chat_guidata"]
+        casi = {
+            "PROFONDITÀ RICERCA FONTI: Approfondita": "approfondita",
+            "Source research depth: In-depth": "approfondita",
+            "Profundidad de la búsqueda de fuentes: Estándar": "standard",
+            "Глубина поиска источников: Углублённый": "approfondita",
+            "عمق البحث عن المصادر: معمّق": "approfondita",
+            "资料检索深度：深入".replace("：", ": "): "approfondita",
+            "PROFONDITÀ RICERCA FONTI: **Standard**": "standard",
+        }
+        for riga, atteso in casi.items():
+            with self.subTest(riga=riga):
+                self.assertEqual(estrai(f"TITOLO DEL LIBRO: Prova\n{riga}\n").get("profondita_ricerca_fonti"), atteso)
+
+    def test_senza_scelta_decide_il_genere(self):
+        scheda = self.app["scheda_chat_guidata_per_sidebar"](
+            [{"role": "assistant", "content": "GENERE LETTERARIO: Saggio Scientifico\n"}], "Italiano", "GPT-5.4 (OpenAI)"
+        )
+        self.assertEqual(scheda["profondita_ricerca_fonti"], "approfondita")
+        scheda = self.app["scheda_chat_guidata_per_sidebar"](
+            [{"role": "assistant", "content": "GENERE LETTERARIO: Fantasy\n"}], "Italiano", "GPT-5.4 (OpenAI)"
+        )
+        self.assertEqual(scheda["profondita_ricerca_fonti"], "standard")
+
+    def test_prompt_finale_chiede_la_profondita(self):
+        prompt = self.app["prompt_scheda_chat_guidata_deepseek"]("English", "DeepSeek V4 Pro", "A")
+        self.assertIn("PROFONDITÀ RICERCA FONTI:", prompt)
