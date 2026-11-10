@@ -54,6 +54,9 @@ CREDIT_COSTS = {
     "chat_nicchia_prompt_finale": 1,
     # Indice professionale GPT: ricerca 4 + generazione 6 = 10 crediti.
     "indice_ricerca_web": 4,
+    # Ricerca approfondita: 3 ricerche web in parallelo (+ eventuale secondo
+    # giro mirato). Indice completo approfondito: 8 + 6 = 14 crediti.
+    "indice_ricerca_web_approfondita": 8,
     "indice_generazione_editoriale": 6,
     # Il voto usa il modello editoriale completo e legge l'intera struttura:
     # due crediti mantengono un margine prudente anche sugli indici più lunghi.

@@ -54,6 +54,8 @@ MODULI_LOCALI_AGGIORNABILI = (
     "brain_names",
     "chat_i18n",
     "voice_chat",
+    "source_research",
+    "source_research_i18n",
 )
 
 
@@ -168,6 +170,8 @@ import chat_i18n as chat_i18n_core
 import book_project as book_project_core
 import book_project_i18n as book_project_i18n_core
 import emotional_impact as emotional_impact_core
+import source_research as ricerca_fonti_core
+import source_research_i18n as ricerca_fonti_i18n
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 marca_moduli_locali_caricati()
 from commercial_layer import (
@@ -363,83 +367,169 @@ def separa_mappa_e_registro_fonti_web(testo):
     return separa_mappa_e_registro_fonti_web_core(testo)
 
 
-def conserva_solo_fonti_web_selezionate(registro, massimo_fonti=5):
+def conserva_solo_fonti_web_selezionate(registro, massimo_fonti=15):
     """Compatibilità UI: il filtro puro vive in project_sources.py."""
     return conserva_solo_fonti_web_selezionate_core(registro, massimo_fonti)
 
 
-def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
-    """Cerca fonti con un tempo massimo, senza bloccare la generazione dell'indice.
+def livello_ricerca_fonti():
+    """Livello scelto nella sidebar: 'standard' (predefinito) o 'approfondita'."""
+    return ricerca_fonti_core.normalizza_livello(st.session_state.get("profondita_ricerca_fonti", "standard"))
 
-    La ricerca migliora l'indice, ma non può diventare un punto morto: se il
-    provider non chiude la richiesta entro il limite, il credito web viene
-    restituito e l'indice prosegue usando il brief della sidebar.
+
+def costo_ricerca_fonti(livello=None):
+    livello = ricerca_fonti_core.normalizza_livello(livello or livello_ricerca_fonti())
+    chiave = "indice_ricerca_web_approfondita" if livello == "approfondita" else "indice_ricerca_web"
+    return CREDIT_COSTS[chiave]
+
+
+def schede_fonti_web_correnti():
+    return ricerca_fonti_core.schede_da_json(st.session_state.get("schede_fonti_web", ""))
+
+
+def _esegui_ricerca_web_fonti(istruzioni, deepseek):
+    """Una singola ricerca web. Nessun accesso alla sessione: può girare in un thread."""
+    if deepseek:
+        client_ricerca = client_deepseek.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0)
+        return client_ricerca.responses.create(
+            model=MODELLO_DEEPSEEK_PRO,
+            tools=[{"type": "web_search"}],
+            tool_choice={"type": "web_search"},
+            instructions="Usa la ricerca web integrata prima di rispondere. "
+            "Le fonti servono solo alla progettazione interna e devono essere elencate nelle schede richieste.",
+            input=istruzioni,
+        )
+    client_ricerca = client.with_options(timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0)
+    return client_ricerca.responses.create(
+        model=MODELLO_ANALISI_FONTI,
+        tools=[{"type": "web_search_preview"}],
+        input=istruzioni,
+    )
+
+
+def _ricerche_web_in_parallelo(elenco_istruzioni, deepseek):
+    """Lancia le ricerche insieme: la durata è quella della più lenta, non la somma."""
+    esiti = [None] * len(elenco_istruzioni)
+    if len(elenco_istruzioni) == 1:
+        try:
+            esiti[0] = _esegui_ricerca_web_fonti(elenco_istruzioni[0], deepseek)
+        except Exception as exc:
+            esiti[0] = exc
+        return esiti
+    with ThreadPoolExecutor(max_workers=len(elenco_istruzioni)) as esecutore:
+        futuri = {
+            esecutore.submit(_esegui_ricerca_web_fonti, istruzioni, deepseek): indice
+            for indice, istruzioni in enumerate(elenco_istruzioni)
+        }
+        for futuro in as_completed(futuri):
+            try:
+                esiti[futuri[futuro]] = futuro.result()
+            except Exception as exc:
+                esiti[futuri[futuro]] = exc
+    return esiti
+
+
+def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, approfondimenti, forza=False):
+    """Ricerca fonti mirata alla sidebar, con tempo massimo e senza bloccare l'indice.
+
+    Le domande di ricerca nascono dai campi della sidebar. Il livello standard
+    fa una ricerca; quello approfondito ne lancia 3 in parallelo (stessa durata
+    circa) e un secondo giro solo se le fonti trovate sono poche. Ogni fonte
+    diventa una scheda riformulata che guida l'indice e, capitolo per
+    capitolo, la stesura. Se nulla va a buon fine, il credito viene restituito
+    e l'indice prosegue usando il brief della sidebar.
     """
-    firma = firma_ricerca_preliminare(titolo, genere, trama, obiettivo, lingua, approfondimenti)
+    livello = livello_ricerca_fonti()
+    firma = firma_ricerca_preliminare(
+        titolo, genere, trama, obiettivo, lingua, f"{approfondimenti}\n#ricerca-fonti-v2:{livello}"
+    )
     if not forza and st.session_state.get("firma_ricerca_preliminare") == firma:
         return st.session_state.get("dossier_ricerca_preliminare", "")
 
-    riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=CREDIT_COSTS["indice_ricerca_web"])
+    costo = costo_ricerca_fonti(livello)
+    deepseek = usa_deepseek_pro()
+    modello = MODELLO_DEEPSEEK_PRO if deepseek else MODELLO_ANALISI_FONTI
+    riferimento = addebita_azione_diretta("ricerca_preliminare_indice", amount=costo)
+    brief = dict(titolo=titolo, genere=genere, trama=trama, obiettivo=obiettivo, lingua=lingua,
+                 approfondimenti=approfondimenti)
+    massimo = ricerca_fonti_core.MASSIMO_FONTI[livello]
     try:
-        istruzioni_ricerca = (
-            "Sei un ricercatore editoriale. Cerca sul web fonti autorevoli e aggiornate utili "
-            "per progettare un libro. Non scrivere il libro e non produrre citazioni per il lettore. "
-            "Restituisci prima una MAPPA CONCETTUALE INTERNA concisa, non un riassunto delle pagine lette: "
-            "concetti e definizioni affidabili; fatti, norme, date o dati da verificare; controversie o limiti; "
-            "progressione didattica consigliata; aspetti concreti da assegnare all'indice. Riformula tutto con "
-            "parole indipendenti, senza citazioni, titoli o formulazioni riconoscibili delle fonti. Non inserire URL, "
-            "link Markdown o bibliografie nella MAPPA.\n\n"
-            "Prima esplora liberamente le fonti necessarie, poi seleziona in autonomia SOLO le 3-5 più autorevoli, "
-            "aggiornate e direttamente pertinenti a titolo, argomento, genere e obiettivo del brief. Scarta le fonti "
-            "generiche, duplicate, deboli o marginali: non elencarle e non citarle. Alla fine inserisci obbligatoriamente "
-            "una riga sola 'REGISTRO FONTI WEB' e sotto esclusivamente le fonti selezionate, in ordine di utilità, nel "
-            "formato: - Titolo della fonte | URL completo | motivo di utilità. Il registro è solo per la schermata interna "
-            "dell'utente: non inserire estratti testuali, citazioni o frasi tratte dalle pagine.\n\n"
-            f"Titolo: {titolo}\nGenere: {genere}\nLingua del libro: {lingua}\n"
-            f"Argomento: {trama}\nObiettivo: {obiettivo}\n"
-            f"Approfondimenti: {approfondimenti or 'Nessuno'}"
-        )
-        if usa_deepseek_pro():
-            # Ricerca nativa DeepSeek: nessuna chiamata a GPT. Il registro
-            # viene conservato e mostrato nella stessa area delle fonti GPT.
-            client_ricerca = client_deepseek.with_options(
-                timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0
+        domande = ricerca_fonti_core.domande_ricerca(titolo, genere, trama, obiettivo, approfondimenti)
+        gruppi = ricerca_fonti_core.dividi_domande(domande, ricerca_fonti_core.GRUPPI_RICERCA[livello])
+        per_gruppo = massimo if len(gruppi) == 1 else max(5, -(-massimo // len(gruppi)) + 1)
+        istruzioni = [
+            ricerca_fonti_core.prompt_ricerca_fonti(domande=gruppo, massimo_schede=per_gruppo, **brief)
+            for gruppo in gruppi
+        ]
+        esiti = _ricerche_web_in_parallelo(istruzioni, deepseek)
+
+        mappe, liste_schede, registri_vecchi, errori = [], [], [], []
+        for esito in esiti:
+            if isinstance(esito, Exception) or esito is None:
+                errori.append(type(esito).__name__ if esito is not None else "Nessuna risposta")
+                continue
+            # Il costo si registra una volta sola; le altre ricerche parallele
+            # restano visibili come fasi interne dello stesso addebito.
+            registra_esito_chiamata_ai(
+                esito, riferimento=riferimento, reason="ricerca_preliminare_indice",
+                amount=0 if mappe or liste_schede else costo, model=modello,
+                riferimento_padre=riferimento if mappe or liste_schede else "",
             )
-            risposta = client_ricerca.responses.create(
-                model=MODELLO_DEEPSEEK_PRO,
-                tools=[{"type": "web_search"}],
-                tool_choice={"type": "web_search"},
-                instructions="Usa la ricerca web integrata prima di rispondere. "
-                "Le fonti servono solo alla progettazione interna e devono essere elencate nel registro richiesto.",
-                input=istruzioni_ricerca,
-            )
-        else:
-            client_ricerca = client.with_options(
-                timeout=TIMEOUT_RICERCA_WEB_SECONDI, max_retries=0
-            )
-            risposta = client_ricerca.responses.create(
-                model=MODELLO_ANALISI_FONTI,
-                tools=[{"type": "web_search_preview"}],
-                input=istruzioni_ricerca,
-            )
-        registra_esito_chiamata_ai(
-            risposta,
-            riferimento=riferimento,
-            reason="ricerca_preliminare_indice",
-            amount=CREDIT_COSTS["indice_ricerca_web"],
-            model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
-        )
-        risposta_testo = (getattr(risposta, "output_text", "") or "").strip()
-        mappa, registro = separa_mappa_e_registro_fonti_web(risposta_testo)
-        registro = conserva_solo_fonti_web_selezionate(registro)
-        if not mappa:
-            refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=CREDIT_COSTS["indice_ricerca_web"])
+            testo_risposta = (getattr(esito, "output_text", "") or "").strip()
+            mappa, schede = ricerca_fonti_core.leggi_schede(testo_risposta)
+            if not schede:
+                # Il modello non ha rispettato il formato: si recupera il vecchio registro.
+                mappa, registro_vecchio = separa_mappa_e_registro_fonti_web(testo_risposta)
+                if registro_vecchio:
+                    registri_vecchi.append(registro_vecchio)
+            if mappa:
+                mappe.append(mappa)
+            liste_schede.append(schede)
+
+        schede = ricerca_fonti_core.unisci_schede(*liste_schede, massimo=massimo)
+
+        # Secondo giro (solo approfondita e solo se servono fonti in più).
+        if (livello == "approfondita" and mappe
+                and len(schede) < ricerca_fonti_core.FONTI_MINIME_SECONDO_GIRO):
+            scoperte = ricerca_fonti_core.domande_scoperte(domande, schede) or domande
+            secondo = _ricerche_web_in_parallelo([
+                ricerca_fonti_core.prompt_secondo_giro(
+                    scoperte, schede, massimo_schede=massimo - len(schede), **brief
+                )
+            ], deepseek)[0]
+            if not isinstance(secondo, Exception) and secondo is not None:
+                registra_esito_chiamata_ai(
+                    secondo, riferimento=riferimento, reason="ricerca_preliminare_secondo_giro",
+                    amount=0, model=modello, riferimento_padre=riferimento,
+                )
+                mappa2, schede2 = ricerca_fonti_core.leggi_schede((getattr(secondo, "output_text", "") or "").strip())
+                if mappa2:
+                    mappe.append(mappa2)
+                schede = ricerca_fonti_core.unisci_schede(schede, schede2, massimo=massimo)
+
+        if not mappe:
+            refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=costo)
+            if errori:
+                registra_esito_chiamata_ai(
+                    None, riferimento=riferimento, reason="ricerca_preliminare_indice", amount=costo,
+                    model=modello, riuscita=False, rimborsata=True, errore=", ".join(errori)[:160],
+                )
+                st.session_state["ultimo_esito_ricerca_preliminare"] = (
+                    "Ricerca preliminare non disponibile o scaduta: l'indice verrà creato "
+                    "dal brief della sidebar. Il credito della ricerca è stato riaccreditato."
+                )
             return ""
+
+        mappa = "\n\n".join(mappe)
+        sintesi = ricerca_fonti_core.sintesi_schede(schede)
+        dossier = mappa + (f"\n\nSCHEDE DELLE FONTI (sintesi interna riformulata):\n{sintesi}" if sintesi else "")
+        registro = ricerca_fonti_core.registro_da_schede(schede) if schede else "\n".join(registri_vecchi)
         st.session_state["firma_ricerca_preliminare"] = firma
-        st.session_state["dossier_ricerca_preliminare"] = mappa
-        st.session_state["registro_fonti_web"] = registro
+        st.session_state["dossier_ricerca_preliminare"] = dossier
+        st.session_state["registro_fonti_web"] = conserva_solo_fonti_web_selezionate(registro)
+        st.session_state["schede_fonti_web"] = ricerca_fonti_core.schede_in_json(schede)
         # La ricerca è un'operazione a consumo: proteggiamo subito dossier e
-        # registro nel cloud, anche se l'utente aggiorna la pagina prima di
+        # schede nel cloud, anche se l'utente aggiorna la pagina prima di
         # generare l'indice. I contenuti manuali restano invece soggetti al
         # pulsante SALVA SESSIONE.
         try:
@@ -451,15 +541,15 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
                 st.session_state["fonti_web_salvate"] = True
         except Exception:
             st.session_state["fonti_web_salvate"] = False
-        return mappa
+        return dossier
     except Exception as exc:
-        refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=CREDIT_COSTS["indice_ricerca_web"])
+        refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=costo)
         registra_esito_chiamata_ai(
             None,
             riferimento=riferimento,
             reason="ricerca_preliminare_indice",
-            amount=CREDIT_COSTS["indice_ricerca_web"],
-            model=MODELLO_DEEPSEEK_PRO if usa_deepseek_pro() else MODELLO_ANALISI_FONTI,
+            amount=costo,
+            model=modello,
             riuscita=False,
             rimborsata=True,
             errore=type(exc).__name__,
@@ -5019,6 +5109,7 @@ def esporta_progetto_editoriale_csv():
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
+        "schede_fonti_web",
     ):
         if chiave in st.session_state:
             valore_fonte = st.session_state.get(chiave, "")
@@ -5626,6 +5717,7 @@ def applica_snapshot_progetto(snapshot):
     for chiave in (
         "conoscenza_extra", "scheda_fonti", "dossier_fonti_ai", "brief_fonti_originale",
         "dossier_ricerca_preliminare", "registro_fonti_web", "firma_ricerca_preliminare",
+        "schede_fonti_web",
     ):
         valore_fonte = fonti.get(chiave, "")
         st.session_state[chiave] = (
@@ -5821,6 +5913,7 @@ def salva_progetto_corrente(sidebar, sezioni):
                 st.session_state.get("registro_fonti_web", "")
             ),
             "firma_ricerca_preliminare": st.session_state.get("firma_ricerca_preliminare", ""),
+            "schede_fonti_web": st.session_state.get("schede_fonti_web", ""),
         },
     }
     # Copia pronta per il logout: la sidebar commerciale viene eseguita prima
@@ -7374,22 +7467,22 @@ with st.sidebar:
     elif st.session_state.get("conoscenza_extra"):
         st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
 
-    etichette_fonti_web = {
-        "Italiano": ("🔄 RIGENERA FONTI WEB", "Cerca di nuovo fonti aggiornate e sostituisce soltanto la mappa e il registro delle fonti web. Indice e sezioni già scritti non cambiano."),
-        "English": ("🔄 REFRESH WEB SOURCES", "Searches for updated sources again and replaces only the web-source map and register. Your index and written sections will not change."),
-        "Español": ("🔄 REGENERAR FUENTES WEB", "Busca de nuevo fuentes actualizadas y sustituye solo el mapa y el registro web. El índice y las secciones escritas no cambian."),
-        "Français": ("🔄 ACTUALISER LES SOURCES WEB", "Recherche à nouveau des sources actualisées et remplace uniquement la carte et le registre web. L’index et les sections déjà écrites ne changent pas."),
-        "Deutsch": ("🔄 WEBQUELLEN AKTUALISIEREN", "Sucht erneut aktuelle Quellen und ersetzt nur Karte und Webquellenregister. Inhaltsverzeichnis und geschriebene Abschnitte bleiben unverändert."),
-    }
-    etichetta_fonti, descrizione_fonti = etichette_fonti_web.get(lingua_sel, etichette_fonti_web["Italiano"])
+    T_fonti = lambda chiave, **valori: ricerca_fonti_i18n.testo(chiave, lingua_sel, **valori)
+    st.radio(
+        T_fonti("profondita"),
+        list(ricerca_fonti_core.LIVELLI_RICERCA),
+        key="profondita_ricerca_fonti",
+        format_func=lambda livello: T_fonti(livello),
+        help=T_fonti("profondita_aiuto"),
+    )
     dati_fonti_pronti = all(str(st.session_state.get(chiave, "")).strip() for chiave in (
         "book_title", "book_genre", "book_goal", "book_plot",
     ))
     if pulsante_con_preventivo(
-        "rigenera_fonti_web", etichetta_fonti, CREDIT_COSTS["indice_ricerca_web"], descrizione_fonti,
+        "rigenera_fonti_web", T_fonti("rigenera"), costo_ricerca_fonti(), T_fonti("rigenera_desc"),
         use_container_width=True, disabled=not dati_fonti_pronti,
     ):
-        with st.spinner("Ricerca e aggiornamento delle fonti web in corso..."):
+        with st.spinner(T_fonti("in_corso")):
             dossier_aggiornato = ricerca_preliminare_per_indice(
                 st.session_state.get("book_title", ""),
                 st.session_state.get("book_genre", ""),
@@ -7400,18 +7493,36 @@ with st.sidebar:
                 forza=True,
             )
         if dossier_aggiornato:
-            st.success("Fonti web aggiornate e salvate nel progetto. Indice e sezioni esistenti sono rimasti invariati.")
+            st.success(T_fonti("ok"))
         else:
-            st.error("Non è stato possibile aggiornare le fonti web. Nessun credito viene trattenuto se la ricerca non restituisce un dossier valido.")
+            st.error(T_fonti("errore"))
 
     registro_fonti_web = conserva_solo_fonti_web_selezionate(
         st.session_state.get("registro_fonti_web", "")
     )
     if registro_fonti_web != str(st.session_state.get("registro_fonti_web", "") or "").strip():
         st.session_state["registro_fonti_web"] = registro_fonti_web
-    if registro_fonti_web:
-        with st.expander("🌐 Fonti web selezionate per il progetto", expanded=False):
-            st.caption("Sono visualizzate solo le fonti più pertinenti e autorevoli selezionate automaticamente per questo brief. Non vengono inserite nel libro.")
+    schede_web = schede_fonti_web_correnti()
+    if schede_web:
+        abbinamenti = ricerca_fonti_core.abbina_schede_ai_capitoli(
+            schede_web, list(st.session_state.get("lista_capitoli", []) or [])
+        )
+        with st.expander(T_fonti("expander", n=len(schede_web)), expanded=False):
+            st.caption(T_fonti("caption"))
+            for scheda in schede_web:
+                titolo_fonte = str(scheda.get("titolo") or scheda["url"]).replace("[", "(").replace("]", ")")
+                riga = f"**[{titolo_fonte}]({scheda['url']})**"
+                if scheda.get("pertinenza"):
+                    riga += f" · {T_fonti('pertinenza')}: {scheda['pertinenza']}/10"
+                st.markdown(riga)
+                if scheda.get("tema"):
+                    st.caption(scheda["tema"])
+                capitoli_fonte = abbinamenti.get(scheda["url"]) or []
+                if capitoli_fonte:
+                    st.caption(f"{T_fonti('capitoli')}: " + " · ".join(capitoli_fonte))
+    elif registro_fonti_web:
+        with st.expander(T_fonti("expander", n=len(registro_fonti_web.splitlines())), expanded=False):
+            st.caption(T_fonti("caption"))
             st.markdown(registro_fonti_web)
     
     st.divider()
@@ -7842,6 +7953,18 @@ def genera_contesto_avanzato(sezione_corrente, argomento=""):
             "=== ESTRATTI PERTINENTI DELLE FONTI ESTERNE (SOLO PER RAGIONAMENTO) ===\n"
             f"{estratti_fonti}"
         )
+    # Fonti web della ricerca preliminare: solo le schede utili a questa
+    # sezione, già riformulate. Calcolo locale, nessuna chiamata in più.
+    fonti_web_sezione = ricerca_fonti_core.schede_per_sezione(
+        schede_fonti_web_correnti(), sezione_corrente, argomento
+    )
+    if fonti_web_sezione:
+        blocchi.append(
+            "=== FATTI DALLE FONTI WEB PERTINENTI A QUESTA SEZIONE (USO INTERNO) ===\n"
+            "Usa questi fatti per dare precisione e concretezza, riformulandoli con parole tue. "
+            "Non citare fonti, siti o URL nel testo. Se un dato è incerto, segnalalo come da verificare.\n"
+            f"{fonti_web_sezione}"
+        )
 
     if sezione_corrente in sezioni_ordinate:
         precedenti = sezioni_ordinate[:sezioni_ordinate.index(sezione_corrente)]
@@ -7865,7 +7988,7 @@ def genera_contesto_avanzato(sezione_corrente, argomento=""):
             "Riparti da dove si chiudono questi passaggi ed evita ripetizioni e incoerenze; non copiarli.\n"
             + "\n".join(estratti_recenti)
         )
-    return "\n\n".join(blocco for blocco in blocchi if str(blocco).strip())[:9000]
+    return "\n\n".join(blocco for blocco in blocchi if str(blocco).strip())[:11500]
 
 def individua_sottocapitoli_del_capitolo(capitolo, sezioni):
     """Restituisce soltanto i sottocapitoli numerati appartenenti al capitolo selezionato."""
@@ -10738,7 +10861,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
             if usa_deepseek_pro() else
             "Include ricerca preliminare online, generazione, valutazione editoriale e possibili correzioni automatiche dell'indice."
         )
-        if pulsante_con_preventivo("genera_indice", L["btn_idx"], CREDIT_COSTS["indice_ricerca_web"] + CREDIT_COSTS["indice_generazione_editoriale"],
+        if pulsante_con_preventivo("genera_indice", L["btn_idx"], costo_ricerca_fonti() + CREDIT_COSTS["indice_generazione_editoriale"],
                                    descrizione_indice,
                                    disabled=not sidebar_pronta):
             with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
@@ -10761,8 +10884,9 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                     "Fonti studiate: costruzione dell'architettura dell'indice...",
                 )
                 if dossier_ricerca_web:
-                    st.session_state["ultimo_esito_ricerca_preliminare"] = (
-                        "Ricerca preliminare completata: il dossier interno guiderà indice e stesura."
+                    st.session_state["ultimo_esito_ricerca_preliminare"] = ricerca_fonti_i18n.testo(
+                        "fatta", lingua_sel, n=len(schede_fonti_web_correnti())
+                        or len(str(st.session_state.get("registro_fonti_web", "")).splitlines()),
                     )
                 
                 # --- INIZIO NUOVE RIGHE PER TRADUZIONE TERMINI INDICE ---
@@ -10871,7 +10995,7 @@ verifica che ogni voce abbia un contenuto autonomo e che la somma di Parti + Cap
                         "\n\nDOSSIER DELLA RICERCA PRELIMINARE ONLINE (USO INTERNO):\n"
                         "Usa questo dossier per controllare definizioni, priorità, limiti e progressione dell'indice. "
                         "Non citare fonti, URL, siti o riferimenti bibliografici nell'indice né nel libro.\n"
-                        f"{dossier_ricerca_web[:7000]}\n"
+                        f"{dossier_ricerca_web[:10000]}\n"
                     )
 
                 prompt_idx += f"""

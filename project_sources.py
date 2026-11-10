@@ -64,7 +64,7 @@ def separa_mappa_e_registro_fonti_web(testo: str) -> tuple[str, str]:
     return testo, ""
 
 
-def conserva_solo_fonti_web_selezionate(registro: str, massimo_fonti: int = 5) -> str:
+def conserva_solo_fonti_web_selezionate(registro: str, massimo_fonti: int = 15) -> str:
     """Conserva soltanto le fonti web effettivamente selezionate."""
     righe = [
         riga.strip() for riga in str(registro or "").splitlines()
