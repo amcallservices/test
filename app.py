@@ -3877,6 +3877,7 @@ CAMPI_CHAT_GUIDATA_SIDEBAR = {
     "TEMPO VERBALE": "tempo_verbale",
     "LUNGHEZZA DELLE SEZIONI": "lunghezza",
     "CERVELLO AI": "provider_ia",
+    "PROFONDITÀ RICERCA FONTI": "profondita_ricerca_fonti",
     "OBIETTIVO DEL LIBRO": "obiettivo",
     "RISULTATO FINALE DESIDERATO": "risultato_finale",
     "TRAMA O ARGOMENTO": "argomento",
@@ -3914,6 +3915,7 @@ CAMPI_CHAT_GUIDATA_ETICHETTE_TRADOTTE = {
     "obiettivi_prerequisiti": ("Objectives and prerequisites", "Objetivos y requisitos previos", "Objectifs et prérequis", "Lernziele und Voraussetzungen", "Obiective și cerințe preliminare", "Цели и требования", "الأهداف والمتطلبات المسبقة", "目标与前提条件"),
     "scheda_personaggi": ("Characters and world", "Personajes y mundo", "Personnages et monde", "Figuren und Welt", "Personaje și lume", "Персонажи и мир", "الشخصيات والعالم", "人物与世界"),
     "lunghezza": ("Section length", "Longitud de las secciones", "Longueur des sections", "Abschnittslänge", "Lungimea secțiunilor", "Длина разделов", "طول الأقسام", "章节长度"),
+    "profondita_ricerca_fonti": ("Source research depth", "Profundidad de la búsqueda de fuentes", "Profondeur de la recherche de sources", "Tiefe der Quellenrecherche", "Profunzimea căutării surselor", "Глубина поиска источников", "عمق البحث عن المصادر", "资料检索深度"),
     "provider_ia": ("AI engine", "Motor de IA", "Moteur IA", "KI-Modell", "Motor IA", "Модель ИИ", "محرك الذكاء الاصطناعي", "AI 模型"),
     "obiettivo": ("Book goal", "Objetivo del libro", "Objectif du livre", "Ziel des Buches", "Obiectivul cărții", "Цель книги", "هدف الكتاب", "图书目标"),
     "risultato_finale": ("Desired final result", "Resultado final deseado", "Résultat final souhaité", "Gewünschtes Endergebnis", "Rezultatul final dorit", "Желаемый итоговый результат", "النتيجة النهائية المرجوة", "期望的最终结果"),
@@ -4003,6 +4005,8 @@ def _valore_scelta_chat_guidata(campo, valore):
             return "Standard KDP"
         if valore_basso.startswith("approfondito"):
             return "Approfondito"
+    if campo == "profondita_ricerca_fonti":
+        return ricerca_fonti_core.normalizza_livello_chat(valore)
     if campo == "narratore":
         return narrative_prompts_core.normalizza_narratore(valore)
     if campo == "tempo_verbale":
@@ -4096,6 +4100,10 @@ def scheda_chat_guidata_per_sidebar(messaggi, lingua, provider):
         scheda.setdefault("tempo_verbale", narrative_prompts_core.TEMPO_PREDEFINITO)
     if not scheda.get("lingua") and lingua in TRADUZIONI:
         scheda["lingua"] = lingua
+    # Se la chat non ha scelto la profondità della ricerca, la sceglie il
+    # software in base al genere: tutto resta automatico.
+    if not scheda.get("profondita_ricerca_fonti"):
+        scheda["profondita_ricerca_fonti"] = ricerca_fonti_core.livello_consigliato(scheda.get("genere", ""))
     scheda["provider_ia"] = provider
     return scheda
 
@@ -4236,11 +4244,12 @@ def prompt_scheda_chat_guidata_deepseek(lingua, provider, scelta="D"):
     etichette = "\n".join(
         f"{etichetta}:"
         for etichetta, campo in CAMPI_CHAT_GUIDATA_SIDEBAR.items()
-        if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo == "provider_ia"
+        if campo in CAMPI_CHAT_GUIDATA_OBBLIGATORI or campo in {"provider_ia", "profondita_ricerca_fonti"}
     )
     blocco_romanzi = (
         narrative_i18n_core.istruzioni_chat_romanzi(lingua)
         + "\n\n" + book_project_core.istruzioni_chat_progetto()
+        + "\n\n" + ricerca_fonti_core.istruzione_chat_profondita()
     )
     campi_personali = campi_personalizzazione_deepseek(scelta)
     etichette_personali = "\n".join(
@@ -4401,6 +4410,17 @@ def applica_scheda_chat_guidata(sovrascrivi=False):
     applicati, mantenuti = [], []
     for campo, valore in scheda.items():
         if campo == "provider_ia":
+            continue
+        if campo == "profondita_ricerca_fonti":
+            # Scelta di lavoro, non un testo dell'autore: la chat la imposta
+            # quando il valore attuale è quello predefinito.
+            livello_chat = ricerca_fonti_core.normalizza_livello(valore)
+            if sovrascrivi or st.session_state.get("profondita_ricerca_fonti", "standard") == "standard":
+                st.session_state["profondita_ricerca_fonti"] = livello_chat
+                if livello_chat != "standard" or sovrascrivi:
+                    applicati.append(campo)
+            elif livello_chat != st.session_state.get("profondita_ricerca_fonti"):
+                mantenuti.append(campo)
             continue
         chiave_sidebar = CAMPI_SALVATAGGIO_PROGETTO.get(campo)
         if not chiave_sidebar or not str(valore).strip():
@@ -10250,6 +10270,8 @@ LUNGHEZZA DELLE SEZIONI:
 
 CERVELLO AI:
 
+PROFONDITÀ RICERCA FONTI:
+
 OBIETTIVO DEL LIBRO:
 
 RISULTATO FINALE DESIDERATO:
@@ -10321,6 +10343,8 @@ TEMPO VERBALE (novels and biographies only):
 LUNGHEZZA DELLE SEZIONI:
 
 CERVELLO AI:
+
+PROFONDITÀ RICERCA FONTI:
 
 OBIETTIVO DEL LIBRO:
 
@@ -10395,6 +10419,7 @@ per riga nel formato ETICHETTA: valore, senza tabella, JSON o testo aggiuntivo.
         prompt_chat_sidebar += (
             "\n\n" + narrative_i18n_core.istruzioni_chat_romanzi(lingua_sel)
             + "\n\n" + book_project_core.istruzioni_chat_progetto()
+            + "\n\n" + ricerca_fonti_core.istruzione_chat_profondita()
         )
         # Il testo prompt_chat_sidebar non viene più mostrato da copiare: resta
         # la base delle istruzioni della Chat guidata qui sotto. L'avvio è
