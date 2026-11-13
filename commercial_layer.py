@@ -1592,7 +1592,7 @@ def _landing_page() -> None:
         f"<a href='#ss-crediti'>{N[4]}</a><a href='#ss-faq'>{N[5]}</a>"
         f"<a href='#ss-guide'>{N[6]}</a>"
         f"<a class='ss-instagram-link' href='https://www.instagram.com/scrittore.site/' target='_blank' rel='noopener noreferrer' aria-label='Instagram Scrittore Site'><svg viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='5'></rect><circle cx='12' cy='12' r='4'></circle><circle cx='17.5' cy='6.5' r='.7' fill='currentColor' stroke='none'></circle></svg>{N[7]}</a>"
-        f"<a href='https://community-fdjf.vercel.app/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>"
+        f"<a href='https://selfpublishingitalia.site/' target='_blank' rel='noopener noreferrer'>👥 {C['community']}</a>"
         f"<a class='ss-store-link' href='https://liberamente.site/' target='_blank' rel='noopener noreferrer'>↗ {store_label}</a>"
     )
     st.markdown(
