@@ -453,6 +453,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
     brief = dict(titolo=titolo, genere=genere, trama=trama, obiettivo=obiettivo, lingua=lingua,
                  approfondimenti=approfondimenti)
     massimo = ricerca_fonti_core.MASSIMO_FONTI[livello]
+    eventi_registrati = 0
     try:
         domande = ricerca_fonti_core.domande_ricerca(titolo, genere, trama, obiettivo, approfondimenti)
         gruppi = ricerca_fonti_core.dividi_domande(domande, ricerca_fonti_core.GRUPPI_RICERCA[livello])
@@ -464,6 +465,9 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         esiti = _ricerche_web_in_parallelo(istruzioni, deepseek)
 
         mappe, liste_schede, registri_vecchi, errori = [], [], [], []
+        # Supabase accetta un solo evento per riferimento (unique user_id +
+        # reference): la prima ricerca usa il riferimento dell'addebito, le
+        # altre un riferimento proprio collegato a quello principale.
         for esito in esiti:
             if isinstance(esito, Exception) or esito is None:
                 errori.append(type(esito).__name__ if esito is not None else "Nessuna risposta")
@@ -471,10 +475,13 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             # Il costo si registra una volta sola; le altre ricerche parallele
             # restano visibili come fasi interne dello stesso addebito.
             registra_esito_chiamata_ai(
-                esito, riferimento=riferimento, reason="ricerca_preliminare_indice",
-                amount=0 if mappe or liste_schede else costo, model=modello,
-                riferimento_padre=riferimento if mappe or liste_schede else "",
+                esito,
+                riferimento=riferimento if not eventi_registrati else f"{riferimento}:ricerca{eventi_registrati + 1}",
+                reason="ricerca_preliminare_indice",
+                amount=0 if eventi_registrati else costo, model=modello,
+                riferimento_padre=riferimento if eventi_registrati else "",
             )
+            eventi_registrati += 1
             testo_risposta = (getattr(esito, "output_text", "") or "").strip()
             mappa, schede = ricerca_fonti_core.leggi_schede(testo_risposta)
             if not schede:
@@ -499,7 +506,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             ], deepseek)[0]
             if not isinstance(secondo, Exception) and secondo is not None:
                 registra_esito_chiamata_ai(
-                    secondo, riferimento=riferimento, reason="ricerca_preliminare_secondo_giro",
+                    secondo, riferimento=f"{riferimento}:secondo_giro", reason="ricerca_preliminare_secondo_giro",
                     amount=0, model=modello, riferimento_padre=riferimento,
                 )
                 mappa2, schede2 = ricerca_fonti_core.leggi_schede((getattr(secondo, "output_text", "") or "").strip())
@@ -511,7 +518,8 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
             refund_credits(riferimento, reason="ricerca_preliminare_vuota", amount=costo)
             if errori:
                 registra_esito_chiamata_ai(
-                    None, riferimento=riferimento, reason="ricerca_preliminare_indice", amount=costo,
+                    None, riferimento=riferimento if not eventi_registrati else f"{riferimento}:esito",
+                    reason="ricerca_preliminare_indice", amount=costo,
                     model=modello, riuscita=False, rimborsata=True, errore=", ".join(errori)[:160],
                 )
                 st.session_state["ultimo_esito_ricerca_preliminare"] = (
@@ -546,7 +554,7 @@ def ricerca_preliminare_per_indice(titolo, genere, trama, obiettivo, lingua, app
         refund_credits(riferimento, reason="ricerca_preliminare_fallita", amount=costo)
         registra_esito_chiamata_ai(
             None,
-            riferimento=riferimento,
+            riferimento=f"{riferimento}:errore",
             reason="ricerca_preliminare_indice",
             amount=costo,
             model=modello,
