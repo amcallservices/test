@@ -445,6 +445,74 @@ INTESTAZIONI_REGISTRO = {
 }
 
 
+LIMITE_REGISTRO = 4500
+
+
+def _blocchi_registro(testo: str) -> list[tuple[str, list[str]]]:
+    """Divide la scheda in (intestazione, voci). Le righe prima della prima intestazione restano voci libere."""
+    blocchi: list[tuple[str, list[str]]] = []
+    for riga in str(testo or "").splitlines():
+        pulita = riga.strip()
+        if not pulita:
+            continue
+        if re.match(r"^[-*•·]\s*", pulita) or not blocchi and not _sembra_intestazione(pulita):
+            if not blocchi:
+                blocchi.append(("", []))
+            blocchi[-1][1].append(pulita)
+        else:
+            blocchi.append((pulita, []))
+    return blocchi
+
+
+def _sembra_intestazione(riga: str) -> bool:
+    riga = riga.strip().strip("*#: ").strip()
+    if not riga or len(riga) > 90:
+        return False
+    lettere = [c for c in riga if c.isalpha()]
+    # Maiuscolo (alfabeti con maiuscole) oppure riga breve senza punto finale (cinese, arabo…).
+    return (bool(lettere) and riga.upper() == riga) or (len(riga) <= 40 and not riga.endswith((".", "。")))
+
+
+def comprimi_registro(testo: str, limite: int = LIMITE_REGISTRO) -> str:
+    """Accorcia la scheda di coerenza senza perdere le parti importanti.
+
+    Tiene sempre tutte le intestazioni e per intero l'ultima (punti ancora
+    aperti). Nelle altre, se serve spazio, sacrifica le voci più vecchie (le
+    prime), perché le ultime descrivono lo stato più recente del libro.
+    """
+    testo = str(testo or "").strip()
+    if len(testo) <= limite:
+        return testo
+    blocchi = _blocchi_registro(testo)
+    if len(blocchi) < 2:
+        return "…" + testo[-(limite - 1):].lstrip()
+    def misura(bl):
+        return sum(len(t) + 1 + sum(len(v) + 1 for v in voci) for t, voci in bl)
+    blocchi = [(t, list(v)) for t, v in blocchi]
+    while misura(blocchi) > limite:
+        # Il blocco (non ultimo) con più voci perde la sua voce più vecchia.
+        candidati = [i for i, (_t, voci) in enumerate(blocchi[:-1]) if len(voci) > 1]
+        if not candidati:
+            break
+        i = max(candidati, key=lambda n: len(blocchi[n][1]))
+        blocchi[i][1].pop(0)
+    risultato = "\n".join("\n".join(([t] if t else []) + voci) for t, voci in blocchi)
+    return risultato if len(risultato) <= limite else risultato[:limite].rstrip() + "…"
+
+
+def registro_aggiornato_valido(nuovo: str, tipo: str, precedente: str = "") -> bool:
+    """La risposta dell'AI sostituisce la scheda solo se è completa (non troncata)."""
+    nuovo = str(nuovo or "").strip()
+    if not nuovo:
+        return False
+    attese = len(INTESTAZIONI_REGISTRO.get(tipo, INTESTAZIONI_REGISTRO["saggistica"]))
+    intestazioni = [t for t, _v in _blocchi_registro(nuovo) if t]
+    if len(intestazioni) < attese:
+        return False
+    # Una scheda crollata a meno di un terzo della precedente è quasi sempre una risposta interrotta.
+    return not precedente or len(nuovo) >= len(str(precedente).strip()) / 3
+
+
 def prompt_aggiorna_registro(*, tipo: str, registro_attuale: str, sezione: str, testo_sezione: str, lingua: str) -> str:
     """Aggiorna la scheda di coerenza con ciò che è appena successo nella sezione."""
     intestazioni = INTESTAZIONI_REGISTRO.get(tipo, INTESTAZIONI_REGISTRO["saggistica"])
@@ -455,7 +523,7 @@ def prompt_aggiorna_registro(*, tipo: str, registro_attuale: str, sezione: str, 
     return f"""Aggiorna la SCHEDA DI COERENZA di un libro dopo la sezione «{sezione}».
 
 SCHEDA ATTUALE:
-{_pulito(registro_attuale, 4000) or "(vuota)"}
+{comprimi_registro(registro_attuale) or "(vuota)"}
 
 TESTO DELLA SEZIONE APPENA SCRITTA:
 {testo}
@@ -465,7 +533,9 @@ nello stesso ordine e voci brevi precedute da «- »:
 {modello}
 
 Regole: registra solo ciò che il testo afferma; togli ciò che non è più vero; l'ultima intestazione
-contiene SOLO ciò che è ancora aperto (togli i punti risolti in questa sezione). Massimo 350 parole.
+contiene SOLO ciò che è ancora aperto (togli i punti risolti in questa sezione).
+Nei libri lunghi conserva i fatti che servono ancora (nomi, luoghi, date, oggetti, concetti chiave) e
+condensa i dettagli vecchi non più utili in voci brevi. Massimo 450 parole.
 Nessun commento prima o dopo la scheda."""
 
 
@@ -497,7 +567,7 @@ SCALETTA DEL CAPITOLO:
 {_pulito(scaletta_capitolo, 2000) or "(non disponibile)"}
 
 SCHEDA DI COERENZA PRIMA DEL CAPITOLO:
-{_pulito(registro, 2500) or "(non disponibile)"}
+{comprimi_registro(registro, 3500) or "(non disponibile)"}
 
 TESTO DEL CAPITOLO:
 {corpo[:30000]}
@@ -557,7 +627,7 @@ def blocco_progetto_sezione(
     if str(registro or "").strip():
         righe.append(
             "=== SCHEDA DI COERENZA (stato attuale del libro: non contraddirla, non ripetere ciò che è già stato detto, "
-            "non usare ciò che non è ancora stato introdotto) ===\n" + _pulito(registro, 3000)
+            "non usare ciò che non è ancora stato introdotto) ===\n" + comprimi_registro(registro)
         )
     righe.append(direttive_struttura(tipo, apre, chiude, marcatore))
     return "\n\n".join(righe)

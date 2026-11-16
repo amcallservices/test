@@ -8371,15 +8371,21 @@ def aggiorna_registro_coerenza_automatico(sezione, testo, genere, lingua):
             ),
             "Sei un editor di continuità: registri solo ciò che il testo afferma, in modo breve e preciso.",
             addebita=False,
-            max_completion_tokens=900,
+            max_completion_tokens=1500,
             model=MODELLO_STESURA,
             reason="registro_coerenza",
             timeout_seconds=60,
         )
     except Exception:
         return
-    if risposta and not str(risposta).startswith("ERRORE:"):
-        imposta_campo_progetto("registro_coerenza", pulisci_testo_editoriale(risposta))
+    if not risposta or str(risposta).startswith("ERRORE:"):
+        return
+    nuovo = pulisci_testo_editoriale(risposta)
+    # Una risposta interrotta a metà non deve sostituire una scheda completa.
+    if book_project_core.registro_aggiornato_valido(
+        nuovo, book_project_core.tipo_opera(genere), valore_campo_progetto("registro_coerenza")
+    ):
+        imposta_campo_progetto("registro_coerenza", book_project_core.comprimi_registro(nuovo))
 
 
 def revisione_capitolo_libro(capitolo, sezioni, genere, lingua):
@@ -12181,6 +12187,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                                 # Non sostituiamo mai testi già presenti. Qui arrivano soltanto
                                 # sottocapitoli dichiarati vuoti al momento del click.
                                 scrivi_sezione_memorizzata(sottocapitolo, contenuto)
+                                # Come nella stesura del libro intero: il sottocapitolo
+                                # successivo deve sapere cosa ha appena scritto questo.
+                                aggiorna_registro_coerenza_automatico(
+                                    sottocapitolo, contenuto, val_genere, lingua_sel
+                                )
                                 # Protezione immediata: non attendere che il
                                 # capitolo intero termini. Se la pagina si
                                 # aggiorna durante il ciclo, ogni sezione già

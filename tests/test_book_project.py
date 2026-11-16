@@ -150,3 +150,45 @@ class IstruzioniChatCompatteTests(unittest.TestCase):
             with self.subTest(lingua=lingua):
                 totale = len(narrative_i18n.istruzioni_chat_romanzi(lingua)) + len(bp.istruzioni_chat_progetto())
                 self.assertLess(totale, 2600)
+
+
+def test_comprimi_registro_tiene_intestazioni_punti_aperti_e_voci_recenti():
+    import book_project as bp
+    voci_vecchie = "\n".join(f"- personaggio {i} è a Torino con la valigia rossa numero {i}" for i in range(80))
+    registro = (
+        "DOVE SONO I PERSONAGGI E COSA HANNO CON SÉ\n" + voci_vecchie + "\n- ULTIMA: Anna è a Genova\n"
+        "TEMPO DELLA STORIA\n- martedì sera\n"
+        "CHI SA COSA\n- Marco sa del furto\n"
+        "MISTERI E PROMESSE ANCORA APERTI\n- chi ha preso la chiave\n- perché Luca mente"
+    )
+    compresso = bp.comprimi_registro(registro, 1500)
+    assert len(compresso) <= 1500
+    for intestazione in bp.INTESTAZIONI_REGISTRO["narrativa"]:
+        assert intestazione in compresso
+    assert "- ULTIMA: Anna è a Genova" in compresso
+    assert "- perché Luca mente" in compresso and "- chi ha preso la chiave" in compresso
+    assert "numero 0 " not in compresso + " "
+    assert bp.comprimi_registro("breve", 1500) == "breve"
+
+
+def test_registro_troncato_non_sostituisce_quello_completo():
+    import book_project as bp
+    completo = "IDEE E TERMINI GIÀ SPIEGATI\n- a\n- b\nESEMPI E STORIE GIÀ USATI\n- c\nPROMESSE AL LETTORE ANCORA DA MANTENERE\n- d"
+    assert bp.registro_aggiornato_valido(completo, "saggistica", "")
+    assert not bp.registro_aggiornato_valido("IDEE E TERMINI GIÀ SPIEGATI\n- a\n- b", "saggistica", completo)
+    assert not bp.registro_aggiornato_valido("", "saggistica", completo)
+    # Intestazioni tradotte (cinese, russo) restano riconosciute.
+    cinese = "已解释的概念和术语\n- 甲\n已使用的例子和故事\n- 乙\n仍需兑现的承诺\n- 丙"
+    assert bp.registro_aggiornato_valido(cinese, "saggistica", "")
+    russo = "УЖЕ ОБЪЯСНЁННЫЕ ИДЕИ\n- а\nУЖЕ ИСПОЛЬЗОВАННЫЕ ПРИМЕРЫ\n- б\nОБЕЩАНИЯ ЧИТАТЕЛЮ\n- в"
+    assert bp.registro_aggiornato_valido(russo, "saggistica", "")
+
+
+def test_stesura_capitolo_aggiorna_la_scheda_dopo_ogni_sottocapitolo():
+    from pathlib import Path
+    sorgente = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
+    blocco = sorgente[sorgente.index("for posizione, sottocapitolo in enumerate(da_generare, start=1):"):]
+    blocco = blocco[:blocco.index("avanzamento.progress(100")]
+    assert blocco.index("scrivi_sezione_memorizzata(sottocapitolo, contenuto)") < blocco.index(
+        "aggiorna_registro_coerenza_automatico("
+    )
