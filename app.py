@@ -56,6 +56,7 @@ MODULI_LOCALI_AGGIORNABILI = (
     "voice_chat",
     "source_research",
     "source_research_i18n",
+    "user_tips",
 )
 
 
@@ -172,6 +173,7 @@ import book_project_i18n as book_project_i18n_core
 import emotional_impact as emotional_impact_core
 import source_research as ricerca_fonti_core
 import source_research_i18n as ricerca_fonti_i18n
+import user_tips as suggerimenti_core
 from voice_chat import MODELLO_TRASCRIZIONE, durata_registrazione_wav, trascrivi_registrazione
 marca_moduli_locali_caricati()
 from commercial_layer import (
@@ -5684,6 +5686,85 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         mostra_didascalia_centro("🛡️ " + html.escape(nota_originalita_facoltativa(lingua)))
 
 
+def stato_per_suggerimenti(campi_obbligatori=None):
+    """Raccoglie lo stato che decide quali suggerimenti mostrare."""
+    stato = riepilogo_operativo_progetto(campi_obbligatori)
+    firma = firma_contenuti_correnti()
+    # Al primo passaggio (progetto appena aperto o riaperto) lo stato attuale
+    # vale come "salvato": il suggerimento compare solo dopo una modifica.
+    salvata = st.session_state.setdefault("firma_contenuti_salvati", firma)
+    genere = str(sidebar_memorizzata_corrente().get("genere", "") or "")
+    return {
+        "job_attivo": bool(stato["job_attivo"]),
+        "non_salvato": firma != salvata and bool(stato["sezioni_scritte"] or stato["indice_pronto"]),
+        "firma_contenuti": firma,
+        "indice_pronto": bool(stato["indice_pronto"]),
+        "sezioni_scritte": int(stato["sezioni_scritte"] or 0),
+        "sezioni_previste": int(stato["sezioni_previste"] or 0),
+        "brief_pronto": bool(stato["brief_pronto"]),
+        "tipo_opera": book_project_core.tipo_opera(genere),
+        "livello_ricerca": livello_ricerca_fonti(),
+        "livello_consigliato": ricerca_fonti_core.livello_consigliato(genere),
+        "scheda_personaggi_vuota": not valore_campo_progetto("scheda_personaggi").strip(),
+    }
+
+
+def chiudi_suggerimento(chiave, firma):
+    chiusi = dict(st.session_state.get("suggerimenti_chiusi", {}) or {})
+    chiusi[chiave] = firma
+    st.session_state["suggerimenti_chiusi"] = chiusi
+
+
+def mostra_suggerimenti_contestuali(lingua, campi_obbligatori=None):
+    """Al massimo due suggerimenti brevi, solo quando servono; ognuno si chiude con ✕."""
+    try:
+        stato = stato_per_suggerimenti(campi_obbligatori)
+    except Exception:
+        return
+    attivi = suggerimenti_core.suggerimenti_attivi(stato, st.session_state.get("suggerimenti_chiusi", {}))
+    for chiave in attivi:
+        colonna_testo, colonna_chiudi = st.columns([0.93, 0.07], vertical_alignment="center")
+        with colonna_testo:
+            st.info(suggerimenti_core.testo_suggerimento(chiave, lingua))
+        with colonna_chiudi:
+            st.button(
+                "✕", key=f"chiudi_suggerimento_{chiave}",
+                help=suggerimenti_core.TITOLO_CHIUDI.get(lingua, "Close"),
+                on_click=chiudi_suggerimento, args=(chiave, stato["firma_contenuti"]),
+            )
+
+
+def avvia_visita_guidata(lingua):
+    """Visita guidata: parte al primo accesso (una volta per browser) o su richiesta."""
+    percorso = os.path.join(os.path.dirname(__file__), "assets", "editor_tour.js")
+    if st.session_state.get("admin_test_mode") or not os.path.isfile(percorso):
+        return
+    forza = bool(st.session_state.pop("riavvia_visita_guidata", False))
+    if forza:
+        st.session_state["visita_guidata_contatore"] = int(st.session_state.get("visita_guidata_contatore", 0)) + 1
+    script = (
+        open(percorso, encoding="utf-8").read()
+        .replace("__DATI_TOUR__", json.dumps(suggerimenti_core.dati_tour(lingua), ensure_ascii=False))
+        .replace("__FORZA_TOUR__", "true" if forza else "false")
+    )
+    # Il contatore cambia il contenuto quando l'utente chiede di rivederla:
+    # Streamlit ricrea l'iframe e la visita riparte.
+    components.html(
+        f"<!-- visita {st.session_state.get('visita_guidata_contatore', 0)} --><script>{script}</script>",
+        height=0,
+    )
+
+
+def mostra_scheda_vuota(chiave, lingua):
+    """Scheda ancora vuota: spiega cosa ci sarà e porta al passo precedente."""
+    testo, etichetta, destinazione = suggerimenti_core.scheda_vuota(chiave, lingua)
+    st.info(f"🧭 {testo}")
+    st.button(
+        etichetta, key=f"vai_da_scheda_vuota_{chiave}",
+        on_click=lambda n=destinazione: st.session_state.__setitem__("apri_scheda_numero", n),
+    )
+
+
 def applica_snapshot_progetto(snapshot):
     """Ripristina una fotografia completa, anche se il progetto e' ancora iniziale.
 
@@ -5863,6 +5944,19 @@ def prepara_ripristino_ultima_stesura():
     return True
 
 
+def firma_contenuti_correnti():
+    """Impronta di indice e sezioni: serve solo a capire se ci sono modifiche non salvate."""
+    try:
+        contenuti = dict(memoria_progetto_unica().get("contenuti", {}) or {})
+    except Exception:
+        contenuti = {}
+    dati = json.dumps(
+        {"indice": str(st.session_state.get("indice_raw", "") or ""), "sezioni": {k: str(v) for k, v in contenuti.items()}},
+        ensure_ascii=False, sort_keys=True,
+    )
+    return hashlib.sha256(dati.encode("utf-8")).hexdigest()
+
+
 def salva_progetto_corrente(sidebar, sezioni):
     """Crea e conferma nel cloud una fotografia completa del progetto aperto.
 
@@ -5990,9 +6084,11 @@ def salva_progetto_corrente(sidebar, sezioni):
     # la fotografia. In questo modo un errore transitorio non lascia nel cloud
     # una vecchia bozza che poi potrebbe riapparire al rerun successivo.
     if st.session_state.get("autosave_firma_cloud") == firma:
+        st.session_state["firma_contenuti_salvati"] = firma_contenuti_correnti()
         return True
     momento = datetime.datetime.now().strftime("%H:%M")
     if salva_progetto_automatico(snapshot):
+        st.session_state["firma_contenuti_salvati"] = firma_contenuti_correnti()
         st.session_state.pop("commercial_project_reset_requested", None)
         st.session_state.pop("commercial_project_reset_completed", None)
         st.session_state["autosave_firma"] = firma
@@ -7338,7 +7434,7 @@ with st.sidebar:
     lingua_scelta = st.selectbox(
         testo_ui("lingua", lingua_sidebar_precedente),
         [""] + list(TRADUZIONI.keys()),
-        key="editor_language",
+        key="editor_language", help=suggerimenti_core.aiuto_campo("editor_language", lingua_sidebar_precedente),
         format_func=lambda valore: valore or testo_ui("seleziona", lingua_sidebar_precedente),
     )
     lingua_sel = lingua_scelta or "Italiano"
@@ -7492,14 +7588,14 @@ with st.sidebar:
             for voce_tariffario in tariffario[motore_tariffario]:
                 st.write(f"• {voce_tariffario}")
             st.caption(costo_kdp_tariffario.get(lingua_sel, costo_kdp_tariffario["Italiano"]))
-    val_titolo = st.text_input(L["lbl_tit"], key="book_title")
-    val_autore = st.text_input(L["lbl_auth"], key="book_author")
+    val_titolo = st.text_input(L["lbl_tit"], key="book_title", help=suggerimenti_core.aiuto_campo("book_title", lingua_sel))
+    val_autore = st.text_input(L["lbl_auth"], key="book_author", help=suggerimenti_core.aiuto_campo("book_author", lingua_sel))
     
     # --- NUOVA SEZIONE CARICAMENTO FONTI ---
     st.divider()
     st.markdown(f"#### 🌐 {intestazioni_sidebar[2]}")
     st.markdown("<small>Carica PDF o DOCX: l'IA ne ricava una mappa concettuale interna e scrive un testo autonomo, senza riprendere formulazioni delle fonti.</small>", unsafe_allow_html=True)
-    file_caricati = st.file_uploader(testo_ui("fonti_carica", lingua_sel), type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
+    file_caricati = st.file_uploader(testo_ui("fonti_carica", lingua_sel), help=suggerimenti_core.aiuto_campo("fonti_file", lingua_sel), type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     if file_caricati:
         if len(file_caricati) > 10:
             st.warning("Hai superato il limite di 10 file. Verranno analizzati i primi 10.")
@@ -7583,7 +7679,7 @@ with st.sidebar:
     st.markdown(f"#### ✍️ {intestazioni_sidebar[3]}")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
-    val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+    val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", help=suggerimenti_core.aiuto_campo("book_genre", lingua_sel), format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     stili_estesi = [
         "Standard", 
@@ -7597,7 +7693,7 @@ with st.sidebar:
         "Epico ed Evocativo", 
         "Minimalista ed Essenziale"
     ]
-    val_stile = st.selectbox(L["lbl_style"], [""] + stili_estesi, key="book_writing_style", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+    val_stile = st.selectbox(L["lbl_style"], [""] + stili_estesi, key="book_writing_style", help=suggerimenti_core.aiuto_campo("book_writing_style", lingua_sel), format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
 
     direttive_indice_tipologia = {
         "Standard": "Crea un percorso lineare da basi a sviluppo, applicazione, verifica e sintesi. Rispetta il budget di sezioni indicato nel prompt: non espandere l'indice con capitoli o sottocapitoli ripetitivi. Ogni sottocapitolo deve avere un obiettivo concreto e un risultato leggibile.",
@@ -7618,7 +7714,7 @@ with st.sidebar:
     val_narrativa = st.selectbox(L["lbl_narrative"], [""] + [
         "Coinvolgente e Narrativo", "Tecnico e Analitico", "Ispirazionale e Motivante", 
         "Socratico (Domanda/Risposta)", "Storytelling Emozionale", "Diretto e Pratico (Action-oriented)", "Storico e Documentale"
-    ], key="book_narrative_style", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+    ], key="book_narrative_style", help=suggerimenti_core.aiuto_campo("book_narrative_style", lingua_sel), format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
 
     etichette_ritmo = {
         "Italiano": "Il ritmo del libro",
@@ -7676,7 +7772,7 @@ with st.sidebar:
             help=narrative_i18n_core.testo("narratore_help", lingua_sel),
         )
         val_tempo_verbale = st.selectbox(
-            etichetta_tempo, [""] + list(narrative_prompts_core.TEMPI_VERBALI), key="book_tense",
+            etichetta_tempo, [""] + list(narrative_prompts_core.TEMPI_VERBALI), key="book_tense", help=suggerimenti_core.aiuto_campo("book_tense", lingua_sel),
             format_func=lambda valore: narrative_i18n_core.etichetta_tempo(valore, lingua_sel) or testo_ui("seleziona", lingua_sel),
         )
         val_pov = (
@@ -7685,7 +7781,7 @@ with st.sidebar:
         )
     else:
         val_narratore = val_tempo_verbale = ""
-        val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
+        val_pov = st.selectbox(L.get("lbl_pov", "Punto di Vista (Pronome)"), [""] + lista_pov, key="book_point_of_view", help=suggerimenti_core.aiuto_campo("book_point_of_view", lingua_sel), format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
     
     # Definizioni disponibili prima del loro primo utilizzo nella UI.
     # Restano presenti anche nel modulo di memoria sottostante per compatibilità.
@@ -7731,7 +7827,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         if duplicati == 0: risultati.append("OK: nessuna duplicazione identica rilevata nel testo disponibile")
         return "\n".join(risultati)
 
-    val_goal = st.text_input(L["lbl_goal"], placeholder="Es: Mantenere l'attenzione alta, far emozionare...", key="book_goal")
+    val_goal = st.text_input(L["lbl_goal"], placeholder="Es: Mantenere l'attenzione alta, far emozionare...", key="book_goal", help=suggerimenti_core.aiuto_campo("book_goal", lingua_sel))
     etichette_risultato = {
         "Italiano": "Risultato finale desiderato",
         "English": "Desired final result",
@@ -7747,14 +7843,14 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         testo_ui("risultato", lingua_sel),
         height=100,
         placeholder=testo_ui("risultato_placeholder", lingua_sel),
-        key="book_desired_result"
+        key="book_desired_result", help=suggerimenti_core.aiuto_campo("book_desired_result", lingua_sel)
     )
-    val_trama = st.text_area(L["lbl_plot"], height=150, key="book_plot")
+    val_trama = st.text_area(L["lbl_plot"], height=150, key="book_plot", help=suggerimenti_core.aiuto_campo("book_plot", lingua_sel))
     val_approfondimenti = st.text_area(
         testo_ui("approfondimenti", lingua_sel),
         height=130,
         placeholder=testo_ui("approfondimenti_placeholder", lingua_sel),
-        key="book_further_details"
+        key="book_further_details", help=suggerimenti_core.aiuto_campo("book_further_details", lingua_sel)
     )
     # Blocco autonomo: non rende obbligatoria la personalizzazione e non
     # modifica i campi editoriali già richiesti per generare indice e testo.
@@ -7763,19 +7859,19 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         st.caption(testi_personalizzazione["intro"])
         val_voce_personale = st.text_area(
             testi_personalizzazione["voce"], height=92,
-            key="book_personal_voice",
+            key="book_personal_voice", help=suggerimenti_core.aiuto_campo("book_personal_voice", lingua_sel),
         )
         val_materiale_personale = st.text_area(
             testi_personalizzazione["materiale"], height=92,
-            key="book_personal_material",
+            key="book_personal_material", help=suggerimenti_core.aiuto_campo("book_personal_material", lingua_sel),
         )
         val_priorita_personali = st.text_area(
             testi_personalizzazione["priorita"], height=92,
-            key="book_personal_priorities",
+            key="book_personal_priorities", help=suggerimenti_core.aiuto_campo("book_personal_priorities", lingua_sel),
         )
         val_confini_personali = st.text_area(
             testi_personalizzazione["confini"], height=92,
-            key="book_personal_boundaries",
+            key="book_personal_boundaries", help=suggerimenti_core.aiuto_campo("book_personal_boundaries", lingua_sel),
         )
         val_modalita_checkpoint = st.selectbox(
             testi_personalizzazione["check"],
@@ -8014,6 +8110,11 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     if os.path.isfile(video_istruzioni):
         with st.expander(titoli_video.get(lingua_sel, titoli_video["Italiano"]), expanded=False):
             st.video(video_istruzioni, format="video/mp4")
+    st.button(
+        (suggerimenti_core.TOUR.get(lingua_sel) or suggerimenti_core.TOUR["English"])["rivedi"],
+        key="rivedi_visita_guidata", use_container_width=True,
+        on_click=lambda: st.session_state.__setitem__("riavvia_visita_guidata", True),
+    )
     if os.path.isfile(logo_sidebar):
         st.image(logo_sidebar, use_container_width=True)
 
@@ -9158,6 +9259,8 @@ st.markdown(
 )
 # La versione resta in VERSIONE_DEPLOY (diagnostica), senza occupare l'editor.
 mostra_centro_progetto(lingua_sel, campi_obbligatori_sidebar)
+mostra_suggerimenti_contestuali(lingua_sel, campi_obbligatori_sidebar)
+avvia_visita_guidata(lingua_sel)
 
 if st.session_state.get("admin_test_mode"):
     # Pannello visibile soltanto dopo l'avvio dal comando protetto della
@@ -10015,6 +10118,20 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             }, 250);
             </script>
             """,
+            height=0,
+        )
+
+    scheda_da_aprire = st.session_state.pop("apri_scheda_numero", None)
+    if isinstance(scheda_da_aprire, int):
+        components.html(
+            f"""<script>
+            setTimeout(function () {{
+              try {{
+                const schede = Array.from(window.parent.document.querySelectorAll('[data-testid="stTabs"] [role="tab"]'));
+                if (schede[{scheda_da_aprire}]) schede[{scheda_da_aprire}].click();
+              }} catch (errore) {{}}
+            }}, 250);
+            </script>""",
             height=0,
         )
 
@@ -10945,7 +11062,7 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
         if pulsante_con_preventivo("genera_indice", L["btn_idx"], costo_ricerca_fonti() + CREDIT_COSTS["indice_generazione_editoriale"],
                                    descrizione_indice,
                                    disabled=not sidebar_pronta):
-            with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso..."):
+            with st.spinner("Ricerca preliminare delle fonti e progettazione dell'indice in corso...  " + suggerimenti_core.consiglio_attesa(lingua_sel, int(time.time() // 10))):
                 barra_indice = st.progress(
                     5,
                     text="Preparazione del brief editoriale e delle fonti...",
@@ -11480,7 +11597,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
 
     # TAB 2: SCRITTURA E QUIZ (E ORA ANCHE RICETTE)
     with tabs[3]:
-        if not lista_cap_base: st.warning(L["msg_err_idx"])
+        if not lista_cap_base:
+            mostra_scheda_vuota("scrivi", lingua_sel)
         else:
             # Progetto del libro, per tutti i generi: campi del tipo d'opera,
             # scaletta, scheda di coerenza automatica e revisione del capitolo.
@@ -11927,6 +12045,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         )
                         completati_attuali = max(0, totale_attuale - len(coda_attuale))
                         sezione_corrente = coda_attuale[0]
+                        # Un consiglio diverso per ogni sezione mentre si aspetta.
+                        st.caption(suggerimenti_core.consiglio_attesa(lingua_sel, completati_attuali))
                         st.progress(
                             int(completati_attuali / totale_attuale * 100),
                             text=(
@@ -12212,7 +12332,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                         for posizione, sottocapitolo in enumerate(da_generare, start=1):
                             avanzamento.progress(
                                 int((posizione - 1) / len(da_generare) * 100),
-                                text=f"Scrittura di {sottocapitolo} ({posizione}/{len(da_generare)})..."
+                                text=f"Scrittura di {sottocapitolo} ({posizione}/{len(da_generare)})...  "
+                                + suggerimenti_core.consiglio_attesa(lingua_sel, posizione),
                             )
                             prompt = crea_prompt_stesura_sezione(
                                 sottocapitolo, st.session_state['indice_raw'], val_trama, val_genere,
@@ -12339,7 +12460,7 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
                 if pulsante_con_preventivo(f"scrivi_sezione_{k_sessione}", L["btn_write"], f"fino a {stima_massima_crediti_stesura(sez_scelta, st.session_state['indice_raw'], val_trama, val_goal, val_genere)}",
                                            f"Verrà generata o sostituita la sezione selezionata: {sez_scelta}."):
                     sezione_salvata = False
-                    with st.spinner(L["msg_run"]):
+                    with st.spinner(f"{L['msg_run']}  {suggerimenti_core.consiglio_attesa(lingua_sel, int(time.time() // 10))}"):
                         try:
                             contenuto_generato = scrivi_contenuto_dettagliato(
                                 sez_scelta, st.session_state['indice_raw'], val_trama, val_genere,
@@ -12557,6 +12678,8 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
         st.subheader(L["preview_tit"])
         sezioni_anteprima = list(opzioni_editor)
         contenuti_libro = {s: leggi_sezione_memorizzata(s) for s in sezioni_anteprima}
+        if not any(str(testo or "").strip() for testo in contenuti_libro.values()):
+            mostra_scheda_vuota("anteprima", lingua_sel)
         sezioni_con_testo = [s for s, testo in contenuti_libro.items() if pulisci_testo_editoriale(testo).strip()]
         riepilogo_pagine = riepilogo_stima_pagine_manoscritto(
             sezioni_anteprima,
@@ -12771,6 +12894,9 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
     # TAB 4: IMPORTAZIONE / ESPORTAZIONE
     with tabs[5]:
         st.subheader("📦 Importa / Esporta / Copyright")
+        if not any(str(leggi_sezione_memorizzata(s) or "").strip() for s in opzioni_editor):
+            # L'importazione del CSV resta disponibile qui sotto.
+            mostra_scheda_vuota("esporta", lingua_sel)
         st.caption("Esporta o importa un CSV completo di sidebar, indice, sezioni, fonti e immagini associate. Qui trovi anche i controlli di originalità e copyright. Il CSV non consuma crediti.")
         progetto_csv = esporta_progetto_editoriale_csv()
         nome_archivio = re.sub(r"[^\w.-]+", "_", val_titolo.strip() or "progetto_scrittore_site", flags=re.UNICODE).strip("_")
