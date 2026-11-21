@@ -1579,6 +1579,12 @@ def _landing_page() -> None:
     interactions_css = Path(__file__).resolve().parent / "assets" / "home_interactions.css"
     if interactions_css.is_file():
         st.markdown(f"<style>{interactions_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+    # Interazioni che seguono il mouse (schede inclinabili, luce, pulsanti
+    # magnetici, menu che segue lo scorrimento). Se lo script non parte, la
+    # home resta identica ma solo con gli effetti CSS.
+    interactions_js = Path(__file__).resolve().parent / "assets" / "home_interactions.js"
+    if interactions_js.is_file():
+        components.html(f"<script>{interactions_js.read_text(encoding='utf-8')}</script>", height=0)
 
     language_spacer, language_picker = st.columns([0.82, 0.18])
     with language_picker:
@@ -1615,6 +1621,7 @@ def _landing_page() -> None:
         f"<a class='ss-store-link' href='https://liberamente.site/' target='_blank' rel='noopener noreferrer'>↗ {store_label}</a>"
     )
     st.markdown(
+        "<div class='ss-avanzamento' aria-hidden='true'></div>"
         f"<nav class='ss-quick-nav' aria-label='Navigazione home' dir='{direzione_home}'>{nav_links_html}</nav>"
         f"<details class='ss-mobile-nav' dir='{direzione_home}'><summary>{menu_label}</summary>"
         f"<nav aria-label='{menu_label}'>{nav_links_html}</nav></details>",
@@ -1631,6 +1638,25 @@ def _landing_page() -> None:
             st.image(str(public_logo), width=180)
         else:
             st.markdown("<p class='ss-title'>Scrittore Site</p>", unsafe_allow_html=True)
+        # Libro interattivo: si apre al passaggio del mouse (o al tocco) e scrive
+        # la prima pagina. Solo HTML e CSS (assets/home_interactions.css).
+        B = HOME_INTERACTIVE_BOOK[home_language]
+        indice_libro = "".join(f"<li>{voce}</li>" for voce in B["items"])
+        righe_libro = "".join(f"<span class='ss-riga'>{riga}</span>" for riga in B["lines"])
+        st.markdown(
+            f"<section class='ss-libro-sezione ss-libro-in-alto' dir='{direzione_home}'>"
+            f"<div class='ss-libro' tabindex='0' role='img' aria-label='{B['cover']} · {B['chapter']}: {B['chapter_title']}'>"
+            "<div class='ss-libro-interno'>"
+            f"<div class='ss-pagina ss-pagina-dx'><small>{B['chapter']}</small><b>{B['chapter_title']}</b>"
+            f"<div class='ss-righe'>{righe_libro}</div></div>"
+            "<div class='ss-copertina'>"
+            f"<div class='ss-copertina-fronte'><span class='ss-copertina-stella'>✦</span><b>{B['cover']}</b><i>{B['cover_sub']}</i></div>"
+            f"<div class='ss-copertina-retro ss-pagina-sx'><small>{B['index']}</small><ol>{indice_libro}</ol></div></div>"
+            "</div></div>"
+            f"<p class='ss-libro-suggerimento'>{B['hint']}</p></section>",
+            unsafe_allow_html=True,
+        )
+
         st.markdown(
             f"""<div class='ss-hero-copy ss-hero-copy-tail'>
               <h1 class='ss-headline'>{HOME_EDITORIAL_HEADLINES[home_language]}</h1>
@@ -1652,25 +1678,6 @@ def _landing_page() -> None:
         st.markdown(f"<div class='ss-bonus'>{H['bonus']}</div>", unsafe_allow_html=True)
     st.markdown(
         f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    # Libro interattivo: si apre al passaggio del mouse (o al tocco) e scrive
-    # la prima pagina. Solo HTML e CSS (assets/home_interactions.css).
-    B = HOME_INTERACTIVE_BOOK[home_language]
-    indice_libro = "".join(f"<li>{voce}</li>" for voce in B["items"])
-    righe_libro = "".join(f"<span class='ss-riga'>{riga}</span>" for riga in B["lines"])
-    st.markdown(
-        f"<section class='ss-libro-sezione' dir='{direzione_home}'>"
-        f"<div class='ss-section'><h2>{B['h2']}</h2><p class='ss-muted'>{B['hint']}</p></div>"
-        f"<div class='ss-libro' tabindex='0' role='img' aria-label='{B['cover']} · {B['chapter']}: {B['chapter_title']}'>"
-        "<div class='ss-libro-interno'>"
-        f"<div class='ss-pagina ss-pagina-dx'><small>{B['chapter']}</small><b>{B['chapter_title']}</b>"
-        f"<div class='ss-righe'>{righe_libro}</div></div>"
-        "<div class='ss-copertina'>"
-        f"<div class='ss-copertina-fronte'><span class='ss-copertina-stella'>✦</span><b>{B['cover']}</b><i>{B['cover_sub']}</i></div>"
-        f"<div class='ss-copertina-retro ss-pagina-sx'><small>{B['index']}</small><ol>{indice_libro}</ol></div></div>"
-        "</div></div></section>",
         unsafe_allow_html=True,
     )
 

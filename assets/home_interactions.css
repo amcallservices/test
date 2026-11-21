@@ -212,7 +212,10 @@
   background: linear-gradient(270deg, #e8dcc4 0%, #f8f2e6 14%, #fffdf8 60%, #f1e8d6 100%) !important;
   box-shadow: inset -12px 0 18px rgba(120, 90, 40, .12), 0 22px 45px rgba(0, 0, 0, .45) !important;
 }
-.ss-pagina-dx { left: 50%; border-radius: 3px 14px 14px 3px; }
+/* Nascosta finché il libro è chiuso: niente pagine che spuntano da dietro la copertina. */
+.ss-pagina-dx { left: 50%; border-radius: 3px 14px 14px 3px; opacity: 0; transition: opacity .2s ease .95s; }
+.ss-libro:hover .ss-pagina-dx,
+.ss-libro:focus-within .ss-pagina-dx { opacity: 1; transition-delay: 0s; }
 .ss-pagina small,
 .ss-pagina-sx small {
   display: block; margin-bottom: .9em; color: #9a6b2f; font-weight: 800;
@@ -306,6 +309,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ss-libro .ss-libro-interno { transform: translateX(0); }
   .ss-libro .ss-copertina { transform: rotateY(-178deg); }
+  .ss-libro .ss-pagina-dx { opacity: 1; }
   .ss-libro .ss-pagina-sx li { opacity: 1; transform: none; }
   .ss-libro .ss-riga { clip-path: none; }
 }
@@ -313,4 +317,98 @@
 @media (max-width: 760px) {
   .ss-libro { --w: 94vw; }
   .ss-pagina { padding: 8% 6% 6%; }
+}
+
+/* =====================================================================
+   Interazioni che seguono il mouse (classi e variabili impostate da
+   assets/home_interactions.js). Senza script restano gli effetti CSS.
+   ===================================================================== */
+
+/* Libro subito sotto il logo */
+.ss-libro-in-alto { margin: .2rem 0 1.4rem; }
+.ss-libro-in-alto .ss-libro { --w: min(600px, 92vw); margin-top: .4rem; }
+.ss-libro-suggerimento {
+  margin: .9rem 0 0; text-align: center; color: var(--ss-muted, #c5dce9); font-size: .9rem; opacity: .85;
+}
+.ss-libro-suggerimento::before { content: "✦ "; color: var(--ss-sky); }
+
+/* Barra di avanzamento della lettura, in cima alla pagina */
+.ss-avanzamento {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1000; pointer-events: none;
+  background: linear-gradient(90deg, var(--ss-sky), var(--ss-accent-2), #f472b6);
+  transform-origin: left center; transform: scaleX(var(--ss-scroll, 0));
+  box-shadow: 0 0 12px rgba(87, 201, 244, .6);
+}
+
+/* Menu: la voce della sezione che stai leggendo resta accesa */
+.ss-quick-nav a.ss-attivo { background: var(--ss-surface-soft, #164967) !important; color: #fff !important; }
+.ss-quick-nav a.ss-attivo::after { transform: scaleX(1); }
+.ss-mobile-nav a.ss-attivo { background: #17466b; }
+[data-testid="stMain"] { scroll-behavior: smooth; }
+
+/* Indice del libro aperto: le voci reagiscono al mouse */
+.ss-pagina-sx li { cursor: default; }
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  /* Le schede si inclinano verso il puntatore e la luce lo segue */
+  .ss-segue { transition: transform .12s linear, box-shadow .3s ease, background-color .3s ease !important; }
+  #ss-percorso .ss-priority.ss-segue,
+  .ss-feature-group.ss-segue,
+  .ss-card.ss-segue,
+  .ss-ai-card.ss-segue,
+  .ss-advantage.ss-segue {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-6px) !important;
+  }
+  .ss-package-card.ss-segue {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-8px) scale(1.03) !important;
+  }
+  .ss-languages-hero.ss-segue,
+  .ss-hero-copy.ss-segue { transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+  #ss-percorso .ss-priority.ss-segue::after,
+  .ss-feature-group.ss-segue::after,
+  .ss-card.ss-segue::after,
+  .ss-ai-card.ss-segue::after,
+  .ss-advantage.ss-segue::after {
+    opacity: 1;
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(87, 201, 244, .22), transparent 65%);
+  }
+  .ss-hero-copy.ss-segue::after,
+  .ss-languages-hero.ss-segue::after {
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(125, 211, 252, .14), transparent 60%);
+  }
+  .ss-languages-hero { position: relative; }
+  .ss-languages-hero::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+
+  /* Il libro si inclina seguendo il mouse, chiuso o aperto */
+  .ss-libro { transition: transform .15s linear; }
+  .ss-libro.ss-segue { transform: perspective(1600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+  .ss-libro.ss-segue .ss-copertina-fronte {
+    background:
+      radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(125, 211, 252, .28), transparent 60%),
+      radial-gradient(circle at 30% 20%, rgba(87, 201, 244, .35), transparent 45%),
+      radial-gradient(circle at 80% 85%, rgba(167, 139, 250, .3), transparent 50%),
+      linear-gradient(150deg, #0d3554, #0a2238 60%, #071726);
+  }
+  .ss-libro:hover .ss-pagina-sx li:hover { color: #0f6aa8; padding-left: .35em; transition-delay: 0s !important; }
+
+  /* Pulsanti magnetici: si spostano verso il puntatore (proprietà translate) */
+  .st-key-landing_signup button,
+  .st-key-landing_login button,
+  .st-key-download_private_area_guide_it button,
+  .st-key-download_private_area_guide_en button { transition: translate .18s ease-out, transform .18s ease, filter .18s ease, box-shadow .25s ease !important; }
+}
+
+/* Pressione: ogni scheda e pulsante "risponde" al clic */
+#ss-percorso .ss-priority:active,
+.ss-feature-group:active,
+.ss-card:active,
+.ss-ai-card:active,
+.ss-advantage:active { transform: scale(.985) !important; }
+
+/* L'iframe invisibile dello script non deve lasciare spazio vuoto */
+[data-testid="stElementContainer"]:has(iframe[height="0"]),
+.element-container:has(iframe[height="0"]) { display: none !important; }
+
+@media (max-width: 760px) {
+  .ss-libro-in-alto .ss-libro { --w: 92vw; }
 }
