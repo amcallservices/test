@@ -1280,6 +1280,21 @@ HOME_MENU_LABELS = {
     "Русский": "Меню", "العربية": "القائمة", "中文": "菜单",
 }
 
+# Libro interattivo della home: si apre al passaggio del mouse (o al tocco) e
+# "scrive" la prima pagina. Righe brevi: ogni riga deve stare in mezza pagina.
+HOME_INTERACTIVE_BOOK = {
+    "Italiano": {"h2": "Il tuo libro prende forma", "hint": "Passa il mouse sul libro (o toccalo) per aprirlo", "cover": "Il tuo libro", "cover_sub": "scritto con Scrittore.site", "index": "Indice", "items": ("1. L'idea", "2. Il progetto", "3. La stesura", "4. La pubblicazione"), "chapter": "Capitolo 1", "chapter_title": "L'idea", "lines": ("Tutto comincia da un'idea.", "Una frase, un ricordo,", "una domanda che non ti", "lascia dormire. Ora puoi", "trasformarla in un libro.")},
+    "English": {"h2": "Watch your book take shape", "hint": "Hover over the book (or tap it) to open it", "cover": "Your book", "cover_sub": "written with Scrittore.site", "index": "Contents", "items": ("1. The idea", "2. The plan", "3. The writing", "4. Publishing"), "chapter": "Chapter 1", "chapter_title": "The idea", "lines": ("It all starts with an idea.", "A sentence, a memory,", "a question that keeps you", "awake at night. Now you", "can turn it into a book.")},
+    "Español": {"h2": "Tu libro toma forma", "hint": "Pasa el ratón sobre el libro (o tócalo) para abrirlo", "cover": "Tu libro", "cover_sub": "escrito con Scrittore.site", "index": "Índice", "items": ("1. La idea", "2. El proyecto", "3. La escritura", "4. La publicación"), "chapter": "Capítulo 1", "chapter_title": "La idea", "lines": ("Todo empieza con una idea.", "Una frase, un recuerdo,", "una pregunta que no te", "deja dormir. Ahora puedes", "convertirla en un libro.")},
+    "Français": {"h2": "Votre livre prend forme", "hint": "Survolez le livre (ou touchez-le) pour l’ouvrir", "cover": "Votre livre", "cover_sub": "écrit avec Scrittore.site", "index": "Sommaire", "items": ("1. L’idée", "2. Le projet", "3. L’écriture", "4. La publication"), "chapter": "Chapitre 1", "chapter_title": "L’idée", "lines": ("Tout commence par une idée.", "Une phrase, un souvenir,", "une question qui vous", "empêche de dormir. Faites-", "en enfin un livre.")},
+    "Deutsch": {"h2": "Ihr Buch nimmt Gestalt an", "hint": "Fahren Sie mit der Maus über das Buch (oder tippen Sie es an), um es zu öffnen", "cover": "Ihr Buch", "cover_sub": "geschrieben mit Scrittore.site", "index": "Inhalt", "items": ("1. Die Idee", "2. Das Konzept", "3. Das Schreiben", "4. Veröffentlichen"), "chapter": "Kapitel 1", "chapter_title": "Die Idee", "lines": ("Alles beginnt mit einer Idee.", "Ein Satz, eine Erinnerung,", "eine Frage, die Sie nicht", "schlafen lässt. Jetzt wird", "daraus ein Buch.")},
+    "Română": {"h2": "Cartea ta prinde contur", "hint": "Treci cu mouse-ul peste carte (sau atinge-o) ca s-o deschizi", "cover": "Cartea ta", "cover_sub": "scrisă cu Scrittore.site", "index": "Cuprins", "items": ("1. Ideea", "2. Proiectul", "3. Scrierea", "4. Publicarea"), "chapter": "Capitolul 1", "chapter_title": "Ideea", "lines": ("Totul începe cu o idee.", "O frază, o amintire,", "o întrebare care nu te", "lasă să dormi. Acum o poți", "transforma într-o carte.")},
+    "Русский": {"h2": "Ваша книга обретает форму", "hint": "Наведите курсор на книгу (или коснитесь её), чтобы открыть", "cover": "Ваша книга", "cover_sub": "написана со Scrittore.site", "index": "Оглавление", "items": ("1. Идея", "2. Замысел", "3. Текст", "4. Публикация"), "chapter": "Глава 1", "chapter_title": "Идея", "lines": ("Всё начинается с идеи.", "Фраза, воспоминание,", "вопрос, который не даёт", "уснуть. Теперь из него", "может выйти книга.")},
+    "العربية": {"h2": "كتابك يتشكّل أمامك", "hint": "مرّر الفأرة فوق الكتاب (أو المسه) لفتحه", "cover": "كتابك", "cover_sub": "مكتوب مع Scrittore.site", "index": "الفهرس", "items": ("1. الفكرة", "2. المشروع", "3. الكتابة", "4. النشر"), "chapter": "الفصل 1", "chapter_title": "الفكرة", "lines": ("كل شيء يبدأ بفكرة.", "جملة، أو ذكرى،", "أو سؤال لا يدعك", "تنام. الآن يمكنك", "أن تحوّلها إلى كتاب.")},
+    "中文": {"h2": "看你的书慢慢成形", "hint": "将鼠标移到书上（或轻触）即可打开", "cover": "你的书", "cover_sub": "用 Scrittore.site 写成", "index": "目录", "items": ("1. 灵感", "2. 规划", "3. 写作", "4. 出版"), "chapter": "第一章", "chapter_title": "灵感", "lines": ("一切都始于一个想法。", "一句话，一段回忆，", "一个让你彻夜难眠", "的问题。现在，你可以", "把它写成一本书。")},
+}
+
+
 # Guide PDF della sola area riservata. Sono disponibili in entrambe le lingue
 # indipendentemente dalla lingua scelta nella home, così ogni visitatore può
 # scaricare la versione che preferisce.
@@ -1637,6 +1652,25 @@ def _landing_page() -> None:
         st.markdown(f"<div class='ss-bonus'>{H['bonus']}</div>", unsafe_allow_html=True)
     st.markdown(
         f"<div class='ss-languages-hero' dir='{direzione_home}'><b>{lingua_titolo}</b><span>{lingua_testo}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    # Libro interattivo: si apre al passaggio del mouse (o al tocco) e scrive
+    # la prima pagina. Solo HTML e CSS (assets/home_interactions.css).
+    B = HOME_INTERACTIVE_BOOK[home_language]
+    indice_libro = "".join(f"<li>{voce}</li>" for voce in B["items"])
+    righe_libro = "".join(f"<span class='ss-riga'>{riga}</span>" for riga in B["lines"])
+    st.markdown(
+        f"<section class='ss-libro-sezione' dir='{direzione_home}'>"
+        f"<div class='ss-section'><h2>{B['h2']}</h2><p class='ss-muted'>{B['hint']}</p></div>"
+        f"<div class='ss-libro' tabindex='0' role='img' aria-label='{B['cover']} · {B['chapter']}: {B['chapter_title']}'>"
+        "<div class='ss-libro-interno'>"
+        f"<div class='ss-pagina ss-pagina-dx'><small>{B['chapter']}</small><b>{B['chapter_title']}</b>"
+        f"<div class='ss-righe'>{righe_libro}</div></div>"
+        "<div class='ss-copertina'>"
+        f"<div class='ss-copertina-fronte'><span class='ss-copertina-stella'>✦</span><b>{B['cover']}</b><i>{B['cover_sub']}</i></div>"
+        f"<div class='ss-copertina-retro ss-pagina-sx'><small>{B['index']}</small><ol>{indice_libro}</ol></div></div>"
+        "</div></div></section>",
         unsafe_allow_html=True,
     )
 
