@@ -418,7 +418,7 @@ HOME_FAQ_COPY = {
     "Italiano": ("Domande frequenti", "Le informazioni essenziali prima di iniziare.", [
         ("Come funzionano i crediti?", "I crediti servono solo per elaborazioni IA: indice, scrittura, rigenerazioni e controlli. Prima di un'azione a consumo vedi il preventivo. Se i crediti terminano, il lavoro già creato resta leggibile, modificabile ed esportabile."),
         ("I miei dati e il mio libro sono privati?", "Ogni account mantiene separati crediti e progetto. Il manoscritto non viene pubblicato automaticamente. Usa una password personale e conserva un CSV dei progetti importanti."),
-        ("Come salvo, recupero o trasferisco un progetto?", "Premi SALVA SESSIONE per conservarlo nel tuo account. Dopo un nuovo accesso l'editor parte pulito: premi RIAGGIORNA ALL'ULTIMA STESURA solo quando vuoi riaprire il progetto. Il CSV conserva sidebar, indice, testi, fonti e immagini per backup o trasferimento."),
+        ("Come salvo, recupero o trasferisco un progetto?", "Premi SALVA SESSIONE per conservarlo nel tuo account. Dopo un nuovo accesso l'editor parte pulito: premi RIAPRI L'ULTIMO SALVATAGGIO solo quando vuoi riaprire il progetto. Il CSV conserva sidebar, indice, testi, fonti e immagini per backup o trasferimento."),
         ("A cosa servono Word e PDF e come ricevo assistenza?", "Il CSV ripristina il progetto modificabile; Word serve per la revisione editoriale e PDF per lettura, stampa o condivisione. Per assistenza usa CONTATTI nella sidebar oppure entra nella Community."),
     ]),
     "English": ("Frequently asked questions", "Essential information before you start.", [
@@ -922,7 +922,7 @@ def _apri_progetto_pulito_dopo_accesso() -> None:
     """Prepara un editor vuoto dopo un nuovo accesso.
 
     L'ultima stesura resta nel cloud, ma non viene mostrata né letta finché
-    l'utente non preme esplicitamente “RIAGGIORNA ALL'ULTIMA STESURA”.
+    l'utente non preme esplicitamente “RIAPRI L'ULTIMO SALVATAGGIO”.
     """
     for chiave in list(st.session_state.keys()):
         if not chiave.startswith("commercial_"):
@@ -1924,7 +1924,7 @@ def _landing_page() -> None:
     for colonna, titolo, testo in (
         (archivio_a, "📥 Esporta progetto completo in CSV", "Con un solo download salvi sidebar, lingua, titolo, obiettivo, indice, capitoli, sottocapitoli, fonti e immagini associate. È una fotografia del lavoro aperto in quel momento."),
         (archivio_b, "📤 Importa e riprendi", "Carica un CSV precedentemente esportato da Scrittore Site: il software ricostruisce nella pagina tutti i campi della sidebar, l’indice e le sezioni scritte. Puoi controllare il risultato prima di fare altro."),
-        (archivio_c, "💾 Decidi tu quando salvare", "Dopo un’importazione, il progetto resta nella sessione finché non scegli “SALVA SESSIONE”. Solo allora viene aggiornato il tuo archivio personale; “RIAGGIORNA ALL’ULTIMA STESURA” resta sempre una scelta volontaria."),
+        (archivio_c, "💾 Decidi tu quando salvare", "Dopo un’importazione, il progetto resta nella sessione finché non scegli “SALVA SESSIONE”. Solo allora viene aggiornato il tuo archivio personale; “RIAPRI L’ULTIMO SALVATAGGIO” resta sempre una scelta volontaria."),
     ):
         with colonna:
             st.markdown(f"<div class='ss-step'><strong>{titolo}</strong>{testo}</div>", unsafe_allow_html=True)
@@ -1966,7 +1966,7 @@ def _landing_page() -> None:
     with st.expander("I miei dati e il mio libro sono privati?"):
         st.write("Ogni account mantiene separati crediti e progetto. Il manoscritto non viene pubblicato automaticamente e resta sempre sotto il tuo controllo. Per maggiore sicurezza, usa una password personale e conserva una copia CSV del progetto importante.")
     with st.expander("Come salvo e recupero una stesura?"):
-        st.write("Durante il lavoro i dati restano nella pagina. Premi “SALVA SESSIONE” per conservarli nel tuo account. Dopo un nuovo accesso l’editor parte pulito: se vuoi riaprire il progetto salvato, premi “RIAGGIORNA ALL’ULTIMA STESURA”.")
+        st.write("Durante il lavoro i dati restano nella pagina. Premi “SALVA SESSIONE” per conservarli nel tuo account. Dopo un nuovo accesso l’editor parte pulito: se vuoi riaprire il progetto salvato, premi “RIAPRI L’ULTIMO SALVATAGGIO”.")
     with st.expander("A cosa serve il CSV del progetto?"):
         st.write("Il CSV è una copia portabile completa: sidebar, indice, sezioni, fonti e immagini associate. Puoi esportarlo come backup e reimportarlo in Scrittore Site. Dopo l’importazione controlli il progetto e decidi tu se premere “SALVA SESSIONE” per aggiornarlo anche nel tuo account.")
     with st.expander("Qual è la differenza tra CSV, Word e PDF?"):

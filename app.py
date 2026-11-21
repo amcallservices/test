@@ -1271,7 +1271,7 @@ TRADUZIONI = {
         "lbl_tit": "Titolo del Libro", "lbl_auth": "Nome Autore", "lbl_lang": "Lingua", 
         "lbl_gen": "Genere Letterario", "lbl_style": "Tipologia Scrittura", "lbl_plot": "Trama o Argomento",
         "lbl_narrative": "Stile di Racconto", "lbl_goal": "Obiettivo del Libro", "lbl_pov": "Punto di Vista (Pronome)",
-        "btn_res": "🔄 RESET PROGETTO", "tabs": ["📊 1. Indice", "✍️ 2. Scrivi il libro", "📖 3. Anteprima", "📑 4. Importa / Esporta / Copyright"],
+        "btn_res": "🗑️ NUOVO PROGETTO (RESET)", "tabs": ["📊 1. Indice", "✍️ 2. Scrivi il libro", "📖 3. Anteprima", "📑 4. Importa / Esporta / Copyright"],
         "btn_idx": "🚀 Genera Indice Professionale", "btn_sync": "✅ Salva e Sincronizza Capitoli",
         "lbl_sec": "Seleziona sezione:", "btn_write": "✨ SCRIVI CONTENUTO (Dettagliato)",
         "btn_quiz": "🧠 AGGIUNGI QUIZ AL LIBRO", "btn_edit": "🚀 RIELABORA CON IA",
@@ -1284,7 +1284,7 @@ TRADUZIONI = {
     "English": {
         "side_tit": "⚙️ Editor Setup", "lbl_tit": "Book Title", "lbl_auth": "Author Name", "lbl_lang": "Language", 
         "lbl_gen": "Genre", "lbl_style": "Writing Style", "lbl_plot": "Plot", "lbl_narrative": "Narrative Style", "lbl_goal": "Book Goal", "lbl_pov": "Point of View (Pronoun)",
-        "btn_res": "🔄 RESET PROJECT", "tabs": ["📊 1. Index", "✍️ 2. Write the book", "📖 3. Preview", "📑 4. Import / Export / Copyright"],
+        "btn_res": "🗑️ NEW PROJECT (RESET)", "tabs": ["📊 1. Index", "✍️ 2. Write the book", "📖 3. Preview", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generate Index", "btn_sync": "✅ Sync Chapters", "lbl_sec": "Select section:",
         "btn_write": "✨ WRITE CONTENT", "btn_quiz": "🧠 ADD QUIZ", "btn_edit": "🚀 REWRITE",
         "msg_run": "Native expert analyzing hierarchy, style and goal...", "preface": "Preface", "ack": "Acknowledgements",
@@ -1295,7 +1295,7 @@ TRADUZIONI = {
     "Español": {
         "side_tit": "⚙️ Configuración del Editor", "lbl_tit": "Título del Libro", "lbl_auth": "Nombre del Autor", "lbl_lang": "Idioma", 
         "lbl_gen": "Género Literario", "lbl_style": "Estilo de Escritura", "lbl_plot": "Trama o Argumento", "lbl_narrative": "Estilo Narrativo", "lbl_goal": "Objetivo del Libro", "lbl_pov": "Punto de Vista (Pronombre)",
-        "btn_res": "🔄 RESETEAR PROYECTO", "tabs": ["📊 1. Índice", "✍️ 2. Escribe el libro", "📖 3. Vista Previa", "📑 4. Importar / Exportar / Copyright"],
+        "btn_res": "🗑️ NUEVO PROYECTO (RESET)", "tabs": ["📊 1. Índice", "✍️ 2. Escribe el libro", "📖 3. Vista Previa", "📑 4. Importar / Exportar / Copyright"],
         "btn_idx": "🚀 Generar Índice Profesional", "btn_sync": "✅ Guardar y Sincronizar", "lbl_sec": "Seleccionar sección:",
         "btn_write": "✨ ESCRIBIR CONTENIDO", "btn_quiz": "🧠 AÑADIR QUIZ", "btn_edit": "🚀 REESCRIBIR",
         "msg_run": "Analizando jerarquía y estilo...", "preface": "Prefacio", "ack": "Agradecimientos",
@@ -1305,7 +1305,7 @@ TRADUZIONI = {
     "Français": {
         "side_tit": "⚙️ Configuration de l'Éditeur", "lbl_tit": "Titre du Livre", "lbl_auth": "Nom de l'Auteur", "lbl_lang": "Langue", 
         "lbl_gen": "Genre Littéraire", "lbl_style": "Style d'Écriture", "lbl_plot": "Intrigue ou Sujet", "lbl_narrative": "Style Narratif", "lbl_goal": "Objectif du Livre", "lbl_pov": "Point de Vue (Pronom)",
-        "btn_res": "🔄 RÉINITIALISER", "tabs": ["📊 1. Index", "✍️ 2. Écrire le livre", "📖 3. Aperçu", "📑 4. Importer / Exporter / Copyright"],
+        "btn_res": "🗑️ NOUVEAU PROJET (RESET)", "tabs": ["📊 1. Index", "✍️ 2. Écrire le livre", "📖 3. Aperçu", "📑 4. Importer / Exporter / Copyright"],
         "btn_idx": "🚀 Générer l'Index", "btn_sync": "✅ Synchroniser", "lbl_sec": "Sélectionner la section:",
         "btn_write": "✨ ÉCRIRE LE CONTENU", "btn_quiz": "🧠 AJOUTER UN QUIZ", "btn_edit": "🚀 RÉÉCRIRE",
         "msg_run": "Analyse de la hiérarchie et du style...", "preface": "Préface", "ack": "Remerciements",
@@ -1315,7 +1315,7 @@ TRADUZIONI = {
     "Deutsch": {
         "side_tit": "⚙️ Editor-Setup", "lbl_tit": "Buchtitel", "lbl_auth": "Autorenname", "lbl_lang": "Sprache", 
         "lbl_gen": "Genre", "lbl_style": "Schreibstil", "lbl_plot": "Handlung", "lbl_narrative": "Erzählstil", "lbl_goal": "Buchziel", "lbl_pov": "Erzählperspektive (Pronomen)",
-        "btn_res": "🔄 PROJEKT ZURÜCKSETZEN", "tabs": ["📊 1. Index", "✍️ 2. Buch schreiben", "📖 3. Vorschau", "📑 4. Importieren / Exportieren / Copyright"],
+        "btn_res": "🗑️ NEUES PROJEKT (RESET)", "tabs": ["📊 1. Index", "✍️ 2. Buch schreiben", "📖 3. Vorschau", "📑 4. Importieren / Exportieren / Copyright"],
         "btn_idx": "🚀 Index Generieren", "btn_sync": "✅ Synchronisieren", "lbl_sec": "Abschnitt wählen:",
         "btn_write": "✨ INHALT SCHREIBEN", "btn_quiz": "🧠 QUIZ HINZUFÜGEN", "btn_edit": "🚀 UMSCHREIBEN",
         "msg_run": "Analysiere Hierarchie und Stil...", "preface": "Vorwort", "ack": "Danksagungen",
@@ -1325,7 +1325,7 @@ TRADUZIONI = {
     "Română": {
         "side_tit": "⚙️ Configurare Editor", "lbl_tit": "Titlul Cărții", "lbl_auth": "Nume Autor", "lbl_lang": "Limbă", 
         "lbl_gen": "Gen Literar", "lbl_style": "Stil de Scriere", "lbl_plot": "Subiect", "lbl_narrative": "Stil Narativ", "lbl_goal": "Obiectivul Cărții", "lbl_pov": "Punct de Vedere (Pronume)",
-        "btn_res": "🔄 RESETARE PROIECT", "tabs": ["📊 1. Cuprins", "✍️ 2. Scrie cartea", "📖 3. Previzualizare", "📑 4. Import / Export / Copyright"],
+        "btn_res": "🗑️ PROIECT NOU (RESET)", "tabs": ["📊 1. Cuprins", "✍️ 2. Scrie cartea", "📖 3. Previzualizare", "📑 4. Import / Export / Copyright"],
         "btn_idx": "🚀 Generare Cuprins", "btn_sync": "✅ Sincronizare", "lbl_sec": "Selectează secțiunea:",
         "btn_write": "✨ SCRIE CONȚINUT", "btn_quiz": "🧠 ADAUGĂ QUIZ", "btn_edit": "🚀 RESCRIE",
         "msg_run": "Se analizează ierarhia și stilul...", "preface": "Prefață", "ack": "Mulțumiri",
@@ -1335,7 +1335,7 @@ TRADUZIONI = {
     "Русский": {
         "side_tit": "⚙️ Настройки Редактора", "lbl_tit": "Название Книги", "lbl_auth": "Имя Автора", "lbl_lang": "Язык", 
         "lbl_gen": "Жанр", "lbl_style": "Стиль Написания", "lbl_plot": "Сюжет", "lbl_narrative": "Стиль Повествования", "lbl_goal": "Цель Книги", "lbl_pov": "Точка зрения (Местоимение)",
-        "btn_res": "🔄 СБРОСИТЬ ПРОЕКТ", "tabs": ["📊 1. Оглавление", "✍️ 2. Написать книгу", "📖 3. Просмотр", "📑 4. Импорт / Экспорт / Copyright"],
+        "btn_res": "🗑️ НОВЫЙ ПРОЕКТ (СБРОС)", "tabs": ["📊 1. Оглавление", "✍️ 2. Написать книгу", "📖 3. Просмотр", "📑 4. Импорт / Экспорт / Copyright"],
         "btn_idx": "🚀 Создать Оглавление", "btn_sync": "✅ Синхронизировать", "lbl_sec": "Выберите раздел:",
         "btn_write": "✨ НАПИСАТЬ ТЕКСТ", "btn_quiz": "🧠 ДОБАВИТЬ ТЕСТ", "btn_edit": "🚀 ПЕРЕПИСАТЬ",
         "msg_run": "Анализ иерархии и стиля...", "preface": "Предисловие", "ack": "Благодарности",
@@ -1345,7 +1345,7 @@ TRADUZIONI = {
     "العربية": {
         "side_tit": "⚙️ إعدادات المحرر", "lbl_tit": "عنوان الكتاب", "lbl_auth": "اسم المؤلف", "lbl_lang": "اللغة", 
         "lbl_gen": "النوع الأدبي", "lbl_style": "أسلوب الكتابة", "lbl_plot": "الحبكة أو الموضوع", "lbl_narrative": "الأسلوب السردي", "lbl_goal": "هدف الكتاب", "lbl_pov": "وجهة النظر (الضمير)",
-        "btn_res": "🔄 إعادة ضبط المشروع", "tabs": ["📊 1. الفهرس", "✍️ 2. اكتب الكتاب", "📖 3. معاينة", "📑 4. استيراد / تصدير / Copyright"],
+        "btn_res": "🗑️ مشروع جديد (إعادة ضبط)", "tabs": ["📊 1. الفهرس", "✍️ 2. اكتب الكتاب", "📖 3. معاينة", "📑 4. استيراد / تصدير / Copyright"],
         "btn_idx": "🚀 إنشاء فهرس احترافي", "btn_sync": "✅ حفظ ومزامنة الفصول", "lbl_sec": "اختر القسم:",
         "btn_write": "✨ كتابة المحتوى", "btn_quiz": "🧠 إضافة اختبار", "btn_edit": "🚀 إعادة صياغة",
         "msg_run": "جاري تحليل التسلسل الهرمي والأسلوب...", "preface": "مقدمة", "ack": "شكر وتقدير",
@@ -1355,7 +1355,7 @@ TRADUZIONI = {
     "中文": {
         "side_tit": "⚙️ 编辑器设置", "lbl_tit": "书名", "lbl_auth": "作者姓名", "lbl_lang": "语言", 
         "lbl_gen": "文学体裁", "lbl_style": "写作类型", "lbl_plot": "情节或主题", "lbl_narrative": "叙事风格", "lbl_goal": "书籍目标", "lbl_pov": "叙事视角 (代词)",
-        "btn_res": "🔄 重置项目", "tabs": ["📊 1. 目录", "✍️ 2. 写作全书", "📖 3. 预览", "📑 4. 导入 / 导出 / Copyright"],
+        "btn_res": "🗑️ 新项目（重置）", "tabs": ["📊 1. 目录", "✍️ 2. 写作全书", "📖 3. 预览", "📑 4. 导入 / 导出 / Copyright"],
         "btn_idx": "🚀 生成专业目录", "btn_sync": "✅ 保存并同步章节", "lbl_sec": "选择章节:",
         "btn_write": "✨ 编写内容", "btn_quiz": "🧠 添加测试", "btn_edit": "🚀 用AI重写",
         "msg_run": "正在分析层级、风格和情感目标...", "preface": "前言", "ack": "致谢",
@@ -1373,7 +1373,7 @@ TESTI_UI = {
         "risultato_placeholder": "Es: Alla fine il lettore deve saper applicare il metodo in autonomia e verificare il risultato.",
         "approfondimenti": "Approfondimenti (facoltativo)", "approfondimenti_placeholder": "Inserisci istruzioni, aspetti da trattare con maggiore attenzione, vincoli, esempi o temi obbligatori.",
         "lunghezza": "Lunghezza delle sezioni", "lunghezza_help": "Definisce la lunghezza del testo generato per ogni sezione, senza modificare il costo in crediti.",
-        "salva": "💾 SALVA SESSIONE", "ripristina": "🔄 RIAGGIORNA ALL'ULTIMA STESURA", "formattazione": "🛠️ 5. Formattazione",
+        "salva": "💾 SALVA SESSIONE", "ripristina": "📂 RIAPRI L'ULTIMO SALVATAGGIO", "formattazione": "🛠️ 5. Formattazione",
     },
     "English": {
         "seleziona": "— Select —", "lingua": "🌐 Language", "cervello": "🧠 AI engine",
@@ -1381,7 +1381,7 @@ TESTI_UI = {
         "risultato_placeholder": "Example: By the end, the reader can apply the method independently and verify the result.",
         "approfondimenti": "Further details (optional)", "approfondimenti_placeholder": "Add instructions, priority topics, constraints, examples or required themes.",
         "lunghezza": "Section length", "lunghezza_help": "Sets the generated-text length for each section without changing the credit cost.",
-        "salva": "💾 SAVE SESSION", "ripristina": "🔄 RESTORE LATEST DRAFT", "formattazione": "🛠️ 5. Formatting",
+        "salva": "💾 SAVE SESSION", "ripristina": "📂 REOPEN LAST SAVE", "formattazione": "🛠️ 5. Formatting",
     },
     "Español": {
         "seleziona": "— Selecciona —", "lingua": "🌐 Idioma", "cervello": "🧠 Motor de IA",
@@ -1389,7 +1389,7 @@ TESTI_UI = {
         "risultato_placeholder": "Ejemplo: Al final, el lector podrá aplicar el método de forma autónoma y verificar el resultado.",
         "approfondimenti": "Profundización (opcional)", "approfondimenti_placeholder": "Incluye instrucciones, aspectos prioritarios, límites, ejemplos o temas obligatorios.",
         "lunghezza": "Longitud de las secciones", "lunghezza_help": "Define la longitud del texto generado por sección sin cambiar el coste en créditos.",
-        "salva": "💾 GUARDAR SESIÓN", "ripristina": "🔄 RESTAURAR ÚLTIMO BORRADOR", "formattazione": "🛠️ 5. Formato",
+        "salva": "💾 GUARDAR SESIÓN", "ripristina": "📂 REABRIR ÚLTIMO GUARDADO", "formattazione": "🛠️ 5. Formato",
     },
     "Français": {
         "seleziona": "— Sélectionnez —", "lingua": "🌐 Langue", "cervello": "🧠 Moteur IA",
@@ -1397,7 +1397,7 @@ TESTI_UI = {
         "risultato_placeholder": "Exemple : à la fin, le lecteur pourra appliquer la méthode de façon autonome et vérifier le résultat.",
         "approfondimenti": "Approfondissements (facultatif)", "approfondimenti_placeholder": "Ajoutez des consignes, priorités, contraintes, exemples ou thèmes obligatoires.",
         "lunghezza": "Longueur des sections", "lunghezza_help": "Définit la longueur du texte généré pour chaque section sans modifier le coût en crédits.",
-        "salva": "💾 ENREGISTRER LA SESSION", "ripristina": "🔄 RESTAURER LA DERNIÈRE VERSION", "formattazione": "🛠️ 5. Mise en forme",
+        "salva": "💾 ENREGISTRER LA SESSION", "ripristina": "📂 ROUVRIR LA DERNIÈRE SAUVEGARDE", "formattazione": "🛠️ 5. Mise en forme",
     },
     "Deutsch": {
         "seleziona": "— Auswählen —", "lingua": "🌐 Sprache", "cervello": "🧠 KI-Modell",
@@ -1405,7 +1405,7 @@ TESTI_UI = {
         "risultato_placeholder": "Beispiel: Am Ende kann der Leser die Methode selbstständig anwenden und das Ergebnis prüfen.",
         "approfondimenti": "Vertiefungen (optional)", "approfondimenti_placeholder": "Fügen Sie Anweisungen, Schwerpunkte, Vorgaben, Beispiele oder Pflichthemen hinzu.",
         "lunghezza": "Abschnittslänge", "lunghezza_help": "Legt die Textlänge je Abschnitt fest, ohne die Kreditkosten zu ändern.",
-        "salva": "💾 SITZUNG SPEICHERN", "ripristina": "🔄 LETZTEN ENTWURF WIEDERHERSTELLEN", "formattazione": "🛠️ 5. Formatierung",
+        "salva": "💾 SITZUNG SPEICHERN", "ripristina": "📂 LETZTE SPEICHERUNG ÖFFNEN", "formattazione": "🛠️ 5. Formatierung",
     },
     "Română": {
         "seleziona": "— Selectează —", "lingua": "🌐 Limbă", "cervello": "🧠 Motor IA",
@@ -1413,7 +1413,7 @@ TESTI_UI = {
         "risultato_placeholder": "Exemplu: La final, cititorul poate aplica metoda autonom și poate verifica rezultatul.",
         "approfondimenti": "Aprofundări (opțional)", "approfondimenti_placeholder": "Adaugă instrucțiuni, aspecte prioritare, limite, exemple sau teme obligatorii.",
         "lunghezza": "Lungimea secțiunilor", "lunghezza_help": "Stabilește lungimea textului generat pentru fiecare secțiune fără a schimba costul în credite.",
-        "salva": "💾 SALVEAZĂ SESIUNEA", "ripristina": "🔄 RESTABILEȘTE ULTIMA VERSIUNE", "formattazione": "🛠️ 5. Formatare",
+        "salva": "💾 SALVEAZĂ SESIUNEA", "ripristina": "📂 REDESCHIDE ULTIMA SALVARE", "formattazione": "🛠️ 5. Formatare",
     },
     "Русский": {
         "seleziona": "— Выберите —", "lingua": "🌐 Язык", "cervello": "🧠 Модель ИИ",
@@ -1421,7 +1421,7 @@ TESTI_UI = {
         "risultato_placeholder": "Пример: в конце читатель сможет самостоятельно применить метод и проверить результат.",
         "approfondimenti": "Дополнительные сведения (необязательно)", "approfondimenti_placeholder": "Добавьте инструкции, приоритетные аспекты, ограничения, примеры или обязательные темы.",
         "lunghezza": "Длина разделов", "lunghezza_help": "Задаёт длину текста для каждого раздела без изменения стоимости в кредитах.",
-        "salva": "💾 СОХРАНИТЬ СЕССИЮ", "ripristina": "🔄 ВОССТАНОВИТЬ ПОСЛЕДНЮЮ ВЕРСИЮ", "formattazione": "🛠️ 5. Форматирование",
+        "salva": "💾 СОХРАНИТЬ СЕССИЮ", "ripristina": "📂 ОТКРЫТЬ ПОСЛЕДНЕЕ СОХРАНЕНИЕ", "formattazione": "🛠️ 5. Форматирование",
     },
     "العربية": {
         "seleziona": "— اختر —", "lingua": "🌐 اللغة", "cervello": "🧠 محرك الذكاء الاصطناعي",
@@ -1429,7 +1429,7 @@ TESTI_UI = {
         "risultato_placeholder": "مثال: في النهاية يستطيع القارئ تطبيق المنهج بشكل مستقل والتحقق من النتيجة.",
         "approfondimenti": "تفاصيل إضافية (اختياري)", "approfondimenti_placeholder": "أضف تعليمات أو جوانب ذات أولوية أو قيوداً أو أمثلة أو موضوعات إلزامية.",
         "lunghezza": "طول الأقسام", "lunghezza_help": "يحدد طول النص المُنشأ لكل قسم من دون تغيير تكلفة الأرصدة.",
-        "salva": "💾 حفظ الجلسة", "ripristina": "🔄 استعادة آخر مسودة", "formattazione": "🛠️ 5. التنسيق",
+        "salva": "💾 حفظ الجلسة", "ripristina": "📂 إعادة فتح آخر حفظ", "formattazione": "🛠️ 5. التنسيق",
     },
     "中文": {
         "seleziona": "— 请选择 —", "lingua": "🌐 语言", "cervello": "🧠 AI 模型",
@@ -1437,7 +1437,7 @@ TESTI_UI = {
         "risultato_placeholder": "示例：完成后，读者能够独立运用该方法并验证结果。",
         "approfondimenti": "补充说明（可选）", "approfondimenti_placeholder": "添加说明、重点、限制、示例或必需主题。",
         "lunghezza": "章节长度", "lunghezza_help": "设定每个章节生成文本的长度，不会改变积分费用。",
-        "salva": "💾 保存会话", "ripristina": "🔄 恢复最新草稿", "formattazione": "🛠️ 5. 格式化",
+        "salva": "💾 保存会话", "ripristina": "📂 重新打开上次保存", "formattazione": "🛠️ 5. 格式化",
     },
 }
 
@@ -3535,7 +3535,7 @@ CHIAVE_MEMORIA_SEZIONI = "memoria_sezioni_editor"
 # Archivio ridondante delle sezioni create dall'IA. È distinto dalla memoria
 # dei widget Streamlit: se la sidebar si aggiorna durante una pausa, il testo
 # generato resta disponibile e viene reidrato nell'editor e nell'anteprima.
-# Viene cancellato insieme al progetto da RESET PROGETTO.
+# Viene cancellato insieme al progetto da NUOVO PROGETTO (RESET).
 CHIAVE_MEMORIA_PROTETTA = "memoria_manoscritto_protetta"
 # Archivio esclusivo della stesura completa. Non viene mai aggiornato da un
 # widget vuoto o da un cambio della sezione selezionata: protegge soprattutto
@@ -5233,8 +5233,28 @@ def testi_memoria_editoriale_ui(lingua):
     return testi.get(lingua, testi["English"])
 
 
-def mostra_memoria_visiva_progetto():
-    """Pannello leggibile che rende verificabile la memoria reale del progetto."""
+TESTI_MEMORIA_PROGETTO = {
+    "Italiano": ("🧠 Memoria del progetto", "Qui vedi ciò che il software conserva: campi della sidebar, indice, testi e fonti di ricerca, inclusi quelli modificati a mano.", "Obbligatori", "Compilati", "Sezioni", "Fonti web", "Indice: ✓ salvato", "Indice: non ancora creato", "Visualizza dati salvati", "parole conservate", "Non ci sono ancora sezioni salvate."),
+    "English": ("🧠 Project memory", "What the software keeps: sidebar fields, outline, texts and research sources, including manual edits.", "Required", "Filled in", "Sections", "Web sources", "Outline: ✓ saved", "Outline: not created yet", "Show saved data", "words kept", "No saved sections yet."),
+    "Español": ("🧠 Memoria del proyecto", "Lo que el software conserva: campos de la barra lateral, índice, textos y fuentes, incluidos los cambios manuales.", "Obligatorios", "Completados", "Secciones", "Fuentes web", "Índice: ✓ guardado", "Índice: aún no creado", "Ver datos guardados", "palabras guardadas", "Todavía no hay secciones guardadas."),
+    "Français": ("🧠 Mémoire du projet", "Ce que le logiciel conserve : champs de la barre latérale, plan, textes et sources, y compris les modifications manuelles.", "Obligatoires", "Remplis", "Sections", "Sources web", "Plan : ✓ enregistré", "Plan : pas encore créé", "Voir les données enregistrées", "mots conservés", "Aucune section enregistrée pour l’instant."),
+    "Deutsch": ("🧠 Projektspeicher", "Was die Software speichert: Felder der Seitenleiste, Gliederung, Texte und Quellen, auch manuelle Änderungen.", "Pflichtfelder", "Ausgefüllt", "Abschnitte", "Webquellen", "Gliederung: ✓ gespeichert", "Gliederung: noch nicht erstellt", "Gespeicherte Daten anzeigen", "Wörter gespeichert", "Noch keine gespeicherten Abschnitte."),
+    "Română": ("🧠 Memoria proiectului", "Ce păstrează programul: câmpurile barei laterale, cuprinsul, textele și sursele, inclusiv modificările manuale.", "Obligatorii", "Completate", "Secțiuni", "Surse web", "Cuprins: ✓ salvat", "Cuprins: încă necreat", "Vezi datele salvate", "cuvinte păstrate", "Încă nu există secțiuni salvate."),
+    "Русский": ("🧠 Память проекта", "Что хранит программа: поля боковой панели, оглавление, тексты и источники, включая ручные правки.", "Обязательные", "Заполнено", "Разделы", "Веб-источники", "Оглавление: ✓ сохранено", "Оглавление: ещё не создано", "Показать сохранённые данные", "слов сохранено", "Сохранённых разделов пока нет."),
+    "العربية": ("🧠 ذاكرة المشروع", "ما يحفظه البرنامج: حقول الشريط الجانبي والفهرس والنصوص والمصادر، بما فيها التعديلات اليدوية.", "إلزامية", "مكتملة", "الأقسام", "مصادر الويب", "الفهرس: ✓ محفوظ", "الفهرس: لم يُنشأ بعد", "عرض البيانات المحفوظة", "كلمة محفوظة", "لا توجد أقسام محفوظة بعد."),
+    "中文": ("🧠 项目记忆", "软件保存的内容：侧边栏字段、目录、文本和资料来源，包括手动修改。", "必填", "已填写", "章节", "网络资料", "目录：✓ 已保存", "目录：尚未创建", "查看已保存的数据", "个词已保存", "还没有已保存的章节。"),
+}
+
+
+def mostra_memoria_visiva_progetto(campi_obbligatori=None):
+    """Pannello leggibile che rende verificabile la memoria reale del progetto.
+
+    Chiuso in una tendina: il titolo riassume già lo stato. I campi
+    obbligatori si contano come nel Centro del progetto, così i due numeri
+    coincidono; accanto c'è il totale dei campi compilati.
+    """
+    lingua_memoria = st.session_state.get("editor_language") or "Italiano"
+    TM = TESTI_MEMORIA_PROGETTO.get(lingua_memoria, TESTI_MEMORIA_PROGETTO["English"])
     sidebar = sidebar_memorizzata_corrente()
     contenuti = dict(st.session_state.get(CHIAVE_ARCHIVIO_STESURA_COMPLETA, {}) or {})
     contenuti.update(dict(st.session_state.get(CHIAVE_MEMORIA_PROTETTA, {}) or {}))
@@ -5249,42 +5269,51 @@ def mostra_memoria_visiva_progetto():
             contenuti[titolo] = valore
 
     campi_compilati = sum(1 for valore in sidebar.values() if str(valore).strip())
-    st.markdown("### 🧠 Memoria del progetto")
+    obbligatori = dict(campi_obbligatori or {})
+    obbligatori_compilati = sum(1 for valore in obbligatori.values() if str(valore).strip())
     registro_fonti = conserva_solo_fonti_web_selezionate(
         st.session_state.get("registro_fonti_web", "")
     )
     numero_fonti = len(re.findall(r"https?://\\S+", registro_fonti))
     if registro_fonti and not numero_fonti:
         numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
-    st.caption("Qui vedi ciò che il software conserva: campi della sidebar, indice, testi e fonti di ricerca, inclusi quelli modificati a mano.")
-    col_a, col_b, col_c = st.columns(3)
-    col_a.metric("Sidebar", f"{campi_compilati}/{len(CAMPI_SALVATAGGIO_PROGETTO)}")
-    col_b.metric("Sezioni salvate", len(contenuti))
-    col_c.metric("Fonti web", numero_fonti)
-    st.caption("Indice: ✓ salvato" if st.session_state.get("indice_raw", "").strip() else "Indice: non ancora creato")
-
-    with st.expander("Visualizza dati salvati", expanded=False):
-        for nome in CAMPI_SALVATAGGIO_PROGETTO:
-            valore = str(sidebar.get(nome, "")).strip() or "—"
-            if nome == "provider_ia" and valore != "—":
-                # Il cervello si mostra con il suo nome visibile, non con il valore tecnico.
-                valore = brain_names_core.nome_cervello(valore, st.session_state.get("editor_language") or "Italiano")
-            st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
-        if st.session_state.get("indice_raw", "").strip():
-            st.text_area(campo_ui("indice_salvato"), value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
-        if registro_fonti:
-            st.text_area(campo_ui("fonti_salvate"), value=registro_fonti, height=150, disabled=True, key="memoria_fonti_web")
-        if contenuti:
-            sezioni = list(contenuti)
-            scelta = st.selectbox(campo_ui("sezione_salvata"), sezioni, key="memoria_sezione_scelta")
-            testo = str(contenuti.get(scelta, ""))
-            st.caption(f"{len(testo.split())} parole conservate")
-            st.text_area(
-                campo_ui("testo_salvato"), value=testo, height=230, disabled=True,
-                key=f"memoria_testo_{hashlib.sha256(scelta.encode('utf-8')).hexdigest()[:12]}",
-            )
-        else:
-            st.info("Non ci sono ancora sezioni salvate.")
+    riassunto = f"{TM[0]} · {TM[2]} {obbligatori_compilati}/{len(obbligatori)}" if obbligatori else TM[0]
+    tendina_memoria = st.expander(f"{riassunto} · {TM[4]} {len(contenuti)}", expanded=False)
+    with tendina_memoria:
+        st.caption(TM[1])
+        col_a, col_b = st.columns(2)
+        if obbligatori:
+            col_a.metric(TM[2], f"{obbligatori_compilati}/{len(obbligatori)}")
+        col_b.metric(TM[3], f"{campi_compilati}/{len(CAMPI_SALVATAGGIO_PROGETTO)}")
+        col_c, col_d = st.columns(2)
+        col_c.metric(TM[4], len(contenuti))
+        col_d.metric(TM[5], numero_fonti)
+        st.caption(TM[6] if st.session_state.get("indice_raw", "").strip() else TM[7])
+        # Dentro una tendina non si può aprirne un'altra: un interruttore.
+        mostra_dati = st.toggle(TM[8], value=False, key="memoria_mostra_dati_salvati")
+    if mostra_dati:
+        with tendina_memoria:
+            for nome in CAMPI_SALVATAGGIO_PROGETTO:
+                valore = str(sidebar.get(nome, "")).strip() or "—"
+                if nome == "provider_ia" and valore != "—":
+                    # Il cervello si mostra con il suo nome visibile, non con il valore tecnico.
+                    valore = brain_names_core.nome_cervello(valore, st.session_state.get("editor_language") or "Italiano")
+                st.caption(f"**{nome.replace('_', ' ').capitalize()}:** {valore}")
+            if st.session_state.get("indice_raw", "").strip():
+                st.text_area(campo_ui("indice_salvato"), value=st.session_state["indice_raw"], height=160, disabled=True, key="memoria_indice")
+            if registro_fonti:
+                st.text_area(campo_ui("fonti_salvate"), value=registro_fonti, height=150, disabled=True, key="memoria_fonti_web")
+            if contenuti:
+                sezioni = list(contenuti)
+                scelta = st.selectbox(campo_ui("sezione_salvata"), sezioni, key="memoria_sezione_scelta")
+                testo = str(contenuti.get(scelta, ""))
+                st.caption(f"{len(testo.split())} {TM[9]}")
+                st.text_area(
+                    campo_ui("testo_salvato"), value=testo, height=230, disabled=True,
+                    key=f"memoria_testo_{hashlib.sha256(scelta.encode('utf-8')).hexdigest()[:12]}",
+                )
+            else:
+                st.info(TM[10])
 
 
 def etichette_centro_progetto(lingua):
@@ -5391,15 +5420,15 @@ def etichette_centro_progetto(lingua):
 # Il percorso è puramente visivo: riassume le funzioni già disponibili nelle
 # tab, senza spostare l'utente né modificare i dati del progetto.
 PASSI_PERCORSO_PROGETTO = {
-    "Italiano": ("Nicchia", "Brief", "Indice", "Scrittura", "Revisione", "KDP facoltativo", "Esporta"),
-    "English": ("Niche", "Brief", "Outline", "Writing", "Review", "Optional KDP", "Export"),
-    "Español": ("Nicho", "Brief", "Índice", "Escritura", "Revisión", "KDP opcional", "Exportar"),
-    "Français": ("Niche", "Brief", "Plan", "Écriture", "Révision", "KDP facultatif", "Exporter"),
-    "Deutsch": ("Nische", "Briefing", "Gliederung", "Schreiben", "Prüfung", "KDP optional", "Export"),
-    "Română": ("Nișă", "Brief", "Cuprins", "Scriere", "Revizuire", "KDP opțional", "Export"),
-    "Русский": ("Ниша", "Бриф", "План", "Написание", "Проверка", "KDP необязательно", "Экспорт"),
-    "العربية": ("النيش", "الموجز", "الفهرس", "الكتابة", "المراجعة", "KDP اختياري", "التصدير"),
-    "中文": ("细分市场", "简报", "目录", "写作", "审阅", "KDP 可选", "导出"),
+    "Italiano": ("Nicchia", "Brief", "Indice", "Scrittura", "Revisione", "Esporta", "KDP facoltativo"),
+    "English": ("Niche", "Brief", "Outline", "Writing", "Review", "Export", "Optional KDP"),
+    "Español": ("Nicho", "Brief", "Índice", "Escritura", "Revisión", "Exportar", "KDP opcional"),
+    "Français": ("Niche", "Brief", "Plan", "Écriture", "Révision", "Exporter", "KDP facultatif"),
+    "Deutsch": ("Nische", "Briefing", "Gliederung", "Schreiben", "Prüfung", "Export", "KDP optional"),
+    "Română": ("Nișă", "Brief", "Cuprins", "Scriere", "Revizuire", "Export", "KDP opțional"),
+    "Русский": ("Ниша", "Бриф", "План", "Написание", "Проверка", "Экспорт", "KDP необязательно"),
+    "العربية": ("النيش", "الموجز", "الفهرس", "الكتابة", "المراجعة", "التصدير", "KDP اختياري"),
+    "中文": ("细分市场", "简报", "目录", "写作", "审阅", "导出", "KDP 可选"),
 }
 
 # Istruzioni concrete accanto al Centro del progetto. Descrivono soltanto
@@ -5589,13 +5618,14 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
     for numero, passo in enumerate(passi, start=1):
         # Nicchia e KDP sono strumenti utili ma facoltativi: non devono mai
         # apparire come obblighi completati né bloccare il percorso principale.
-        facoltativo = numero == 1 or numero == 6
+        # Il numero mostrato è lo stesso dei pulsanti -1…5 del menu operativo.
+        facoltativo = numero == 1 or numero == 7
         completato = (
             (numero < fase_attiva and not facoltativo)
-            or (numero == 6 and controllo_kdp_eseguito)
+            or (numero == 7 and controllo_kdp_eseguito)
         )
         classe = "optional" if facoltativo and not completato else "done" if completato else "current" if numero == fase_attiva else ""
-        indicatore = "✓" if completato else "○" if facoltativo else numero
+        indicatore = "✓" if completato else numero - 2
         percorso_html += (
             f"<div class='ss-project-step {classe}'>"
             f"<span>{indicatore}</span><b>{html.escape(passo)}</b></div>"
@@ -5629,16 +5659,14 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         )
 
     # Le didascalie mantengono tutti i dettagli utili, ma restano visivamente
-    # secondarie rispetto al Centro operativo e ai suoi pulsanti principali.
+    # secondarie rispetto al riquadro del Centro e ai pulsanti del menu.
     def mostra_didascalia_centro(contenuto):
         st.markdown(
             f"<p class='ss-project-caption'>{contenuto}</p>",
             unsafe_allow_html=True,
         )
 
-    mostra_didascalia_centro(
-        f"<strong>{html.escape(etichette['prossimo'])}:</strong> {html.escape(prossimo)}"
-    )
+    # Il prossimo passo è già nel riquadro del Centro: niente ripetizioni.
     if stato["errore"]:
         mostra_didascalia_centro(
             f"<strong>{html.escape(etichette['dettaglio'])}:</strong> {html.escape(stato['errore'])}"
@@ -5654,7 +5682,6 @@ def mostra_centro_progetto(lingua, campi_obbligatori=None):
         and not stato["job_attivo"]
     ):
         mostra_didascalia_centro("🛡️ " + html.escape(nota_originalita_facoltativa(lingua)))
-    mostra_didascalia_centro(html.escape(etichette["nota"]))
 
 
 def applica_snapshot_progetto(snapshot):
@@ -5662,7 +5689,7 @@ def applica_snapshot_progetto(snapshot):
 
     Un utente puo' salvare correttamente la sidebar o le fonti prima di avere
     creato l'indice. Quel salvataggio e' comunque un progetto valido e il
-    comando ``RIAGGIORNA ALL'ULTIMA STESURA`` deve poterlo recuperare, anziche'
+    comando ``RIAPRI L'ULTIMO SALVATAGGIO`` deve poterlo recuperare, anziche'
     apparire inefficace per la sola assenza dell'indice.
     """
     if not isinstance(snapshot, dict):
@@ -5811,7 +5838,7 @@ def svuota_memoria_progetto_dopo_reset():
 
 def ripristina_progetto_salvato():
     """Ripristina l'ultima bozza una sola volta, oppure una bozza richiesta dal pulsante manuale."""
-    # RESET PROGETTO ha priorità assoluta: anche se una vecchia riga cloud non
+    # NUOVO PROGETTO (RESET) ha priorità assoluta: anche se una vecchia riga cloud non
     # fosse ancora stata eliminata, non deve ricomparire al rerun successivo.
     if st.session_state.get("commercial_project_reset_requested"):
         return False
@@ -5898,7 +5925,7 @@ def salva_progetto_corrente(sidebar, sezioni):
     st.session_state[CHIAVE_MEMORIA_PROTETTA] = dict(contenuti)
     # Un salvataggio da una pagina appena riaperta non deve mai cancellare un
     # indice già presente nel cloud solo perché il relativo widget non è ancora
-    # stato renderizzato. Il RESET PROGETTO è l'unica eccezione esplicita.
+    # stato renderizzato. Il NUOVO PROGETTO (RESET) è l'unica eccezione esplicita.
     indice_corrente = str(progetto.get("indice", "") or st.session_state.get("indice_raw", "") or "")
     indice_precedente = str(
         precedente.get("indice_raw", "") or precedente.get("indice_backup", "") or ""
@@ -7278,7 +7305,7 @@ def valuta_approccio_neurologico(genere, stile, narrativa):
 # 6. SIDEBAR: SETUP EDITORIALE AVANZATO E CARICAMENTO FONTI
 # ======================================================================================================================
 # Il progetto cloud non viene più caricato automaticamente: l'utente sceglie
-# esplicitamente quando recuperarlo con “RIAGGIORNA ALL'ULTIMA STESURA”. Il
+# esplicitamente quando recuperarlo con “RIAPRI L'ULTIMO SALVATAGGIO”. Il
 # flag esiste soltanto nel rerun immediatamente successivo a quel pulsante.
 # Dopo RESET la pulizia avviene qui, prima che la sidebar renda i widget: in
 # questo modo nessun valore precedente può restare visibile o riapparire.
@@ -7302,9 +7329,8 @@ with st.sidebar:
         </style>""",
         unsafe_allow_html=True,
     )
+    # Il logo è in fondo alla sidebar: in alto restano i comandi.
     logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo.png")
-    if os.path.isfile(logo_sidebar):
-        st.image(logo_sidebar, use_container_width=True)
 
     # La lingua è il primo comando operativo: traduce subito crediti, menu e
     # configurazione, senza modificare i dati già salvati nel progetto.
@@ -7332,19 +7358,19 @@ with st.sidebar:
     # questa posizione: tariffario e cervello restano sempre uno sotto l'altro.
     tariffario_sotto_cervello = st.container()
     intestazioni_sidebar = {
-        "Italiano": ("Percorso: configura → indice → scrivi → controlla ed esporta", "Configura il progetto", "Fonti e ricerca (opzionale)", "Dettagli editoriali", "Sessione e memoria", "Salva per conservare anche le modifiche manuali; il ripristino è sempre volontario."),
-        "English": ("Path: configure → outline → write → review and export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."),
-        "Español": ("Ruta: configura → índice → escribe → revisa y exporta", "Configura el proyecto", "Fuentes y búsqueda (opcional)", "Detalles editoriales", "Sesión y memoria", "Guarda también los cambios manuales; restaurar siempre es voluntario."),
-        "Français": ("Parcours : configurez → planifiez → rédigez → contrôlez et exportez", "Configurer le projet", "Sources et recherche (facultatif)", "Détails éditoriaux", "Session et mémoire", "Enregistrez aussi les modifications manuelles ; la restauration reste volontaire."),
-        "Deutsch": ("Ablauf: konfigurieren → Gliederung → schreiben → prüfen und exportieren", "Projekt konfigurieren", "Quellen und Recherche (optional)", "Redaktionelle Details", "Sitzung und Speicher", "Speichern Sie auch manuelle Änderungen; eine Wiederherstellung bleibt freiwillig."),
-        "Română": ("Parcurs: configurează → cuprins → scrie → verifică și exportă", "Configurează proiectul", "Surse și cercetare (opțional)", "Detalii editoriale", "Sesiune și memorie", "Salvează și modificările manuale; restaurarea rămâne voluntară."),
-        "Русский": ("Порядок: настройка → оглавление → текст → проверка и экспорт", "Настройка проекта", "Источники и поиск (необязательно)", "Редакционные параметры", "Сессия и память", "Сохраните и ручные правки; восстановление всегда выполняется по вашему выбору."),
-        "العربية": ("المسار: الإعداد ← الفهرس ← الكتابة ← المراجعة والتصدير", "إعداد المشروع", "المصادر والبحث (اختياري)", "التفاصيل التحريرية", "الجلسة والذاكرة", "احفظ أيضاً التعديلات اليدوية؛ والاستعادة اختيارية دائماً."),
-        "中文": ("流程：配置 → 目录 → 写作 → 检查并导出", "配置项目", "资料与研究（可选）", "编辑详情", "会话与记忆", "保存可保留手动修改；恢复始终由你决定。"),
-    }.get(lingua_sel, ("Path: configure → outline → write → review and export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."))
+        "Italiano": ("Percorso: 0 sidebar → 1 indice → 2 scrivi → 3 anteprima → 4 esporta", "Configura il progetto", "Fonti e ricerca (opzionale)", "Dettagli editoriali", "Sessione e memoria", "Salva per conservare anche le modifiche manuali; il ripristino è sempre volontario."),
+        "English": ("Path: 0 sidebar → 1 outline → 2 write → 3 preview → 4 export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."),
+        "Español": ("Ruta: 0 barra lateral → 1 índice → 2 escribe → 3 vista previa → 4 exporta", "Configura el proyecto", "Fuentes y búsqueda (opcional)", "Detalles editoriales", "Sesión y memoria", "Guarda también los cambios manuales; restaurar siempre es voluntario."),
+        "Français": ("Parcours : 0 barre latérale → 1 plan → 2 rédaction → 3 aperçu → 4 export", "Configurer le projet", "Sources et recherche (facultatif)", "Détails éditoriaux", "Session et mémoire", "Enregistrez aussi les modifications manuelles ; la restauration reste volontaire."),
+        "Deutsch": ("Ablauf: 0 Seitenleiste → 1 Gliederung → 2 Schreiben → 3 Vorschau → 4 Export", "Projekt konfigurieren", "Quellen und Recherche (optional)", "Redaktionelle Details", "Sitzung und Speicher", "Speichern Sie auch manuelle Änderungen; eine Wiederherstellung bleibt freiwillig."),
+        "Română": ("Parcurs: 0 bara laterală → 1 cuprins → 2 scrie → 3 previzualizare → 4 export", "Configurează proiectul", "Surse și cercetare (opțional)", "Detalii editoriale", "Sesiune și memorie", "Salvează și modificările manuale; restaurarea rămâne voluntară."),
+        "Русский": ("Порядок: 0 панель → 1 оглавление → 2 текст → 3 просмотр → 4 экспорт", "Настройка проекта", "Источники и поиск (необязательно)", "Редакционные параметры", "Сессия и память", "Сохраните и ручные правки; восстановление всегда выполняется по вашему выбору."),
+        "العربية": ("المسار: 0 الشريط الجانبي ← 1 الفهرس ← 2 الكتابة ← 3 المعاينة ← 4 التصدير", "إعداد المشروع", "المصادر والبحث (اختياري)", "التفاصيل التحريرية", "الجلسة والذاكرة", "احفظ أيضاً التعديلات اليدوية؛ والاستعادة اختيارية دائماً."),
+        "中文": ("流程：0 侧边栏 → 1 目录 → 2 写作 → 3 预览 → 4 导出", "配置项目", "资料与研究（可选）", "编辑详情", "会话与记忆", "保存可保留手动修改；恢复始终由你决定。"),
+    }.get(lingua_sel, ("Path: 0 sidebar → 1 outline → 2 write → 3 preview → 4 export", "Configure your project", "Sources and research (optional)", "Editorial details", "Session and memory", "Save to keep manual edits too; restoring is always voluntary."))
     st.caption(intestazioni_sidebar[0])
     st.title(L["side_tit"])
-    st.markdown(f"#### 1 · {intestazioni_sidebar[1]}")
+    st.markdown(f"#### ⚙️ {intestazioni_sidebar[1]}")
     tariffari_sidebar = {
         "Italiano": {
             "gpt_info": "Cervello costoso attivo: usa il cervello completo, incluse ricerca web, verifica copyright web e generazione immagini.",
@@ -7471,7 +7497,7 @@ with st.sidebar:
     
     # --- NUOVA SEZIONE CARICAMENTO FONTI ---
     st.divider()
-    st.markdown(f"#### 2 · {intestazioni_sidebar[2]}")
+    st.markdown(f"#### 🌐 {intestazioni_sidebar[2]}")
     st.markdown("<small>Carica PDF o DOCX: l'IA ne ricava una mappa concettuale interna e scrive un testo autonomo, senza riprendere formulazioni delle fonti.</small>", unsafe_allow_html=True)
     file_caricati = st.file_uploader(testo_ui("fonti_carica", lingua_sel), type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     if file_caricati:
@@ -7493,7 +7519,7 @@ with st.sidebar:
             st.success(f"Studiati {len(file_caricati)} documenti. La mappa concettuale originale guiderà indice e stesura.")
             st.caption(f"Analisi fonti: {'Cervello economico' if usa_deepseek_pro() else MODELLO_ANALISI_FONTI}. I brani caricati non vengono passati alla stesura: l'IA usa solo concetti rielaborati e il controllo di originalità confronta il testo prima dell'esportazione.")
     elif st.session_state.get("conoscenza_extra"):
-        st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa RESET PROGETTO.")
+        st.caption("Fonti già elaborate e conservate nel progetto. Per sostituirle, carica nuovi file oppure usa NUOVO PROGETTO (RESET).")
 
     T_fonti = lambda chiave, **valori: ricerca_fonti_i18n.testo(chiave, lingua_sel, **valori)
     st.radio(
@@ -7554,7 +7580,7 @@ with st.sidebar:
             st.markdown(registro_fonti_web)
     
     st.divider()
-    st.markdown(f"#### 3 · {intestazioni_sidebar[3]}")
+    st.markdown(f"#### ✍️ {intestazioni_sidebar[3]}")
     # --- AGGIUNTA "STORICO" AI GENERI ---
     lista_gen = ["Saggio Scientifico", "Quiz Scientifico", "Manuale Tecnico", "Religioso / Teologico", "Spirituale / Esoterico", "Meditazione / Mindfulness", "Business & Marketing", "Economia e Finanza", "Romanzo Rosa", "Thriller / Noir", "Fantasy", "Fantascienza", "Manuale Psicologico", "Biografia", "Ricettario", "Test Prep (Preparazione Esami)", "Narrativo", "Romanzo Classico", "Contemporaneo", "Self-Help", "Manuale Pratico", "Storico"]
     val_genere = st.selectbox(L["lbl_gen"], [""] + lista_gen, key="book_genre", format_func=lambda valore: valore or testo_ui("seleziona", lingua_sel))
@@ -7866,9 +7892,22 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         st.caption(st.session_state["autosave_stato"])
 
     st.divider()
-    st.markdown(f"#### 4 · {intestazioni_sidebar[4]}")
+    st.markdown(f"#### 💾 {intestazioni_sidebar[4]}")
     st.caption(intestazioni_sidebar[5])
     
+    # Una riga sotto ogni pulsante dice cosa fa, nella lingua dell'editor.
+    spiegazioni_sessione = {
+        "Italiano": ("Svuota editor e sidebar per iniziare un libro da zero.", "Toglie avvisi e messaggi temporanei. Il progetto non cambia.", "Salva nel tuo account sidebar, indice, testi e fonti.", "Ricarica il progetto salvato nel tuo account."),
+        "English": ("Empties editor and sidebar to start a book from scratch.", "Removes temporary notices and messages. Your project does not change.", "Saves sidebar, outline, texts and sources to your account.", "Reloads the project saved in your account."),
+        "Español": ("Vacía el editor y la barra lateral para empezar un libro desde cero.", "Quita avisos y mensajes temporales. El proyecto no cambia.", "Guarda en tu cuenta barra lateral, índice, textos y fuentes.", "Vuelve a cargar el proyecto guardado en tu cuenta."),
+        "Français": ("Vide l’éditeur et la barre latérale pour commencer un livre de zéro.", "Supprime les avis et messages temporaires. Le projet ne change pas.", "Enregistre dans votre compte barre latérale, plan, textes et sources.", "Recharge le projet enregistré dans votre compte."),
+        "Deutsch": ("Leert Editor und Seitenleiste, um ein Buch neu zu beginnen.", "Entfernt temporäre Hinweise und Meldungen. Das Projekt bleibt unverändert.", "Speichert Seitenleiste, Gliederung, Texte und Quellen in Ihrem Konto.", "Lädt das in Ihrem Konto gespeicherte Projekt erneut."),
+        "Română": ("Golește editorul și bara laterală pentru a începe o carte de la zero.", "Elimină avertismentele și mesajele temporare. Proiectul nu se schimbă.", "Salvează în cont bara laterală, cuprinsul, textele și sursele.", "Reîncarcă proiectul salvat în contul tău."),
+        "Русский": ("Очищает редактор и панель, чтобы начать книгу с нуля.", "Убирает временные уведомления и сообщения. Проект не меняется.", "Сохраняет в аккаунте панель, оглавление, тексты и источники.", "Заново загружает проект, сохранённый в аккаунте."),
+        "العربية": ("يفرغ المحرر والشريط الجانبي لبدء كتاب من الصفر.", "يزيل التنبيهات والرسائل المؤقتة. لا يتغير المشروع.", "يحفظ في حسابك الشريط الجانبي والفهرس والنصوص والمصادر.", "يعيد تحميل المشروع المحفوظ في حسابك."),
+        "中文": ("清空编辑器和侧边栏，从零开始一本新书。", "移除临时提示和消息。项目不会改变。", "将侧边栏、目录、文本和资料保存到你的账户。", "重新载入保存在你账户中的项目。"),
+    }
+    sp_reset, sp_pulisci, sp_salva, sp_riapri = spiegazioni_sessione.get(lingua_sel, spiegazioni_sessione["Italiano"])
     # Reset del solo progetto: l'accesso commerciale e il saldo crediti restano attivi.
     if st.button(
         L["btn_res"],
@@ -7899,14 +7938,18 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
                 )
         if reset_eseguito:
             st.rerun()
+    st.caption(sp_reset)
 
     etichette_aggiorna = {
-        "Italiano": ("🔄 AGGIORNA PAGINA", "Pagina aggiornata: cache e messaggi temporanei ripuliti. Il progetto resta invariato."),
-        "English": ("🔄 REFRESH PAGE", "Page refreshed: cache and temporary messages cleared. Your project is unchanged."),
-        "Español": ("🔄 ACTUALIZAR PÁGINA", "Página actualizada: caché y mensajes temporales eliminados. El proyecto no cambia."),
-        "Français": ("🔄 ACTUALISER LA PAGE", "Page actualisée : cache et messages temporaires effacés. Le projet reste inchangé."),
-        "Deutsch": ("🔄 SEITE AKTUALISIEREN", "Seite aktualisiert: Cache und temporäre Meldungen wurden gelöscht. Das Projekt bleibt unverändert."),
-        "Română": ("🔄 REÎNCARCĂ PAGINA", "Pagina a fost reîncărcată: cache-ul și mesajele temporare au fost șterse. Proiectul rămâne neschimbat."),
+        "Italiano": ("🧹 PULISCI MESSAGGI", "Pagina aggiornata: cache e messaggi temporanei ripuliti. Il progetto resta invariato."),
+        "English": ("🧹 CLEAR MESSAGES", "Page refreshed: cache and temporary messages cleared. Your project is unchanged."),
+        "Español": ("🧹 LIMPIAR MENSAJES", "Página actualizada: caché y mensajes temporales eliminados. El proyecto no cambia."),
+        "Français": ("🧹 EFFACER LES MESSAGES", "Page actualisée : cache et messages temporaires effacés. Le projet reste inchangé."),
+        "Deutsch": ("🧹 MELDUNGEN LEEREN", "Seite aktualisiert: Cache und temporäre Meldungen wurden gelöscht. Das Projekt bleibt unverändert."),
+        "Română": ("🧹 ȘTERGE MESAJELE", "Pagina a fost reîncărcată: cache-ul și mesajele temporare au fost șterse. Proiectul rămâne neschimbat."),
+        "Русский": ("🧹 ОЧИСТИТЬ СООБЩЕНИЯ", "Сообщения и временный кэш очищены. Проект не изменился."),
+        "العربية": ("🧹 مسح الرسائل", "تم مسح الرسائل والذاكرة المؤقتة. لم يتغير المشروع."),
+        "中文": ("🧹 清除消息", "已清除提示和临时缓存。项目没有变化。"),
     }
     etichetta_aggiorna, messaggio_aggiorna = etichette_aggiorna.get(
         lingua_sel, etichette_aggiorna["Italiano"]
@@ -7928,6 +7971,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         st.session_state["messaggio_aggiornamento_pagina"] = messaggio_aggiorna
         st.rerun()
 
+    st.caption(sp_pulisci)
     if st.session_state.pop("messaggio_aggiornamento_pagina", ""):
         st.success(messaggio_aggiorna)
 
@@ -7945,22 +7989,33 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
             st.success("Sessione salvata: sidebar, indice, sezioni e fonti web sono stati memorizzati nel tuo account.")
         else:
             st.error("Non è stato possibile salvare la sessione nel tuo account. Il lavoro resta aperto in questa pagina.")
+    st.caption(sp_salva)
 
     if st.button(testo_ui("ripristina", lingua_sel), use_container_width=True, key="ripristina_ultima_stesura"):
         if prepara_ripristino_ultima_stesura():
             st.rerun()
         else:
             st.warning("Non è stata trovata una stesura salvata nel tuo account. Verifica che il salvataggio automatico indichi “nel tuo account”.")
+    st.caption(sp_riapri)
 
-    mostra_memoria_visiva_progetto()
+    mostra_memoria_visiva_progetto(campi_obbligatori_sidebar)
 
     st.divider()
-    st.markdown("### ISTRUZIONI SULL'UTILIZZO DI SCRITTORE SITE")
+    titoli_video = {
+        "Italiano": "🎬 Video: come si usa Scrittore Site", "English": "🎬 Video: how to use Scrittore Site",
+        "Español": "🎬 Vídeo: cómo usar Scrittore Site", "Français": "🎬 Vidéo : utiliser Scrittore Site",
+        "Deutsch": "🎬 Video: So nutzen Sie Scrittore Site", "Română": "🎬 Video: cum folosești Scrittore Site",
+        "Русский": "🎬 Видео: как пользоваться Scrittore Site", "العربية": "🎬 فيديو: كيف تستخدم Scrittore Site",
+        "中文": "🎬 视频：如何使用 Scrittore Site",
+    }
     video_istruzioni = os.path.join(
         os.path.dirname(__file__), "assets", "istruzioni-scrittore-site.mp4"
     )
     if os.path.isfile(video_istruzioni):
-        st.video(video_istruzioni, format="video/mp4")
+        with st.expander(titoli_video.get(lingua_sel, titoli_video["Italiano"]), expanded=False):
+            st.video(video_istruzioni, format="video/mp4")
+    if os.path.isfile(logo_sidebar):
+        st.image(logo_sidebar, use_container_width=True)
 
 # ======================================================================================================================
 # 7. LOGICA DI MEMORIA E COERENZA (EVITA RIPETIZIONI GLOBALI) E INTEGRAZIONE FONTI
@@ -9101,7 +9156,7 @@ st.markdown(
     </div>''',
     unsafe_allow_html=True,
 )
-st.caption(VERSIONE_DEPLOY)
+# La versione resta in VERSIONE_DEPLOY (diagnostica), senza occupare l'editor.
 mostra_centro_progetto(lingua_sel, campi_obbligatori_sidebar)
 
 if st.session_state.get("admin_test_mode"):
@@ -9658,7 +9713,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     aggiornamenti_guida_localizzati = {
         "Italiano": """### Funzioni aggiornate: salvataggio, fonti e copyright
 
-**Salvare e recuperare.** Il progetto resta pulito quando accedi. Quando vuoi conservarlo, premi **💾 SALVA SESSIONE** nella sidebar: vengono salvati campi della sidebar, indice, testi, fonti, immagini e impostazioni del progetto nel tuo account. Per recuperare deliberatamente il lavoro salvato premi **🔄 RIAGGIORNA ALL'ULTIMA STESURA**. **RESET PROGETTO** cancella invece il progetto aperto e svuota anche la sidebar.
+**Salvare e recuperare.** Il progetto resta pulito quando accedi. Quando vuoi conservarlo, premi **💾 SALVA SESSIONE** nella sidebar: vengono salvati campi della sidebar, indice, testi, fonti, immagini e impostazioni del progetto nel tuo account. Per recuperare deliberatamente il lavoro salvato premi **🔄 RIAPRI L'ULTIMO SALVATAGGIO**. **NUOVO PROGETTO (RESET)** cancella invece il progetto aperto e svuota anche la sidebar.
 
 **Importa / Esporta / Copyright.** Esporta progetto completo crea un CSV che contiene sidebar, indice, sezioni, fonti e immagini associate. Importa progetto CSV ripristina questi dati nella pagina; premi poi **SALVA SESSIONE** se vuoi conservarli anche nel tuo account. Word e PDF restano disponibili nella stessa area dopo il controllo finale.
 
@@ -9671,7 +9726,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 **Controllo completezza e finale.** Prima del controllo finale puoi usare **Controlla completezza del manoscritto**: è gratuito, non usa API e rileva testi mancanti, troppo brevi o tecnicamente interrotti senza modificare il libro. Prima di Word/PDF, il controllo finale segnala poi contenuti mancanti, deboli o completi e propone correzioni da applicare soltanto con la tua approvazione. Rileggi sempre il manoscritto e il file esportato prima della pubblicazione.""",
         "English": """### Updated features: saving, sources and copyright
 
-**Save and recover.** The project opens clean after sign-in. Use **💾 SAVE SESSION** to store sidebar fields, index, texts, sources, images and project settings in your account. Use **🔄 REFRESH TO LATEST DRAFT** only when you want to restore that saved work. **RESET PROJECT** clears the open project and the sidebar.
+**Save and recover.** The project opens clean after sign-in. Use **💾 SAVE SESSION** to store sidebar fields, index, texts, sources, images and project settings in your account. Use **🔄 REFRESH TO LATEST DRAFT** only when you want to restore that saved work. **NEW PROJECT (RESET)** clears the open project and the sidebar.
 
 **Import / Export / Copyright.** Complete project export creates a CSV containing the sidebar, index, sections, sources and linked images. Importing it restores those data in the page; then use **SAVE SESSION** to keep them in your account. Word and PDF remain available there after the final check.
 
@@ -9680,28 +9735,28 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 **Editor, preview and listening.** The Professional Editor edits one section at a time; Preview reads the full project memory. In the voice reader choose a starting point, play, pause and resume. The reading view highlights spoken text when the browser supports it. Always review the manuscript and exported file before publishing.""",
         "Español": """### Funciones actualizadas: guardado, fuentes y copyright
 
-**Guardar y recuperar.** El proyecto se abre limpio al iniciar sesión. Usa **💾 GUARDAR SESIÓN** para guardar en tu cuenta los campos, índice, textos, fuentes, imágenes y ajustes. Usa **🔄 ACTUALIZAR A LA ÚLTIMA VERSIÓN** solo para restaurar ese trabajo. **RESETEAR PROYECTO** borra el proyecto abierto y la barra lateral.
+**Guardar y recuperar.** El proyecto se abre limpio al iniciar sesión. Usa **💾 GUARDAR SESIÓN** para guardar en tu cuenta los campos, índice, textos, fuentes, imágenes y ajustes. Usa **🔄 ACTUALIZAR A LA ÚLTIMA VERSIÓN** solo para restaurar ese trabajo. **NUEVO PROYECTO (RESET)** borra el proyecto abierto y la barra lateral.
 
 **Importar / Exportar / Copyright.** La exportación completa crea un CSV con barra lateral, índice, secciones, fuentes e imágenes. Al importarlo se restaura en la página; después pulsa **GUARDAR SESIÓN** para conservarlo en tu cuenta. Los controles de originalidad muestran solo las secciones que requieren cambios; el detalle técnico es opcional. No sustituye una certificación legal.
 
 **Fuentes, edición y escucha.** La investigación previa crea un mapa conceptual interno; el libro se redacta con estructura y formulación nuevas, no copiando fuentes. El editor modifica una sección, la vista previa lee todo el proyecto y el lector de voz permite elegir inicio, reproducir, pausar y reanudar. Revisa siempre el archivo antes de publicar.""",
         "Français": """### Fonctions mises à jour : sauvegarde, sources et copyright
 
-**Sauvegarder et récupérer.** Le projet s’ouvre vide après connexion. Utilisez **💾 SAUVEGARDER LA SESSION** pour enregistrer dans votre compte les champs, l’index, les textes, les sources, les images et les réglages. Utilisez **🔄 ACTUALISER LA DERNIÈRE VERSION** uniquement pour restaurer ce travail. **RÉINITIALISER LE PROJET** efface le projet ouvert et la barre latérale.
+**Sauvegarder et récupérer.** Le projet s’ouvre vide après connexion. Utilisez **💾 SAUVEGARDER LA SESSION** pour enregistrer dans votre compte les champs, l’index, les textes, les sources, les images et les réglages. Utilisez **🔄 ACTUALISER LA DERNIÈRE VERSION** uniquement pour restaurer ce travail. **NOUVEAU PROJET (RESET)** efface le projet ouvert et la barre latérale.
 
 **Importer / Exporter / Copyright.** L’export complet crée un CSV avec barre latérale, index, sections, sources et images. L’import le restaure dans la page ; sauvegardez ensuite la session pour le conserver. Les contrôles d’originalité affichent seulement les sections à corriger ; le détail technique est facultatif. Ce n’est pas une certification juridique.
 
 **Sources, édition et écoute.** La recherche prépare une carte conceptuelle interne ; le livre est écrit avec une structure et des formulations nouvelles. L’éditeur modifie une section, l’aperçu lit tout le projet et le lecteur vocal permet de choisir le départ, lire, mettre en pause et reprendre. Vérifiez toujours le fichier avant publication.""",
         "Deutsch": """### Aktualisierte Funktionen: Speichern, Quellen und Urheberrecht
 
-**Speichern und Wiederherstellen.** Nach der Anmeldung öffnet sich ein leeres Projekt. Mit **💾 SITZUNG SPEICHERN** sichern Sie Seitenleiste, Index, Texte, Quellen, Bilder und Einstellungen im Konto. **🔄 LETZTEN ENTWURF AKTUALISIEREN** stellt diesen Stand bewusst wieder her. **PROJEKT ZURÜCKSETZEN** leert Projekt und Seitenleiste.
+**Speichern und Wiederherstellen.** Nach der Anmeldung öffnet sich ein leeres Projekt. Mit **💾 SITZUNG SPEICHERN** sichern Sie Seitenleiste, Index, Texte, Quellen, Bilder und Einstellungen im Konto. **🔄 LETZTEN ENTWURF AKTUALISIEREN** stellt diesen Stand bewusst wieder her. **NEUES PROJEKT (RESET)** leert Projekt und Seitenleiste.
 
 **Import / Export / Copyright.** Der vollständige Export erzeugt eine CSV mit allen Projektdaten. Der Import stellt sie auf der Seite wieder her; speichern Sie danach die Sitzung. Originalitätsprüfungen zeigen direkt nur zu überarbeitende Abschnitte, technische Details sind optional. Sie ersetzen keine rechtliche Zertifizierung.
 
 **Quellen, Editor und Vorlesen.** Die Recherche erstellt eine interne Konzeptkarte; der Text wird neu strukturiert und formuliert. Der Editor bearbeitet einen Abschnitt, die Vorschau liest das gesamte Projekt, und der Sprachleser kann Startpunkt, Wiedergabe, Pause und Fortsetzen steuern. Prüfen Sie das Enddokument immer vor der Veröffentlichung.""",
         "Română": """### Funcții actualizate: salvare, surse și copyright
 
-**Salvare și recuperare.** Proiectul se deschide gol după autentificare. Folosește **💾 SALVEAZĂ SESIUNEA** pentru câmpuri, cuprins, texte, surse, imagini și setări. **🔄 ACTUALIZEAZĂ LA ULTIMA VERSIUNE** restaurează intenționat versiunea salvată. **RESETARE PROIECT** golește proiectul și bara laterală.
+**Salvare și recuperare.** Proiectul se deschide gol după autentificare. Folosește **💾 SALVEAZĂ SESIUNEA** pentru câmpuri, cuprins, texte, surse, imagini și setări. **🔄 ACTUALIZEAZĂ LA ULTIMA VERSIUNE** restaurează intenționat versiunea salvată. **PROIECT NOU (RESET)** golește proiectul și bara laterală.
 
 **Import / Export / Copyright.** Exportul complet creează un CSV cu toate datele proiectului; importul le restaurează în pagină, apoi salvează sesiunea. Controalele de originalitate arată doar secțiunile de corectat, iar detaliul tehnic este opțional; nu reprezintă o certificare juridică.
 
@@ -9715,14 +9770,14 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 **Источники, редактор и озвучивание.** Исследование создаёт внутреннюю карту понятий, а текст формулируется заново. Редактор меняет один раздел, предпросмотр читает весь проект, голосовой читатель позволяет выбрать начало, воспроизвести, поставить на паузу и продолжить. Всегда проверяйте итоговый файл перед публикацией.""",
         "العربية": """### ميزات محدّثة: الحفظ والمصادر وحقوق النشر
 
-**الحفظ والاستعادة.** يفتح المشروع فارغاً بعد تسجيل الدخول. استخدم **💾 حفظ الجلسة** لحفظ حقول الشريط الجانبي والفهرس والنصوص والمصادر والصور والإعدادات في حسابك. استخدم **🔄 تحديث إلى آخر نسخة** فقط لاستعادة العمل المحفوظ. إعادة ضبط المشروع تمسح المشروع والشريط الجانبي.
+**الحفظ والاستعادة.** يفتح المشروع فارغاً بعد تسجيل الدخول. استخدم **💾 حفظ الجلسة** لحفظ حقول الشريط الجانبي والفهرس والنصوص والمصادر والصور والإعدادات في حسابك. استخدم **🔄 تحديث إلى آخر نسخة** فقط لاستعادة العمل المحفوظ. مشروع جديد (إعادة ضبط) تمسح المشروع والشريط الجانبي.
 
 **استيراد / تصدير / حقوق النشر.** ينشئ التصدير الكامل ملف CSV يحوي كل بيانات المشروع، ويعيد الاستيراد هذه البيانات إلى الصفحة ثم احفظ الجلسة. تعرض فحوص الأصالة الأقسام التي تحتاج تعديلاً فقط، بينما التفاصيل التقنية اختيارية. لا تمثل هذه الفحوص شهادة قانونية.
 
 **المصادر والتحرير والقراءة.** ينشئ البحث خريطة مفاهيم داخلية ويُكتب النص بصياغة جديدة. يعدّل المحرر قسماً واحداً، وتقرأ المعاينة المشروع كاملاً، ويتيح القارئ الصوتي اختيار نقطة البداية والتشغيل والإيقاف والاستئناف. راجع الملف النهائي دائماً قبل النشر.""",
         "中文": """### 更新功能：保存、来源与版权
 
-**保存和恢复。** 登录后项目会以干净状态打开。使用 **💾 保存会话** 将侧边栏、目录、文本、来源、图片和设置保存到账号。仅在需要恢复时使用 **🔄 更新到最新草稿**。重置项目会清空当前项目和侧边栏。
+**保存和恢复。** 登录后项目会以干净状态打开。使用 **💾 保存会话** 将侧边栏、目录、文本、来源、图片和设置保存到账号。仅在需要恢复时使用 **🔄 更新到最新草稿**。新项目（重置）会清空当前项目和侧边栏。
 
 **导入 / 导出 / 版权。** 完整导出会创建包含所有项目数据的 CSV；导入会在页面中恢复数据，随后请保存会话。原创性检查只显示需要修改的部分，技术详情可按需展开；它不是法律认证。
 
@@ -9810,28 +9865,8 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         esegui_collaudo_automatico()
         st.rerun()
 
-    etichette_menu_operativo = {
-        "Italiano": ("Centro operativo", "Dalla nicchia all'esportazione: la sezione -1 è facoltativa, la sezione 0 è il punto di partenza."),
-        "English": ("Operations center", "From niche to export: section -1 is optional, while section 0 is your starting point."),
-        "Español": ("Centro operativo", "Del nicho a la exportación: la sección -1 es opcional y la sección 0 es el punto de partida."),
-        "Français": ("Centre opérationnel", "De la niche à l’exportation : la section -1 est facultative et la section 0 est votre point de départ."),
-        "Deutsch": ("Arbeitszentrale", "Von der Nische bis zum Export: Bereich -1 ist optional, Bereich 0 ist der Einstieg."),
-        "Română": ("Centru operațional", "De la nișă la export: secțiunea -1 este opțională, iar secțiunea 0 este punctul de plecare."),
-        "Русский": ("Рабочий центр", "От ниши до экспорта: раздел -1 необязателен, раздел 0 — точка начала."),
-        "العربية": ("مركز العمل", "من المجال إلى التصدير: القسم -1 اختياري، والقسم 0 هو نقطة البداية."),
-        "中文": ("操作中心", "从细分市场到导出：-1 节为可选功能，0 节是起点。"),
-    }
-    titolo_menu_operativo, descrizione_menu_operativo = etichette_menu_operativo.get(
-        lingua_sel, etichette_menu_operativo["Italiano"]
-    )
-    st.markdown(
-        f"""<section class='ss-operational-menu-heading'>
-          <span>🧭</span><div><h2>{html.escape(titolo_menu_operativo)}</h2>
-          <p>{html.escape(descrizione_menu_operativo)}</p></div>
-          <span class='ss-menu-range'>-1 — 5</span>
-        </section>""",
-        unsafe_allow_html=True,
-    )
+    # I pulsanti colorati -1…5 qui sotto sono già il menu operativo: nessun
+    # riquadro-titolo in più sopra di loro.
     etichette_tab_nicchia = {
         "Italiano": "🔎 -1. La chat della nicchia", "English": "🔎 -1. Niche chat",
         "Español": "🔎 -1. Chat de nicho", "Français": "🔎 -1. Chat de niche",
@@ -9985,17 +10020,25 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
 
     with tabs[0]:
         avviso_reset_nuovo_progetto = {
-            "Italiano": "⚠️ Prima di iniziare un nuovo progetto, premi **RESET PROGETTO** nella sidebar per cancellare la cache salvata del progetto precedente.",
-            "English": "⚠️ Before starting a new project, press **RESET PROJECT** in the sidebar to clear the saved cache from the previous project.",
-            "Español": "⚠️ Antes de iniciar un proyecto nuevo, pulsa **RESETEAR PROYECTO** en la barra lateral para borrar la caché guardada del proyecto anterior.",
-            "Français": "⚠️ Avant de commencer un nouveau projet, appuyez sur **RÉINITIALISER LE PROJET** dans la barre latérale pour effacer le cache enregistré du projet précédent.",
-            "Deutsch": "⚠️ Bevor Sie ein neues Projekt beginnen, drücken Sie in der Seitenleiste **PROJEKT ZURÜCKSETZEN**, um den gespeicherten Cache des vorherigen Projekts zu löschen.",
-            "Română": "⚠️ Înainte de a începe un proiect nou, apasă **RESETARE PROIECT** în bara laterală pentru a șterge memoria cache salvată a proiectului anterior.",
-            "Русский": "⚠️ Перед началом нового проекта нажмите **СБРОСИТЬ ПРОЕКТ** на боковой панели, чтобы очистить сохранённый кэш предыдущего проекта.",
-            "العربية": "⚠️ قبل بدء مشروع جديد، اضغط **إعادة تعيين المشروع** في الشريط الجانبي لمسح ذاكرة التخزين المؤقت المحفوظة للمشروع السابق.",
-            "中文": "⚠️ 开始新项目之前，请点击侧边栏中的 **重置项目**，清除上一个项目保存的缓存。",
+            "Italiano": "⚠️ Prima di iniziare un nuovo progetto, premi **NUOVO PROGETTO (RESET)** nella sidebar per cancellare la cache salvata del progetto precedente.",
+            "English": "⚠️ Before starting a new project, press **NEW PROJECT (RESET)** in the sidebar to clear the saved cache from the previous project.",
+            "Español": "⚠️ Antes de iniciar un proyecto nuevo, pulsa **NUEVO PROYECTO (RESET)** en la barra lateral para borrar la caché guardada del proyecto anterior.",
+            "Français": "⚠️ Avant de commencer un nouveau projet, appuyez sur **NOUVEAU PROJET (RESET)** dans la barre latérale pour effacer le cache enregistré du projet précédent.",
+            "Deutsch": "⚠️ Bevor Sie ein neues Projekt beginnen, drücken Sie in der Seitenleiste **NEUES PROJEKT (RESET)**, um den gespeicherten Cache des vorherigen Projekts zu löschen.",
+            "Română": "⚠️ Înainte de a începe un proiect nou, apasă **PROIECT NOU (RESET)** în bara laterală pentru a șterge memoria cache salvată a proiectului anterior.",
+            "Русский": "⚠️ Перед началом нового проекта нажмите **НОВЫЙ ПРОЕКТ (СБРОС)** на боковой панели, чтобы очистить сохранённый кэш предыдущего проекта.",
+            "العربية": "⚠️ قبل بدء مشروع جديد، اضغط **مشروع جديد (إعادة ضبط)** في الشريط الجانبي لمسح ذاكرة التخزين المؤقت المحفوظة للمشروع السابق.",
+            "中文": "⚠️ 开始新项目之前，请点击侧边栏中的 **新项目（重置）**，清除上一个项目保存的缓存。",
         }
-        st.warning(avviso_reset_nuovo_progetto.get(lingua_sel, avviso_reset_nuovo_progetto["Italiano"]))
+        # L'avviso serve solo se c'è già un progetto aperto (titolo, indice o
+        # sezioni): con l'editor vuoto non c'è niente da azzerare.
+        progetto_gia_aperto = bool(
+            str(st.session_state.get("book_title", "") or "").strip()
+            or st.session_state.get("lista_capitoli")
+            or any(str(v or "").strip() for v in (st.session_state.get(CHIAVE_MEMORIA_SEZIONI, {}) or {}).values())
+        )
+        if progetto_gia_aperto:
+            st.warning(avviso_reset_nuovo_progetto.get(lingua_sel, avviso_reset_nuovo_progetto["Italiano"]))
         st.subheader(titolo_guida)
         st.markdown(percorso_rapido.get(lingua_sel, percorso_rapido["Italiano"]))
         chat_subito = {
@@ -10019,59 +10062,6 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             on_click=avvia_chat_sidebar_da_guida,
             use_container_width=True,
         )
-        guida_personalizzazione = {
-            "Italiano": "✍️ **Personalizza il tuo libro** è facoltativo: conserva voce, casi, priorità e confini nel progetto. Puoi anche scegliere una pausa guidata prima delle Parti o della conclusione; la risposta viene aggiunta al brief senza consumare crediti.",
-            "English": "✍️ **Personalize your book** is optional: it keeps your voice, cases, priorities and boundaries with the project. You may also choose a guided pause before Parts or the conclusion; your answer is added to the brief without using credits.",
-            "Español": "✍️ **Personaliza tu libro** es opcional: conserva voz, casos, prioridades y límites con el proyecto. También puedes elegir una pausa guiada antes de las Partes o de la conclusión; la respuesta se añade al brief sin consumir créditos.",
-            "Français": "✍️ **Personnalisez votre livre** est facultatif : voix, cas, priorités et limites sont conservés dans le projet. Vous pouvez aussi choisir une pause guidée avant les parties ou la conclusion, sans crédit consommé.",
-            "Deutsch": "✍️ **Personalisiere dein Buch** ist optional: Stimme, Fälle, Prioritäten und Grenzen werden mit dem Projekt gespeichert. Eine geführte Pause vor Teilen oder Schluss fügt Hinweise ohne Credits zum Brief hinzu.",
-            "Română": "✍️ **Personalizează cartea** este opțional: vocea, cazurile, prioritățile și limitele se păstrează în proiect. Poți alege și o pauză ghidată înainte de părți sau concluzie, fără credite.",
-            "Русский": "✍️ **Персонализируйте книгу** — необязательная функция: голос, примеры, приоритеты и ограничения сохраняются в проекте. Можно выбрать паузу перед частями или заключением без расхода кредитов.",
-            "العربية": "✍️ **خصص كتابك** ميزة اختيارية تحفظ الصوت والأمثلة والأولويات والحدود داخل المشروع. يمكنك أيضاً اختيار توقف موجّه قبل الأجزاء أو الخاتمة من دون استهلاك أرصدة.",
-            "中文": "✍️ **个性化你的图书**是可选功能：写作声音、案例、重点和边界会随项目保存。也可在各部分或结论前选择引导暂停，不消耗积分。",
-        }
-        st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
-        avvisi_guida_base = {
-            "Italiano": ("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.", "📚 Guida completa e regole di utilizzo", "✨ Funzioni, salvataggio e copyright"),
-            "English": ("Complete the sidebar, then create the index and start writing. The full instructions remain available below.", "📚 Complete guide and rules", "✨ Features, saving and copyright"),
-            "Español": ("Completa la barra lateral, crea el índice y empieza a escribir. Las instrucciones completas están disponibles abajo.", "📚 Guía completa y reglas de uso", "✨ Funciones, guardado y copyright"),
-            "Français": ("Remplissez la barre latérale, puis créez l'index et commencez à écrire. Les instructions complètes restent disponibles ci-dessous.", "📚 Guide complet et règles d'utilisation", "✨ Fonctions, enregistrement et copyright"),
-            "Deutsch": ("Füllen Sie die Seitenleiste aus, erstellen Sie dann den Index und beginnen Sie zu schreiben. Die vollständige Anleitung steht unten bereit.", "📚 Vollständige Anleitung und Regeln", "✨ Funktionen, Speichern und Copyright"),
-            "Română": ("Completează bara laterală, apoi generează cuprinsul și începe să scrii. Instrucțiunile complete rămân disponibile mai jos.", "📚 Ghid complet și reguli de utilizare", "✨ Funcții, salvare și copyright"),
-            "Русский": ("Заполните боковую панель, затем создайте оглавление и начните писать. Полные инструкции доступны ниже.", "📚 Полное руководство и правила", "✨ Функции, сохранение и copyright"),
-            "العربية": ("أكمل الشريط الجانبي ثم أنشئ الفهرس وابدأ الكتابة. التعليمات الكاملة متاحة أدناه.", "📚 الدليل الكامل وقواعد الاستخدام", "✨ الميزات والحفظ وحقوق النشر"),
-            "中文": ("请先完成侧边栏，然后生成目录并开始写作。完整说明在下方提供。", "📚 完整指南和使用规则", "✨ 功能、保存和版权"),
-        }
-        avviso_guida, etichetta_guida_completa, etichetta_funzioni = avvisi_guida_base.get(lingua_sel, avvisi_guida_base["Italiano"])
-        if not sidebar_pronta:
-            st.info(avviso_guida)
-        with st.expander(etichetta_guida_completa, expanded=False):
-            st.markdown(testo_guida)
-        with st.expander(etichetta_funzioni, expanded=False):
-            st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
-        st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
-        st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
-        etichette_prova_notifiche = {
-            "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
-            "Français": "🔔 TESTER LES NOTIFICATIONS", "Deutsch": "🔔 BENACHRICHTIGUNGEN TESTEN", "Română": "🔔 TESTEAZĂ NOTIFICĂRILE",
-            "Русский": "🔔 ПРОВЕРИТЬ УВЕДОМЛЕНИЯ", "العربية": "🔔 اختبار الإشعارات", "中文": "🔔 测试通知"
-        }
-        istruzioni_audio = {
-            "Italiano": "Se non senti il suono, controlla che la scheda del browser non sia silenziata e consenti la riproduzione audio.",
-            "English": "If you do not hear the sound, check that the browser tab is not muted and allow audio playback.",
-            "Español": "Si no oyes el sonido, comprueba que la pestaña no esté silenciada y permite la reproducción de audio.",
-            "Français": "Si vous n’entendez pas le son, vérifiez que l’onglet n’est pas muet et autorisez la lecture audio.",
-            "Deutsch": "Wenn Sie keinen Ton hören, prüfen Sie, ob der Browser-Tab stummgeschaltet ist, und erlauben Sie die Audiowiedergabe.",
-            "Română": "Dacă nu auzi sunetul, verifică dacă fila browserului nu este pe mut și permite redarea audio.",
-            "Русский": "Если звука нет, проверьте, не отключён ли звук у вкладки браузера, и разрешите воспроизведение аудио.",
-            "العربية": "إذا لم تسمع الصوت، تحقق من أن علامة تبويب المتصفح غير مكتومة واسمح بتشغيل الصوت.",
-            "中文": "如果听不到声音，请检查浏览器标签页是否被静音，并允许音频播放。"
-        }
-        st.caption(istruzioni_audio.get(lingua_sel, istruzioni_audio["Italiano"]))
-        if st.button(etichette_prova_notifiche.get(lingua_sel, etichette_prova_notifiche["Italiano"]), key="prova_notifiche"):
-            notifica_sonora("test_notifiche", lingua_sel, ripeti=True)
-
-        st.divider()
         etichette_tendine_chat = {
             "Italiano": {"guidata": "Chat guidata per compilare la sidebar (opzionale)"},
             "English": {"guidata": "Guided chat to complete the sidebar (optional)"},
@@ -10778,6 +10768,58 @@ Comunica sempre nella lingua operativa selezionata dall'utente; se il brief indi
                     on_click=reimposta_chat_sidebar_guidata,
                     use_container_width=True,
                 )
+
+        # Spiegazioni di approfondimento raccolte nelle tendine: in vista restano
+        # solo il percorso, il pulsante della chat e la chat guidata.
+        guida_personalizzazione = {
+            "Italiano": "✍️ **Personalizza il tuo libro** è facoltativo: conserva voce, casi, priorità e confini nel progetto. Puoi anche scegliere una pausa guidata prima delle Parti o della conclusione; la risposta viene aggiunta al brief senza consumare crediti.",
+            "English": "✍️ **Personalize your book** is optional: it keeps your voice, cases, priorities and boundaries with the project. You may also choose a guided pause before Parts or the conclusion; your answer is added to the brief without using credits.",
+            "Español": "✍️ **Personaliza tu libro** es opcional: conserva voz, casos, prioridades y límites con el proyecto. También puedes elegir una pausa guiada antes de las Partes o de la conclusión; la respuesta se añade al brief sin consumir créditos.",
+            "Français": "✍️ **Personnalisez votre livre** est facultatif : voix, cas, priorités et limites sont conservés dans le projet. Vous pouvez aussi choisir une pause guidée avant les parties ou la conclusion, sans crédit consommé.",
+            "Deutsch": "✍️ **Personalisiere dein Buch** ist optional: Stimme, Fälle, Prioritäten und Grenzen werden mit dem Projekt gespeichert. Eine geführte Pause vor Teilen oder Schluss fügt Hinweise ohne Credits zum Brief hinzu.",
+            "Română": "✍️ **Personalizează cartea** este opțional: vocea, cazurile, prioritățile și limitele se păstrează în proiect. Poți alege și o pauză ghidată înainte de părți sau concluzie, fără credite.",
+            "Русский": "✍️ **Персонализируйте книгу** — необязательная функция: голос, примеры, приоритеты и ограничения сохраняются в проекте. Можно выбрать паузу перед частями или заключением без расхода кредитов.",
+            "العربية": "✍️ **خصص كتابك** ميزة اختيارية تحفظ الصوت والأمثلة والأولويات والحدود داخل المشروع. يمكنك أيضاً اختيار توقف موجّه قبل الأجزاء أو الخاتمة من دون استهلاك أرصدة.",
+            "中文": "✍️ **个性化你的图书**是可选功能：写作声音、案例、重点和边界会随项目保存。也可在各部分或结论前选择引导暂停，不消耗积分。",
+        }
+        avvisi_guida_base = {
+            "Italiano": ("Completa la barra laterale, poi crea l'indice e inizia a scrivere. Le istruzioni complete restano disponibili qui sotto.", "📚 Guida completa e regole di utilizzo", "✨ Funzioni, salvataggio e copyright"),
+            "English": ("Complete the sidebar, then create the index and start writing. The full instructions remain available below.", "📚 Complete guide and rules", "✨ Features, saving and copyright"),
+            "Español": ("Completa la barra lateral, crea el índice y empieza a escribir. Las instrucciones completas están disponibles abajo.", "📚 Guía completa y reglas de uso", "✨ Funciones, guardado y copyright"),
+            "Français": ("Remplissez la barre latérale, puis créez l'index et commencez à écrire. Les instructions complètes restent disponibles ci-dessous.", "📚 Guide complet et règles d'utilisation", "✨ Fonctions, enregistrement et copyright"),
+            "Deutsch": ("Füllen Sie die Seitenleiste aus, erstellen Sie dann den Index und beginnen Sie zu schreiben. Die vollständige Anleitung steht unten bereit.", "📚 Vollständige Anleitung und Regeln", "✨ Funktionen, Speichern und Copyright"),
+            "Română": ("Completează bara laterală, apoi generează cuprinsul și începe să scrii. Instrucțiunile complete rămân disponibile mai jos.", "📚 Ghid complet și reguli de utilizare", "✨ Funcții, salvare și copyright"),
+            "Русский": ("Заполните боковую панель, затем создайте оглавление и начните писать. Полные инструкции доступны ниже.", "📚 Полное руководство и правила", "✨ Функции, сохранение и copyright"),
+            "العربية": ("أكمل الشريط الجانبي ثم أنشئ الفهرس وابدأ الكتابة. التعليمات الكاملة متاحة أدناه.", "📚 الدليل الكامل وقواعد الاستخدام", "✨ الميزات والحفظ وحقوق النشر"),
+            "中文": ("请先完成侧边栏，然后生成目录并开始写作。完整说明在下方提供。", "📚 完整指南和使用规则", "✨ 功能、保存和版权"),
+        }
+        avviso_guida, etichetta_guida_completa, etichetta_funzioni = avvisi_guida_base.get(lingua_sel, avvisi_guida_base["Italiano"])
+        etichette_prova_notifiche = {
+            "Italiano": "🔔 PROVA NOTIFICHE", "English": "🔔 TEST NOTIFICATIONS", "Español": "🔔 PROBAR NOTIFICACIONES",
+            "Français": "🔔 TESTER LES NOTIFICATIONS", "Deutsch": "🔔 BENACHRICHTIGUNGEN TESTEN", "Română": "🔔 TESTEAZĂ NOTIFICĂRILE",
+            "Русский": "🔔 ПРОВЕРИТЬ УВЕДОМЛЕНИЯ", "العربية": "🔔 اختبار الإشعارات", "中文": "🔔 测试通知"
+        }
+        istruzioni_audio = {
+            "Italiano": "Se non senti il suono, controlla che la scheda del browser non sia silenziata e consenti la riproduzione audio.",
+            "English": "If you do not hear the sound, check that the browser tab is not muted and allow audio playback.",
+            "Español": "Si no oyes el sonido, comprueba que la pestaña no esté silenciada y permite la reproducción de audio.",
+            "Français": "Si vous n’entendez pas le son, vérifiez que l’onglet n’est pas muet et autorisez la lecture audio.",
+            "Deutsch": "Wenn Sie keinen Ton hören, prüfen Sie, ob der Browser-Tab stummgeschaltet ist, und erlauben Sie die Audiowiedergabe.",
+            "Română": "Dacă nu auzi sunetul, verifică dacă fila browserului nu este pe mut și permite redarea audio.",
+            "Русский": "Если звука нет, проверьте, не отключён ли звук у вкладки браузера, и разрешите воспроизведение аудио.",
+            "العربية": "إذا لم تسمع الصوت، تحقق من أن علامة تبويب المتصفح غير مكتومة واسمح بتشغيل الصوت.",
+            "中文": "如果听不到声音，请检查浏览器标签页是否被静音，并允许音频播放。"
+        }
+        with st.expander(etichetta_guida_completa, expanded=False):
+            st.markdown(testo_guida)
+            st.info(guida_personalizzazione.get(lingua_sel, guida_personalizzazione["Italiano"]))
+            st.info(avviso_cervelli_ia.get(lingua_sel, avviso_cervelli_ia["Italiano"]))
+            st.info(avviso_salvataggio_ia.get(lingua_sel, avviso_salvataggio_ia["Italiano"]))
+            st.caption(istruzioni_audio.get(lingua_sel, istruzioni_audio["Italiano"]))
+            if st.button(etichette_prova_notifiche.get(lingua_sel, etichette_prova_notifiche["Italiano"]), key="prova_notifiche"):
+                notifica_sonora("test_notifiche", lingua_sel, ripeti=True)
+        with st.expander(etichetta_funzioni, expanded=False):
+            st.markdown(aggiornamenti_guida_localizzati.get(lingua_sel, aggiornamenti_guida_localizzati["Italiano"]))
 
     # TAB -1: CHAT DELLA NICCHIA. È una ricerca autonoma e non può toccare
     # nessun dato editoriale del progetto corrente.
@@ -13013,11 +13055,11 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             if st.session_state.get("report_originalita_web"):
                 with st.expander("Dettaglio tecnico — verifica copyright sul web", expanded=False):
                     st.info(st.session_state["report_originalita_web"])
-                    st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo web.")
+                    st.caption("Disponibile fino a NUOVO PROGETTO (RESET) o a un nuovo controllo web.")
             if st.session_state.get("report_originalita_web_completa"):
                 with st.expander("Dettaglio tecnico — verifica copyright web completa", expanded=False):
                     st.info(st.session_state["report_originalita_web_completa"])
-                    st.caption("Disponibile fino a RESET PROGETTO o a un nuovo controllo completo.")
+                    st.caption("Disponibile fino a NUOVO PROGETTO (RESET) o a un nuovo controllo completo.")
         st.divider()
         sezioni_controllo_finale = elenco_sezioni_indice_attivo(lista_cap_base)
         sezioni_incomplete_export = sezioni_mancanti_per_esportazione(sezioni_controllo_finale, val_genere)

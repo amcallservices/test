@@ -25,8 +25,8 @@ IT = {
                 ("h2", "Le zone della pagina"),
                 ("tabella", ["Area", "A cosa serve"], [
                     ["Sidebar", "Configura l'account, il cervello AI e il brief editoriale del libro."],
-                    ["Centro del progetto", "Mostra Brief, Indice, Manoscritto, Fonti e il prossimo passo consigliato. Non modifica nulla."],
-                    ["Centro operativo", "Raccoglie la Chat della nicchia e le sezioni 0-5. Segui il percorso oppure apri direttamente ciò che ti serve."],
+                    ["Centro del progetto", "Mostra Brief, Indice, Manoscritto, Fonti e il prossimo passo consigliato. I passaggi hanno gli stessi numeri del menu (-1…5). Non modifica nulla."],
+                    ["Menu operativo", "I pulsanti colorati da -1 a 5: Chat della nicchia e sezioni 0-5. Segui i numeri oppure apri direttamente ciò che ti serve."],
                 ], [0.28, 0.72]),
                 ("h2", "Il percorso consigliato"),
                 ("punti", [
@@ -49,7 +49,7 @@ IT = {
                     ["Ricarica crediti", "Apre pacchetti e pagamento sicuro.", "Quando vuoi acquistare crediti."],
                     ["Invita e guadagna crediti", "Mostra link referral, inviti e premi maturati.", "Per condividere il software."],
                     ["Esci", "Salva una fotografia aggiornata del progetto e chiude la sessione.", "Attendi la schermata di accesso."],
-                    ["Reset progetto", "Cancella il progetto aperto: sidebar, indice, testi, fonti, immagini, memoria e cache.", "Solo per iniziare davvero un progetto nuovo."],
+                    ["Nuovo progetto (reset)", "Cancella il progetto aperto: sidebar, indice, testi, fonti, immagini, memoria e cache.", "Solo per iniziare davvero un progetto nuovo."],
                 ], [0.24, 0.44, 0.32]),
                 ("h2", "Lingua e cervello AI"),
                 ("punti", [
@@ -124,8 +124,8 @@ IT = {
                 ("h2", "Salvataggio e recupero"),
                 ("tabella", ["Pulsante", "Cosa fa"], [
                     ["Salva sessione", "Salva nel tuo account sidebar, progetto, indice, sezioni, fonti, immagini e memoria."],
-                    ["Riaggiorna all'ultima stesura", "Ripristina l'ultima fotografia salvata. Usalo dopo login, logout, refresh o cambio dispositivo."],
-                    ["Aggiorna pagina", "Ricarica l'interfaccia. Dopo modifiche importanti, salva prima la sessione."],
+                    ["Riapri l'ultimo salvataggio", "Ripristina l'ultima fotografia salvata. Usalo dopo login, logout, refresh o cambio dispositivo."],
+                    ["Pulisci messaggi", "Toglie avvisi e messaggi temporanei e ricarica l'interfaccia. Il progetto non cambia."],
                     ["Esci", "Tenta il salvataggio finale prima di chiudere. Per una copia portabile usa anche l'esportazione CSV."],
                 ], [0.32, 0.68]),
             ],
@@ -287,10 +287,10 @@ IT = {
                 ]),
                 ("h2", "Se qualcosa non appare"),
                 ("punti", [
-                    "Dopo login o cambio dispositivo, premi Riaggiorna all'ultima stesura.",
+                    "Dopo login o cambio dispositivo, premi Riapri l'ultimo salvataggio.",
                     "Se una sezione è scritta ma non è visibile, controlla che l'indice sia salvato e sincronizzato.",
                     "Il riquadro Progetto del libro compare in Scrivi il libro dopo aver creato l'indice.",
-                    "Per iniziare un libro nuovo usa Reset progetto: è l'unico comando che cancella l'intero progetto aperto.",
+                    "Per iniziare un libro nuovo usa Nuovo progetto (reset): è l'unico comando che cancella l'intero progetto aperto.",
                 ]),
             ],
         },
@@ -321,8 +321,8 @@ EN = {
                 ("h2", "Areas of the page"),
                 ("tabella", ["Area", "What it is for"], [
                     ["Sidebar", "Sets up the account, the AI engine and the editorial brief of the book."],
-                    ["Project Centre", "Shows Brief, Outline, Manuscript, Sources and the next recommended step. It changes nothing."],
-                    ["Operational Centre", "Contains the Niche chat and sections 0-5. Follow the path or open what you need directly."],
+                    ["Project Centre", "Shows Brief, Outline, Manuscript, Sources and the next recommended step. The steps use the same numbers as the menu (-1…5). It changes nothing."],
+                    ["Operational menu", "The coloured buttons from -1 to 5: Niche chat and sections 0-5. Follow the numbers or open what you need directly."],
                 ], [0.28, 0.72]),
                 ("h2", "Recommended path"),
                 ("punti", [
@@ -344,7 +344,7 @@ EN = {
                     ["Top up credits", "Opens packages and secure payment.", "When you want to buy credits."],
                     ["Invite and earn credits", "Shows referral link, invitations and rewards.", "To share the software."],
                     ["Sign out", "Saves an updated snapshot of the project and closes the session.", "Wait for the sign-in screen."],
-                    ["Reset project", "Deletes the open project: sidebar, outline, texts, sources, images, memory and cache.", "Only to really start a new project."],
+                    ["New project (reset)", "Deletes the open project: sidebar, outline, texts, sources, images, memory and cache.", "Only to really start a new project."],
                 ], [0.24, 0.44, 0.32]),
                 ("h2", "Language and AI engine"),
                 ("punti", [
@@ -417,8 +417,8 @@ EN = {
                 ("h2", "Saving and recovery"),
                 ("tabella", ["Button", "What it does"], [
                     ["Save session", "Saves sidebar, plan, outline, sections, sources, images and memory to your account."],
-                    ["Refresh latest draft", "Restores the last saved snapshot. Use it after sign-in, sign-out, refresh or a device change."],
-                    ["Refresh page", "Reloads the interface. After important edits, save the session first."],
+                    ["Reopen last save", "Restores the last saved snapshot. Use it after sign-in, sign-out, refresh or a device change."],
+                    ["Clear messages", "Removes temporary notices and messages and reloads the interface. Your project does not change."],
                     ["Sign out", "Attempts a final save before closing. For a portable copy also use the CSV export."],
                 ], [0.32, 0.68]),
             ],
@@ -575,10 +575,10 @@ EN = {
                 ]),
                 ("h2", "If something does not appear"),
                 ("punti", [
-                    "After signing in or changing device, press Refresh latest draft.",
+                    "After signing in or changing device, press Reopen last save.",
                     "If a section is written but not visible, check that the outline is saved and synchronized.",
                     "The Book plan panel appears in Write the book once the outline exists.",
-                    "To start a new book use Reset project: it is the only command that deletes the whole open project.",
+                    "To start a new book use New project (reset): it is the only command that deletes the whole open project.",
                 ]),
             ],
         },

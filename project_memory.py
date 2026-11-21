@@ -448,7 +448,7 @@ def rimuovi_sezioni_fuori_indice(
     È chiamata solo quando l'autore applica un nuovo indice. Impedisce che
     capitoli della struttura precedente restino nella coda, nell'anteprima o
     negli export. Un indice vuoto non viene interpretato come un comando di
-    cancellazione: per quello esiste RESET PROGETTO.
+    cancellazione: per quello esiste NUOVO PROGETTO (RESET).
     """
     attive_ordinate = list(dict.fromkeys(
         str(sezione or "").strip()
