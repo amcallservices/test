@@ -1560,6 +1560,10 @@ def _landing_page() -> None:
     editorial_css = Path(__file__).resolve().parent / "assets" / "home_editorial.css"
     if editorial_css.is_file():
         st.markdown(f"<style>{editorial_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+    # Effetti al passaggio del mouse e animazioni leggere, solo sulla home.
+    interactions_css = Path(__file__).resolve().parent / "assets" / "home_interactions.css"
+    if interactions_css.is_file():
+        st.markdown(f"<style>{interactions_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
     language_spacer, language_picker = st.columns([0.82, 0.18])
     with language_picker:
