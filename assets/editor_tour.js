@@ -62,6 +62,28 @@
       else if (ev.key === "ArrowLeft") { vai(-1); }
     }
 
+    // ---- Telefono: la sidebar copre la pagina, quindi la visita la apre per i
+    // passi della sidebar e la chiude per quelli della pagina. ----
+    const SEL_SIDEBAR = '[data-testid="stSidebar"]';
+    function telefono() { return win.innerWidth < 768; }
+    function sidebarAperta() {
+      const sb = doc.querySelector(SEL_SIDEBAR);
+      return !!sb && sb.getBoundingClientRect().right > 120;
+    }
+    function preparaSidebar(p, fatto) {
+      if (!telefono() || !p.sel) { fatto(); return; }
+      const el = doc.querySelector(p.sel);
+      if (!el) { fatto(); return; }
+      const vuoleAperta = p.sel === SEL_SIDEBAR || !!el.closest(SEL_SIDEBAR);
+      if (sidebarAperta() === vuoleAperta) { fatto(); return; }
+      const bottone = vuoleAperta
+        ? doc.querySelector('[data-testid="stExpandSidebarButton"]') || doc.querySelector('button[aria-controls="stSidebar"][aria-expanded="false"]')
+        : doc.querySelector('[data-testid="stSidebarCollapseButton"] button') || doc.querySelector('button[aria-controls="stSidebar"][aria-expanded="true"]');
+      if (!bottone) { fatto(); return; }
+      bottone.click();
+      win.setTimeout(fatto, 520);   // attende la fine dell'animazione della sidebar
+    }
+
     function bersaglio() {
       const p = passi[i];
       if (!p || !p.sel) { return null; }
@@ -92,9 +114,11 @@
         return;
       }
       const r = el.getBoundingClientRect();
-      const m = 6;
-      const top = Math.min(Math.max(4, r.top - m), vh - 24), left = Math.min(Math.max(4, r.left - m), vw - 24);
-      const w = Math.max(20, Math.min(vw - left - 4, r.width + 2 * m)), h = Math.max(20, Math.min(vh - top - 4, r.height + 2 * m));
+      const m = el.matches(SEL_SIDEBAR) ? -2 : 6;
+      const top = Math.min(Math.max(3, r.top - m), vh - 24);
+      const left = Math.min(Math.max(3, r.left - m), vw - 24);
+      const destra = Math.min(vw - 3, r.right + m), basso = Math.min(vh - 3, r.bottom + m);
+      const w = Math.max(20, destra - left), h = Math.max(20, basso - top);
       luce.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + w + "px;height:" + h + "px;";
       let ft, fl;
       if (r.width < vw * 0.4 && r.right + fw + 24 < vw) {        // a destra (es. sidebar)
@@ -120,6 +144,10 @@
 
     function disegna() {
       const p = passi[i];
+      fumetto.style.visibility = "hidden"; luce.style.opacity = "0";
+      preparaSidebar(p, function () { mostra(p); });
+    }
+    function mostra(p) {
       const ultimo = i === passi.length - 1;
       fumetto.innerHTML = "";
       const t = doc.createElement("b"); t.textContent = p.titolo;
@@ -143,8 +171,14 @@
       // Prima porta l'elemento in vista (scorrimento immediato), poi controlla
       // se è visibile e calcola la posizione sull'elemento già fermo.
       const grezzo = p.sel ? doc.querySelector(p.sel) : null;
-      if (grezzo && grezzo.scrollIntoView) { grezzo.scrollIntoView({ block: "center", behavior: "auto" }); }
+      if (grezzo && grezzo.scrollIntoView && !grezzo.matches(SEL_SIDEBAR)) {
+        // Elementi alti (es. Centro del progetto su telefono): in cima allo
+        // schermo, così il fumetto trova spazio sotto.
+        const alto = grezzo.getBoundingClientRect().height > win.innerHeight * 0.45;
+        grezzo.scrollIntoView({ block: alto ? "start" : "center", behavior: "auto" });
+      }
       posiziona();
+      fumetto.style.visibility = "visible"; luce.style.opacity = "1";
       win.setTimeout(posiziona, 150);
       win.setTimeout(posiziona, 600);
       avanti.focus({ preventScroll: true });
