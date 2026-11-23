@@ -412,3 +412,158 @@
 @media (max-width: 760px) {
   .ss-libro-in-alto .ss-libro { --w: 92vw; }
 }
+
+/* =====================================================================
+   Slide animate di "Come funziona" (logica in home_interactions.js).
+   Senza script resta visibile la prima slide.
+   ===================================================================== */
+.ss-slides {
+  position: relative; margin: 1.1rem 0 1.6rem; padding: 1.4rem 3.4rem 2.6rem; border-radius: 22px; outline: none;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(87, 201, 244, .16), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(167, 139, 250, .14), transparent 55%),
+    linear-gradient(150deg, #0e3152, #0a2238);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, .35), inset 0 0 0 1px rgba(125, 211, 252, .2);
+  overflow: hidden;
+}
+.ss-slides:focus-visible { box-shadow: 0 0 0 3px #8ce4ff, 0 20px 45px rgba(0, 0, 0, .35); }
+/* Tutte le slide nella stessa cella: l'altezza è quella della più alta,
+   così il resto della pagina non "salta" quando cambiano. */
+.ss-slides-pista { display: grid; min-height: 250px; }
+.ss-slide {
+  grid-area: 1 / 1; position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 2rem; align-items: center;
+  opacity: 0; visibility: hidden; transform: translateX(40px);
+  transition: opacity .55s ease, transform .65s var(--ss-ease), visibility 0s linear .65s;
+}
+[dir="rtl"] .ss-slide { transform: translateX(-40px); }
+.ss-slide.attiva { opacity: 1; visibility: visible; transform: none; transition: opacity .55s ease, transform .65s var(--ss-ease), visibility 0s; }
+.ss-slide.uscita { transform: translateX(-40px); }
+[dir="rtl"] .ss-slide.uscita { transform: translateX(40px); }
+.ss-slide-testo { color: #eaf6ff; }
+.ss-slide-num {
+  display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  background: var(--ss-sky); color: #062033; font-weight: 900; font-size: 1.1rem; margin-bottom: .8rem;
+  box-shadow: 0 0 0 6px rgba(87, 201, 244, .16);
+}
+.ss-slide-testo h3 { margin: 0 0 .5rem; color: #fff; font: 700 clamp(1.3rem, 2.6vw, 1.85rem)/1.15 Georgia, serif; }
+.ss-slide-testo p { margin: 0; color: #c7e3f4; font-size: 1.04rem; line-height: 1.55; }
+
+/* Comandi */
+.ss-freccia {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  border: 1px solid rgba(125, 211, 252, .4); background: rgba(13, 53, 84, .85); color: #eaf6ff;
+  font-size: 1.5rem; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0 0 3px;
+  transition: background .2s ease, transform .2s ease;
+}
+.ss-freccia:hover { background: #1689e8; transform: translateY(-50%) scale(1.08); }
+.ss-freccia-prec { left: .7rem; } .ss-freccia-succ { right: .7rem; }
+.ss-punti { position: absolute; left: 0; right: 0; bottom: .9rem; display: flex; justify-content: center; gap: .5rem; }
+.ss-punto {
+  width: 2.2rem; height: .42rem; border: 0; padding: 0; border-radius: 99px; cursor: pointer; overflow: hidden;
+  background: rgba(125, 211, 252, .22);
+}
+.ss-punto span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--ss-sky), var(--ss-accent-2)); }
+.ss-punto.attivo span { width: 100%; }
+.ss-slides.in-corsa .ss-punto.attivo span { width: 0; animation: ss-avanza-slide var(--ss-durata, 6s) linear forwards; }
+.ss-slides.in-pausa .ss-punto.attivo span { animation-play-state: paused; }
+@keyframes ss-avanza-slide { to { width: 100%; } }
+
+/* ---------- Illustrazioni (si animano quando la slide è attiva) ---------- */
+.ss-scena {
+  position: relative; height: 230px; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02));
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .18);
+}
+.ss-scena i, .ss-scena li, .ss-scena span, .ss-scena b { opacity: 1; }
+/* 1. Idea: bolle di chat */
+.ss-bolla { position: absolute; height: 26px; border-radius: 14px; }
+.ss-bolla-u { right: 8%; width: 46%; background: #1689e8; border-bottom-right-radius: 4px; }
+.ss-bolla-ai { left: 8%; width: 58%; background: rgba(255, 255, 255, .85); border-bottom-left-radius: 4px; }
+.ss-scena-idea .ss-bolla:nth-of-type(1) { top: 26px; }
+.ss-scena-idea .ss-bolla:nth-of-type(2) { top: 70px; }
+.ss-scena-idea .ss-bolla:nth-of-type(3) { top: 114px; }
+.ss-scena-idea .ss-bolla:nth-of-type(4) { top: 158px; }
+.ss-corta { width: 30% !important; } .ss-lunga { width: 70% !important; }
+.ss-scena-icona { position: absolute; right: 7%; bottom: 10px; font-size: 1.6rem; }
+/* 2. Indice */
+.ss-scena-indice ul { list-style: none; margin: 0; padding: 30px 12% 0 14%; }
+.ss-scena-indice li { display: flex; align-items: center; gap: .7rem; height: 36px; }
+.ss-scena-indice li b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem; background: #2dd4bf; color: #04302a; }
+.ss-scena-indice li i { flex: 1; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, .75); }
+.ss-scena-indice li:nth-child(2) i, .ss-scena-indice li:nth-child(4) i { margin-left: 1.2rem; background: rgba(255, 255, 255, .5); }
+.ss-lente { position: absolute; left: 4%; top: 6px; font-size: 1.5rem; }
+.ss-chip { position: absolute; right: 5%; top: 14px; font-size: 1.3rem; }
+.ss-chip-2 { top: auto; bottom: 14px; }
+/* 3. Scrittura */
+.ss-foglio { position: absolute; left: 14%; right: 14%; top: 18px; bottom: 44px; border-radius: 8px; padding: 18px 16px; background: #fffdf8; display: grid; align-content: start; gap: 11px; }
+.ss-foglio i { display: block; height: 8px; border-radius: 4px; background: #c9bfa9; }
+.ss-foglio i:nth-child(1) { width: 55%; height: 12px; background: #1d2433; }
+.ss-barra { position: absolute; left: 14%; right: 14%; bottom: 18px; height: 8px; border-radius: 6px; background: rgba(255, 255, 255, .18); overflow: hidden; }
+.ss-barra span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--ss-sky), var(--ss-accent-2)); }
+.ss-penna { position: absolute; right: 9%; top: 44%; font-size: 1.6rem; }
+/* 4. Controllo */
+.ss-foglio-libro { left: 22%; right: 22%; }
+.ss-badge { position: absolute; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; background: #2dd4bf; color: #04302a; box-shadow: 0 0 0 6px rgba(45, 212, 191, .18); }
+.ss-badge-1 { left: 12%; top: 28px; } .ss-badge-2 { right: 12%; top: 92px; } .ss-badge-3 { left: 14%; bottom: 38px; }
+/* 5. Esporta */
+.ss-scena-esporta { display: flex; align-items: center; justify-content: center; gap: 1.1rem; }
+.ss-file { width: 64px; height: 82px; border-radius: 8px 20px 8px 8px; display: grid; place-items: end center; padding-bottom: 12px; font-weight: 900; font-size: .9rem; color: #fff; box-shadow: 0 10px 22px rgba(0, 0, 0, .35); }
+.ss-file-w { background: linear-gradient(160deg, #2f7ce4, #1b4fae); }
+.ss-file-p { background: linear-gradient(160deg, #ef5350, #b71c1c); }
+.ss-file-c { background: linear-gradient(160deg, #2dbb75, #157a49); }
+.ss-razzo { position: absolute; right: 8%; top: 14px; font-size: 1.7rem; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ss-slide.attiva .ss-bolla { animation: ss-entra-bolla .5s var(--ss-ease) both; }
+  .ss-slide.attiva .ss-bolla:nth-of-type(1) { animation-delay: .2s; }
+  .ss-slide.attiva .ss-bolla:nth-of-type(2) { animation-delay: .8s; }
+  .ss-slide.attiva .ss-bolla:nth-of-type(3) { animation-delay: 1.4s; }
+  .ss-slide.attiva .ss-bolla:nth-of-type(4) { animation-delay: 2s; }
+  @keyframes ss-entra-bolla { from { opacity: 0; transform: translateY(12px) scale(.9); } }
+
+  .ss-slide.attiva .ss-scena-indice li { animation: ss-entra-riga .45s var(--ss-ease) both; }
+  .ss-slide.attiva .ss-scena-indice li:nth-child(1) { animation-delay: .5s; }
+  .ss-slide.attiva .ss-scena-indice li:nth-child(2) { animation-delay: .9s; }
+  .ss-slide.attiva .ss-scena-indice li:nth-child(3) { animation-delay: 1.3s; }
+  .ss-slide.attiva .ss-scena-indice li:nth-child(4) { animation-delay: 1.7s; }
+  .ss-slide.attiva .ss-lente { animation: ss-cerca 1.6s ease-in-out 2; }
+  @keyframes ss-entra-riga { from { opacity: 0; transform: translateX(-14px); } }
+  @keyframes ss-cerca { 50% { transform: translate(14px, 8px) rotate(-12deg); } }
+
+  .ss-slide.attiva .ss-foglio i { animation: ss-scrivi-riga .7s steps(12) both; transform-origin: left; }
+  .ss-slide.attiva .ss-foglio i:nth-child(1) { animation-delay: .3s; }
+  .ss-slide.attiva .ss-foglio i:nth-child(2) { animation-delay: 1s; }
+  .ss-slide.attiva .ss-foglio i:nth-child(3) { animation-delay: 1.7s; }
+  .ss-slide.attiva .ss-foglio i:nth-child(4) { animation-delay: 2.4s; }
+  .ss-slide.attiva .ss-foglio i:nth-child(5) { animation-delay: 3.1s; }
+  .ss-slide.attiva .ss-barra span { animation: ss-riempi 4s .3s ease-out both; }
+  .ss-slide.attiva .ss-penna { animation: ss-penna 0.7s ease-in-out 6 alternate; }
+  @keyframes ss-scrivi-riga { from { transform: scaleX(0); } }
+  @keyframes ss-riempi { from { width: 0; } }
+  @keyframes ss-penna { to { transform: translate(-10px, 6px) rotate(-10deg); } }
+
+  .ss-slide.attiva .ss-badge { animation: ss-timbro .45s var(--ss-ease) both; }
+  .ss-slide.attiva .ss-badge-1 { animation-delay: .6s; }
+  .ss-slide.attiva .ss-badge-2 { animation-delay: 1.2s; }
+  .ss-slide.attiva .ss-badge-3 { animation-delay: 1.8s; }
+  @keyframes ss-timbro { from { opacity: 0; transform: scale(2.2); } }
+
+  .ss-slide.attiva .ss-file { animation: ss-file .55s var(--ss-ease) both; }
+  .ss-slide.attiva .ss-file-w { animation-delay: .3s; }
+  .ss-slide.attiva .ss-file-p { animation-delay: .7s; }
+  .ss-slide.attiva .ss-file-c { animation-delay: 1.1s; }
+  .ss-slide.attiva .ss-razzo { animation: ss-razzo 2.2s 1.6s ease-in both; }
+  @keyframes ss-file { from { opacity: 0; transform: translateY(26px) rotate(-6deg); } }
+  @keyframes ss-razzo { 0% { opacity: 0; transform: translate(-30px, 60px); } 30% { opacity: 1; } 100% { transform: translate(10px, -10px); } }
+}
+
+@media (max-width: 760px) {
+  .ss-slides { padding: 1.1rem 1rem 2.6rem; }
+  .ss-slide { grid-template-columns: 1fr; gap: 1rem; }
+  .ss-scena { height: 180px; }
+  .ss-freccia { top: auto; bottom: .35rem; transform: none; width: 2rem; height: 2rem; font-size: 1.25rem; }
+  .ss-freccia:hover { transform: none; }
+  .ss-freccia-prec { left: .6rem; } .ss-freccia-succ { right: .6rem; }
+  .ss-punti { bottom: .95rem; }
+  .ss-punto { width: 1.5rem; }
+}

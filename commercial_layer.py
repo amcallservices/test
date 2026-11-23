@@ -391,6 +391,91 @@ HOME_BODY_COPY = {
     },
 }
 
+# Slide animate di "Come funziona": (titolo, testo) per i 5 passaggi, più le
+# etichette dei comandi. Le illustrazioni sono disegnate in CSS e non hanno
+# testo, quindi valgono per tutte le lingue.
+HOME_SLIDES = {
+    "Italiano": {"etichetta": "Guarda come funziona", "prec": "Diapositiva precedente", "succ": "Diapositiva successiva", "vai": "Vai alla diapositiva", "slide": (
+        ("Racconta la tua idea", "Scrivi l'idea o rispondi alla chat guidata: compila per te titolo, genere, obiettivo e trama."),
+        ("Fonti e indice", "Il software cerca fonti affidabili e crea un indice professionale, che puoi correggere quando vuoi."),
+        ("Scrittura guidata", "Scrivi una sezione alla volta o tutto il libro: l'AI ricorda personaggi, fatti e stile."),
+        ("Controllo e anteprima", "Controlla coerenza, ripetizioni e originalità, e guarda il libro già impaginato."),
+        ("Esporta e pubblica", "Scarica Word, PDF o CSV, pronti per la revisione o per Amazon KDP."),
+    )},
+    "English": {"etichetta": "See how it works", "prec": "Previous slide", "succ": "Next slide", "vai": "Go to slide", "slide": (
+        ("Share your idea", "Type your idea or answer the guided chat: it fills in title, genre, goal and plot for you."),
+        ("Sources and outline", "The software looks for reliable sources and builds a professional outline you can edit at any time."),
+        ("Guided writing", "Write one section at a time or the whole book: the AI remembers characters, facts and style."),
+        ("Check and preview", "Check coherence, repetitions and originality, and see the book already laid out."),
+        ("Export and publish", "Download Word, PDF or CSV, ready for editing or for Amazon KDP."),
+    )},
+    "Español": {"etichetta": "Mira cómo funciona", "prec": "Diapositiva anterior", "succ": "Diapositiva siguiente", "vai": "Ir a la diapositiva", "slide": (
+        ("Cuenta tu idea", "Escribe tu idea o responde al chat guiado: completa por ti título, género, objetivo y trama."),
+        ("Fuentes e índice", "El software busca fuentes fiables y crea un índice profesional que puedes corregir cuando quieras."),
+        ("Escritura guiada", "Escribe una sección cada vez o todo el libro: la IA recuerda personajes, hechos y estilo."),
+        ("Control y vista previa", "Revisa coherencia, repeticiones y originalidad, y mira el libro ya maquetado."),
+        ("Exporta y publica", "Descarga Word, PDF o CSV, listos para revisar o para Amazon KDP."),
+    )},
+    "Français": {"etichetta": "Voyez comment ça marche", "prec": "Diapositive précédente", "succ": "Diapositive suivante", "vai": "Aller à la diapositive", "slide": (
+        ("Racontez votre idée", "Écrivez votre idée ou répondez au chat guidé : il remplit pour vous titre, genre, objectif et intrigue."),
+        ("Sources et plan", "Le logiciel cherche des sources fiables et crée un plan professionnel, modifiable à tout moment."),
+        ("Écriture guidée", "Rédigez une section à la fois ou tout le livre : l’IA retient personnages, faits et style."),
+        ("Contrôle et aperçu", "Vérifiez cohérence, répétitions et originalité, et voyez le livre déjà mis en page."),
+        ("Exportez et publiez", "Téléchargez Word, PDF ou CSV, prêts pour la relecture ou pour Amazon KDP."),
+    )},
+    "Deutsch": {"etichetta": "So funktioniert es", "prec": "Vorherige Folie", "succ": "Nächste Folie", "vai": "Zur Folie", "slide": (
+        ("Erzählen Sie Ihre Idee", "Schreiben Sie Ihre Idee oder antworten Sie im geführten Chat: Titel, Genre, Ziel und Handlung werden für Sie ausgefüllt."),
+        ("Quellen und Gliederung", "Die Software sucht verlässliche Quellen und erstellt eine professionelle Gliederung, die Sie jederzeit ändern können."),
+        ("Geführtes Schreiben", "Schreiben Sie Abschnitt für Abschnitt oder das ganze Buch: Die KI merkt sich Figuren, Fakten und Stil."),
+        ("Prüfung und Vorschau", "Prüfen Sie Stimmigkeit, Wiederholungen und Originalität und sehen Sie das fertig gesetzte Buch."),
+        ("Exportieren und veröffentlichen", "Laden Sie Word, PDF oder CSV herunter, bereit für das Lektorat oder Amazon KDP."),
+    )},
+    "Română": {"etichetta": "Vezi cum funcționează", "prec": "Diapozitivul anterior", "succ": "Diapozitivul următor", "vai": "Mergi la diapozitivul", "slide": (
+        ("Povestește-ți ideea", "Scrie ideea sau răspunde chatului ghidat: completează pentru tine titlul, genul, obiectivul și subiectul."),
+        ("Surse și cuprins", "Programul caută surse de încredere și creează un cuprins profesionist, pe care îl poți corecta oricând."),
+        ("Scriere ghidată", "Scrie câte o secțiune sau toată cartea: AI-ul ține minte personajele, faptele și stilul."),
+        ("Control și previzualizare", "Verifică coerența, repetițiile și originalitatea și vezi cartea deja paginată."),
+        ("Exportă și publică", "Descarcă Word, PDF sau CSV, gata pentru revizuire sau pentru Amazon KDP."),
+    )},
+    "Русский": {"etichetta": "Посмотрите, как это работает", "prec": "Предыдущий слайд", "succ": "Следующий слайд", "vai": "Перейти к слайду", "slide": (
+        ("Расскажите идею", "Опишите идею или ответьте в управляемом чате: он заполнит за вас название, жанр, цель и сюжет."),
+        ("Источники и оглавление", "Программа ищет надёжные источники и создаёт профессиональное оглавление, которое можно править в любой момент."),
+        ("Управляемое письмо", "Пишите по разделу или всю книгу сразу: ИИ помнит персонажей, факты и стиль."),
+        ("Проверка и просмотр", "Проверьте согласованность, повторы и оригинальность и посмотрите уже свёрстанную книгу."),
+        ("Экспорт и публикация", "Скачайте Word, PDF или CSV — готовые для редактуры или Amazon KDP."),
+    )},
+    "العربية": {"etichetta": "شاهد كيف يعمل", "prec": "الشريحة السابقة", "succ": "الشريحة التالية", "vai": "انتقل إلى الشريحة", "slide": (
+        ("احكِ فكرتك", "اكتب فكرتك أو أجب عن الدردشة الموجّهة: تملأ عنك العنوان والنوع والهدف والحبكة."),
+        ("المصادر والفهرس", "يبحث البرنامج عن مصادر موثوقة وينشئ فهرساً احترافياً يمكنك تعديله في أي وقت."),
+        ("كتابة موجّهة", "اكتب قسماً تلو الآخر أو الكتاب كله: يتذكر الذكاء الاصطناعي الشخصيات والوقائع والأسلوب."),
+        ("المراجعة والمعاينة", "راجع الاتساق والتكرار والأصالة، وشاهد الكتاب منسقاً."),
+        ("صدّر وانشر", "نزّل Word أو PDF أو CSV، جاهزة للمراجعة أو لـ Amazon KDP."),
+    )},
+    "中文": {"etichetta": "看看它如何运作", "prec": "上一张", "succ": "下一张", "vai": "前往第", "slide": (
+        ("说出你的想法", "写下你的想法或回答引导式聊天：它会替你填写书名、类型、目标和情节。"),
+        ("资料与目录", "软件会查找可靠资料并生成专业目录，你可以随时修改。"),
+        ("引导式写作", "逐节写作或一次写完全书：AI 会记住人物、事实和风格。"),
+        ("检查与预览", "检查一致性、重复和原创性，并查看已排版的书。"),
+        ("导出与出版", "下载 Word、PDF 或 CSV，可直接审阅或用于 Amazon KDP。"),
+    )},
+}
+
+# Illustrazioni delle 5 slide (solo forme e icone, nessun testo da tradurre).
+HOME_SLIDE_SCENE = (
+    "<div class='ss-scena ss-scena-idea'><i class='ss-bolla ss-bolla-u'></i><i class='ss-bolla ss-bolla-ai'></i>"
+    "<i class='ss-bolla ss-bolla-u ss-corta'></i><i class='ss-bolla ss-bolla-ai ss-lunga'></i><span class='ss-scena-icona'>💬</span></div>",
+    "<div class='ss-scena ss-scena-indice'><span class='ss-lente'>🔎</span><ul>"
+    "<li><b>✓</b><i></i></li><li><b>✓</b><i></i></li><li><b>✓</b><i></i></li><li><b>✓</b><i></i></li></ul>"
+    "<span class='ss-chip'>🌐</span><span class='ss-chip ss-chip-2'>📚</span></div>",
+    "<div class='ss-scena ss-scena-scrivi'><div class='ss-foglio'><i></i><i></i><i></i><i></i><i></i></div>"
+    "<div class='ss-barra'><span></span></div><span class='ss-penna'>✒️</span></div>",
+    "<div class='ss-scena ss-scena-controllo'><div class='ss-foglio ss-foglio-libro'><i></i><i></i><i></i><i></i></div>"
+    "<span class='ss-badge ss-badge-1'>✓</span><span class='ss-badge ss-badge-2'>✓</span><span class='ss-badge ss-badge-3'>✓</span></div>",
+    "<div class='ss-scena ss-scena-esporta'><span class='ss-file ss-file-w'>W</span><span class='ss-file ss-file-p'>PDF</span>"
+    "<span class='ss-file ss-file-c'>CSV</span><span class='ss-razzo'>🚀</span></div>",
+)
+
+
 HOME_PACKAGE_NAMES = {
     "Italiano": ("Base", "Creator", "Studio", "Professionale"),
     "English": ("Base", "Creator", "Studio", "Professional"),
@@ -1679,9 +1764,31 @@ def _landing_page() -> None:
         f"<b>{title}</b><p>{text}</p></div>"
         for number, title, text in J["cards"]
     )
+    # Slide animate: cambiano da sole (si fermano col mouse sopra), con frecce,
+    # pallini e scorrimento col dito. La logica è in home_interactions.js;
+    # senza script resta visibile la prima slide.
+    D = HOME_SLIDES[home_language]
+    slide_html = "".join(
+        f"<article class='ss-slide{' attiva' if n == 0 else ''}' aria-hidden='{'false' if n == 0 else 'true'}'>"
+        f"<div class='ss-slide-testo'><span class='ss-slide-num'>{n + 1}</span><h3>{titolo}</h3><p>{testo}</p></div>"
+        f"{HOME_SLIDE_SCENE[n]}</article>"
+        for n, (titolo, testo) in enumerate(D["slide"])
+    )
+    punti_html = "".join(
+        f"<button type='button' class='ss-punto{' attivo' if n == 0 else ''}' data-vai='{n}' aria-label='{D['vai']} {n + 1}'><span></span></button>"
+        for n in range(len(D["slide"]))
+    )
+    slide_box = (
+        f"<div class='ss-slides' tabindex='0' role='region' aria-roledescription='carousel' aria-label='{D['etichetta']}'>"
+        f"<div class='ss-slides-pista'>{slide_html}</div>"
+        f"<button type='button' class='ss-freccia ss-freccia-prec' data-passo='-1' aria-label='{D['prec']}'>‹</button>"
+        f"<button type='button' class='ss-freccia ss-freccia-succ' data-passo='1' aria-label='{D['succ']}'>›</button>"
+        f"<div class='ss-punti'>{punti_html}</div></div>"
+    )
     st.markdown(
         f"<section id='ss-percorso' class='ss-home-path' dir='{direzione_home}'>"
         f"<div class='ss-section'><h2>{S['how']}</h2><p class='ss-muted'>{J['core'][1]}</p></div>"
+        f"{slide_box}"
         f"<div class='ss-priority-grid'>{cards_html}</div></section>",
         unsafe_allow_html=True,
     )

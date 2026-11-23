@@ -34,10 +34,79 @@
   doc.addEventListener("scroll", function () { win.requestAnimationFrame(aggiornaScorrimento); }, true);
   win.setInterval(aggiornaScorrimento, 1200);
 
+  // 2) Slide di "Come funziona": avanzano da sole ogni 6 secondi, si fermano
+  //    con il mouse sopra o mentre l'utente le usa; frecce, pallini, tasti
+  //    freccia e scorrimento col dito. Funziona anche su telefono.
+  const DURATA = 6000;
+  function mostraSlide(box, n, verso) {
+    const slide = box.querySelectorAll(".ss-slide");
+    if (!slide.length) { return; }
+    const tot = slide.length;
+    const prima = Number(box.dataset.attiva || 0);
+    n = ((n % tot) + tot) % tot;
+    slide.forEach(function (el, k) {
+      const attiva = k === n;
+      el.classList.toggle("attiva", attiva);
+      el.classList.toggle("uscita", k === prima && !attiva && verso > 0);
+      el.setAttribute("aria-hidden", attiva ? "false" : "true");
+    });
+    box.querySelectorAll(".ss-punto").forEach(function (p, k) { p.classList.toggle("attivo", k === n); });
+    box.dataset.attiva = String(n);
+    box.dataset.da = String(Date.now());
+    // Riavvia la barra di avanzamento del pallino attivo.
+    box.classList.remove("in-corsa"); void box.offsetWidth;
+    if (!fermo) { box.classList.add("in-corsa"); }
+  }
+  function boxDa(el) { return el && el.closest ? el.closest(".ss-slides") : null; }
+  doc.addEventListener("click", function (ev) {
+    const box = boxDa(ev.target);
+    if (!box) { return; }
+    const freccia = ev.target.closest(".ss-freccia");
+    const punto = ev.target.closest(".ss-punto");
+    const attuale = Number(box.dataset.attiva || 0);
+    if (freccia) { const v = Number(freccia.dataset.passo || 1); mostraSlide(box, attuale + v, v); }
+    else if (punto) { const n = Number(punto.dataset.vai || 0); mostraSlide(box, n, n >= attuale ? 1 : -1); }
+  }, true);
+  doc.addEventListener("keydown", function (ev) {
+    const box = boxDa(doc.activeElement);
+    if (!box || (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft")) { return; }
+    const avanti = (ev.key === "ArrowRight") !== (box.closest("[dir=rtl]") !== null);
+    mostraSlide(box, Number(box.dataset.attiva || 0) + (avanti ? 1 : -1), avanti ? 1 : -1);
+    ev.preventDefault();
+  }, true);
+  let tocco = null;
+  doc.addEventListener("pointerdown", function (ev) {
+    const box = boxDa(ev.target);
+    tocco = box && ev.pointerType !== "mouse" ? { box: box, x: ev.clientX, y: ev.clientY } : null;
+  }, { passive: true, capture: true });
+  doc.addEventListener("pointerup", function (ev) {
+    if (!tocco) { return; }
+    const dx = ev.clientX - tocco.x, dy = ev.clientY - tocco.y;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      const avanti = (dx < 0) !== (tocco.box.closest("[dir=rtl]") !== null);
+      mostraSlide(tocco.box, Number(tocco.box.dataset.attiva || 0) + (avanti ? 1 : -1), avanti ? 1 : -1);
+    }
+    tocco = null;
+  }, { passive: true, capture: true });
+  function inPausa(box) {
+    return box.matches(":hover") || box.contains(doc.activeElement) || doc.hidden;
+  }
+  win.setInterval(function () {
+    doc.querySelectorAll(".ss-slides").forEach(function (box) {
+      if (!box.dataset.da) { mostraSlide(box, 0, 1); return; }   // slide appena disegnata
+      const pausa = inPausa(box);
+      box.classList.toggle("in-pausa", pausa);
+      if (pausa) { box.dataset.da = String(Number(box.dataset.da) + 250); return; }
+      if (!fermo && Date.now() - Number(box.dataset.da) >= DURATA) {
+        mostraSlide(box, Number(box.dataset.attiva || 0) + 1, 1);
+      }
+    });
+  }, 250);
+
   if (!mouseVero || fermo) { return; }
 
-  // 2) Schede che si inclinano verso il mouse, con una luce che lo segue.
-  // 3) Pulsanti "magnetici" che si avvicinano leggermente al puntatore.
+  // 3) Schede che si inclinano verso il mouse, con una luce che lo segue.
+  // 4) Pulsanti "magnetici" che si avvicinano leggermente al puntatore.
   let corrente = null, magnete = null, x = 0, y = 0, inAttesa = false;
   function azzera(el) {
     if (!el) { return; }
