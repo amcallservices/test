@@ -7426,7 +7426,9 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     # Il logo è in fondo alla sidebar: in alto restano i comandi.
-    logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo.png")
+    logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo-480.png")
+    if not os.path.isfile(logo_sidebar):
+        logo_sidebar = os.path.join(os.path.dirname(__file__), "assets", "scrittore-site-logo.png")
 
     # La lingua è il primo comando operativo: traduce subito crediti, menu e
     # configurazione, senza modificare i dati già salvati nel progetto.

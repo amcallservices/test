@@ -3,7 +3,10 @@ name: Verifica e riattiva Scrittore Site
 on:
   schedule:
     # Orario UTC; il minuto 17 riduce i ritardi tipici dei lavori avviati all'ora piena.
-    - cron: "17 */4 * * *"
+    # Ogni 2 ore: GitHub ritarda spesso i lavori programmati (nei registri gli
+    # intervalli reali con "ogni 4 ore" arrivavano a 10-14 ore), mentre
+    # Streamlit Community Cloud addormenta l'app dopo circa 12 ore senza visite.
+    - cron: "17 */2 * * *"
   workflow_dispatch:
 
 permissions:

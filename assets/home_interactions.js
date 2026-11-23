@@ -6,7 +6,7 @@
   try { win = window.parent; doc = win.document; } catch (e) { return; }
   // Guardia con versione: dopo un aggiornamento dell'app (senza ricaricare la
   // pagina) la versione nuova parte anche se quella vecchia è ancora attiva.
-  const VERSIONE = "3";
+  const VERSIONE = "4";
   if (!doc || doc.__ssHomeInterattiva === VERSIONE) { return; }
   doc.__ssHomeInterattiva = VERSIONE;
 
@@ -14,7 +14,7 @@
   const mouseVero = win.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const fermo = win.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const SCHEDE = ".ss-priority, .ss-feature-group, .ss-card, .ss-ai-card, .ss-advantage, .ss-languages-hero, .ss-hero-copy, .ss-libro";
-  const MAGNETICI = ".st-key-landing_signup button, .st-key-landing_login button, .st-key-download_private_area_guide_it button, .st-key-download_private_area_guide_en button";
+  const MAGNETICI = ".st-key-landing_signup button, .st-key-landing_login button, .st-key-download_private_area_guide_it button, .st-key-download_private_area_guide_en button, a.ss-guida-pdf";
 
   // 1) Barra di avanzamento della lettura + menu che evidenzia la sezione visibile.
   const sezioni = ["ss-percorso", "ss-funzioni", "ss-vantaggi", "ss-cervelli", "ss-crediti", "ss-faq", "ss-guide"];
