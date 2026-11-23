@@ -567,3 +567,48 @@
   .ss-punti { bottom: .95rem; }
   .ss-punto { width: 1.5rem; }
 }
+
+/* ---------------------------------------------------------------------
+   Slide senza script: se lo script non parte (browser che lo blocca o
+   versione vecchia ancora in memoria) le slide scorrono comunque con il
+   solo CSS, ogni 6 secondi, e si fermano con il mouse sopra. Appena lo
+   script è attivo aggiunge la classe .js e prende il comando.
+   --------------------------------------------------------------------- */
+.ss-slides:not(.js) .ss-freccia { display: none; }
+.ss-slides:not(.js) .ss-slide,
+.ss-slides:not(.js) .ss-slide.attiva {
+  opacity: 0; visibility: hidden; transform: none; transition: none;
+  animation: ss-ciclo-slide 30s linear infinite;
+}
+.ss-slides:not(.js) .ss-slide:nth-child(2) { animation-delay: 6s; }
+.ss-slides:not(.js) .ss-slide:nth-child(3) { animation-delay: 12s; }
+.ss-slides:not(.js) .ss-slide:nth-child(4) { animation-delay: 18s; }
+.ss-slides:not(.js) .ss-slide:nth-child(5) { animation-delay: 24s; }
+.ss-slides:not(.js) .ss-punto span { width: 0; animation: ss-ciclo-punto 30s linear infinite; }
+.ss-slides:not(.js) .ss-punto:nth-child(2) span { animation-delay: 6s; }
+.ss-slides:not(.js) .ss-punto:nth-child(3) span { animation-delay: 12s; }
+.ss-slides:not(.js) .ss-punto:nth-child(4) span { animation-delay: 18s; }
+.ss-slides:not(.js) .ss-punto:nth-child(5) span { animation-delay: 24s; }
+.ss-slides:not(.js):hover .ss-slide,
+.ss-slides:not(.js):hover .ss-punto span { animation-play-state: paused; }
+/* La prima slide è visibile da subito, prima che parta il ciclo. */
+.ss-slides:not(.js) .ss-slide:first-child { animation-name: ss-ciclo-slide-prima; }
+@keyframes ss-ciclo-slide {
+  0% { opacity: 0; visibility: visible; }
+  2%, 18% { opacity: 1; visibility: visible; }
+  20% { opacity: 0; visibility: visible; }
+  20.1%, 100% { opacity: 0; visibility: hidden; }
+}
+@keyframes ss-ciclo-slide-prima {
+  0%, 18% { opacity: 1; visibility: visible; }
+  20% { opacity: 0; visibility: visible; }
+  20.1%, 98% { opacity: 0; visibility: hidden; }
+  100% { opacity: 0; visibility: visible; }
+}
+@keyframes ss-ciclo-punto { 0% { width: 0; } 20% { width: 100%; } 20.1%, 100% { width: 0; } }
+
+/* "Riduci movimento" (es. Windows con Effetti di animazione disattivati):
+   le slide cambiano comunque, con una semplice dissolvenza. */
+@media (prefers-reduced-motion: reduce) {
+  .ss-slide, .ss-slide.uscita, [dir="rtl"] .ss-slide, [dir="rtl"] .ss-slide.uscita { transform: none !important; }
+}

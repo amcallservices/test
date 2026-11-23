@@ -4,8 +4,11 @@
 (function () {
   let doc, win;
   try { win = window.parent; doc = win.document; } catch (e) { return; }
-  if (!doc || doc.__ssHomeInterattiva) { return; }
-  doc.__ssHomeInterattiva = true;
+  // Guardia con versione: dopo un aggiornamento dell'app (senza ricaricare la
+  // pagina) la versione nuova parte anche se quella vecchia è ancora attiva.
+  const VERSIONE = "3";
+  if (!doc || doc.__ssHomeInterattiva === VERSIONE) { return; }
+  doc.__ssHomeInterattiva = VERSIONE;
 
   const radice = doc.documentElement;
   const mouseVero = win.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -55,7 +58,7 @@
     box.dataset.da = String(Date.now());
     // Riavvia la barra di avanzamento del pallino attivo.
     box.classList.remove("in-corsa"); void box.offsetWidth;
-    if (!fermo) { box.classList.add("in-corsa"); }
+    box.classList.add("in-corsa");
   }
   function boxDa(el) { return el && el.closest ? el.closest(".ss-slides") : null; }
   doc.addEventListener("click", function (ev) {
@@ -93,11 +96,14 @@
   }
   win.setInterval(function () {
     doc.querySelectorAll(".ss-slides").forEach(function (box) {
-      if (!box.dataset.da) { mostraSlide(box, 0, 1); return; }   // slide appena disegnata
+      if (!box.dataset.da) {                                      // slide appena disegnata
+        box.classList.add("js");                                  // lo script prende il comando
+        mostraSlide(box, 0, 1); return;
+      }
       const pausa = inPausa(box);
       box.classList.toggle("in-pausa", pausa);
       if (pausa) { box.dataset.da = String(Number(box.dataset.da) + 250); return; }
-      if (!fermo && Date.now() - Number(box.dataset.da) >= DURATA) {
+      if (Date.now() - Number(box.dataset.da) >= DURATA) {
         mostraSlide(box, Number(box.dataset.attiva || 0) + 1, 1);
       }
     });
