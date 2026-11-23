@@ -1,4 +1,7 @@
 [server]
+# Le guide PDF della home sono servite come file statici (static/): il browser
+# le scarica solo quando l'utente clicca, non a ogni apertura della home.
+enableStaticServing = true
 enableCORS = false
 enableXsrfProtection = false
 frameAncestors = ["*"]

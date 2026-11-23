@@ -3,7 +3,7 @@
 Uso (dalla cartella del progetto):
     python tools/guide/genera_guide.py
 
-I testi sono in tools/guide/contenuti.py; i PDF vengono scritti in assets/ con
+I testi sono in tools/guide/contenuti.py; i PDF vengono scritti in static/ con
 gli stessi nomi offerti dalla home. Richiede reportlab e i font Liberation Sans.
 
 Stile ripreso dalle guide originali: copertina con logo, titoli blu notte,
@@ -30,8 +30,8 @@ from contenuti import GUIDE  # noqa: E402
 
 LOGO = RADICE / "assets" / "scrittore-site-logo.png"
 USCITE = {
-    "Italiano": RADICE / "assets" / "scrittore-site-guida-area-riservata-italiano.pdf",
-    "English": RADICE / "assets" / "scrittore-site-private-area-guide-english.pdf",
+    "Italiano": RADICE / "static" / "scrittore-site-guida-area-riservata-italiano.pdf",
+    "English": RADICE / "static" / "scrittore-site-private-area-guide-english.pdf",
 }
 
 pdfmetrics.registerFont(TTFont("Sans", "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"))

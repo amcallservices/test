@@ -1392,18 +1392,18 @@ HOME_GUIDE_FILES = {
 }
 
 
-def _read_public_guide(filename: str) -> bytes | None:
-    """Legge la guida inclusa nel deploy senza conservarne una copia obsoleta.
+def _public_guide_link(filename: str) -> str:
+    """Indirizzo statico della guida, con un numero di versione legato al file.
 
-    I PDF possono essere sostituiti mantenendo lo stesso nome: evitare la cache
-    fa sì che i pulsanti della home offrano sempre la versione pubblicata più
-    recente.
+    Il numero cambia quando il PDF viene rigenerato, così il browser non
+    mostra una copia vecchia rimasta in cache.
     """
-    guide_path = Path(__file__).resolve().parent / "assets" / filename
-    try:
-        return guide_path.read_bytes()
-    except OSError:
-        return None
+    percorso = Path(__file__).resolve().parent / "static" / filename
+    if not percorso.is_file():
+        return ""
+    versione = int(percorso.stat().st_mtime) % 10_000_000 + percorso.stat().st_size
+    return f"app/static/{filename}?v={versione}"
+
 
 # Messaggio visibile nella home pubblica: la lingua scelta dall'utente viene
 # usata dall'editor, dall'indice, dalla chat guidata e dalla stesura.
@@ -1704,7 +1704,10 @@ def _landing_page() -> None:
         unsafe_allow_html=True,
     )
     base_dir = Path(__file__).resolve().parent
-    public_logo = base_dir / "assets" / "scrittore-site-logo.png"
+    # Logo già ridotto (480 px): il server non ridimensiona l'originale a ogni visita.
+    public_logo = base_dir / "assets" / "scrittore-site-logo-480.png"
+    if not public_logo.is_file():
+        public_logo = base_dir / "assets" / "scrittore-site-logo.png"
     # La home resta intenzionalmente testuale: l'idea e il percorso editoriale
     # hanno più valore di una fotografia decorativa e risultano più chiari anche
     # su telefono.
@@ -1879,38 +1882,32 @@ def _landing_page() -> None:
             st.write(risposta)
 
     guide_title, guide_text, italian_guide_label, english_guide_label = HOME_GUIDES_COPY[home_language]
-    italian_guide = _read_public_guide(HOME_GUIDE_FILES["italian"])
-    english_guide = _read_public_guide(HOME_GUIDE_FILES["english"])
+    # Le guide sono file statici (static/, server.enableStaticServing): un link
+    # normale le scarica solo al clic. Prima st.download_button le inviava al
+    # browser (1,7 MB) a ogni apertura della home.
     st.markdown(
         f"<div id='ss-guide' class='ss-section' dir='{direzione_home}'><h2>{guide_title}</h2>"
         f"<p class='ss-muted'>{guide_text}</p></div>",
         unsafe_allow_html=True,
     )
     italian_column, english_column = st.columns(2, gap="medium")
-    with italian_column:
-        if italian_guide:
-            st.download_button(
-                italian_guide_label,
-                data=italian_guide,
-                file_name=f"Guida-area-riservata-Scrittore-Site-Italiano-v{COMMERCIAL_VERSION}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                key="download_private_area_guide_it",
-            )
-        else:
-            st.info("La guida in italiano sarà disponibile a breve.")
-    with english_column:
-        if english_guide:
-            st.download_button(
-                english_guide_label,
-                data=english_guide,
-                file_name=f"Scrittore-Site-Private-Area-Guide-English-v{COMMERCIAL_VERSION}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                key="download_private_area_guide_en",
-            )
-        else:
-            st.info("The English guide will be available soon.")
+    guide_da_mostrare = (
+        (italian_column, "italian", italian_guide_label, f"Guida-area-riservata-Scrittore-Site-Italiano-v{COMMERCIAL_VERSION}.pdf",
+         "La guida in italiano sarà disponibile a breve."),
+        (english_column, "english", english_guide_label, f"Scrittore-Site-Private-Area-Guide-English-v{COMMERCIAL_VERSION}.pdf",
+         "The English guide will be available soon."),
+    )
+    for colonna, lingua_guida, etichetta, nome_file, testo_mancante in guide_da_mostrare:
+        with colonna:
+            link = _public_guide_link(HOME_GUIDE_FILES[lingua_guida])
+            if link:
+                st.markdown(
+                    f"<a class='ss-guida-pdf ss-guida-pdf-{lingua_guida}' href='{link}' download='{nome_file}' "
+                    f"target='_blank' rel='noopener'>{etichetta}</a>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info(testo_mancante)
     return
 
     st.markdown("<div class='ss-section'><h2>Da un’idea a un libro: un esempio concreto</h2><p class='ss-muted'>La stessa idea passa dalla sidebar all’indice, poi diventa un manoscritto controllabile e modificabile.</p></div>", unsafe_allow_html=True)
