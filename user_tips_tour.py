@@ -395,3 +395,233 @@ TESTI_TOUR = {
     lingua: tuple(base[voce] if isinstance(voce, int) else TESTI_AGGIUNTI[lingua][voce] for voce, _passo in _PASSI)
     for lingua, base in TESTI_BASE.items()
 }
+
+
+# --------------------------------------------------------------------------
+# Comandi che compaiono più avanti (dopo la chat, dopo l'indice, durante la
+# stesura...). Non esistono ancora nella pagina: la visita apre la scheda in
+# cui compariranno e nel fumetto mostra un'anteprima dei pulsanti.
+# Ogni voce: (titolo, testo, ((etichetta, stile), ...)); stile = oro | vuoto | corallo.
+# --------------------------------------------------------------------------
+_O, _V, _C = "oro", "vuoto", "corallo"
+
+COMPARIRA = {
+    "Italiano": "Comparirà così:", "English": "It will look like this:", "Español": "Aparecerá así:",
+    "Français": "Cela apparaîtra ainsi :", "Deutsch": "So wird es aussehen:", "Română": "Va apărea așa:",
+    "Русский": "Это появится так:", "العربية": "سيظهر هكذا:", "中文": "之后会显示为：",
+}
+
+ANTEPRIME = {
+    "Italiano": {
+        "dopo_chat": ("Quando la chat ha finito", "Compaiono questi pulsanti: riempi solo i campi ancora vuoti della sidebar oppure sostituisci tutto con la proposta. Poi puoi ricominciare con una nuova chat.",
+                      (("Compila solo i campi vuoti", _O), ("Sostituisci tutti i campi", _V), ("Nuova chat", _V))),
+        "voto_indice": ("Dopo aver generato l'indice", "Puoi chiedere un voto editoriale: arriva una proposta migliorata che applichi con un clic. Poi salva e sincronizza i capitoli per passare alla scrittura.",
+                        (("Valuta l'indice", _V), ("✅ Applica e sincronizza la proposta", _O), ("✅ Salva e sincronizza capitoli", _O))),
+        "chat_indice": ("Chat per modificare l'indice", "Parli con un editor solo dell'indice: chiedi di aggiungere, unire o spostare capitoli. Confronti la proposta e decidi tu se sincronizzarla o scartarla.",
+                        (("💬 Apri la chat per migliorare l'indice", _O), ("✅ Sincronizza questo indice", _O), ("↺ Scarta la proposta", _V), ("Chiudi e reimposta la chat", _V))),
+        "scrittura": ("I pulsanti di scrittura", "Con l'indice pronto compaiono: scrivi la sezione scelta, scrivi tutto il libro in sequenza oppure rigenera una sezione già scritta.",
+                      (("✨ Scrivi contenuto", _O), ("📚 Scrivi tutto il libro", _O), ("↻ Rigenera sezione", _V))),
+        "controllo_stesura": ("Costo, pausa e stop", "Prima di ogni scrittura vedi il preventivo e confermi tu. Durante la stesura del libro puoi mettere in pausa, riprendere o fermare tutto.",
+                              (("Conferma e avvia", _O), ("Annulla", _V), ("⏸ Pausa", _V), ("▶ Riprendi generazione", _O), ("⏹ Stop definitivo", _C))),
+        "migliora_sezione": ("Migliorare una sezione", "Sotto ogni sezione scritta: rielabora il testo con le tue istruzioni, aggiungi quiz, inserisci un'immagine del capitolo o correggi a mano nel foglio.",
+                             (("🚀 Rielabora con IA", _V), ("🧠 Aggiungi quiz al libro", _V), ("🖼️ Inserisci immagine", _V))),
+        "strumenti_anteprima": ("Strumenti dell'anteprima", "Con le sezioni scritte compaiono: vai a una sezione, cerca nel testo, ascolta con il lettore vocale, chiedi il parere dell'Editor AI e scarica il libro.",
+                                (("Vai a una sezione", _V), ("🔎 Cerca", _V), ("🔊 Ascolta", _V), ("Parere dell'Editor AI", _V), ("📥 Scarica Word", _O), ("📥 Scarica PDF", _O))),
+        "strumenti_export": ("Copia, ripristino e originalità", "Scarica il progetto completo in CSV, ricaricalo per riprendere il lavoro e avvia il controllo di originalità rispetto alle fonti.",
+                             (("📥 Esporta progetto CSV", _O), ("📤 Importa e ripristina progetto", _V), ("Controllo originalità", _V))),
+        "strumenti_formato": ("Formattazione pronta", "Dopo aver caricato il file Word compaiono i pulsanti per formattarlo a 6×9 per KDP e scaricarlo.",
+                              (("Formatta documento", _O), ("📥 Scarica Word formattato", _V))),
+    },
+    "English": {
+        "dopo_chat": ("When the chat is done", "These buttons appear: fill only the empty sidebar fields or replace everything with the proposal. Then you can start a new chat.",
+                      (("Fill only empty fields", _O), ("Replace all fields", _V), ("New chat", _V))),
+        "voto_indice": ("After generating the outline", "Ask for an editorial score: you get an improved proposal you apply with one click. Then save and sync the chapters to start writing.",
+                        (("Score the outline", _V), ("✅ Apply and sync the proposal", _O), ("✅ Save and sync chapters", _O))),
+        "chat_indice": ("Chat to edit the outline", "Talk to an editor about the outline only: add, merge or move chapters. Compare the proposal and decide whether to sync or discard it.",
+                        (("💬 Open the chat to improve the outline", _O), ("✅ Sync this outline", _O), ("↺ Discard the proposal", _V), ("Close and reset the chat", _V))),
+        "scrittura": ("Writing buttons", "With the outline ready you get: write the selected section, write the whole book in sequence, or regenerate a section already written.",
+                      (("✨ Write content", _O), ("📚 Write the whole book", _O), ("↻ Regenerate section", _V))),
+        "controllo_stesura": ("Cost, pause and stop", "Before every writing step you see a quote and confirm it. While the book is being written you can pause, resume or stop everything.",
+                              (("Confirm and start", _O), ("Cancel", _V), ("⏸ Pause", _V), ("▶ Resume", _O), ("⏹ Stop", _C))),
+        "migliora_sezione": ("Improve a section", "Under each written section: rework the text with your instructions, add quizzes, insert a chapter image or edit by hand on the page.",
+                             (("🚀 Rework with AI", _V), ("🧠 Add quizzes", _V), ("🖼️ Insert image", _V))),
+        "strumenti_anteprima": ("Preview tools", "Once sections are written: jump to a section, search the text, listen with the voice reader, ask the AI Editor and download the book.",
+                                (("Go to a section", _V), ("🔎 Search", _V), ("🔊 Listen", _V), ("AI Editor feedback", _V), ("📥 Download Word", _O), ("📥 Download PDF", _O))),
+        "strumenti_export": ("Backup, restore and originality", "Download the full project as CSV, upload it again to resume, and run the originality check against your sources.",
+                             (("📥 Export project CSV", _O), ("📤 Import and restore project", _V), ("Originality check", _V))),
+        "strumenti_formato": ("Formatting ready", "After uploading the Word file you get the buttons to format it 6×9 for KDP and download it.",
+                              (("Format document", _O), ("📥 Download formatted Word", _V))),
+    },
+    "Español": {
+        "dopo_chat": ("Cuando el chat termina", "Aparecen estos botones: rellena solo los campos vacíos de la barra lateral o sustituye todo con la propuesta. Luego puedes empezar un chat nuevo.",
+                      (("Rellenar solo campos vacíos", _O), ("Sustituir todos los campos", _V), ("Nuevo chat", _V))),
+        "voto_indice": ("Tras generar el índice", "Pide una valoración editorial: recibes una propuesta mejorada que aplicas con un clic. Luego guarda y sincroniza los capítulos para escribir.",
+                        (("Valorar el índice", _V), ("✅ Aplicar y sincronizar la propuesta", _O), ("✅ Guardar y sincronizar capítulos", _O))),
+        "chat_indice": ("Chat para modificar el índice", "Hablas con un editor solo del índice: añade, une o mueve capítulos. Comparas la propuesta y decides si sincronizarla o descartarla.",
+                        (("💬 Abrir el chat para mejorar el índice", _O), ("✅ Sincronizar este índice", _O), ("↺ Descartar la propuesta", _V), ("Cerrar y reiniciar el chat", _V))),
+        "scrittura": ("Botones de escritura", "Con el índice listo aparecen: escribe la sección elegida, escribe todo el libro en secuencia o regenera una sección ya escrita.",
+                      (("✨ Escribir contenido", _O), ("📚 Escribir todo el libro", _O), ("↻ Regenerar sección", _V))),
+        "controllo_stesura": ("Coste, pausa y parada", "Antes de cada escritura ves el presupuesto y confirmas tú. Mientras se escribe el libro puedes pausar, reanudar o detenerlo todo.",
+                              (("Confirmar e iniciar", _O), ("Cancelar", _V), ("⏸ Pausa", _V), ("▶ Reanudar", _O), ("⏹ Parar", _C))),
+        "migliora_sezione": ("Mejorar una sección", "Bajo cada sección escrita: reelabora el texto con tus instrucciones, añade cuestionarios, inserta una imagen del capítulo o corrige a mano.",
+                             (("🚀 Reelaborar con IA", _V), ("🧠 Añadir cuestionarios", _V), ("🖼️ Insertar imagen", _V))),
+        "strumenti_anteprima": ("Herramientas de vista previa", "Con secciones escritas: ir a una sección, buscar en el texto, escuchar con el lector de voz, pedir la opinión del Editor IA y descargar el libro.",
+                                (("Ir a una sección", _V), ("🔎 Buscar", _V), ("🔊 Escuchar", _V), ("Opinión del Editor IA", _V), ("📥 Descargar Word", _O), ("📥 Descargar PDF", _O))),
+        "strumenti_export": ("Copia, restauración y originalidad", "Descarga el proyecto completo en CSV, vuelve a cargarlo para continuar y lanza el control de originalidad frente a las fuentes.",
+                             (("📥 Exportar proyecto CSV", _O), ("📤 Importar y restaurar proyecto", _V), ("Control de originalidad", _V))),
+        "strumenti_formato": ("Formato listo", "Tras subir el archivo Word aparecen los botones para darle formato 6×9 para KDP y descargarlo.",
+                              (("Dar formato al documento", _O), ("📥 Descargar Word con formato", _V))),
+    },
+    "Français": {
+        "dopo_chat": ("Quand le chat a terminé", "Ces boutons apparaissent : remplissez seulement les champs vides de la barre latérale ou remplacez tout par la proposition. Puis lancez un nouveau chat si besoin.",
+                      (("Remplir seulement les champs vides", _O), ("Remplacer tous les champs", _V), ("Nouveau chat", _V))),
+        "voto_indice": ("Après avoir généré le plan", "Demandez une note éditoriale : vous recevez une proposition améliorée à appliquer en un clic. Puis enregistrez et synchronisez les chapitres pour écrire.",
+                        (("Noter le plan", _V), ("✅ Appliquer et synchroniser la proposition", _O), ("✅ Enregistrer et synchroniser les chapitres", _O))),
+        "chat_indice": ("Chat pour modifier le plan", "Vous parlez à un éditeur uniquement du plan : ajouter, fusionner ou déplacer des chapitres. Vous comparez la proposition et décidez de la synchroniser ou de l'écarter.",
+                        (("💬 Ouvrir le chat pour améliorer le plan", _O), ("✅ Synchroniser ce plan", _O), ("↺ Écarter la proposition", _V), ("Fermer et réinitialiser le chat", _V))),
+        "scrittura": ("Boutons d'écriture", "Avec le plan prêt apparaissent : écrire la section choisie, écrire tout le livre à la suite ou régénérer une section déjà écrite.",
+                      (("✨ Écrire le contenu", _O), ("📚 Écrire tout le livre", _O), ("↻ Régénérer la section", _V))),
+        "controllo_stesura": ("Coût, pause et arrêt", "Avant chaque écriture vous voyez le devis et vous confirmez. Pendant l'écriture du livre vous pouvez mettre en pause, reprendre ou tout arrêter.",
+                              (("Confirmer et lancer", _O), ("Annuler", _V), ("⏸ Pause", _V), ("▶ Reprendre", _O), ("⏹ Arrêt", _C))),
+        "migliora_sezione": ("Améliorer une section", "Sous chaque section écrite : retravaillez le texte avec vos consignes, ajoutez des quiz, insérez une image de chapitre ou corrigez à la main.",
+                             (("🚀 Retravailler avec l'IA", _V), ("🧠 Ajouter des quiz", _V), ("🖼️ Insérer une image", _V))),
+        "strumenti_anteprima": ("Outils de l'aperçu", "Avec des sections écrites : aller à une section, chercher dans le texte, écouter avec le lecteur vocal, demander l'avis de l'Éditeur IA et télécharger le livre.",
+                                (("Aller à une section", _V), ("🔎 Chercher", _V), ("🔊 Écouter", _V), ("Avis de l'Éditeur IA", _V), ("📥 Télécharger Word", _O), ("📥 Télécharger PDF", _O))),
+        "strumenti_export": ("Sauvegarde, restauration et originalité", "Téléchargez le projet complet en CSV, réimportez-le pour reprendre et lancez le contrôle d'originalité par rapport aux sources.",
+                             (("📥 Exporter le projet CSV", _O), ("📤 Importer et restaurer le projet", _V), ("Contrôle d'originalité", _V))),
+        "strumenti_formato": ("Mise en forme prête", "Après l'import du fichier Word apparaissent les boutons pour le mettre en forme 6×9 pour KDP et le télécharger.",
+                              (("Mettre en forme", _O), ("📥 Télécharger le Word mis en forme", _V))),
+    },
+    "Deutsch": {
+        "dopo_chat": ("Wenn der Chat fertig ist", "Diese Schaltflächen erscheinen: nur leere Felder der Seitenleiste füllen oder alles durch den Vorschlag ersetzen. Danach können Sie einen neuen Chat starten.",
+                      (("Nur leere Felder füllen", _O), ("Alle Felder ersetzen", _V), ("Neuer Chat", _V))),
+        "voto_indice": ("Nach der Gliederung", "Lassen Sie sie redaktionell bewerten: Sie erhalten einen verbesserten Vorschlag, den Sie mit einem Klick übernehmen. Dann Kapitel speichern und synchronisieren.",
+                        (("Gliederung bewerten", _V), ("✅ Vorschlag übernehmen und synchronisieren", _O), ("✅ Kapitel speichern und synchronisieren", _O))),
+        "chat_indice": ("Chat zur Gliederung", "Sie sprechen mit einem Lektor nur über die Gliederung: Kapitel hinzufügen, zusammenlegen oder verschieben. Sie vergleichen und entscheiden selbst.",
+                        (("💬 Chat zur Verbesserung öffnen", _O), ("✅ Diese Gliederung synchronisieren", _O), ("↺ Vorschlag verwerfen", _V), ("Chat schließen und zurücksetzen", _V))),
+        "scrittura": ("Schreib-Schaltflächen", "Mit fertiger Gliederung erscheinen: gewählten Abschnitt schreiben, das ganze Buch nacheinander schreiben oder einen Abschnitt neu erzeugen.",
+                      (("✨ Inhalt schreiben", _O), ("📚 Ganzes Buch schreiben", _O), ("↻ Abschnitt neu erzeugen", _V))),
+        "controllo_stesura": ("Kosten, Pause und Stopp", "Vor jedem Schreiben sehen Sie die Kosten und bestätigen selbst. Während das Buch entsteht, können Sie pausieren, fortsetzen oder alles stoppen.",
+                              (("Bestätigen und starten", _O), ("Abbrechen", _V), ("⏸ Pause", _V), ("▶ Fortsetzen", _O), ("⏹ Stopp", _C))),
+        "migliora_sezione": ("Einen Abschnitt verbessern", "Unter jedem Abschnitt: Text mit eigenen Anweisungen überarbeiten, Quiz hinzufügen, ein Kapitelbild einfügen oder von Hand korrigieren.",
+                             (("🚀 Mit KI überarbeiten", _V), ("🧠 Quiz hinzufügen", _V), ("🖼️ Bild einfügen", _V))),
+        "strumenti_anteprima": ("Werkzeuge der Vorschau", "Mit geschriebenen Abschnitten: zu einem Abschnitt springen, im Text suchen, vorlesen lassen, den KI-Lektor fragen und das Buch herunterladen.",
+                                (("Zu einem Abschnitt", _V), ("🔎 Suchen", _V), ("🔊 Anhören", _V), ("Meinung des KI-Lektors", _V), ("📥 Word herunterladen", _O), ("📥 PDF herunterladen", _O))),
+        "strumenti_export": ("Sicherung, Wiederherstellung, Originalität", "Laden Sie das ganze Projekt als CSV herunter, laden Sie es wieder hoch, um weiterzuarbeiten, und starten Sie die Originalitätsprüfung.",
+                             (("📥 Projekt als CSV exportieren", _O), ("📤 Projekt importieren und wiederherstellen", _V), ("Originalitätsprüfung", _V))),
+        "strumenti_formato": ("Formatierung bereit", "Nach dem Hochladen der Word-Datei erscheinen die Schaltflächen, um sie für KDP auf 6×9 zu formatieren und herunterzuladen.",
+                              (("Dokument formatieren", _O), ("📥 Formatiertes Word herunterladen", _V))),
+    },
+    "Română": {
+        "dopo_chat": ("Când chatul a terminat", "Apar aceste butoane: completezi doar câmpurile goale ale barei laterale sau înlocuiești totul cu propunerea. Apoi poți începe un chat nou.",
+                      (("Completează doar câmpurile goale", _O), ("Înlocuiește toate câmpurile", _V), ("Chat nou", _V))),
+        "voto_indice": ("După generarea cuprinsului", "Cere o notă editorială: primești o propunere îmbunătățită pe care o aplici cu un clic. Apoi salvează și sincronizează capitolele pentru scriere.",
+                        (("Evaluează cuprinsul", _V), ("✅ Aplică și sincronizează propunerea", _O), ("✅ Salvează și sincronizează capitolele", _O))),
+        "chat_indice": ("Chat pentru modificarea cuprinsului", "Vorbești cu un editor doar despre cuprins: adaugi, unești sau muți capitole. Compari propunerea și decizi dacă o sincronizezi sau o renunți.",
+                        (("💬 Deschide chatul pentru cuprins", _O), ("✅ Sincronizează acest cuprins", _O), ("↺ Renunță la propunere", _V), ("Închide și resetează chatul", _V))),
+        "scrittura": ("Butoanele de scriere", "Cu cuprinsul gata apar: scrie secțiunea aleasă, scrie toată cartea pe rând sau regenerează o secțiune deja scrisă.",
+                      (("✨ Scrie conținutul", _O), ("📚 Scrie toată cartea", _O), ("↻ Regenerează secțiunea", _V))),
+        "controllo_stesura": ("Cost, pauză și oprire", "Înainte de fiecare scriere vezi devizul și confirmi tu. În timpul scrierii cărții poți pune pauză, relua sau opri totul.",
+                              (("Confirmă și pornește", _O), ("Anulează", _V), ("⏸ Pauză", _V), ("▶ Reia", _O), ("⏹ Oprire", _C))),
+        "migliora_sezione": ("Îmbunătățește o secțiune", "Sub fiecare secțiune: reelaborează textul cu instrucțiunile tale, adaugă teste, inserează o imagine a capitolului sau corectează manual.",
+                             (("🚀 Reelaborează cu AI", _V), ("🧠 Adaugă teste", _V), ("🖼️ Inserează imagine", _V))),
+        "strumenti_anteprima": ("Instrumentele previzualizării", "Cu secțiuni scrise: mergi la o secțiune, caută în text, ascultă cu cititorul vocal, cere părerea Editorului AI și descarcă cartea.",
+                                (("Mergi la o secțiune", _V), ("🔎 Caută", _V), ("🔊 Ascultă", _V), ("Părerea Editorului AI", _V), ("📥 Descarcă Word", _O), ("📥 Descarcă PDF", _O))),
+        "strumenti_export": ("Copie, restaurare și originalitate", "Descarcă proiectul complet în CSV, reîncarcă-l pentru a continua și pornește verificarea originalității față de surse.",
+                             (("📥 Exportă proiectul CSV", _O), ("📤 Importă și restaurează proiectul", _V), ("Verificarea originalității", _V))),
+        "strumenti_formato": ("Formatare gata", "După încărcarea fișierului Word apar butoanele pentru formatarea 6×9 pentru KDP și descărcare.",
+                              (("Formatează documentul", _O), ("📥 Descarcă Word formatat", _V))),
+    },
+    "Русский": {
+        "dopo_chat": ("Когда чат закончен", "Появляются кнопки: заполнить только пустые поля боковой панели или заменить всё предложением. Затем можно начать новый чат.",
+                      (("Заполнить только пустые поля", _O), ("Заменить все поля", _V), ("Новый чат", _V))),
+        "voto_indice": ("После создания оглавления", "Запросите редакторскую оценку: придёт улучшенный вариант, который применяется одним кликом. Затем сохраните и синхронизируйте главы.",
+                        (("Оценить оглавление", _V), ("✅ Применить и синхронизировать", _O), ("✅ Сохранить и синхронизировать главы", _O))),
+        "chat_indice": ("Чат для правки оглавления", "Вы обсуждаете с редактором только оглавление: добавить, объединить или переставить главы. Сравните вариант и решите сами — синхронизировать или отклонить.",
+                        (("💬 Открыть чат по оглавлению", _O), ("✅ Синхронизировать это оглавление", _O), ("↺ Отклонить предложение", _V), ("Закрыть и сбросить чат", _V))),
+        "scrittura": ("Кнопки написания", "Когда оглавление готово: написать выбранный раздел, написать всю книгу подряд или перегенерировать уже написанный раздел.",
+                      (("✨ Написать текст", _O), ("📚 Написать всю книгу", _O), ("↻ Перегенерировать раздел", _V))),
+        "controllo_stesura": ("Стоимость, пауза и стоп", "Перед каждым написанием вы видите расчёт и подтверждаете сами. Во время написания книги можно поставить паузу, продолжить или остановить всё.",
+                              (("Подтвердить и начать", _O), ("Отмена", _V), ("⏸ Пауза", _V), ("▶ Продолжить", _O), ("⏹ Стоп", _C))),
+        "migliora_sezione": ("Улучшить раздел", "Под каждым разделом: переработать текст по вашим указаниям, добавить тесты, вставить изображение главы или править вручную.",
+                             (("🚀 Переработать с ИИ", _V), ("🧠 Добавить тесты", _V), ("🖼️ Вставить изображение", _V))),
+        "strumenti_anteprima": ("Инструменты просмотра", "Когда разделы написаны: перейти к разделу, искать в тексте, слушать голосом, спросить ИИ-редактора и скачать книгу.",
+                                (("Перейти к разделу", _V), ("🔎 Поиск", _V), ("🔊 Слушать", _V), ("Мнение ИИ-редактора", _V), ("📥 Скачать Word", _O), ("📥 Скачать PDF", _O))),
+        "strumenti_export": ("Копия, восстановление и оригинальность", "Скачайте весь проект в CSV, загрузите его снова, чтобы продолжить, и запустите проверку оригинальности.",
+                             (("📥 Экспорт проекта CSV", _O), ("📤 Импорт и восстановление", _V), ("Проверка оригинальности", _V))),
+        "strumenti_formato": ("Вёрстка готова", "После загрузки файла Word появятся кнопки, чтобы сверстать его 6×9 для KDP и скачать.",
+                              (("Сверстать документ", _O), ("📥 Скачать свёрстанный Word", _V))),
+    },
+    "العربية": {
+        "dopo_chat": ("عندما تنتهي الدردشة", "تظهر هذه الأزرار: املأ الحقول الفارغة فقط في الشريط الجانبي أو استبدل كل شيء بالاقتراح. ثم يمكنك بدء دردشة جديدة.",
+                      (("املأ الحقول الفارغة فقط", _O), ("استبدل كل الحقول", _V), ("دردشة جديدة", _V))),
+        "voto_indice": ("بعد إنشاء الفهرس", "اطلب تقييماً تحريرياً: تصلك نسخة محسّنة تطبقها بنقرة واحدة. ثم احفظ الفصول وزامنها لتبدأ الكتابة.",
+                        (("قيّم الفهرس", _V), ("✅ طبّق الاقتراح وزامنه", _O), ("✅ احفظ الفصول وزامنها", _O))),
+        "chat_indice": ("دردشة لتعديل الفهرس", "تتحدث مع محرر عن الفهرس فقط: أضف فصولاً أو ادمجها أو انقلها. تقارن الاقتراح وتقرر بنفسك مزامنته أو تجاهله.",
+                        (("💬 افتح دردشة تحسين الفهرس", _O), ("✅ زامن هذا الفهرس", _O), ("↺ تجاهل الاقتراح", _V), ("أغلق الدردشة وأعد ضبطها", _V))),
+        "scrittura": ("أزرار الكتابة", "عندما يجهز الفهرس تظهر: اكتب القسم المختار، أو اكتب الكتاب كله بالتتابع، أو أعد توليد قسم مكتوب.",
+                      (("✨ اكتب المحتوى", _O), ("📚 اكتب الكتاب كله", _O), ("↻ أعد توليد القسم", _V))),
+        "controllo_stesura": ("التكلفة والإيقاف", "قبل كل كتابة ترى التقدير وتؤكد بنفسك. أثناء كتابة الكتاب يمكنك الإيقاف المؤقت أو الاستئناف أو إيقاف كل شيء.",
+                              (("أكّد وابدأ", _O), ("إلغاء", _V), ("⏸ إيقاف مؤقت", _V), ("▶ استئناف", _O), ("⏹ إيقاف", _C))),
+        "migliora_sezione": ("تحسين قسم", "تحت كل قسم مكتوب: أعد صياغة النص بتعليماتك، أضف اختبارات، أدرج صورة للفصل أو صحّح يدوياً.",
+                             (("🚀 أعد الصياغة بالذكاء الاصطناعي", _V), ("🧠 أضف اختبارات", _V), ("🖼️ أدرج صورة", _V))),
+        "strumenti_anteprima": ("أدوات المعاينة", "عند وجود أقسام مكتوبة: انتقل إلى قسم، ابحث في النص، استمع بالقارئ الصوتي، اطلب رأي محرر الذكاء الاصطناعي ونزّل الكتاب.",
+                                (("انتقل إلى قسم", _V), ("🔎 بحث", _V), ("🔊 استمع", _V), ("رأي المحرر الذكي", _V), ("📥 تنزيل Word", _O), ("📥 تنزيل PDF", _O))),
+        "strumenti_export": ("نسخة واستعادة وأصالة", "نزّل المشروع كاملاً بصيغة CSV، وأعد رفعه لمتابعة العمل، وشغّل فحص الأصالة مقارنة بالمصادر.",
+                             (("📥 صدّر المشروع CSV", _O), ("📤 استورد المشروع واستعده", _V), ("فحص الأصالة", _V))),
+        "strumenti_formato": ("التنسيق جاهز", "بعد رفع ملف Word تظهر أزرار تنسيقه بمقاس 6×9 لـ KDP وتنزيله.",
+                              (("نسّق المستند", _O), ("📥 نزّل Word المنسق", _V))),
+    },
+    "中文": {
+        "dopo_chat": ("聊天结束后", "会出现这些按钮：只填写侧边栏中的空白字段，或用建议替换全部内容。之后可以开始新的聊天。",
+                      (("只填写空白字段", _O), ("替换全部字段", _V), ("新聊天", _V))),
+        "voto_indice": ("生成目录后", "可以请求编辑评分：会得到一份改进版，一键即可应用。然后保存并同步章节，开始写作。",
+                        (("为目录评分", _V), ("✅ 应用并同步建议", _O), ("✅ 保存并同步章节", _O))),
+        "chat_indice": ("修改目录的聊天", "只和编辑讨论目录：添加、合并或移动章节。对比建议后由你决定同步还是放弃。",
+                        (("💬 打开目录改进聊天", _O), ("✅ 同步此目录", _O), ("↺ 放弃建议", _V), ("关闭并重置聊天", _V))),
+        "scrittura": ("写作按钮", "目录完成后会出现：写选中的小节、按顺序写完全书，或重新生成已写的小节。",
+                      (("✨ 撰写内容", _O), ("📚 写完全书", _O), ("↻ 重新生成小节", _V))),
+        "controllo_stesura": ("费用、暂停和停止", "每次写作前都会显示报价，由你确认。写书过程中可以暂停、继续或全部停止。",
+                              (("确认并开始", _O), ("取消", _V), ("⏸ 暂停", _V), ("▶ 继续", _O), ("⏹ 停止", _C))),
+        "migliora_sezione": ("改进小节", "每个已写小节下方：按你的要求改写、添加测验、插入章节图片或手动修改。",
+                             (("🚀 AI 改写", _V), ("🧠 添加测验", _V), ("🖼️ 插入图片", _V))),
+        "strumenti_anteprima": ("预览工具", "写好小节后：跳到某一节、在文中搜索、语音朗读、请 AI 编辑给出意见并下载全书。",
+                                (("跳到小节", _V), ("🔎 搜索", _V), ("🔊 朗读", _V), ("AI 编辑意见", _V), ("📥 下载 Word", _O), ("📥 下载 PDF", _O))),
+        "strumenti_export": ("备份、恢复和原创性", "把完整项目下载为 CSV，重新上传即可继续，并对照资料进行原创性检查。",
+                             (("📥 导出项目 CSV", _O), ("📤 导入并恢复项目", _V), ("原创性检查", _V))),
+        "strumenti_formato": ("排版就绪", "上传 Word 文件后会出现按钮，可按 KDP 6×9 排版并下载。",
+                              (("排版文档", _O), ("📥 下载排版后的 Word", _V))),
+    },
+}
+
+# Dopo quale passo esistente va ciascuna anteprima (stessa scheda).
+_DOPO = {
+    16: ("dopo_chat", 0), 18: ("voto_indice", 2), "_18b": ("chat_indice", 2),
+    19: ("scrittura", 3), "_19b": ("controllo_stesura", 3), "_19c": ("migliora_sezione", 3),
+    20: ("strumenti_anteprima", 4), 21: ("strumenti_export", 5), 22: ("strumenti_formato", 6),
+}
+_PASSI_ESTESI = []
+for _voce, _passo in _PASSI:
+    _PASSI_ESTESI.append((_voce, _passo))
+    if isinstance(_voce, int) and _voce in _DOPO:
+        aggiunte = [_DOPO[_voce]] + [v for k, v in _DOPO.items() if isinstance(k, str) and k.startswith(f"_{_voce}")]
+        for nome, scheda in aggiunte:
+            _PASSI_ESTESI.append((("anteprima", nome), {"sel": _SCHEDA.format(scheda + 1), "scheda": scheda, "anteprima": True}))
+_PASSI = tuple(_PASSI_ESTESI)
+PASSI_TOUR = tuple(passo for _testo, passo in _PASSI)
+
+
+def _testo_passo(lingua: str, voce):
+    if isinstance(voce, int):
+        return TESTI_BASE[lingua][voce]
+    if isinstance(voce, tuple):
+        titolo, testo, _pulsanti = ANTEPRIME[lingua][voce[1]]
+        return (titolo, testo)
+    return TESTI_AGGIUNTI[lingua][voce]
+
+
+TESTI_TOUR = {lingua: tuple(_testo_passo(lingua, voce) for voce, _p in _PASSI) for lingua in TESTI_BASE}
+PULSANTI_TOUR = {
+    lingua: tuple(ANTEPRIME[lingua][voce[1]][2] if isinstance(voce, tuple) else () for voce, _p in _PASSI)
+    for lingua in TESTI_BASE
+}

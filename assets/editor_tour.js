@@ -5,7 +5,7 @@
 (function () {
   const DATI = __DATI_TOUR__;
   const FORZA = __FORZA_TOUR__;
-  const CHIAVE = "ss_tour_editor_v3";   // v3: visita integrale (crediti, inviti, contatti, sidebar completa)
+  const CHIAVE = "ss_tour_editor_v4";   // v4: anche i comandi che compaiono più avanti
   let doc, win;
   try { win = window.parent; doc = win.document; } catch (e) { return; }
   if (!doc || doc.__ssTourAttivo) { return; }
@@ -66,6 +66,14 @@
       ".ss-tour-indietro{background:transparent;color:#f4efe6;box-shadow:inset 0 0 0 1px #2d3858}",
       ".ss-tour-avanti{background:#f2b84b;color:#1a1206}",
       ".ss-tour-barra button:focus-visible{outline:3px solid #7cc4f5;outline-offset:2px}",
+      ".ss-tour-anteprima{margin:0 0 .9rem;padding:.7rem;border-radius:12px;background:#0a0e1a;border:1px dashed #2d3858}",
+      ".ss-tour-anteprima small{display:block;margin-bottom:.5rem;color:#8e99b3;font-weight:700;font-size:12px;letter-spacing:.04em}",
+      ".ss-tour-pulsanti{display:flex;flex-wrap:wrap;gap:.4rem}",
+      ".ss-tour-pulsanti span{display:inline-block;padding:.4rem .7rem;border-radius:9px;font:700 12.5px/1.25 'Source Sans 3','Source Sans Pro',system-ui,sans-serif}",
+      ".ss-tour-pulsanti .oro{background:#f2b84b;color:#1a1206}",
+      ".ss-tour-pulsanti .vuoto{border:1px solid #2d3858;color:#f4efe6}",
+      ".ss-tour-pulsanti .corallo{border:1px solid #5a2f2f;color:#f5a38f}",
+      ".ss-tour-fumetto.con-anteprima{max-width:min(400px,calc(100vw - 32px))}",
       ".ss-tour-avanzamento{height:3px;border-radius:3px;background:#1c2540;margin:0 0 .8rem;overflow:hidden}",
       ".ss-tour-avanzamento i{display:block;height:100%;background:#f2b84b;transition:width .35s ease}"
     ].join("");
@@ -205,7 +213,19 @@
       const avanzamento = doc.createElement("div"); avanzamento.className = "ss-tour-avanzamento";
       const pieno = doc.createElement("i"); pieno.style.width = ((i + 1) / passi.length * 100) + "%";
       avanzamento.appendChild(pieno);
-      fumetto.appendChild(avanzamento); fumetto.appendChild(t); fumetto.appendChild(x); fumetto.appendChild(barra);
+      fumetto.appendChild(avanzamento); fumetto.appendChild(t); fumetto.appendChild(x);
+      // Comandi che compariranno più avanti: anteprima con le stesse etichette.
+      fumetto.classList.toggle("con-anteprima", !!(p.pulsanti && p.pulsanti.length));
+      if (p.pulsanti && p.pulsanti.length) {
+        const box = doc.createElement("div"); box.className = "ss-tour-anteprima";
+        const nota = doc.createElement("small"); nota.textContent = DATI.comparira || "";
+        const riga = doc.createElement("div"); riga.className = "ss-tour-pulsanti";
+        p.pulsanti.forEach(function (b) {
+          const el = doc.createElement("span"); el.className = b.s || "vuoto"; el.textContent = b.t; riga.appendChild(el);
+        });
+        box.appendChild(nota); box.appendChild(riga); fumetto.appendChild(box);
+      }
+      fumetto.appendChild(barra);
       // Prima porta l'elemento in vista (scorrimento immediato), poi controlla
       // se è visibile e calcola la posizione sull'elemento già fermo.
       const grezzo = trova(p);
