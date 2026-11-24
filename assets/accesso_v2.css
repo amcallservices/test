@@ -1,0 +1,32 @@
+/* =====================================================================
+   Pagina di accesso, registrazione e recupero password: stessa grafica
+   "inchiostro e oro" di home e area riservata (gli stili di campi,
+   pulsanti e schede vengono da area_v2.css). Solo aspetto: il
+   funzionamento di accesso e registrazione non cambia.
+   ===================================================================== */
+/* Barra di Streamlit in alto (Fork, GitHub, menu): non serve agli utenti. */
+[data-testid="stHeader"], header.stAppHeader, [data-testid="stToolbar"], [data-testid="stToolbarActions"],
+[data-testid="stDecoration"], [data-testid="stStatusWidget"], #MainMenu, .stAppDeployButton { display: none !important; }
+[data-testid="stMainBlockContainer"] { max-width: 560px !important; padding-top: 3.2rem !important; padding-bottom: 4rem !important; }
+[data-testid="stMain"] h1 {
+  font-family: "Fraunces", Georgia, serif !important; font-weight: 500 !important; letter-spacing: -.02em;
+  font-size: clamp(2.2rem, 6vw, 3rem) !important; line-height: 1.05 !important; color: #fbf7ef !important;
+}
+[data-testid="stMain"] h1::before {
+  content: ""; display: block; width: 2.6rem; height: 3px; margin-bottom: 1.1rem; border-radius: 3px; background: #f2b84b;
+}
+[data-testid="stMain"] h1 a { display: none !important; }
+/* Il riquadro con le schede Accedi / Crea account */
+[data-testid="stMain"] [data-testid="stTabs"] {
+  margin-top: 1.2rem; padding: 1.4rem 1.4rem 1.2rem; border-radius: 22px;
+  background: #121a2e; border: 1px solid #24304d;
+}
+[data-testid="stMain"] [data-testid="stTabs"] [role="tablist"] { padding: 4px !important; }
+[data-testid="stMain"] [data-testid="stTabs"] [role="tab"] { flex: 1 1 0; justify-content: center; }
+[data-testid="stMain"] [data-testid="stTabs"] [role="tab"][aria-selected="true"] { background: #f2b84b !important; border-color: #f2b84b !important; }
+[data-testid="stMain"] .stButton button[kind="primary"] { min-height: 3rem; padding-left: 1.6rem !important; padding-right: 1.6rem !important; }
+/* "Torna alla home" come collegamento discreto */
+.st-key-commercial_back_to_home button {
+  border: 0 !important; background: transparent !important; color: #b6bfd3 !important; padding-left: 0 !important; min-height: 0 !important;
+}
+.st-key-commercial_back_to_home button:hover { color: #f2b84b !important; background: transparent !important; transform: none !important; }
