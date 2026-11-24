@@ -488,7 +488,7 @@ def aiuto_campo(chiave: str, lingua: str) -> str:
 # Selettore vuoto = fumetto al centro della pagina.
 # I passi (elemento indicato, scheda da aprire) e i testi completi sono in
 # user_tips_tour.py; qui restano i pulsanti della visita.
-from user_tips_tour import PASSI_TOUR, TESTI_TOUR  # noqa: E402
+from user_tips_tour import COMPARIRA, PASSI_TOUR, PULSANTI_TOUR, TESTI_TOUR  # noqa: E402
 
 SELETTORI_TOUR = PASSI_TOUR
 TOUR = {
@@ -611,12 +611,16 @@ for _lingua, _voci in TOUR.items():
 def dati_tour(lingua: str) -> dict:
     """Testi e selettori della visita guidata, pronti per lo script."""
     voci = TOUR.get(lingua) or TOUR["English"]
+    pulsanti = PULSANTI_TOUR.get(lingua) or PULSANTI_TOUR["English"]
     passi = [
         {"sel": passo["sel"], "alt": passo.get("alt", ""), "scheda": passo.get("scheda"),
-         "titolo": titolo, "testo": testo}
-        for passo, (titolo, testo) in zip(SELETTORI_TOUR, voci["passi"])
+         "titolo": titolo, "testo": testo,
+         # Comandi che compaiono più avanti: anteprima disegnata nel fumetto.
+         "pulsanti": [{"t": etichetta, "s": stile} for etichetta, stile in anteprima]}
+        for passo, (titolo, testo), anteprima in zip(SELETTORI_TOUR, voci["passi"], pulsanti)
     ]
     return {
         "passi": passi, "avanti": voci["avanti"], "indietro": voci["indietro"],
         "salta": voci["salta"], "fine": voci["fine"], "rtl": lingua == "العربية",
+        "comparira": COMPARIRA.get(lingua) or COMPARIRA["English"],
     }

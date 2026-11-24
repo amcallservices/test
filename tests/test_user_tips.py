@@ -53,13 +53,19 @@ def test_testi_completi_in_tutte_le_lingue():
 
 def test_dati_tour_serializzabili_e_rtl():
     dati = ut.dati_tour("العربية")
-    assert dati["rtl"] is True and len(dati["passi"]) == len(ut.SELETTORI_TOUR) == 33
+    assert dati["rtl"] is True and len(dati["passi"]) == len(ut.SELETTORI_TOUR) == 42
     caricati = json.loads(json.dumps(dati, ensure_ascii=False))
     assert caricati["passi"][1]["sel"] == ".st-key-ss_blocco_crediti"
     assert ut.dati_tour("Italiano")["rtl"] is False
     # Le schede del percorso vengono aperte tutte, una volta ciascuna (0…6).
+    # Le schede si aprono in ordine; i passi "in anticipo" restano nella stessa scheda.
     schede = [p["scheda"] for p in caricati["passi"] if p["scheda"] is not None]
-    assert schede == list(range(7))
+    assert sorted(set(schede)) == list(range(7)) and schede == sorted(schede)
+    anteprime = [p for p in caricati["passi"] if p["pulsanti"]]
+    assert len(anteprime) == 9 and all(p["scheda"] is not None for p in anteprime)
+    assert dati["comparira"]
+    for lingua in LINGUE:
+        assert [len(x) for x in ut.PULSANTI_TOUR[lingua]] == [len(x) for x in ut.PULSANTI_TOUR["Italiano"]], lingua
 
 
 def test_ogni_comando_della_visita_esiste():
