@@ -1,0 +1,249 @@
+/* =====================================================================
+   Area riservata "inchiostro e oro" (come la home e l'anteprima approvata).
+   Solo grafica: è uno strato sopra quella precedente, non cambia campi,
+   pulsanti né funzioni. Per tornare alla grafica precedente basta il
+   segreto AREA_CLASSICA = "1" (il file non viene caricato).
+   ===================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600;700;800&display=swap");
+
+:root {
+  --a2-ink: #0a0e1a; --a2-fascia: #0d1222; --a2-pannello: #121a2e; --a2-pannello-2: #1b2540;
+  --a2-linea: #1c2540; --a2-bordo: #24304d; --a2-bordo-2: #2d3858;
+  --a2-testo: #f4efe6; --a2-chiaro: #fbf7ef; --a2-tenue: #b6bfd3; --a2-grigio: #8e99b3; --a2-riga: #dfe4ef;
+  --a2-oro: #f2b84b; --a2-oro-2: #f7c96b; --a2-oro-ink: #1a1206; --a2-blu: #7cc4f5; --a2-verde: #7ee2b0;
+  --a2-corallo: #f5a38f; --a2-carta: #f4ecdc;
+  --a2-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --a2-sans: "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+}
+
+/* ---------- Fondo e caratteri ---------- */
+[data-testid="stAppViewContainer"], .stApp {
+  background:
+    radial-gradient(900px 520px at 85% -8%, rgba(242, 184, 75, .07), transparent 60%),
+    var(--a2-ink) !important;
+  color: var(--a2-testo) !important;
+}
+[data-testid="stMain"], [data-testid="stSidebar"] { font-family: var(--a2-sans) !important; }
+[data-testid="stMain"] p, [data-testid="stMain"] li, [data-testid="stMain"] label,
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] li { font-family: var(--a2-sans) !important; }
+[data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3 {
+  font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-chiaro) !important; letter-spacing: -.01em;
+}
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stMain"] [data-testid="stCaptionContainer"] { color: var(--a2-tenue); }
+[data-testid="stMain"] a { color: var(--a2-blu) !important; }
+
+/* ---------- Sidebar ---------- */
+section[data-testid="stSidebar"] {
+  background: var(--a2-fascia) !important; border-right: 1px solid var(--a2-linea) !important;
+}
+section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p { color: var(--a2-riga) !important; }
+section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
+  font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-chiaro) !important;
+}
+/* Titoli dei gruppi (Configura il progetto, Fonti, Dettagli, Sessione) */
+section[data-testid="stSidebar"] h4 {
+  border: 1px solid var(--a2-bordo) !important; border-left: 3px solid var(--a2-oro) !important;
+  border-radius: 14px !important; background: var(--a2-pannello) !important; box-shadow: none !important;
+  color: var(--a2-chiaro) !important; font-family: var(--a2-sans) !important; font-weight: 800 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+  color: var(--a2-tenue) !important; font-size: .86rem !important; font-weight: 700 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+section[data-testid="stSidebar"] small { color: var(--a2-grigio) !important; }
+
+/* Campi (sidebar e area di lavoro) */
+.stTextInput input, .stTextArea textarea, .stNumberInput input,
+div[data-baseweb="select"] > div, [data-baseweb="input"], [data-baseweb="textarea"],
+section[data-testid="stSidebar"] .stTextInput input,
+section[data-testid="stSidebar"] .stTextArea textarea,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+  background: var(--a2-ink) !important; border-color: var(--a2-bordo) !important; border-radius: 12px !important;
+  color: var(--a2-testo) !important; caret-color: var(--a2-oro) !important;
+}
+[data-baseweb="input"] input, [data-baseweb="textarea"] textarea { background: transparent !important; }
+.stTextInput input:focus, .stTextArea textarea:focus,
+[data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within,
+div[data-baseweb="select"] > div:focus-within {
+  border-color: var(--a2-oro) !important; box-shadow: 0 0 0 3px rgba(242, 184, 75, .18) !important;
+}
+.stTextInput input::placeholder, .stTextArea textarea::placeholder { color: var(--a2-grigio) !important; }
+div[data-baseweb="select"] span { color: var(--a2-testo) !important; }
+[data-baseweb="popover"] ul, [data-baseweb="menu"] { background: var(--a2-pannello) !important; border: 1px solid var(--a2-bordo-2) !important; border-radius: 12px !important; }
+[data-baseweb="menu"] li { color: var(--a2-riga) !important; }
+[data-baseweb="menu"] li:hover, [data-baseweb="menu"] li[aria-selected="true"] { background: var(--a2-pannello-2) !important; }
+
+/* Caricamento file */
+[data-testid="stFileUploaderDropzone"], [data-testid="stFileUploader"] section {
+  background: var(--a2-ink) !important; border: 2px dashed var(--a2-bordo-2) !important; border-radius: 16px !important;
+}
+[data-testid="stFileUploaderDropzone"]:hover { border-color: var(--a2-oro) !important; }
+
+/* Saldo crediti */
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] div {
+  font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-oro) !important;
+}
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] p { color: var(--a2-tenue) !important; }
+
+/* ---------- Pulsanti ---------- */
+.stButton button, .stDownloadButton button, .stFormSubmitButton button, .stLinkButton a {
+  border-radius: 12px !important; font-family: var(--a2-sans) !important; font-weight: 700 !important;
+  background: transparent !important; color: var(--a2-testo) !important;
+  border: 1px solid var(--a2-bordo-2) !important; box-shadow: none !important;
+  transition: transform .2s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease !important;
+}
+.stButton button p, .stDownloadButton button p, .stFormSubmitButton button p { color: inherit !important; }
+.stButton button:hover, .stDownloadButton button:hover, .stFormSubmitButton button:hover, .stLinkButton a:hover {
+  border-color: var(--a2-oro) !important; background: rgba(242, 184, 75, .08) !important; color: var(--a2-chiaro) !important;
+  transform: translateY(-1px) !important;
+}
+.stButton button[kind="primary"], .stButton button[data-testid="baseButton-primary"],
+.stButton button[data-testid="stBaseButton-primary"], .stDownloadButton button[kind="primary"],
+.stFormSubmitButton button[kind="primary"],
+[class*="st-key-scrivi_tutto_libro"] button, [class*="st-key-scrivi_sezione_"] button,
+.st-key-avvia_chat_sidebar_guidata button, .st-key-avvia_chat_sidebar_subito button {
+  background: var(--a2-oro) !important; border-color: var(--a2-oro) !important; color: var(--a2-oro-ink) !important;
+}
+.stButton button[kind="primary"]:hover, .stButton button[data-testid="stBaseButton-primary"]:hover,
+.stDownloadButton button[kind="primary"]:hover, .stFormSubmitButton button[kind="primary"]:hover,
+[class*="st-key-scrivi_tutto_libro"] button:hover, [class*="st-key-scrivi_sezione_"] button:hover,
+.st-key-avvia_chat_sidebar_guidata button:hover, .st-key-avvia_chat_sidebar_subito button:hover {
+  background: var(--a2-oro-2) !important; border-color: var(--a2-oro-2) !important; color: var(--a2-oro-ink) !important;
+  box-shadow: 0 12px 26px rgba(242, 184, 75, .28) !important;
+}
+[class*="st-key-scrivi_tutto_libro"] button { box-shadow: 0 10px 24px rgba(242, 184, 75, .22) !important; }
+/* Rigenera: azione secondaria in oro chiaro; pausa e stop riconoscibili */
+[class*="st-key-rigenera_sezione_"] button { background: transparent !important; border-color: #5a4620 !important; color: var(--a2-oro) !important; }
+[class*="st-key-pausa_scrittura_"] button { background: transparent !important; border-color: #6b5a2a !important; color: #f7d58b !important; }
+[class*="st-key-stop_scrittura_"] button,
+.st-key-reset_progetto_distruttivo button, .st-key-reset_progetto_distruttivo .stButton button {
+  background: transparent !important; border-color: #5a2f2f !important; color: var(--a2-corallo) !important;
+}
+[class*="st-key-stop_scrittura_"] button:hover,
+.st-key-reset_progetto_distruttivo button:hover { background: rgba(245, 163, 143, .1) !important; border-color: var(--a2-corallo) !important; color: #ffc4b6 !important; }
+.stButton button:focus-visible, .stDownloadButton button:focus-visible { outline: 3px solid var(--a2-blu) !important; outline-offset: 2px !important; }
+.stButton button:disabled { opacity: .45 !important; transform: none !important; }
+
+/* ---------- Schede del percorso (-1 … 5) ---------- */
+[data-testid="stTabs"] [role="tablist"], [data-testid="stTabs"] [data-baseweb="tab-list"] {
+  background: var(--a2-fascia) !important; border: 1px solid var(--a2-linea) !important;
+  border-radius: 18px !important; padding: 6px !important; gap: 6px !important;
+}
+[data-testid="stTabs"] button[role="tab"],
+[data-testid="stTabs"] button[role="tab"]:nth-of-type(n) {
+  background: transparent !important; border: 1px solid transparent !important; border-radius: 12px !important;
+  color: #c9d1e3 !important; box-shadow: none !important; font-family: var(--a2-sans) !important;
+}
+[data-testid="stTabs"] button[role="tab"] p { color: inherit !important; font-weight: 700 !important; }
+[data-testid="stTabs"] button[role="tab"]:hover { border-color: #3a4a70 !important; color: var(--a2-chiaro) !important; transform: none !important; }
+[data-testid="stTabs"] button[aria-selected="true"],
+[data-testid="stTabs"] button[aria-selected="true"]:nth-of-type(n) {
+  background: var(--a2-pannello) !important; border-color: var(--a2-oro) !important; color: var(--a2-chiaro) !important;
+  box-shadow: inset 0 -3px 0 var(--a2-oro) !important;
+}
+[data-testid="stTabs"] button[aria-selected="true"]::after { background: var(--a2-oro) !important; color: var(--a2-oro-ink) !important; }
+[data-testid="stTabs"] [data-baseweb="tab-highlight"], [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
+
+/* ---------- Riquadri, tendine e avvisi ---------- */
+[data-testid="stExpander"] {
+  background: var(--a2-pannello) !important; border: 1px solid var(--a2-bordo) !important; border-radius: 16px !important;
+}
+[data-testid="stExpander"]:has(details[open]) { border-color: #5a4620 !important; }
+[data-testid="stExpander"] summary, [data-testid="stExpander"] details {
+  background: transparent !important; color: var(--a2-chiaro) !important;
+}
+[data-testid="stExpander"] summary:hover { color: var(--a2-oro) !important; }
+[data-testid="stExpander"] summary svg { color: var(--a2-oro) !important; fill: var(--a2-oro) !important; }
+section[data-testid="stSidebar"] [data-testid="stExpander"] { background: var(--a2-pannello) !important; border-color: var(--a2-bordo) !important; }
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary { background: transparent !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {
+  border-color: var(--a2-bordo) !important; border-radius: 18px !important;
+}
+[data-testid="stAlert"] { border-radius: 14px !important; }
+[data-testid="stAlert"] [data-testid="stAlertContentInfo"], div[data-baseweb="notification"][kind="info"] { color: var(--a2-riga) !important; }
+[data-testid="stProgress"] [role="progressbar"] > div > div { background: var(--a2-oro) !important; }
+hr { border-color: var(--a2-linea) !important; }
+
+/* ---------- Foglio di scrittura: la sezione si legge su carta ---------- */
+.st-key-ss_foglio_editor [data-baseweb="textarea"] {
+  background: var(--a2-carta) !important; border: 1px solid #d9c9a8 !important; border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .35) !important;
+}
+.st-key-ss_foglio_editor textarea {
+  background: transparent !important; color: #1d1a14 !important; caret-color: #8a5a12 !important;
+  font-family: var(--a2-serif) !important; font-size: 1.06rem !important; line-height: 1.75 !important;
+  padding: 1.4rem 1.6rem !important;
+}
+.st-key-ss_foglio_editor textarea::selection { background: rgba(242, 184, 75, .45); }
+.st-key-ss_foglio_editor [data-baseweb="textarea"]:focus-within { border-color: var(--a2-oro) !important; box-shadow: 0 0 0 3px rgba(242, 184, 75, .25), 0 20px 40px rgba(0, 0, 0, .35) !important; }
+.st-key-ss_foglio_editor [data-testid="stWidgetLabel"] p {
+  color: var(--a2-oro) !important; font-size: .78rem !important; font-weight: 800 !important; letter-spacing: .14em; text-transform: uppercase;
+}
+
+/* Barra di scorrimento discreta */
+[data-testid="stMain"] ::-webkit-scrollbar, [data-testid="stSidebar"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+[data-testid="stMain"] ::-webkit-scrollbar-thumb, [data-testid="stSidebar"] ::-webkit-scrollbar-thumb { background: var(--a2-bordo-2); border-radius: 10px; }
+
+/* ---------- Intestazione del progetto e Centro del progetto ---------- */
+.ss-workspace-header {
+  background: var(--a2-pannello) !important; border: 1px solid var(--a2-bordo) !important;
+  border-radius: 20px !important; box-shadow: none !important;
+}
+.ss-workspace-mark { background: var(--a2-oro) !important; color: var(--a2-oro-ink) !important; }
+.ss-workspace-title { font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-chiaro) !important; font-size: 1.5rem !important; }
+.ss-workspace-subtitle { color: var(--a2-grigio) !important; }
+.ss-workspace-chip { background: transparent !important; border-color: var(--a2-bordo-2) !important; color: var(--a2-riga) !important; }
+.ss-workspace-chip.ok { color: var(--a2-verde) !important; border-color: #2f5a46 !important; }
+.ss-workspace-chip.writing { color: var(--a2-blu) !important; border-color: #23405e !important; }
+.ss-workspace-chip.pause, .ss-workspace-chip.credit { color: var(--a2-oro) !important; border-color: #5a4620 !important; }
+.ss-project-panel {
+  background: var(--a2-pannello) !important; border: 1px solid var(--a2-bordo) !important; border-radius: 20px !important; box-shadow: none !important;
+}
+.ss-project-title { font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-chiaro) !important; }
+.ss-project-caption, .ss-project-caption strong { color: var(--a2-grigio) !important; }
+.ss-project-step { background: transparent !important; border-color: var(--a2-bordo) !important; color: var(--a2-tenue) !important; border-radius: 12px !important; }
+.ss-project-step span { background: var(--a2-pannello-2) !important; color: var(--a2-tenue) !important; }
+.ss-project-step.done { color: var(--a2-verde) !important; border-color: #2f5a46 !important; }
+.ss-project-step.done span { background: var(--a2-verde) !important; color: #06281a !important; }
+.ss-project-step.current { background: var(--a2-oro) !important; border-color: var(--a2-oro) !important; color: var(--a2-oro-ink) !important; box-shadow: 0 8px 20px rgba(242, 184, 75, .25) !important; }
+.ss-project-step.current span { background: var(--a2-oro-ink) !important; color: var(--a2-oro) !important; }
+.ss-project-step.optional { color: #d8c79f !important; border-color: #5a4620 !important; background: transparent !important; }
+.ss-project-step.optional span { background: rgba(242, 184, 75, .15) !important; color: var(--a2-oro) !important; }
+.ss-project-metric { background: var(--a2-ink) !important; border-color: var(--a2-bordo) !important; border-radius: 12px !important; }
+.ss-project-metric span { color: var(--a2-grigio) !important; }
+.ss-project-metric b { font-family: var(--a2-serif) !important; font-weight: 500 !important; color: var(--a2-chiaro) !important; }
+.ss-next-action { background: rgba(124, 196, 245, .07) !important; border: 1px solid #23405e !important; border-radius: 14px !important; color: var(--a2-riga) !important; }
+.ss-next-action .ss-next-icon { background: var(--a2-blu) !important; color: var(--a2-ink) !important; }
+.ss-next-action.pause { background: rgba(242, 184, 75, .07) !important; border-color: #5a4620 !important; }
+.ss-next-action.pause .ss-next-icon { background: var(--a2-oro) !important; color: var(--a2-oro-ink) !important; }
+.ss-next-action.complete { background: rgba(126, 226, 176, .07) !important; border-color: #2f5a46 !important; }
+.ss-operational-menu-heading h2 { font-family: var(--a2-serif) !important; }
+/* Avvisi informativi di Streamlit nei colori della home */
+[data-testid="stAlertContainer"], div[role="alert"] { border-radius: 14px !important; }
+[data-testid="stAlertContentInfo"] { color: var(--a2-riga) !important; }
+
+/* Testo della scheda scelta leggibile sull'oro; niente sottolineatura blu */
+[data-testid="stTabs"] button[aria-selected="true"] p, [data-testid="stTabs"] button[aria-selected="true"] span,
+[data-testid="stTabs"] button[aria-selected="true"] div { color: #1a1206 !important; }
+[data-testid="stTabs"] button[role="tab"]::after, [data-testid="stTabs"] button[aria-selected="true"]::after { display: none !important; }
+/* Link (Contatti, pagamenti) come pulsanti della home */
+.stLinkButton a, .stLinkButton a[kind="primary"], .stLinkButton a[data-testid*="primary"] {
+  background: transparent !important; border: 1px solid var(--a2-bordo-2) !important; color: var(--a2-testo) !important; border-radius: 12px !important;
+}
+.stLinkButton a:hover { border-color: var(--a2-oro) !important; background: rgba(242, 184, 75, .08) !important; }
+.stLinkButton a p { color: inherit !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * { color: var(--a2-oro) !important; font-family: var(--a2-serif) !important; font-weight: 500 !important; }
+[data-testid="stAlertContainer"] { background: rgba(124, 196, 245, .07) !important; border: 1px solid #23405e !important; color: var(--a2-riga) !important; }
+[data-testid="stAlertContainer"] p { color: var(--a2-riga) !important; }
+
+/* In Streamlit 1.67 le schede sono elementi role="tab" (non <button>) */
+[data-testid="stTabs"] [role="tab"] p, [data-testid="stTabs"] [role="tab"] span { color: inherit !important; }
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] *, [data-testid="stTabs"] [role="tab"][aria-selected="true"] { color: #1a1206 !important; }
+[data-testid="stTabs"] [role="tab"]::after { display: none !important; }
+[data-testid="stTabs"] [data-baseweb="tab-highlight"], [data-testid="stTabs"] [data-testid="stTabHighlight"],
+[data-testid="stTabs"] [role="tablist"] + div[aria-hidden], [data-testid="stTabs"] [class*="TabHighlight"] { display: none !important; }
+[data-testid="stTabs"] [role="tablist"]::before, [data-testid="stTabs"] [role="tablist"]::after,
+[data-testid="stTabs"] [role="tab"]::before { display: none !important; }
+[data-testid="stTabs"] .react-aria-SelectionIndicator { display: none !important; }

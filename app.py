@@ -1923,6 +1923,24 @@ section[data-testid="stSidebar"] div[data-baseweb="select"]:focus-within > div {
 </style>
 """, unsafe_allow_html=True)
 
+
+def grafica_area_classica() -> bool:
+    """Segreto AREA_CLASSICA = "1": torna alla grafica dell'area riservata precedente."""
+    try:
+        return str(st.secrets.get("AREA_CLASSICA", "")).strip().lower() in ("1", "true", "si", "sì")
+    except Exception:
+        return False
+
+
+# Grafica "inchiostro e oro" dell'area riservata (come la home): solo uno
+# strato di stile sopra quello qui sopra. Campi, pulsanti e funzioni restano
+# identici; con AREA_CLASSICA = "1" il file non viene caricato.
+if not grafica_area_classica():
+    _area_v2_css = os.path.join(os.path.dirname(__file__), "assets", "area_v2.css")
+    if os.path.isfile(_area_v2_css):
+        with open(_area_v2_css, encoding="utf-8") as _file_area_v2:
+            st.markdown(f"<style>{_file_area_v2.read()}</style>", unsafe_allow_html=True)
+
 # ======================================================================================================================
 # 4. GESTIONE EXPORT PDF (CHIRURGIA: FIX TITOLI LUNGHI E MARGINI)
 # ======================================================================================================================
@@ -9990,6 +10008,9 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         <script>
         (function () {
           const documento = window.parent.document;
+          // Con la grafica "inchiostro e oro" il menu usa la stessa palette
+          // della home; con AREA_CLASSICA = "1" restano i colori precedenti.
+          const NUOVA = __GRAFICA_NUOVA__;
           const colori = [
             ['#154f7c', '#0c2e4b'], ['#245b75', '#12374a'], ['#58318a', '#331c56'],
             ['#9a5415', '#5d300b'], ['#14657e', '#0a3e52'], ['#8a6811', '#55400a'], ['#167246', '#0c4529']
@@ -10014,20 +10035,21 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(intestazione.style, 'gap', mobile ? '11px' : '15px');
               imposta(intestazione.style, 'padding', mobile ? '15px 16px' : '20px 23px');
               imposta(intestazione.style, 'margin', '24px 0 5px');
-              imposta(intestazione.style, 'border', '1px solid #4ba3d6');
-              imposta(intestazione.style, 'border-left', '8px solid #76d0ff');
+              imposta(intestazione.style, 'border', NUOVA ? '1px solid #24304d' : '1px solid #4ba3d6');
+              imposta(intestazione.style, 'border-left', NUOVA ? '4px solid #f2b84b' : '8px solid #76d0ff');
               imposta(intestazione.style, 'border-radius', '18px');
-              imposta(intestazione.style, 'background', '#10324d');
-              imposta(intestazione.style, 'box-shadow', '0 6px 18px rgba(6, 38, 65, .22)');
+              imposta(intestazione.style, 'background', NUOVA ? '#121a2e' : '#10324d');
+              imposta(intestazione.style, 'box-shadow', NUOVA ? 'none' : '0 6px 18px rgba(6, 38, 65, .22)');
               const titolo = intestazione.querySelector('h2');
               const testo = intestazione.querySelector('p');
               const intervallo = intestazione.querySelector('.ss-menu-range');
               if (titolo) { imposta(titolo.style, 'color', '#ffffff'); imposta(titolo.style, 'font-size', mobile ? '23px' : '31px'); }
-              if (testo) { imposta(testo.style, 'color', '#d3efff'); imposta(testo.style, 'font-size', mobile ? '13px' : '15px'); }
+              if (titolo && NUOVA) { imposta(titolo.style, 'color', '#fbf7ef'); imposta(titolo.style, 'font-family', '"Fraunces", Georgia, serif'); imposta(titolo.style, 'font-weight', '500'); }
+              if (testo) { imposta(testo.style, 'color', NUOVA ? '#b6bfd3' : '#d3efff'); imposta(testo.style, 'font-size', mobile ? '13px' : '15px'); }
               if (intervallo) {
                 imposta(intervallo.style, 'margin-left', 'auto'); imposta(intervallo.style, 'padding', '7px 10px');
-                imposta(intervallo.style, 'border', '1px solid #97dcff'); imposta(intervallo.style, 'border-radius', '999px');
-                imposta(intervallo.style, 'background', '#0b2b47'); imposta(intervallo.style, 'color', '#effaff');
+                imposta(intervallo.style, 'border', NUOVA ? '1px solid #5a4620' : '1px solid #97dcff'); imposta(intervallo.style, 'border-radius', '999px');
+                imposta(intervallo.style, 'background', NUOVA ? 'rgba(242,184,75,.07)' : '#0b2b47'); imposta(intervallo.style, 'color', NUOVA ? '#f2b84b' : '#effaff');
               }
             }
 
@@ -10039,9 +10061,9 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
             imposta(lista.style, 'overflow-y', 'hidden');
             imposta(lista.style, 'width', '100%');
             imposta(lista.style, 'box-sizing', 'border-box');
-            imposta(lista.style, 'border', '1px solid #426786');
+            imposta(lista.style, 'border', NUOVA ? '1px solid #1c2540' : '1px solid #426786');
             imposta(lista.style, 'border-radius', '22px');
-            imposta(lista.style, 'background', '#0b2035');
+            imposta(lista.style, 'background', NUOVA ? '#0d1222' : '#0b2035');
             imposta(lista.style, 'box-shadow', 'none');
 
             // La tab 0 resta la prima nel DOM per l'apertura automatica.
@@ -10059,28 +10081,43 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
               imposta(scheda.style, 'padding', mobile ? '16px 17px' : '14px 13px');
               imposta(scheda.style, 'margin', '0');
               imposta(scheda.style, 'border-radius', '18px');
-              imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
-              imposta(scheda.style, 'border-top', scelto ? '7px solid #ffffff' : '7px solid ' + colore[0]);
-              imposta(scheda.style, 'background', scelto
-                ? 'linear-gradient(135deg, #1688da, #36b4f4)'
-                : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
-              imposta(scheda.style, 'color', '#ffffff');
+              if (NUOVA) {
+                imposta(scheda.style, 'border', scelto ? '2px solid #f2b84b' : '1px solid #24304d');
+                imposta(scheda.style, 'border-top', scelto ? '2px solid #f2b84b' : '1px solid #24304d');
+                imposta(scheda.style, 'background', scelto ? '#f2b84b' : '#121a2e');
+                imposta(scheda.style, 'color', scelto ? '#1a1206' : '#dfe4ef');
+              } else {
+                imposta(scheda.style, 'border', scelto ? '3px solid #d7f1ff' : '2px solid ' + colore[0]);
+                imposta(scheda.style, 'border-top', scelto ? '7px solid #ffffff' : '7px solid ' + colore[0]);
+                imposta(scheda.style, 'background', scelto
+                  ? 'linear-gradient(135deg, #1688da, #36b4f4)'
+                  : 'linear-gradient(145deg, ' + colore[0] + ', ' + colore[1] + ')');
+                imposta(scheda.style, 'color', '#ffffff');
+              }
               imposta(scheda.style, 'font-size', mobile ? '17px' : '16px');
               imposta(scheda.style, 'font-weight', '800');
               imposta(scheda.style, 'line-height', '1.35');
               imposta(scheda.style, 'white-space', 'normal');
               imposta(scheda.style, 'text-align', mobile ? 'left' : 'center');
               imposta(scheda.style, 'justify-content', 'center');
-              imposta(scheda.style, 'box-shadow', scelto
-                ? '0 12px 25px rgba(45, 170, 243, .55)'
-                : '0 8px 17px rgba(0, 0, 0, .23)');
+              imposta(scheda.style, 'box-shadow', NUOVA
+                ? (scelto ? '0 12px 26px rgba(242, 184, 75, .28)' : 'none')
+                : (scelto ? '0 12px 25px rgba(45, 170, 243, .55)' : '0 8px 17px rgba(0, 0, 0, .23)'));
             });
             return true;
           }
 
           let tentativi = 0;
+          let osservato = null;
           const attiva = function () {
-            if (!disegnaMenu() && tentativi++ < 12) window.setTimeout(attiva, 180);
+            if (!disegnaMenu() && tentativi++ < 12) { window.setTimeout(attiva, 180); return; }
+            // Ridisegna appena cambia la scheda scelta (anche da tastiera).
+            const lista = documento.querySelector('[data-testid="stTabs"] [role="tablist"]');
+            if (lista && lista !== osservato && window.parent.MutationObserver) {
+              osservato = lista;
+              new window.parent.MutationObserver(function () { disegnaMenu(); })
+                .observe(lista, { attributes: true, subtree: true, attributeFilter: ['aria-selected'] });
+            }
           };
           attiva();
           documento.addEventListener('click', function (evento) {
@@ -10088,7 +10125,7 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
           }, { once: false });
         })();
         </script>
-        """,
+        """.replace("__GRAFICA_NUOVA__", "false" if grafica_area_classica() else "true"),
         height=0,
     )
 
@@ -12634,14 +12671,16 @@ Applica tutti i miglioramenti utili, senza introdurre capitoli generici, glossar
             elif chiave_widget_editor not in st.session_state:
                 st.session_state[k_sessione] = ""
                 st.session_state[chiave_widget_editor] = ""
-            st.text_area(
-                L["label_editor"],
-                height=500,
-                key=chiave_widget_editor,
-                help="Le modifiche restano nella sessione corrente. Usa “SALVA SESSIONE” nella sidebar per conservarle nel tuo account.",
-                on_change=sincronizza_modifica_manuale,
-                args=(sez_scelta, chiave_widget_editor),
-            )
+            # Contenitore solo grafico: con la nuova grafica il testo si legge su carta.
+            with st.container(key="ss_foglio_editor"):
+                st.text_area(
+                    L["label_editor"],
+                    height=500,
+                    key=chiave_widget_editor,
+                    help="Le modifiche restano nella sessione corrente. Usa “SALVA SESSIONE” nella sidebar per conservarle nel tuo account.",
+                    on_change=sincronizza_modifica_manuale,
+                    args=(sez_scelta, chiave_widget_editor),
+                )
 
             testi_memoria_editor = testi_memoria_editoriale_ui(lingua_sel)
             with st.expander(testi_memoria_editor["titolo"], expanded=False):
