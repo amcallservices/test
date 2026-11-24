@@ -55,7 +55,7 @@ def test_dati_tour_serializzabili_e_rtl():
     dati = ut.dati_tour("العربية")
     assert dati["rtl"] is True and len(dati["passi"]) == 24
     caricati = json.loads(json.dumps(dati, ensure_ascii=False))
-    assert caricati["passi"][1]["sel"] == ".st-key-commercial_refresh_credits"
+    assert caricati["passi"][1]["sel"] == ".st-key-ss_blocco_crediti"
     assert ut.dati_tour("Italiano")["rtl"] is False
     # Le schede del percorso vengono aperte tutte, una volta ciascuna (0…6).
     schede = [p["scheda"] for p in caricati["passi"] if p["scheda"] is not None]

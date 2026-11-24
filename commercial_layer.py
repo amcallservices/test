@@ -3130,7 +3130,9 @@ def completa_logout_sicuro() -> None:
 def _commerce_sidebar() -> None:
     user = st.session_state["commercial_user_context"]
     is_admin = _is_admin(user)
-    with st.sidebar:
+    # Contenitore con nome: la visita guidata inquadra tutta l'area crediti
+    # (saldo, aggiorna, contatti, ricarica, movimenti). Nessun cambio di funzioni.
+    with st.sidebar, st.container(key="ss_blocco_crediti"):
         st.markdown("### 💳 Crediti")
         if _mode() == "demo":
             st.caption("Modalità dimostrativa: saldo valido solo per questa sessione.")
