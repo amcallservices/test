@@ -3045,7 +3045,7 @@ def _render_referral_sidebar(user: dict[str, Any]) -> None:
     """Mostra il link referral senza esporre email, saldi o inviti di altri utenti."""
     lingua = st.session_state.get("editor_language", "Italiano")
     testo = REFERRAL_COPY.get(lingua, REFERRAL_COPY["Italiano"])
-    with st.expander(testo["title"], expanded=False):
+    with st.container(key="ss_blocco_invita"), st.expander(testo["title"], expanded=False):
         st.caption(testo["intro"])
         codice = _codice_referral_personale(str(user.get("id", "")))
         if not codice:
@@ -3161,7 +3161,7 @@ def _commerce_sidebar() -> None:
 
         lingua_sidebar = st.session_state.get("editor_language", "Italiano")
         testo_contatti = CONTACT_LABELS.get(lingua_sidebar, CONTACT_LABELS["Italiano"])
-        st.link_button(
+        st.container(key="ss_blocco_contatti").link_button(
             f"💬 {testo_contatti}",
             "https://wa.me/393282693777?text=Scrivo%20da%20Scrittore%20Site",
             use_container_width=True,
@@ -3487,7 +3487,7 @@ def _commerce_sidebar() -> None:
                     )
 
         apri_ricarica = bool(st.session_state.pop("commercial_open_topup", False))
-        with st.expander("Ricarica crediti", expanded=apri_ricarica):
+        with st.container(key="ss_blocco_ricarica"), st.expander("Ricarica crediti", expanded=apri_ricarica):
             if is_admin:
                 st.caption("Non sono necessari acquisti: questo account ha crediti illimitati.")
             elif _mode() == "demo":
@@ -3508,7 +3508,7 @@ def _commerce_sidebar() -> None:
                             st.error(str(error))
 
         if _mode() == "demo":
-            with st.expander("Movimenti", expanded=False):
+            with st.container(key="ss_blocco_movimenti"), st.expander("Movimenti", expanded=False):
                 movements = st.session_state.get("commercial_demo_ledger", [])[-12:]
                 st.write(movements or "Nessun movimento ancora.")
 

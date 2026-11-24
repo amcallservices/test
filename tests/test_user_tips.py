@@ -53,7 +53,7 @@ def test_testi_completi_in_tutte_le_lingue():
 
 def test_dati_tour_serializzabili_e_rtl():
     dati = ut.dati_tour("العربية")
-    assert dati["rtl"] is True and len(dati["passi"]) == 24
+    assert dati["rtl"] is True and len(dati["passi"]) == len(ut.SELETTORI_TOUR) == 34
     caricati = json.loads(json.dumps(dati, ensure_ascii=False))
     assert caricati["passi"][1]["sel"] == ".st-key-ss_blocco_crediti"
     assert ut.dati_tour("Italiano")["rtl"] is False
@@ -68,7 +68,10 @@ def test_ogni_comando_della_visita_esiste():
     for passo in ut.SELETTORI_TOUR:
         for selettore in (passo["sel"], passo.get("alt", "")):
             for chiave in re.findall(r"\.st-key-([a-z_]+)", selettore):
-                assert f'key="{chiave}"' in sorgente, chiave
+                if chiave.startswith("preventivo_avvio_"):   # chiave creata da pulsante_con_preventivo
+                    assert f'"{chiave[len("preventivo_avvio_"):]}"' in sorgente, chiave
+                else:
+                    assert f'key="{chiave}"' in sorgente, chiave
             for classe in re.findall(r"^\.(ss-[a-z-]+)$", selettore):
                 assert classe in sorgente, classe
 
