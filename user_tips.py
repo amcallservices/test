@@ -486,15 +486,11 @@ def aiuto_campo(chiave: str, lingua: str) -> str:
 # --------------------------------------------------------------------------
 # Ogni passo: (selettore CSS dell'elemento da indicare, titolo, testo).
 # Selettore vuoto = fumetto al centro della pagina.
-SELETTORI_TOUR = (
-    "",
-    '[data-testid="stSidebar"]',
-    ".st-key-avvia_chat_sidebar_subito",
-    ".ss-project-panel",
-    '[data-testid="stTabs"] [role="tablist"]',
-    ".st-key-salva_sessione_manuale",
-    "",
-)
+# I passi (elemento indicato, scheda da aprire) e i testi completi sono in
+# user_tips_tour.py; qui restano i pulsanti della visita.
+from user_tips_tour import PASSI_TOUR, TESTI_TOUR  # noqa: E402
+
+SELETTORI_TOUR = PASSI_TOUR
 TOUR = {
     "Italiano": {
         "passi": (
@@ -607,12 +603,18 @@ TOUR = {
 }
 
 
+# I testi dei passi vengono dalla visita completa (24 passi, 9 lingue).
+for _lingua, _voci in TOUR.items():
+    _voci["passi"] = TESTI_TOUR.get(_lingua) or TESTI_TOUR["English"]
+
+
 def dati_tour(lingua: str) -> dict:
     """Testi e selettori della visita guidata, pronti per lo script."""
     voci = TOUR.get(lingua) or TOUR["English"]
     passi = [
-        {"sel": sel, "titolo": titolo, "testo": testo}
-        for sel, (titolo, testo) in zip(SELETTORI_TOUR, voci["passi"])
+        {"sel": passo["sel"], "alt": passo.get("alt", ""), "scheda": passo.get("scheda"),
+         "titolo": titolo, "testo": testo}
+        for passo, (titolo, testo) in zip(SELETTORI_TOUR, voci["passi"])
     ]
     return {
         "passi": passi, "avanti": voci["avanti"], "indietro": voci["indietro"],

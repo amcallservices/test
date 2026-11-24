@@ -53,9 +53,24 @@ def test_testi_completi_in_tutte_le_lingue():
 
 def test_dati_tour_serializzabili_e_rtl():
     dati = ut.dati_tour("العربية")
-    assert dati["rtl"] is True and len(dati["passi"]) == 7
-    assert json.loads(json.dumps(dati, ensure_ascii=False))["passi"][1]["sel"] == '[data-testid="stSidebar"]'
+    assert dati["rtl"] is True and len(dati["passi"]) == 24
+    caricati = json.loads(json.dumps(dati, ensure_ascii=False))
+    assert caricati["passi"][1]["sel"] == ".st-key-commercial_refresh_credits"
     assert ut.dati_tour("Italiano")["rtl"] is False
+    # Le schede del percorso vengono aperte tutte, una volta ciascuna (0…6).
+    schede = [p["scheda"] for p in caricati["passi"] if p["scheda"] is not None]
+    assert schede == list(range(7))
+
+
+def test_ogni_comando_della_visita_esiste():
+    base = Path(__file__).resolve().parents[1]
+    sorgente = (base / "app.py").read_text(encoding="utf-8") + (base / "commercial_layer.py").read_text(encoding="utf-8")
+    for passo in ut.SELETTORI_TOUR:
+        for selettore in (passo["sel"], passo.get("alt", "")):
+            for chiave in re.findall(r"\.st-key-([a-z_]+)", selettore):
+                assert f'key="{chiave}"' in sorgente, chiave
+            for classe in re.findall(r"^\.(ss-[a-z-]+)$", selettore):
+                assert classe in sorgente, classe
 
 
 def test_ogni_campo_sidebar_ha_una_spiegazione():
