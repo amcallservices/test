@@ -5,7 +5,7 @@
 (function () {
   const DATI = __DATI_TOUR__;
   const FORZA = __FORZA_TOUR__;
-  const CHIAVE = "ss_tour_editor_v2";   // v2: visita completa (24 passi)
+  const CHIAVE = "ss_tour_editor_v3";   // v3: visita integrale (crediti, inviti, contatti, sidebar completa)
   let doc, win;
   try { win = window.parent; doc = win.document; } catch (e) { return; }
   if (!doc || doc.__ssTourAttivo) { return; }

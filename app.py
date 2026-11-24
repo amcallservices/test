@@ -5298,7 +5298,7 @@ def mostra_memoria_visiva_progetto(campi_obbligatori=None):
     if registro_fonti and not numero_fonti:
         numero_fonti = len([riga for riga in registro_fonti.splitlines() if riga.strip()])
     riassunto = f"{TM[0]} · {TM[2]} {obbligatori_compilati}/{len(obbligatori)}" if obbligatori else TM[0]
-    tendina_memoria = st.expander(f"{riassunto} · {TM[4]} {len(contenuti)}", expanded=False)
+    tendina_memoria = st.container(key="ss_blocco_memoria").expander(f"{riassunto} · {TM[4]} {len(contenuti)}", expanded=False)
     with tendina_memoria:
         st.caption(TM[1])
         col_a, col_b = st.columns(2)
@@ -7602,7 +7602,7 @@ with st.sidebar:
         "العربية": "فحص توافق KDP: 18 رصيدًا مع العقل المكلف · 6 أرصدة مع العقل الاقتصادي.",
         "中文": "KDP 合规检查：高价大脑为 18 积分 · 经济大脑为 6 积分。",
     }
-    with tariffario_sotto_cervello:
+    with tariffario_sotto_cervello, st.container(key="ss_blocco_tariffario"):
         st.info(tariffario[f"{motore_tariffario}_info"])
         with st.expander(tariffario[f"{motore_tariffario}_title"], expanded=False):
             for voce_tariffario in tariffario[motore_tariffario]:
@@ -7875,7 +7875,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     # Blocco autonomo: non rende obbligatoria la personalizzazione e non
     # modifica i campi editoriali già richiesti per generare indice e testo.
     testi_personalizzazione = etichette_personalizzazione(lingua_sel)
-    with st.expander(testi_personalizzazione["titolo"], expanded=False):
+    with st.container(key="ss_blocco_personalizza"), st.expander(testi_personalizzazione["titolo"], expanded=False):
         st.caption(testi_personalizzazione["intro"])
         val_voce_personale = st.text_area(
             testi_personalizzazione["voce"], height=92,
@@ -8128,7 +8128,7 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
         os.path.dirname(__file__), "assets", "istruzioni-scrittore-site.mp4"
     )
     if os.path.isfile(video_istruzioni):
-        with st.expander(titoli_video.get(lingua_sel, titoli_video["Italiano"]), expanded=False):
+        with st.container(key="ss_blocco_video"), st.expander(titoli_video.get(lingua_sel, titoli_video["Italiano"]), expanded=False):
             st.video(video_istruzioni, format="video/mp4")
     st.button(
         (suggerimenti_core.TOUR.get(lingua_sel) or suggerimenti_core.TOUR["English"])["rivedi"],
