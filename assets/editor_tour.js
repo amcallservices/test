@@ -5,7 +5,7 @@
 (function () {
   const DATI = __DATI_TOUR__;
   const FORZA = __FORZA_TOUR__;
-  const CHIAVE = "ss_tour_editor_v1";
+  const CHIAVE = "ss_tour_editor_v2";   // v2: visita completa (24 passi)
   let doc, win;
   try { win = window.parent; doc = win.document; } catch (e) { return; }
   if (!doc || doc.__ssTourAttivo) { return; }
@@ -18,26 +18,56 @@
   function avvia() {
     if (doc.__ssTourAttivo) { return; }
     doc.__ssTourAttivo = true;
-    const passi = DATI.passi.filter(function (p) { return !p.sel || doc.querySelector(p.sel); });
+    const SEL_SCHEDE = '[data-testid="stTabs"] [role="tab"]';
+    function visibile(el) {
+      if (!el) { return false; }
+      const r = el.getBoundingClientRect();
+      return r.width > 4 && r.height > 4;
+    }
+    // Elemento del passo: quello principale se visibile, altrimenti la riserva.
+    function trova(p) {
+      if (!p || !p.sel) { return null; }
+      const el = doc.querySelector(p.sel);
+      if (visibile(el)) { return el; }
+      const alt = p.alt ? doc.querySelector(p.alt) : null;
+      return visibile(alt) ? alt : (el || alt);
+    }
+    const passi = DATI.passi.filter(function (p) {
+      return !p.sel || p.scheda !== null && p.scheda !== undefined || doc.querySelector(p.sel) || (p.alt && doc.querySelector(p.alt));
+    });
     let i = 0;
+    // Scheda aperta all'inizio: la visita ci torna alla fine.
+    const schedaIniziale = (function () {
+      const tutte = Array.from(doc.querySelectorAll(SEL_SCHEDE));
+      return tutte.findIndex(function (t) { return t.getAttribute("aria-selected") === "true"; });
+    })();
+    function apriScheda(n, fatto) {
+      const tutte = doc.querySelectorAll(SEL_SCHEDE);
+      const scheda = tutte[n];
+      if (!scheda || scheda.getAttribute("aria-selected") === "true") { fatto(); return; }
+      scheda.click();
+      win.setTimeout(fatto, 450);   // il contenuto della scheda compare subito, poi si assesta
+    }
 
     const stile = doc.createElement("style");
     stile.textContent = [
       ".ss-tour-velo{position:fixed;inset:0;z-index:2147483000;background:transparent}",
-      ".ss-tour-luce{position:fixed;z-index:2147483001;border:2px solid #57c9f4;border-radius:14px;",
-      "box-shadow:0 0 0 9999px rgba(3,12,24,.74),0 0 22px rgba(87,201,244,.55);transition:all .35s cubic-bezier(.22,.8,.26,1);pointer-events:none}",
+      ".ss-tour-luce{position:fixed;z-index:2147483001;border:2px solid #f2b84b;border-radius:14px;",
+      "box-shadow:0 0 0 9999px rgba(6,9,18,.76),0 0 22px rgba(242,184,75,.45);transition:all .35s cubic-bezier(.22,.8,.26,1);pointer-events:none}",
       ".ss-tour-fumetto{position:fixed;z-index:2147483002;max-width:min(360px,calc(100vw - 32px));padding:1.05rem 1.1rem .9rem;",
-      "border-radius:16px;background:linear-gradient(150deg,#0d3554,#0a2238);color:#eaf6ff;border:1px solid rgba(125,211,252,.45);",
+      "border-radius:16px;background:#121a2e;color:#f4efe6;border:1px solid #5a4620;",
       "box-shadow:0 18px 40px rgba(0,0,0,.45);font:15px/1.5 'Source Sans Pro',system-ui,sans-serif;transition:top .35s ease,left .35s ease}",
-      ".ss-tour-fumetto b{display:block;font-size:1.08rem;margin-bottom:.35rem;color:#fff}",
-      ".ss-tour-fumetto p{margin:0 0 .85rem;color:#cfe6f7}",
+      ".ss-tour-fumetto b{display:block;font:500 1.2rem/1.2 'Fraunces',Georgia,serif;margin-bottom:.4rem;color:#fbf7ef}",
+      ".ss-tour-fumetto p{margin:0 0 .85rem;color:#b6bfd3}",
       ".ss-tour-barra{display:flex;align-items:center;gap:.4rem}",
-      ".ss-tour-barra small{margin-inline-end:auto;color:#8fc6e8;font-weight:700}",
+      ".ss-tour-barra small{margin-inline-end:auto;color:#f2b84b;font-weight:700}",
       ".ss-tour-barra button{border:0;border-radius:999px;padding:.42rem .85rem;font:700 13px/1 inherit;cursor:pointer}",
-      ".ss-tour-salta{background:transparent;color:#9fcbe6}",
-      ".ss-tour-indietro{background:rgba(125,211,252,.16);color:#e6f6ff}",
-      ".ss-tour-avanti{background:#1689e8;color:#fff}",
-      ".ss-tour-barra button:focus-visible{outline:3px solid #8ce4ff;outline-offset:2px}"
+      ".ss-tour-salta{background:transparent;color:#8e99b3}",
+      ".ss-tour-indietro{background:transparent;color:#f4efe6;box-shadow:inset 0 0 0 1px #2d3858}",
+      ".ss-tour-avanti{background:#f2b84b;color:#1a1206}",
+      ".ss-tour-barra button:focus-visible{outline:3px solid #7cc4f5;outline-offset:2px}",
+      ".ss-tour-avanzamento{height:3px;border-radius:3px;background:#1c2540;margin:0 0 .8rem;overflow:hidden}",
+      ".ss-tour-avanzamento i{display:block;height:100%;background:#f2b84b;transition:width .35s ease}"
     ].join("");
     doc.head.appendChild(stile);
 
@@ -50,6 +80,10 @@
 
     function chiudi() {
       segnaVisto();
+      if (schedaIniziale >= 0) {
+        const tutte = doc.querySelectorAll(SEL_SCHEDE);
+        if (tutte[schedaIniziale] && tutte[schedaIniziale].getAttribute("aria-selected") !== "true") { tutte[schedaIniziale].click(); }
+      }
       [velo, luce, fumetto, stile].forEach(function (el) { if (el.parentNode) { el.parentNode.removeChild(el); } });
       win.removeEventListener("resize", posiziona);
       doc.removeEventListener("scroll", suScroll, true);
@@ -72,7 +106,7 @@
     }
     function preparaSidebar(p, fatto) {
       if (!telefono() || !p.sel) { fatto(); return; }
-      const el = doc.querySelector(p.sel);
+      const el = trova(p);
       if (!el) { fatto(); return; }
       const vuoleAperta = p.sel === SEL_SIDEBAR || !!el.closest(SEL_SIDEBAR);
       if (sidebarAperta() === vuoleAperta) { fatto(); return; }
@@ -87,7 +121,7 @@
     function bersaglio() {
       const p = passi[i];
       if (!p || !p.sel) { return null; }
-      const el = doc.querySelector(p.sel);
+      const el = trova(p);
       if (!el) { return null; }
       const r = el.getBoundingClientRect();
       // Sidebar chiusa (telefono) o elemento invisibile: fumetto al centro.
@@ -145,7 +179,8 @@
     function disegna() {
       const p = passi[i];
       fumetto.style.visibility = "hidden"; luce.style.opacity = "0";
-      preparaSidebar(p, function () { mostra(p); });
+      const dopoScheda = function () { preparaSidebar(p, function () { mostra(p); }); };
+      if (p && p.scheda !== null && p.scheda !== undefined) { apriScheda(p.scheda, dopoScheda); } else { dopoScheda(); }
     }
     function mostra(p) {
       const ultimo = i === passi.length - 1;
@@ -167,10 +202,13 @@
       avanti.textContent = ultimo ? DATI.fine : DATI.avanti;
       avanti.onclick = function () { if (ultimo) { chiudi(); } else { vai(1); } };
       barra.appendChild(avanti);
-      fumetto.appendChild(t); fumetto.appendChild(x); fumetto.appendChild(barra);
+      const avanzamento = doc.createElement("div"); avanzamento.className = "ss-tour-avanzamento";
+      const pieno = doc.createElement("i"); pieno.style.width = ((i + 1) / passi.length * 100) + "%";
+      avanzamento.appendChild(pieno);
+      fumetto.appendChild(avanzamento); fumetto.appendChild(t); fumetto.appendChild(x); fumetto.appendChild(barra);
       // Prima porta l'elemento in vista (scorrimento immediato), poi controlla
       // se è visibile e calcola la posizione sull'elemento già fermo.
-      const grezzo = p.sel ? doc.querySelector(p.sel) : null;
+      const grezzo = trova(p);
       if (grezzo && grezzo.scrollIntoView && !grezzo.matches(SEL_SIDEBAR)) {
         // Elementi alti (es. Centro del progetto su telefono): in cima allo
         // schermo, così il fumetto trova spazio sotto.
