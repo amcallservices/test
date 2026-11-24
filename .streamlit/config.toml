@@ -12,3 +12,9 @@ primaryColor = "#4aa8ff"
 backgroundColor = "#0b1423"
 secondaryBackgroundColor = "#16263d"
 textColor = "#eef5ff"
+
+[runner]
+# Velocità: la funzione "magic" (mostrare da sola un'espressione scritta da
+# sola su una riga) non è usata dal sito, ma a ogni avvio riscrive tutto
+# app.py (circa 2 secondi). Spenta, il primo caricamento è più rapido.
+magicEnabled = false
