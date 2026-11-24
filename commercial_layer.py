@@ -1091,6 +1091,24 @@ def _supabase_recover_password(email: str) -> None:
         raise RuntimeError("Impossibile inviare il link di recupero. Riprova tra poco.")
 
 
+def _stile_pagina_accesso() -> None:
+    """Grafica inchiostro e oro della pagina di accesso (solo aspetto).
+
+    Con il segreto AREA_CLASSICA = "1" resta la grafica precedente, come
+    nell'area riservata.
+    """
+    if _secret("AREA_CLASSICA", "").strip().lower() in ("1", "true", "si", "sì"):
+        return
+    base = Path(__file__).resolve().parent / "assets"
+    blocchi = []
+    for nome in ("area_v2.css", "accesso_v2.css"):
+        file_css = base / nome
+        if file_css.is_file():
+            blocchi.append(file_css.read_text(encoding="utf-8"))
+    if blocchi:
+        st.markdown("<style>" + "\n".join(blocchi) + "</style>", unsafe_allow_html=True)
+
+
 def _render_password_recovery() -> bool:
     """Mostra e completa il recupero password con controlli nativi Streamlit."""
     try:
@@ -1099,6 +1117,7 @@ def _render_password_recovery() -> bool:
         is_recovery = False
     if not is_recovery:
         return False
+    _stile_pagina_accesso()
 
     # Il token_hash viene aggiunto al link dell'email di recupero. A differenza
     # dell'hash della URL, Streamlit può leggerlo in modo affidabile.
@@ -2255,15 +2274,16 @@ def _account_gate() -> dict[str, Any]:
     if current:
         return current
 
+    _stile_pagina_accesso()
     st.title("Accedi a Scrittore Site")
     st.caption("Ogni account mantiene separati crediti e sessione di lavoro.")
     if st.button("← Torna alla home", key="commercial_back_to_home"):
         st.session_state.pop("commercial_show_auth", None)
         st.session_state.pop("commercial_auth_hint", None)
         st.rerun()
-    if st.session_state.get("commercial_auth_hint") == "signup":
-        st.info("Seleziona la scheda “Crea account” per registrarti.")
-    access_tab, signup_tab = st.tabs(["Accedi", "Crea account"])
+    # Da "Inizia gratis" si apre direttamente la scheda di registrazione.
+    scheda_iniziale = "Crea account" if st.session_state.get("commercial_auth_hint") == "signup" else None
+    access_tab, signup_tab = st.tabs(["Accedi", "Crea account"], default=scheda_iniziale)
     with access_tab:
         email = st.text_input("Email", key="commercial_login_email")
         password = st.text_input("Password", type="password", key="commercial_login_password")
