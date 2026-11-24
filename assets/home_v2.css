@@ -6,7 +6,9 @@
 
 /* ---------- Contenitore di Streamlit: pagina a tutta larghezza ---------- */
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background: #0a0e1a !important; color: #f4efe6 !important; }
-[data-testid="stHeader"] { background: transparent !important; height: 0 !important; }
+/* La barra di Streamlit in cima è trasparente ma copre il menu e prende i
+   clic: sulla home non serve, quindi sparisce del tutto. */
+[data-testid="stHeader"], header.stAppHeader { display: none !important; pointer-events: none !important; }
 [data-testid="stToolbar"], [data-testid="stToolbarActions"], [data-testid="stStatusWidget"], [data-testid="stDecoration"],
 .stAppDeployButton, #MainMenu, footer, button[title="Manage app"], a[title="Manage app"] { display: none !important; }
 [data-testid="stMainBlockContainer"], section.main > div.block-container {
