@@ -11,7 +11,7 @@ _SCHEDA = '[data-testid="stTabs"] [role="tab"]:nth-child({})'
 
 PASSI_TOUR = (
     {"sel": ""},
-    {"sel": ".st-key-commercial_refresh_credits", "alt": '[data-testid="stSidebar"] [data-testid="stMetric"]'},
+    {"sel": ".st-key-ss_blocco_crediti", "alt": ".st-key-commercial_refresh_credits"},
     {"sel": ".st-key-editor_language"},
     {"sel": ".st-key-provider_ia"},
     {"sel": ".st-key-book_title"},
