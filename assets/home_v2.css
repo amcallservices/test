@@ -459,6 +459,10 @@ b.ss2-verde { font-weight: 700; }
 
 /* ---------- Telefono ---------- */
 @media (max-width: 640px) {
+  /* Menu e lingue a tutta larghezza sotto la barra: niente voci tagliate ai bordi. */
+  .ss2-menu-mobile nav, .ss2-lingue-mobile .ss2-lingue-elenco {
+    position: fixed; left: 12px; right: 12px; top: 64px; width: auto; max-height: calc(100vh - 80px); overflow-y: auto;
+  }
   .ss2-wrap { padding-left: 18px; padding-right: 18px; }
   .ss2-header-riga { gap: 10px; padding-top: 10px; padding-bottom: 10px; }
   .ss2-logo img { width: 36px; height: 36px; }
