@@ -36,7 +36,6 @@ _PASSI = (
     (11, {"sel": ".st-key-aggiorna_pagina_sicura"}),
     (12, {"sel": ".st-key-reset_progetto_distruttivo"}),
     ("memoria", {"sel": ".st-key-ss_blocco_memoria"}),
-    ("video", {"sel": ".st-key-ss_blocco_video"}),
     (13, {"sel": ".ss-workspace-header"}),
     (14, {"sel": ".ss-project-panel"}),
     (15, {"sel": '[data-testid="stTabs"] [role="tablist"]'}),
@@ -301,7 +300,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Rigenera fonti web", "Rifà la ricerca delle fonti sul web, per esempio dopo aver cambiato argomento. Il costo compare prima di confermare."),
         "personalizza": ("Personalizza il tuo libro", "Facoltativo: aggiungi la tua voce, esperienze e materiale personale, priorità e limiti, e scegli se vuoi dei controlli durante la stesura."),
         "memoria": ("Memoria del progetto", "Mostra cosa il software conserva: campi compilati, indice, sezioni scritte e fonti, comprese le modifiche fatte a mano."),
-        "video": ("Video", "Un breve video che mostra come usare il software dall'inizio alla fine."),
     },
     "English": {
         "ricarica": ("Top up credits", "Choose a package: Base 150 credits (€10), Creator 375 (€25), Studio 750 (€50) or Professional 1,500 (€100). Pay with Stripe, then press Refresh balance."),
@@ -313,7 +311,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Regenerate web sources", "Runs the web source search again, for example after changing topic. The cost appears before you confirm."),
         "personalizza": ("Personalise your book", "Optional: add your own voice, experiences and material, priorities and limits, and choose whether you want checks during writing."),
         "memoria": ("Project memory", "Shows what the software keeps: filled-in fields, outline, written sections and sources, including manual edits."),
-        "video": ("Video", "A short video showing how to use the software from start to finish."),
     },
     "Español": {
         "ricarica": ("Recargar créditos", "Elige un paquete: Base 150 créditos (10 €), Creator 375 (25 €), Studio 750 (50 €) o Profesional 1.500 (100 €). Pagas con Stripe y luego pulsas Actualizar saldo."),
@@ -325,7 +322,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Regenerar fuentes web", "Repite la búsqueda de fuentes en la web, por ejemplo tras cambiar de tema. El coste aparece antes de confirmar."),
         "personalizza": ("Personaliza tu libro", "Opcional: añade tu voz, experiencias y material propio, prioridades y límites, y decide si quieres controles durante la escritura."),
         "memoria": ("Memoria del proyecto", "Muestra lo que el programa conserva: campos completados, índice, secciones escritas y fuentes, incluidos los cambios manuales."),
-        "video": ("Vídeo", "Un vídeo breve que muestra cómo usar el programa de principio a fin."),
     },
     "Français": {
         "ricarica": ("Recharger des crédits", "Choisissez un pack : Base 150 crédits (10 €), Creator 375 (25 €), Studio 750 (50 €) ou Professionnel 1 500 (100 €). Payez avec Stripe, puis appuyez sur Actualiser le solde."),
@@ -337,7 +333,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Régénérer les sources web", "Relance la recherche de sources sur le web, par exemple après un changement de sujet. Le coût s'affiche avant confirmation."),
         "personalizza": ("Personnalisez votre livre", "Facultatif : ajoutez votre voix, vos expériences et documents, vos priorités et limites, et choisissez si vous voulez des contrôles pendant l'écriture."),
         "memoria": ("Mémoire du projet", "Montre ce que le logiciel conserve : champs remplis, plan, sections écrites et sources, modifications manuelles comprises."),
-        "video": ("Vidéo", "Une courte vidéo qui montre comment utiliser le logiciel du début à la fin."),
     },
     "Deutsch": {
         "ricarica": ("Credits aufladen", "Wählen Sie ein Paket: Base 150 Credits (10 €), Creator 375 (25 €), Studio 750 (50 €) oder Professional 1.500 (100 €). Bezahlen Sie mit Stripe und drücken Sie dann Guthaben aktualisieren."),
@@ -349,7 +344,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Webquellen neu suchen", "Wiederholt die Quellensuche im Web, zum Beispiel nach einem Themenwechsel. Die Kosten erscheinen vor der Bestätigung."),
         "personalizza": ("Buch personalisieren", "Optional: Fügen Sie Ihre eigene Stimme, Erfahrungen und Material, Prioritäten und Grenzen hinzu und wählen Sie, ob Sie Kontrollen beim Schreiben möchten."),
         "memoria": ("Projektspeicher", "Zeigt, was die Software speichert: ausgefüllte Felder, Gliederung, geschriebene Abschnitte und Quellen, auch manuelle Änderungen."),
-        "video": ("Video", "Ein kurzes Video, das die Nutzung der Software von Anfang bis Ende zeigt."),
     },
     "Română": {
         "ricarica": ("Reîncarcă credite", "Alege un pachet: Base 150 credite (10 €), Creator 375 (25 €), Studio 750 (50 €) sau Profesional 1.500 (100 €). Plătești prin Stripe, apoi apeși Actualizează soldul."),
@@ -361,7 +355,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Regenerează sursele web", "Reface căutarea surselor pe web, de exemplu după ce schimbi subiectul. Costul apare înainte de confirmare."),
         "personalizza": ("Personalizează-ți cartea", "Opțional: adaugă vocea ta, experiențe și material personal, priorități și limite și alege dacă vrei verificări în timpul scrierii."),
         "memoria": ("Memoria proiectului", "Arată ce păstrează programul: câmpuri completate, cuprins, secțiuni scrise și surse, inclusiv modificările manuale."),
-        "video": ("Video", "Un videoclip scurt care arată cum se folosește programul de la început la sfârșit."),
     },
     "Русский": {
         "ricarica": ("Пополнить кредиты", "Выберите пакет: Base 150 кредитов (10 €), Creator 375 (25 €), Studio 750 (50 €) или Professional 1 500 (100 €). Оплатите через Stripe и нажмите «Обновить баланс»."),
@@ -373,7 +366,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("Обновить веб-источники", "Повторяет поиск источников в интернете, например после смены темы. Стоимость видна до подтверждения."),
         "personalizza": ("Настройте книгу под себя", "Необязательно: добавьте свой голос, опыт и материалы, приоритеты и ограничения, и решите, нужны ли проверки во время написания."),
         "memoria": ("Память проекта", "Показывает, что хранит программа: заполненные поля, оглавление, написанные разделы и источники, включая ручные правки."),
-        "video": ("Видео", "Короткое видео о том, как пользоваться программой от начала до конца."),
     },
     "العربية": {
         "ricarica": ("شحن الأرصدة", "اختر باقة: Base بـ 150 رصيداً (10 €)، Creator بـ 375 (25 €)، Studio بـ 750 (50 €) أو الاحترافية بـ 1500 (100 €). ادفع عبر Stripe ثم اضغط تحديث الرصيد."),
@@ -385,7 +377,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("إعادة البحث عن مصادر الويب", "يعيد البحث عن المصادر على الويب، مثلاً بعد تغيير الموضوع. تظهر التكلفة قبل التأكيد."),
         "personalizza": ("خصّص كتابك", "اختياري: أضف صوتك وتجاربك ومادتك الشخصية وأولوياتك وحدودك، واختر إن كنت تريد مراجعات أثناء الكتابة."),
         "memoria": ("ذاكرة المشروع", "تعرض ما يحفظه البرنامج: الحقول المعبأة والفهرس والأقسام المكتوبة والمصادر، بما فيها التعديلات اليدوية."),
-        "video": ("فيديو", "فيديو قصير يشرح استخدام البرنامج من البداية إلى النهاية."),
     },
     "中文": {
         "ricarica": ("充值积分", "选择套餐：Base 150 积分（10 €）、Creator 375（25 €）、Studio 750（50 €）或 Professional 1500（100 €）。通过 Stripe 付款后点击“刷新余额”。"),
@@ -397,7 +388,6 @@ TESTI_AGGIUNTI = {
         "rigenera_fonti": ("重新检索网络资料", "重新在网上检索资料，例如更换主题之后。确认前会显示费用。"),
         "personalizza": ("个性化你的书", "可选：加入你的个人风格、经历和素材、优先事项和界限，并选择写作过程中是否需要检查。"),
         "memoria": ("项目记忆", "显示软件保存的内容：已填写的字段、目录、已写小节和资料，包括手动修改。"),
-        "video": ("视频", "一段简短的视频，演示软件从头到尾的用法。"),
     },
 }
 

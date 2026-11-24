@@ -8117,19 +8117,6 @@ gli esempi o le procedure da produrre e ciò che deve restare fuori per evitare 
     mostra_memoria_visiva_progetto(campi_obbligatori_sidebar)
 
     st.divider()
-    titoli_video = {
-        "Italiano": "🎬 Video: come si usa Scrittore Site", "English": "🎬 Video: how to use Scrittore Site",
-        "Español": "🎬 Vídeo: cómo usar Scrittore Site", "Français": "🎬 Vidéo : utiliser Scrittore Site",
-        "Deutsch": "🎬 Video: So nutzen Sie Scrittore Site", "Română": "🎬 Video: cum folosești Scrittore Site",
-        "Русский": "🎬 Видео: как пользоваться Scrittore Site", "العربية": "🎬 فيديو: كيف تستخدم Scrittore Site",
-        "中文": "🎬 视频：如何使用 Scrittore Site",
-    }
-    video_istruzioni = os.path.join(
-        os.path.dirname(__file__), "assets", "istruzioni-scrittore-site.mp4"
-    )
-    if os.path.isfile(video_istruzioni):
-        with st.container(key="ss_blocco_video"), st.expander(titoli_video.get(lingua_sel, titoli_video["Italiano"]), expanded=False):
-            st.video(video_istruzioni, format="video/mp4")
     st.button(
         (suggerimenti_core.TOUR.get(lingua_sel) or suggerimenti_core.TOUR["English"])["rivedi"],
         key="rivedi_visita_guidata", use_container_width=True,
