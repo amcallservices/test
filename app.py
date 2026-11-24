@@ -15,7 +15,6 @@ import math
 import tempfile
 import uuid
 from fpdf import FPDF
-from openai import OpenAI
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -1064,19 +1063,43 @@ VERSIONE_DEPLOY = f"Scrittore Site commerciale — {COMMERCIAL_TEST_VERSION}"
 VERSIONE_AUDIT_COHERENZA = "4"
 
 # --- CONNESSIONI AI: due cervelli separati, selezionabili dall'utente ---
-client_openai = None
-client_deepseek = None
-try:
-    client_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-except Exception:
-    pass
-try:
-    client_deepseek = OpenAI(
-        api_key=st.secrets["DEEPSEEK_API_KEY"],
-        base_url="https://api.deepseek.com",
-    )
-except Exception:
-    pass
+# Velocità: la libreria OpenAI (circa mezzo secondo di import) si carica solo
+# al primo uso vero di un cervello, non all'apertura della home; il client
+# viene creato una volta per processo e riusato, invece che a ogni clic.
+@st.cache_resource(show_spinner=False)
+def _client_ai_condiviso(api_key, base_url=""):
+    from openai import OpenAI
+    if base_url:
+        return OpenAI(api_key=api_key, base_url=base_url)
+    return OpenAI(api_key=api_key)
+
+
+class ClientAIPigro:
+    """Si comporta come il client OpenAI, ma lo crea solo quando serve."""
+
+    def __init__(self, api_key, base_url=""):
+        self._api_key = api_key
+        self._base_url = base_url
+
+    def __bool__(self):
+        return bool(self._api_key)
+
+    def __getattr__(self, nome):
+        return getattr(_client_ai_condiviso(self._api_key, self._base_url), nome)
+
+
+def _segreto_api(nome):
+    try:
+        return str(st.secrets[nome] or "")
+    except Exception:
+        return ""
+
+
+client_openai = ClientAIPigro(_segreto_api("OPENAI_API_KEY")) if _segreto_api("OPENAI_API_KEY") else None
+client_deepseek = (
+    ClientAIPigro(_segreto_api("DEEPSEEK_API_KEY"), "https://api.deepseek.com")
+    if _segreto_api("DEEPSEEK_API_KEY") else None
+)
 
 # Compatibilità con gli strumenti esclusivi OpenAI già presenti (immagini e
 # ricerca web). Non viene mai usato per la scrittura se l'utente sceglie
