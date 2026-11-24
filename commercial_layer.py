@@ -1420,8 +1420,172 @@ HOME_LANGUAGE_HIGHLIGHT = {
 }
 
 
+# Home "inchiostro e oro": testi nuovi della home nelle 9 lingue.
+HOME_LANGUAGE_CODES = {
+    "Italiano": "IT", "English": "EN", "Español": "ES", "Français": "FR", "Deutsch": "DE",
+    "Română": "RO", "Русский": "RU", "العربية": "AR", "中文": "ZH",
+}
+HOME_NUOVA_COPY = {
+    "Italiano": {"kicker": "Scrittura editoriale con AI · 9 lingue", "consigliato": "Consigliato",
+                 "stima_con": "Calcola le stime con:", "finale_titolo": "Il tuo libro può <em>cominciare oggi.</em>",
+                 "finale_testo": "50 crediti gratuiti per provare indice e prime sezioni. Nessuna carta richiesta."},
+    "English": {"kicker": "AI-powered book writing · 9 languages", "consigliato": "Recommended",
+                "stima_con": "Estimate with:", "finale_titolo": "Your book can <em>start today.</em>",
+                "finale_testo": "50 free credits to try the outline and first sections. No card required."},
+    "Español": {"kicker": "Escritura editorial con IA · 9 idiomas", "consigliato": "Recomendado",
+                "stima_con": "Calcular con:", "finale_titolo": "Tu libro puede <em>empezar hoy.</em>",
+                "finale_testo": "50 créditos gratis para probar el índice y las primeras secciones. Sin tarjeta."},
+    "Français": {"kicker": "Écriture éditoriale avec l’IA · 9 langues", "consigliato": "Recommandé",
+                 "stima_con": "Estimer avec :", "finale_titolo": "Votre livre peut <em>commencer aujourd’hui.</em>",
+                 "finale_testo": "50 crédits gratuits pour essayer le plan et les premières sections. Sans carte bancaire."},
+    "Deutsch": {"kicker": "Redaktionelles Schreiben mit KI · 9 Sprachen", "consigliato": "Empfohlen",
+                "stima_con": "Schätzen mit:", "finale_titolo": "Ihr Buch kann <em>heute beginnen.</em>",
+                "finale_testo": "50 Gratis-Credits, um Gliederung und erste Abschnitte zu testen. Keine Karte nötig."},
+    "Română": {"kicker": "Scriere editorială cu AI · 9 limbi", "consigliato": "Recomandat",
+               "stima_con": "Estimează cu:", "finale_titolo": "Cartea ta poate <em>începe azi.</em>",
+               "finale_testo": "50 de credite gratuite pentru a încerca cuprinsul și primele secțiuni. Fără card."},
+    "Русский": {"kicker": "Редакторское письмо с ИИ · 9 языков", "consigliato": "Рекомендуем",
+                "stima_con": "Считать для:", "finale_titolo": "Ваша книга может <em>начаться сегодня.</em>",
+                "finale_testo": "50 бесплатных кредитов, чтобы попробовать оглавление и первые разделы. Карта не нужна."},
+    "العربية": {"kicker": "كتابة تحريرية بالذكاء الاصطناعي · 9 لغات", "consigliato": "موصى به",
+                "stima_con": "احسب التقديرات باستخدام:", "finale_titolo": "يمكن أن <em>يبدأ كتابك اليوم.</em>",
+                "finale_testo": "50 رصيداً مجانياً لتجربة الفهرس والأقسام الأولى. لا حاجة إلى بطاقة."},
+    "中文": {"kicker": "AI 编辑式写作 · 9 种语言", "consigliato": "推荐",
+             "stima_con": "按以下引擎估算：", "finale_titolo": "你的书<em>今天就可以开始。</em>",
+             "finale_testo": "50 个免费积分，可试用目录和前几节。无需银行卡。"},
+}
+
+
+def _lingua_home_da_url() -> None:
+    """Il menu delle lingue è fatto di link (?lang=EN): imposta la lingua della home."""
+    try:
+        codice = str(st.query_params.get("lang", "") or "").strip().upper()
+    except Exception:
+        return
+    if not codice:
+        return
+    for lingua, sigla in HOME_LANGUAGE_CODES.items():
+        if sigla == codice:
+            st.session_state["commercial_home_language"] = lingua
+            break
+    try:
+        del st.query_params["lang"]
+    except Exception:
+        pass
+
+
+def _link_home(**parametri: str) -> str:
+    """Link della home che conserva lingua e codice invito (servono dopo il ricaricamento)."""
+    valori = {"lang": HOME_LANGUAGE_CODES.get(st.session_state.get("commercial_home_language", "Italiano"), "IT")}
+    invito = st.session_state.get("commercial_pending_referral_code", "")
+    if invito:
+        valori["ref"] = invito
+    valori.update(parametri)
+    from urllib.parse import urlencode
+    return "?" + urlencode(valori)
+
+
+def _landing_page_v2() -> None:
+    """Home pubblica "inchiostro e oro", identica all'anteprima approvata."""
+    from html import escape
+
+    from home_page import build_home_html
+
+    base = Path(__file__).resolve().parent
+    css = base / "assets" / "home_v2.css"
+    if css.is_file():
+        st.markdown(f"<style>{css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+
+    _lingua_home_da_url()
+    if st.session_state.get("commercial_home_language") not in HOME_COPY:
+        st.session_state["commercial_home_language"] = "Italiano"
+    lingua = st.session_state["commercial_home_language"]
+
+    # I link "Inizia gratis" e "Accedi" portano ?azione=...; con lo script
+    # attivo premono invece questi pulsanti nascosti, senza ricaricare.
+    try:
+        azione = str(st.query_params.get("azione", "") or "")
+    except Exception:
+        azione = ""
+    if azione in ("registrati", "accedi"):
+        try:
+            del st.query_params["azione"]
+        except Exception:
+            pass
+        st.session_state["commercial_show_auth"] = True
+        st.session_state["commercial_auth_hint"] = "signup" if azione == "registrati" else "login"
+        st.rerun()
+    nascosto_a, nascosto_b = st.columns(2)
+    with nascosto_a:
+        if st.button("registrati", key="ss2_registrati"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "signup"
+            st.rerun()
+    with nascosto_b:
+        if st.button("accedi", key="ss2_accedi"):
+            st.session_state["commercial_show_auth"] = True
+            st.session_state["commercial_auth_hint"] = "login"
+            st.rerun()
+
+    H = HOME_COPY[lingua]
+    C = HOME_BODY_COPY[lingua]
+    A = HOME_AI_ENGINES_COPY[lingua]
+    J = HOME_IDEA_TO_BOOK_COPY[lingua]
+    NU = HOME_NUOVA_COPY[lingua]
+    righe_titolo = HOME_EDITORIAL_HEADLINES[lingua].split("<br>", 1)
+    titolo = escape(righe_titolo[0]) + (f"<br><em>{escape(righe_titolo[1])}</em>" if len(righe_titolo) > 1 else "")
+    nomi_pacchetti = HOME_PACKAGE_NAMES[lingua]
+    pacchetti = []
+    for posizione, (chiave, pacchetto) in enumerate(PACKAGES.items()):
+        pro, eco = PACKAGE_ENGINE_BOOKS.get(chiave, (0, 0))
+        pacchetti.append({
+            "nome": nomi_pacchetti[posizione],
+            "prezzo": f"{pacchetto['amount_cents'] / 100:.0f} €" if pacchetto["amount_cents"] % 100 == 0
+            else f"{pacchetto['amount_cents'] / 100:.2f} €".replace(".", ","),
+            "crediti": f"{pacchetto['credits']:,}".replace(",", "."),
+            "pro": pro, "eco": eco, "consigliato": chiave == "creator_375",
+        })
+    faq_titolo, _faq_sotto, faq_voci = HOME_FAQ_COPY[lingua]
+    guida_titolo, guida_testo, etichetta_it, etichetta_en = HOME_GUIDES_COPY[lingua]
+    T2 = __import__("home_page_copy").HOME_V2_COPY[lingua]
+    guide = [
+        (etichetta_it.replace("📄", "").strip(), T2["guida_it_sub"], _public_guide_link(HOME_GUIDE_FILES["italian"]),
+         f"Guida-area-riservata-Scrittore-Site-Italiano-v{COMMERCIAL_VERSION}.pdf"),
+        (etichetta_en.replace("📄", "").strip(), T2["guida_en_sub"], _public_guide_link(HOME_GUIDE_FILES["english"]),
+         f"Scrittore-Site-Private-Area-Guide-English-v{COMMERCIAL_VERSION}.pdf"),
+    ]
+    dati = {
+        "nav": HOME_NAVIGATION[lingua], "community": C["community"], "store": HOME_STORE_LABELS[lingua],
+        "menu": HOME_MENU_LABELS[lingua], "etichetta_lingua": H["language"], "sigla": HOME_LANGUAGE_CODES[lingua],
+        "lingue": [(nome, sigla, _link_home(lang=sigla)) for nome, sigla in HOME_LANGUAGE_CODES.items()],
+        "link_registrati": _link_home(azione="registrati"), "link_accedi": _link_home(azione="accedi"),
+        "kicker": NU["kicker"], "titolo": titolo, "sottotitolo": J["subtitle"],
+        "inizia": H["start"], "accedi": H["login"], "libro": HOME_INTERACTIVE_BOOK[lingua],
+        "fiducia": HOME_TRUST_STRIP[lingua], "slide": HOME_SLIDES[lingua]["slide"],
+        "prec": HOME_SLIDES[lingua]["prec"], "succ": HOME_SLIDES[lingua]["succ"],
+        "vantaggi": HOME_ADVANTAGE_CARDS[lingua],
+        "cervelli": {"titolo": A[0], "pro_nome": A[2], "pro_testo": A[3], "pro_costo": A[4],
+                     "eco_nome": A[5], "eco_testo": A[6], "eco_costo": A[7], "nota": A[8] if len(A) > 8 else ""},
+        "pacchetti": pacchetti, "consigliato": NU["consigliato"],
+        "nota_stime": HOME_ENGINE_ESTIMATE_COPY[lingua][2],
+        "faq_titolo": faq_titolo, "faq": [*faq_voci, *HOME_FAQ_EXTRA[lingua]],
+        "guide_titolo": guida_titolo, "guide_testo": guida_testo, "guide": guide,
+        "finale_titolo": NU["finale_titolo"], "finale_testo": NU["finale_testo"],
+        "versione": f"{C['version']} {COMMERCIAL_VERSION}",
+    }
+    st.markdown(build_home_html(lingua, dati), unsafe_allow_html=True)
+    js = base / "assets" / "home_v2.js"
+    if js.is_file():
+        components.html(f"<script>{js.read_text(encoding='utf-8')}</script>", height=0)
+
+
 def _landing_page() -> None:
     """Pagina di ingresso pubblica: compare prima dell'accesso."""
+    # Nuova home "inchiostro e oro". La versione precedente (qui sotto) resta
+    # disponibile come riserva con il segreto HOME_CLASSICA = "1".
+    if _secret("HOME_CLASSICA", "").strip() not in ("1", "true", "si", "sì"):
+        _landing_page_v2()
+        return
     st.markdown(
         """
         <style>
