@@ -3298,6 +3298,10 @@ def _commerce_sidebar() -> None:
                     except Exception as error:
                         st.error(str(error))
 
+            with st.expander("📧 Email agli utenti", expanded=False):
+                st.caption("Visibile solo agli account amministratore.")
+                _pannello_email_utenti(profili_utenti, user)
+
             with st.expander("📊 Consumi AI, ricavi e margini", expanded=False):
                 st.caption(
                     "Registro tecnico riservato: non contiene prompt, testi o titoli. L'email dell'account è "
@@ -3544,6 +3548,186 @@ def _commerce_sidebar() -> None:
             st.rerun()
 
 
+# ------------------------------------------------------------------
+# Email agli utenti (pannello amministratore) e disiscrizione
+# ------------------------------------------------------------------
+CHIAVE_METADATA_DISISCRITTO = "ss_email_disiscritto"
+
+
+def _chiave_firma_email() -> str:
+    """Chiave per firmare i link di disiscrizione (mai mostrata agli utenti)."""
+    return _secret("EMAIL_UNSUBSCRIBE_SECRET") or _secret("SUPABASE_SERVICE_ROLE_KEY")
+
+
+def _utenti_auth() -> list[dict[str, Any]]:
+    """Tutti gli account di Supabase Auth (paginati), con i loro metadati."""
+    utenti: list[dict[str, Any]] = []
+    for pagina in range(1, 51):
+        risposta = _supabase("GET", "auth/v1/admin/users", params={"page": str(pagina), "per_page": "1000"}) or {}
+        blocco = risposta.get("users", []) if isinstance(risposta, dict) else list(risposta or [])
+        utenti.extend(blocco)
+        if len(blocco) < 1000:
+            break
+    return utenti
+
+
+def _email_disiscritte(utenti: list[dict[str, Any]]) -> set[str]:
+    return {
+        str(u.get("email", "")).strip().lower()
+        for u in utenti
+        if (u.get("user_metadata") or {}).get(CHIAVE_METADATA_DISISCRITTO)
+    }
+
+
+def _segna_disiscrizione(email: str) -> bool:
+    """Registra nel profilo Supabase che l'utente non vuole più queste email."""
+    email = email.strip().lower()
+    for utente in _utenti_auth():
+        if str(utente.get("email", "")).strip().lower() == email and utente.get("id"):
+            metadati = dict(utente.get("user_metadata") or {})
+            metadati[CHIAVE_METADATA_DISISCRITTO] = True
+            _supabase("PUT", f"auth/v1/admin/users/{utente['id']}", payload={"user_metadata": metadati})
+            return True
+    return False
+
+
+def _gestisci_disiscrizione_da_url() -> None:
+    """Link "Non voglio più ricevere queste email": conferma e si ferma qui."""
+    try:
+        valore = st.query_params.get("disiscrivi", "")
+        token = st.query_params.get("t", "")
+    except Exception:
+        return
+    if not valore:
+        return
+    from email_admin import leggi_disiscrizione
+
+    email = leggi_disiscrizione(valore, token, _chiave_firma_email())
+    _stile_pagina_accesso()
+    if not email:
+        st.title("Link non valido")
+        st.write("Il link di disiscrizione non è valido o è incompleto. Puoi scriverci con il pulsante Contatti.")
+    else:
+        try:
+            _segna_disiscrizione(email)
+            st.title("Fatto")
+            st.write(f"Non invieremo più comunicazioni a **{email}**. Il tuo account e i tuoi progetti restano attivi.")
+        except Exception:
+            st.title("Riprova tra poco")
+            st.write("Non è stato possibile registrare la richiesta in questo momento. Riprova più tardi.")
+    if st.button("← Vai alla home", key="commercial_disiscrizione_home"):
+        for chiave in ("disiscrivi", "t"):
+            try:
+                del st.query_params[chiave]
+            except Exception:
+                pass
+        st.rerun()
+    st.stop()
+
+
+def _pannello_email_utenti(profili_utenti: list[dict[str, Any]], user: dict[str, Any]) -> None:
+    """Riquadro dell'amministratore per scrivere a tutti o ad alcuni utenti."""
+    from email_admin import LIMITE_GIORNALIERO_GMAIL, configurazione_email, corpo_html, invia_a_tutti, link_disiscrizione
+
+    conf = configurazione_email(_secret)
+    if not conf:
+        st.info(
+            "Per inviare email serve la tua Gmail. Nei segreti di Streamlit aggiungi:\n\n"
+            "`EMAIL_SMTP_USER = \"tuoindirizzo@gmail.com\"`\n\n"
+            "`EMAIL_SMTP_PASSWORD = \"password per le app di Google\"`\n\n"
+            "La password per le app si crea da myaccount.google.com → Sicurezza → Verifica in due passaggi → Password per le app."
+        )
+        return
+    st.caption(f"Mittente: {conf['nome']} <{conf['utente']}>. Ogni persona riceve un'email separata, con il link per non riceverne più.")
+
+    try:
+        disiscritti = _email_disiscritte(_utenti_auth())
+    except Exception as error:
+        disiscritti = set()
+        st.warning(f"Impossibile leggere le disiscrizioni: {error}")
+    tutte = sorted({str(p.get("email", "")).strip().lower() for p in profili_utenti if "@" in str(p.get("email", ""))})
+    valide = [e for e in tutte if e not in disiscritti]
+    mia_email = str(user.get("email", "")).strip().lower()
+
+    scelta = st.radio(
+        "Destinatari",
+        ["tutti", "alcuni", "prova"],
+        format_func=lambda v: {
+            "tutti": f"Tutti gli utenti registrati ({len(valide)})",
+            "alcuni": "Solo alcuni utenti",
+            "prova": f"Solo a me, come prova ({mia_email or 'amministratore'})",
+        }[v],
+        key="commercial_admin_email_scelta",
+    )
+    if disiscritti:
+        n = len(disiscritti)
+        st.caption(f"{'Escluso 1 utente che ha' if n == 1 else f'Esclusi {n} utenti che hanno'} chiesto di non ricevere email.")
+    if scelta == "tutti":
+        destinatari = valide
+    elif scelta == "alcuni":
+        destinatari = st.multiselect("Scegli gli utenti", valide, key="commercial_admin_email_alcuni")
+    else:
+        destinatari = [mia_email] if mia_email else []
+
+    oggetto = st.text_input("Oggetto", key="commercial_admin_email_oggetto", max_chars=150)
+    testo = st.text_area(
+        "Messaggio",
+        key="commercial_admin_email_testo",
+        height=220,
+        help="Testo semplice. Lascia una riga vuota tra un paragrafo e l'altro.",
+    )
+    if oggetto.strip() and testo.strip():
+        with st.expander("👁️ Anteprima dell'email", expanded=False):
+            esempio = link_disiscrizione(_secret("APP_BASE_URL") or "https://scrittoresite.streamlit.app", "esempio@email.it", "anteprima")
+            st.markdown(f"**Oggetto:** {oggetto}")
+            st.html(corpo_html(testo, esempio, conf["nome"]))
+
+    if len(destinatari) > LIMITE_GIORNALIERO_GMAIL - 50:
+        st.warning(
+            f"Gmail permette circa {LIMITE_GIORNALIERO_GMAIL} destinatari al giorno: con {len(destinatari)} "
+            "l'invio potrebbe fermarsi a metà. Dividi l'invio in più giorni scegliendo \"Solo alcuni utenti\"."
+        )
+    conferma = True
+    if len(destinatari) > 1:
+        conferma = st.checkbox(f"Confermo l'invio a {len(destinatari)} persone", key="commercial_admin_email_conferma")
+    pronto = bool(destinatari and oggetto.strip() and testo.strip() and conferma)
+    if st.button(
+        f"📤 Invia ({len(destinatari)})",
+        type="primary",
+        use_container_width=True,
+        disabled=not pronto,
+        key="commercial_admin_email_invia",
+    ):
+        barra = st.progress(0.0, text="Connessione a Gmail…")
+
+        def avanzamento(fatti: int, totale: int, ultimo: str) -> None:
+            barra.progress(fatti / max(totale, 1), text=f"Inviate {fatti} di {totale} · {ultimo}")
+
+        try:
+            esito = invia_a_tutti(
+                conf, destinatari, oggetto, testo,
+                _secret("APP_BASE_URL") or "https://scrittoresite.streamlit.app",
+                _chiave_firma_email(), avanzamento,
+            )
+        except Exception as error:
+            barra.empty()
+            st.error(
+                f"Gmail ha rifiutato la connessione: {error}. Controlla EMAIL_SMTP_USER e la password per le app."
+            )
+            return
+        barra.empty()
+        if esito["inviati"]:
+            st.success(f"Email inviata a {len(esito['inviati'])} {'persona' if len(esito['inviati']) == 1 else 'persone'}.")
+        if esito["falliti"]:
+            st.error(f"Non inviata a {len(esito['falliti'])} indirizzi.")
+            st.dataframe(
+                [{"Email": email, "Motivo": motivo} for email, motivo in esito["falliti"]],
+                use_container_width=True, hide_index=True,
+            )
+        if esito["inviati"] and len(destinatari) > 1:
+            st.session_state.pop("commercial_admin_email_conferma", None)
+
+
 def bootstrap_commercial_app() -> None:
     """Mostra la home pubblica, quindi accesso e area editor riservata."""
     try:
@@ -3556,6 +3740,9 @@ def bootstrap_commercial_app() -> None:
     # cambia alcun progetto: resta solo una preferenza temporanea per un
     # eventuale nuovo account creato in questa visita.
     _cattura_referral_dalla_url()
+    # Link "Non voglio più ricevere queste email": pagina dedicata, poi si ferma.
+    if _mode() != "demo" and _supabase_ready():
+        _gestisci_disiscrizione_da_url()
     browser_action = _sincronizza_sessione_browser()
     if browser_action == "logout":
         # Il componente ha ricevuto il comando di cancellazione e riporta il
