@@ -19,10 +19,12 @@ concurrency:
 jobs:
   wake:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # Installazione del browser (1-2 minuti) + controllo (al massimo 3 minuti).
+    timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Versioni v5: girano su Node 24 (niente avviso "Node.js 20 deprecated").
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
       - name: Installa il browser di controllo
@@ -30,6 +32,7 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.64.0
           npx playwright install --with-deps --only-shell chromium
       - name: Visita la home e riattiva l'app se dorme
+        timeout-minutes: 4
         env:
           STREAMLIT_URL: https://scrittoresite.streamlit.app/
         run: node .github/scripts/wake-streamlit.mjs
