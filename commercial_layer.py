@@ -167,6 +167,12 @@ def _unita_deepseek(reason: str, amount: int) -> int:
 # Non inserire indirizzi amministratore direttamente nel codice pubblicato.
 
 PACKAGES = {
+    "prova_15": {
+        "name": "Pacchetto Prova — 15 crediti",
+        "credits": 15,
+        "amount_cents": 100,
+        "currency": "eur",
+    },
     "base_150": {
         "name": "Pacchetto Base — 150 crediti",
         "credits": 150,
@@ -196,9 +202,6 @@ PACKAGES = {
 # Compatibilità temporanea: permette di accreditare checkout già creati prima
 # dell'aggiornamento, senza mostrarli né renderli acquistabili nell'app.
 LEGACY_PACKAGES = {
-    # Pacchetto Prova (1 € / 15 crediti) ritirato: resta solo per accreditare
-    # eventuali checkout già aperti, non è più acquistabile né mostrato.
-    "prova_15": {"credits": 15},
     "prova_7": {"credits": 7},
     "base_100": {"credits": 100},
     "creator_260": {"credits": 260},
@@ -210,6 +213,7 @@ LEGACY_PACKAGES = {
 # per l'indice. Le attività opzionali restano escluse per non promettere
 # crediti che l'utente potrebbe scegliere di usare diversamente.
 PACKAGE_BOOK_ESTIMATES = {
+    "prova_15": "15 crediti per provare le funzioni principali",
     "base_150": "1 libro standard con il cervello costoso oppure 5 con il cervello economico",
     "creator_375": "4 libri standard con il cervello costoso oppure 13 con il cervello economico",
     "studio_750": "8 libri standard con il cervello costoso oppure 26 con il cervello economico",
@@ -225,6 +229,10 @@ PACKAGE_ESTIMATE_NOTE = (
 # Testo commerciale prudente: i crediti residui proteggono l'utente quando
 # desidera rigenerare, verificare fatti o usare strumenti aggiuntivi.
 PACKAGE_HOME_GUIDE = {
+    "prova_15": {
+        "ideal": "Ideale per: provare indice, editor e prime sezioni.",
+        "estimate": "Stima prudente: indice e fino a 10–12 sezioni brevi.",
+    },
     "base_150": {
         "ideal": "Ideale per: il primo manuale o progetto editoriale completo.",
         "estimate": "1 libro standard con il cervello costoso oppure 5 con il cervello economico.",
@@ -248,6 +256,7 @@ PACKAGE_HOME_GUIDE = {
 # Le quantità indicano esclusivamente libri completi, senza usare il residuo
 # per attività facoltative come rigenerazioni, immagini e controlli extra.
 PACKAGE_ENGINE_BOOKS = {
+    "prova_15": (0, 0),
     "base_150": (1, 5),
     "creator_375": (4, 13),
     "studio_750": (8, 26),
@@ -286,35 +295,35 @@ REFERRAL_COPY = {
         "intro": "Condividi il tuo link personale. Il premio arriva solo dopo il primo pacchetto ammesso acquistato dall’amico invitato.",
         "link": "Il tuo link personale",
         "copy": "Tocca il link per copiarlo e condividerlo.",
-        "rewards": "Premi: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionale 150+50 crediti. Il primo numero va a te, il secondo al nuovo utente.",
+        "rewards": "Premi: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionale 150+50 crediti. Il primo numero va a te, il secondo al nuovo utente. Il pacchetto Prova non dà premi.",
         "registered": "Inviti registrati",
         "rewarded": "Premi assegnati",
         "pending": "In attesa del primo acquisto ammesso",
         "empty": "Non hai ancora inviti registrati.",
     },
     "English": {
-        "title": "🎁 Invite friends and earn credits", "intro": "Share your personal link. Rewards are granted only after your friend’s first eligible package purchase.", "link": "Your personal link", "copy": "Tap the link to copy and share it.", "rewards": "Rewards: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 credits. The first number is yours, the second is for the new user.", "registered": "Registered referrals", "rewarded": "Rewards granted", "pending": "Waiting for the first eligible purchase", "empty": "You have no registered referrals yet."
+        "title": "🎁 Invite friends and earn credits", "intro": "Share your personal link. Rewards are granted only after your friend’s first eligible package purchase.", "link": "Your personal link", "copy": "Tap the link to copy and share it.", "rewards": "Rewards: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 credits. The first number is yours, the second is for the new user. The Trial package gives no reward.", "registered": "Registered referrals", "rewarded": "Rewards granted", "pending": "Waiting for the first eligible purchase", "empty": "You have no registered referrals yet."
     },
     "Español": {
-        "title": "🎁 Invita y gana créditos", "intro": "Comparte tu enlace personal. La recompensa llega solo tras la primera compra elegible de la persona invitada.", "link": "Tu enlace personal", "copy": "Toca el enlace para copiarlo y compartirlo.", "rewards": "Premios: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 créditos. El primer número es para ti y el segundo para el nuevo usuario.", "registered": "Invitaciones registradas", "rewarded": "Premios asignados", "pending": "En espera de la primera compra elegible", "empty": "Aún no tienes invitaciones registradas."
+        "title": "🎁 Invita y gana créditos", "intro": "Comparte tu enlace personal. La recompensa llega solo tras la primera compra elegible de la persona invitada.", "link": "Tu enlace personal", "copy": "Toca el enlace para copiarlo y compartirlo.", "rewards": "Premios: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 créditos. El primer número es para ti y el segundo para el nuevo usuario. El paquete Prueba no da premios.", "registered": "Invitaciones registradas", "rewarded": "Premios asignados", "pending": "En espera de la primera compra elegible", "empty": "Aún no tienes invitaciones registradas."
     },
     "Français": {
-        "title": "🎁 Invitez et gagnez des crédits", "intro": "Partagez votre lien personnel. La récompense est attribuée après le premier achat éligible de la personne invitée.", "link": "Votre lien personnel", "copy": "Touchez le lien pour le copier et le partager.", "rewards": "Récompenses : Base 15+10 · Creator 38+15 · Studio 75+30 · Professionnel 150+50 crédits. Le premier nombre est pour vous, le second pour le nouvel utilisateur.", "registered": "Invitations enregistrées", "rewarded": "Récompenses attribuées", "pending": "En attente du premier achat éligible", "empty": "Vous n’avez encore aucune invitation enregistrée."
+        "title": "🎁 Invitez et gagnez des crédits", "intro": "Partagez votre lien personnel. La récompense est attribuée après le premier achat éligible de la personne invitée.", "link": "Votre lien personnel", "copy": "Touchez le lien pour le copier et le partager.", "rewards": "Récompenses : Base 15+10 · Creator 38+15 · Studio 75+30 · Professionnel 150+50 crédits. Le premier nombre est pour vous, le second pour le nouvel utilisateur. Le pack Essai ne donne pas de récompense.", "registered": "Invitations enregistrées", "rewarded": "Récompenses attribuées", "pending": "En attente du premier achat éligible", "empty": "Vous n’avez encore aucune invitation enregistrée."
     },
     "Deutsch": {
-        "title": "🎁 Freunde einladen und Credits verdienen", "intro": "Teile deinen persönlichen Link. Die Prämie wird erst nach dem ersten zulässigen Paketkauf der eingeladenen Person gutgeschrieben.", "link": "Dein persönlicher Link", "copy": "Tippe auf den Link, um ihn zu kopieren und zu teilen.", "rewards": "Prämien: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionell 150+50 Credits. Die erste Zahl ist für dich, die zweite für den neuen Nutzer.", "registered": "Registrierte Einladungen", "rewarded": "Gutgeschriebene Prämien", "pending": "Warten auf den ersten zulässigen Kauf", "empty": "Noch keine Einladungen registriert."
+        "title": "🎁 Freunde einladen und Credits verdienen", "intro": "Teile deinen persönlichen Link. Die Prämie wird erst nach dem ersten zulässigen Paketkauf der eingeladenen Person gutgeschrieben.", "link": "Dein persönlicher Link", "copy": "Tippe auf den Link, um ihn zu kopieren und zu teilen.", "rewards": "Prämien: Base 15+10 · Creator 38+15 · Studio 75+30 · Professionell 150+50 Credits. Die erste Zahl ist für dich, die zweite für den neuen Nutzer. Das Testpaket bringt keine Prämie.", "registered": "Registrierte Einladungen", "rewarded": "Gutgeschriebene Prämien", "pending": "Warten auf den ersten zulässigen Kauf", "empty": "Noch keine Einladungen registriert."
     },
     "Română": {
-        "title": "🎁 Invită și câștigă credite", "intro": "Distribuie linkul personal. Recompensa se acordă numai după prima achiziție eligibilă a persoanei invitate.", "link": "Linkul tău personal", "copy": "Atinge linkul pentru a-l copia și distribui.", "rewards": "Recompense: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 credite. Primul număr este pentru tine, al doilea pentru utilizatorul nou.", "registered": "Invitații înregistrate", "rewarded": "Recompense acordate", "pending": "În așteptarea primei achiziții eligibile", "empty": "Nu ai încă invitații înregistrate."
+        "title": "🎁 Invită și câștigă credite", "intro": "Distribuie linkul personal. Recompensa se acordă numai după prima achiziție eligibilă a persoanei invitate.", "link": "Linkul tău personal", "copy": "Atinge linkul pentru a-l copia și distribui.", "rewards": "Recompense: Base 15+10 · Creator 38+15 · Studio 75+30 · Profesional 150+50 credite. Primul număr este pentru tine, al doilea pentru utilizatorul nou. Pachetul de probă nu oferă recompense.", "registered": "Invitații înregistrate", "rewarded": "Recompense acordate", "pending": "În așteptarea primei achiziții eligibile", "empty": "Nu ai încă invitații înregistrate."
     },
     "Русский": {
-        "title": "🎁 Приглашайте и получайте кредиты", "intro": "Поделитесь личной ссылкой. Награда начисляется только после первой подходящей покупки приглашённого пользователя.", "link": "Ваша личная ссылка", "copy": "Нажмите на ссылку, чтобы скопировать и поделиться ею.", "rewards": "Награды: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 кредитов. Первое число — вам, второе — новому пользователю.", "registered": "Зарегистрированные приглашения", "rewarded": "Начисленные награды", "pending": "Ожидание первой подходящей покупки", "empty": "Зарегистрированных приглашений пока нет."
+        "title": "🎁 Приглашайте и получайте кредиты", "intro": "Поделитесь личной ссылкой. Награда начисляется только после первой подходящей покупки приглашённого пользователя.", "link": "Ваша личная ссылка", "copy": "Нажмите на ссылку, чтобы скопировать и поделиться ею.", "rewards": "Награды: Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 кредитов. Первое число — вам, второе — новому пользователю. Пробный пакет не даёт наград.", "registered": "Зарегистрированные приглашения", "rewarded": "Начисленные награды", "pending": "Ожидание первой подходящей покупки", "empty": "Зарегистрированных приглашений пока нет."
     },
     "العربية": {
-        "title": "🎁 ادعُ الأصدقاء واكسب أرصدة", "intro": "شارك رابطك الشخصي. تُمنح المكافأة فقط بعد أول عملية شراء مؤهلة للشخص المدعو.", "link": "رابطك الشخصي", "copy": "اضغط على الرابط لنسخه ومشاركته.", "rewards": "المكافآت: Base ‏15+10 · Creator ‏38+15 · Studio ‏75+30 · Professional ‏150+50 رصيداً. الرقم الأول لك والثاني للمستخدم الجديد.", "registered": "الدعوات المسجلة", "rewarded": "المكافآت الممنوحة", "pending": "بانتظار أول عملية شراء مؤهلة", "empty": "لا توجد دعوات مسجلة بعد."
+        "title": "🎁 ادعُ الأصدقاء واكسب أرصدة", "intro": "شارك رابطك الشخصي. تُمنح المكافأة فقط بعد أول عملية شراء مؤهلة للشخص المدعو.", "link": "رابطك الشخصي", "copy": "اضغط على الرابط لنسخه ومشاركته.", "rewards": "المكافآت: Base ‏15+10 · Creator ‏38+15 · Studio ‏75+30 · Professional ‏150+50 رصيداً. الرقم الأول لك والثاني للمستخدم الجديد. باقة التجربة لا تمنح مكافآت.", "registered": "الدعوات المسجلة", "rewarded": "المكافآت الممنوحة", "pending": "بانتظار أول عملية شراء مؤهلة", "empty": "لا توجد دعوات مسجلة بعد."
     },
     "中文": {
-        "title": "🎁 邀请好友并赚取积分", "intro": "分享您的专属链接。只有受邀好友首次购买符合条件的套餐后才会发放奖励。", "link": "您的专属链接", "copy": "点击链接即可复制并分享。", "rewards": "奖励：Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 积分。第一个数字归您，第二个数字归新用户。", "registered": "已登记邀请", "rewarded": "已发放奖励", "pending": "等待首次符合条件的购买", "empty": "您暂时没有已登记的邀请。"
+        "title": "🎁 邀请好友并赚取积分", "intro": "分享您的专属链接。只有受邀好友首次购买符合条件的套餐后才会发放奖励。", "link": "您的专属链接", "copy": "点击链接即可复制并分享。", "rewards": "奖励：Base 15+10 · Creator 38+15 · Studio 75+30 · Professional 150+50 积分。第一个数字归您，第二个数字归新用户。试用套餐没有奖励。", "registered": "已登记邀请", "rewarded": "已发放奖励", "pending": "等待首次符合条件的购买", "empty": "您暂时没有已登记的邀请。"
     },
 }
 
@@ -339,55 +348,55 @@ HOME_BODY_COPY = {
         "community": "La nostra Community", "version": "Versione app",
         "body": """<div class='ss-section'><h2>Dall'idea al libro, con controllo reale</h2><p class='ss-muted'>Compila la sidebar, crea un indice studiato, sviluppa il testo e decidi tu ogni modifica.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Progetto su misura</b><p>Brief, pubblico, genere, stile e obiettivo guidano ogni fase del libro.</p><span class='ss-priority-tag'>SIDEBAR GUIDATA</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Indice studiato</b><p>Ricerca preliminare, struttura professionale, voto editoriale e correzioni mirate.</p><span class='ss-priority-tag'>STRUTTURA</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scrittura controllabile</b><p>Genera una sezione, un capitolo o tutto il libro; correggi soltanto ciò che desideri.</p><span class='ss-priority-tag'>TESTO</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualità e originalità</b><p>Controlli su coerenza, completezza, fonti e possibili somiglianze prima dell'esportazione.</p><span class='ss-priority-tag'>REVISIONE</span></div></div><div class='ss-section'><h2>Tutto il progetto resta recuperabile</h2><p class='ss-muted'>Salva manualmente la sessione, esporta un CSV completo e riprendi il lavoro quando vuoi.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importa ed esporta</b>CSV completo con sidebar, indice, testi, fonti e immagini associate.</div><div class='ss-benefit'><b>🔊 Anteprima e lettura vocale</b>Leggi, ascolta, metti in pausa e riprendi il manoscritto direttamente nel browser.</div><div class='ss-benefit'><b>📄 Word, PDF e KDP</b>Prepara il manoscritto per revisione, stampa o pubblicazione.</div></div><div class='ss-section'><h2>Domande frequenti</h2><p class='ss-muted'>Crediti solo per le elaborazioni IA; lettura, modifiche manuali, CSV ed export restano gratuiti. Il libro non viene mai pubblicato automaticamente.</p></div>""",
         "packages": "Pacchetti crediti chiari", "package_sub": "Scegli il pacchetto in base al tuo progetto. Le stime sono prudenti e includono margine per i controlli.", "credit_word": "crediti",
-        "package_hints": ["Per un primo progetto completo.", "Per più guide o Test Prep.", "Per lavoro editoriale continuativo.", "Per cataloghi e uso professionale."],
+        "package_hints": ["Per provare le funzioni principali.", "Per un primo progetto completo.", "Per più guide o Test Prep.", "Per lavoro editoriale continuativo.", "Per cataloghi e uso professionale."],
     },
     "English": {
         "community": "Our Community", "version": "App version",
         "body": """<div class='ss-section'><h2>From idea to book, with real control</h2><p class='ss-muted'>Complete the sidebar, build a researched outline, develop the text, and decide every change yourself.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>A tailored project</b><p>Your brief, audience, genre, style and goal guide every stage of the book.</p><span class='ss-priority-tag'>GUIDED SIDEBAR</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>A researched outline</b><p>Preliminary research, professional structure, editorial scoring and targeted improvements.</p><span class='ss-priority-tag'>STRUCTURE</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Writing you control</b><p>Generate one section, a chapter or the whole book; revise only what you choose.</p><span class='ss-priority-tag'>WRITING</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Quality and originality</b><p>Checks for consistency, completeness, sources and possible similarities before export.</p><span class='ss-priority-tag'>REVIEW</span></div></div><div class='ss-section'><h2>Your whole project remains recoverable</h2><p class='ss-muted'>Save your session manually, export a complete CSV file and resume work whenever you wish.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import and export</b>A complete CSV with sidebar, outline, text, sources and linked images.</div><div class='ss-benefit'><b>🔊 Preview and voice reader</b>Read, listen, pause and resume the manuscript directly in your browser.</div><div class='ss-benefit'><b>📄 Word, PDF and KDP</b>Prepare your manuscript for editing, printing or publishing.</div></div><div class='ss-section'><h2>Frequently asked questions</h2><p class='ss-muted'>Credits are used only for AI work; reading, manual edits, CSV and export remain free. Your book is never published automatically.</p></div>""",
         "packages": "Clear credit packages", "package_sub": "Choose a package for your project. Estimates are conservative and include room for checks.", "credit_word": "credits",
-        "package_hints": ["For a first complete project.", "For several guides or Test Prep books.", "For ongoing editorial work.", "For catalogs and professional use."],
+        "package_hints": ["To try the main features.", "For a first complete project.", "For several guides or Test Prep books.", "For ongoing editorial work.", "For catalogs and professional use."],
     },
     "Español": {
         "community": "Nuestra Comunidad", "version": "Versión de la app",
         "body": """<div class='ss-section'><h2>De la idea al libro, con control real</h2><p class='ss-muted'>Completa la barra lateral, crea un índice documentado, desarrolla el texto y decide cada cambio.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Proyecto a medida</b><p>El briefing, público, género, estilo y objetivo guían cada fase del libro.</p><span class='ss-priority-tag'>BARRA GUIADA</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Índice estudiado</b><p>Investigación previa, estructura profesional, evaluación editorial y mejoras específicas.</p><span class='ss-priority-tag'>ESTRUCTURA</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Escritura controlable</b><p>Genera una sección, un capítulo o todo el libro; revisa solo lo que elijas.</p><span class='ss-priority-tag'>TEXTO</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Calidad y originalidad</b><p>Controles de coherencia, integridad, fuentes y posibles similitudes antes de exportar.</p><span class='ss-priority-tag'>REVISIÓN</span></div></div><div class='ss-section'><h2>Todo tu proyecto se puede recuperar</h2><p class='ss-muted'>Guarda la sesión manualmente, exporta un CSV completo y retoma el trabajo cuando quieras.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importar y exportar</b>CSV completo con barra lateral, índice, textos, fuentes e imágenes vinculadas.</div><div class='ss-benefit'><b>🔊 Vista previa y lector de voz</b>Lee, escucha, pausa y reanuda el manuscrito en el navegador.</div><div class='ss-benefit'><b>📄 Word, PDF y KDP</b>Prepara el manuscrito para revisión, impresión o publicación.</div></div><div class='ss-section'><h2>Preguntas frecuentes</h2><p class='ss-muted'>Los créditos solo se usan para elaboraciones con IA; lectura, edición manual, CSV y exportación son gratis. El libro nunca se publica automáticamente.</p></div>""",
         "packages": "Paquetes de créditos claros", "package_sub": "Elige un paquete según tu proyecto. Las estimaciones son prudentes e incluyen margen para controles.", "credit_word": "créditos",
-        "package_hints": ["Para un primer proyecto completo.", "Para varias guías o Test Prep.", "Para trabajo editorial continuo.", "Para catálogos y uso profesional."],
+        "package_hints": ["Para probar las funciones principales.", "Para un primer proyecto completo.", "Para varias guías o Test Prep.", "Para trabajo editorial continuo.", "Para catálogos y uso profesional."],
     },
     "Français": {
         "community": "Notre communauté", "version": "Version de l’application",
         "body": """<div class='ss-section'><h2>De l’idée au livre, avec un vrai contrôle</h2><p class='ss-muted'>Remplissez la barre latérale, créez un plan documenté, développez le texte et décidez de chaque modification.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Projet sur mesure</b><p>Le brief, le public, le genre, le style et l’objectif guident chaque étape.</p><span class='ss-priority-tag'>BARRE GUIDÉE</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Plan étudié</b><p>Recherche préalable, structure professionnelle, évaluation éditoriale et améliorations ciblées.</p><span class='ss-priority-tag'>STRUCTURE</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Rédaction maîtrisée</b><p>Générez une section, un chapitre ou tout le livre; modifiez seulement ce que vous choisissez.</p><span class='ss-priority-tag'>TEXTE</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualité et originalité</b><p>Contrôles de cohérence, complétude, sources et similitudes possibles avant l’export.</p><span class='ss-priority-tag'>RÉVISION</span></div></div><div class='ss-section'><h2>Votre projet reste récupérable</h2><p class='ss-muted'>Sauvegardez la session manuellement, exportez un CSV complet et reprenez le travail quand vous le souhaitez.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Importer et exporter</b>CSV complet avec barre latérale, plan, textes, sources et images liées.</div><div class='ss-benefit'><b>🔊 Aperçu et lecteur vocal</b>Lisez, écoutez, mettez en pause et reprenez le manuscrit dans le navigateur.</div><div class='ss-benefit'><b>📄 Word, PDF et KDP</b>Préparez le manuscrit pour révision, impression ou publication.</div></div><div class='ss-section'><h2>Questions fréquentes</h2><p class='ss-muted'>Les crédits servent seulement aux travaux IA; lecture, modifications manuelles, CSV et export restent gratuits. Le livre n’est jamais publié automatiquement.</p></div>""",
         "packages": "Forfaits de crédits clairs", "package_sub": "Choisissez un forfait selon votre projet. Les estimations sont prudentes et incluent une marge pour les contrôles.", "credit_word": "crédits",
-        "package_hints": ["Pour un premier projet complet.", "Pour plusieurs guides ou Test Prep.", "Pour un travail éditorial continu.", "Pour catalogues et usage professionnel."],
+        "package_hints": ["Pour essayer les fonctions principales.", "Pour un premier projet complet.", "Pour plusieurs guides ou Test Prep.", "Pour un travail éditorial continu.", "Pour catalogues et usage professionnel."],
     },
     "Deutsch": {
         "community": "Unsere Community", "version": "App-Version",
         "body": """<div class='ss-section'><h2>Von der Idee zum Buch – mit echter Kontrolle</h2><p class='ss-muted'>Füllen Sie die Seitenleiste aus, erstellen Sie eine recherchierte Gliederung und entscheiden Sie über jede Änderung.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Maßgeschneidertes Projekt</b><p>Briefing, Zielgruppe, Genre, Stil und Ziel steuern jede Phase des Buchs.</p><span class='ss-priority-tag'>GEFÜHRTE SIDEBAR</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Durchdachte Gliederung</b><p>Vorabrecherche, professionelle Struktur, Bewertung und gezielte Verbesserungen.</p><span class='ss-priority-tag'>STRUKTUR</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Kontrollierbares Schreiben</b><p>Erstellen Sie einen Abschnitt, ein Kapitel oder das ganze Buch und ändern Sie nur Gewünschtes.</p><span class='ss-priority-tag'>TEXT</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Qualität und Originalität</b><p>Prüfungen auf Kohärenz, Vollständigkeit, Quellen und mögliche Ähnlichkeiten vor dem Export.</p><span class='ss-priority-tag'>PRÜFUNG</span></div></div><div class='ss-section'><h2>Ihr Projekt bleibt wiederherstellbar</h2><p class='ss-muted'>Speichern Sie die Sitzung manuell, exportieren Sie eine vollständige CSV-Datei und setzen Sie später fort.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import und Export</b>Vollständige CSV mit Sidebar, Gliederung, Texten, Quellen und Bildern.</div><div class='ss-benefit'><b>🔊 Vorschau und Sprachleser</b>Lesen, hören, pausieren und fortsetzen direkt im Browser.</div><div class='ss-benefit'><b>📄 Word, PDF und KDP</b>Bereiten Sie das Manuskript für Überarbeitung, Druck oder Veröffentlichung vor.</div></div><div class='ss-section'><h2>Häufige Fragen</h2><p class='ss-muted'>Credits gelten nur für KI-Verarbeitungen; Lesen, manuelle Änderungen, CSV und Export bleiben kostenlos. Das Buch wird nie automatisch veröffentlicht.</p></div>""",
         "packages": "Klare Credit-Pakete", "package_sub": "Wählen Sie ein Paket für Ihr Projekt. Die Schätzungen sind vorsichtig und enthalten Spielraum für Prüfungen.", "credit_word": "Credits",
-        "package_hints": ["Für ein erstes vollständiges Projekt.", "Für mehrere Ratgeber oder Test Prep.", "Für laufende Redaktionsarbeit.", "Für Kataloge und professionelle Nutzung."],
+        "package_hints": ["Zum Testen der Hauptfunktionen.", "Für ein erstes vollständiges Projekt.", "Für mehrere Ratgeber oder Test Prep.", "Für laufende Redaktionsarbeit.", "Für Kataloge und professionelle Nutzung."],
     },
     "Română": {
         "community": "Comunitatea noastră", "version": "Versiunea aplicației",
         "body": """<div class='ss-section'><h2>De la idee la carte, cu control real</h2><p class='ss-muted'>Completează bara laterală, creează un cuprins documentat, dezvoltă textul și decide fiecare modificare.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Proiect personalizat</b><p>Brief-ul, publicul, genul, stilul și obiectivul ghidează fiecare etapă.</p><span class='ss-priority-tag'>BARĂ GHIDATĂ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Cuprins studiat</b><p>Cercetare preliminară, structură profesională, evaluare editorială și îmbunătățiri țintite.</p><span class='ss-priority-tag'>STRUCTURĂ</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Scriere controlabilă</b><p>Generează o secțiune, un capitol sau întreaga carte și modifică doar ce alegi.</p><span class='ss-priority-tag'>TEXT</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Calitate și originalitate</b><p>Verificări de coerență, completitudine, surse și similitudini înainte de export.</p><span class='ss-priority-tag'>REVIZUIRE</span></div></div><div class='ss-section'><h2>Proiectul tău rămâne recuperabil</h2><p class='ss-muted'>Salvează manual sesiunea, exportă un CSV complet și reia lucrul oricând.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Import și export</b>CSV complet cu bara laterală, cuprins, texte, surse și imagini.</div><div class='ss-benefit'><b>🔊 Previziualizare și cititor vocal</b>Citește, ascultă, întrerupe și reia manuscrisul în browser.</div><div class='ss-benefit'><b>📄 Word, PDF și KDP</b>Pregătește manuscrisul pentru revizie, tipar sau publicare.</div></div><div class='ss-section'><h2>Întrebări frecvente</h2><p class='ss-muted'>Creditele sunt folosite doar pentru prelucrări IA; citirea, modificările manuale, CSV și exportul rămân gratuite. Cartea nu se publică automat.</p></div>""",
         "packages": "Pachete de credite clare", "package_sub": "Alege pachetul pentru proiectul tău. Estimările sunt prudente și includ spațiu pentru verificări.", "credit_word": "credite",
-        "package_hints": ["Pentru un prim proiect complet.", "Pentru mai multe ghiduri sau Test Prep.", "Pentru activitate editorială continuă.", "Pentru cataloage și utilizare profesională."],
+        "package_hints": ["Pentru a testa funcțiile principale.", "Pentru un prim proiect complet.", "Pentru mai multe ghiduri sau Test Prep.", "Pentru activitate editorială continuă.", "Pentru cataloage și utilizare profesională."],
     },
     "Русский": {
         "community": "Наше сообщество", "version": "Версия приложения",
         "body": """<div class='ss-section'><h2>От идеи до книги — с реальным контролем</h2><p class='ss-muted'>Заполните боковую панель, создайте продуманный план, развивайте текст и решайте каждое изменение.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>Индивидуальный проект</b><p>Бриф, аудитория, жанр, стиль и цель направляют каждый этап книги.</p><span class='ss-priority-tag'>ПАНЕЛЬ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>Продуманный план</b><p>Предварительное исследование, профессиональная структура и целевые улучшения.</p><span class='ss-priority-tag'>СТРУКТУРА</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>Управляемый текст</b><p>Создавайте раздел, главу или всю книгу и изменяйте только выбранное.</p><span class='ss-priority-tag'>ТЕКСТ</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>Качество и оригинальность</b><p>Проверки связности, полноты, источников и возможных совпадений перед экспортом.</p><span class='ss-priority-tag'>ПРОВЕРКА</span></div></div><div class='ss-section'><h2>Проект можно восстановить</h2><p class='ss-muted'>Сохраняйте сессию вручную, экспортируйте полный CSV и продолжайте работу в любое время.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 Импорт и экспорт</b>Полный CSV с панелью, планом, текстами, источниками и изображениями.</div><div class='ss-benefit'><b>🔊 Предпросмотр и чтение вслух</b>Читайте, слушайте, ставьте на паузу и продолжайте в браузере.</div><div class='ss-benefit'><b>📄 Word, PDF и KDP</b>Подготовьте рукопись к редактированию, печати или публикации.</div></div><div class='ss-section'><h2>Частые вопросы</h2><p class='ss-muted'>Кредиты используются только для ИИ; чтение, ручное редактирование, CSV и экспорт бесплатны. Книга никогда не публикуется автоматически.</p></div>""",
         "packages": "Понятные пакеты кредитов", "package_sub": "Выберите пакет для своего проекта. Оценки осторожны и включают запас на проверки.", "credit_word": "кредитов",
-        "package_hints": ["Для первого полного проекта.", "Для нескольких руководств или Test Prep.", "Для постоянной редакционной работы.", "Для каталогов и профессионального использования."],
+        "package_hints": ["Чтобы попробовать основные функции.", "Для первого полного проекта.", "Для нескольких руководств или Test Prep.", "Для постоянной редакционной работы.", "Для каталогов и профессионального использования."],
     },
     "العربية": {
         "community": "مجتمعنا", "version": "إصدار التطبيق",
         "body": """<div class='ss-section'><h2>من الفكرة إلى الكتاب، بتحكم حقيقي</h2><p class='ss-muted'>أكمل الشريط الجانبي، أنشئ فهرساً مدروساً، طوّر النص وقرر كل تعديل بنفسك.</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>مشروع مخصص</b><p>الملخص والجمهور والنوع والأسلوب والهدف توجه كل مرحلة من الكتاب.</p><span class='ss-priority-tag'>شريط موجه</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>فهرس مدروس</b><p>بحث أولي وبنية احترافية وتقييم تحريري وتحسينات موجهة.</p><span class='ss-priority-tag'>البنية</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>كتابة قابلة للتحكم</b><p>أنشئ قسماً أو فصلاً أو الكتاب كاملاً وعدّل فقط ما تختاره.</p><span class='ss-priority-tag'>النص</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>الجودة والأصالة</b><p>فحوص للاتساق والاكتمال والمصادر والتشابهات المحتملة قبل التصدير.</p><span class='ss-priority-tag'>مراجعة</span></div></div><div class='ss-section'><h2>يمكن استعادة مشروعك دائماً</h2><p class='ss-muted'>احفظ الجلسة يدوياً وصدّر ملف CSV كاملاً واستأنف العمل متى شئت.</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 استيراد وتصدير</b>CSV كامل للشريط الجانبي والفهرس والنصوص والمصادر والصور.</div><div class='ss-benefit'><b>🔊 معاينة وقارئ صوتي</b>اقرأ واستمع وأوقف واستأنف المخطوطة في المتصفح.</div><div class='ss-benefit'><b>📄 Word وPDF وKDP</b>جهّز المخطوطة للمراجعة أو الطباعة أو النشر.</div></div><div class='ss-section'><h2>أسئلة شائعة</h2><p class='ss-muted'>تُستخدم الأرصدة فقط لمعالجة الذكاء الاصطناعي؛ القراءة والتعديل اليدوي وCSV والتصدير مجانية. لا يُنشر الكتاب تلقائياً أبداً.</p></div>""",
         "packages": "باقات أرصدة واضحة", "package_sub": "اختر الباقة المناسبة لمشروعك. التقديرات حذرة وتشمل هامشاً للفحوص.", "credit_word": "رصيداً",
-        "package_hints": ["لأول مشروع كامل.", "لأدلة أو Test Prep متعددة.", "لعمل تحريري مستمر.", "للكتالوجات والاستخدام الاحترافي."],
+        "package_hints": ["لتجربة الوظائف الرئيسية.", "لأول مشروع كامل.", "لأدلة أو Test Prep متعددة.", "لعمل تحريري مستمر.", "للكتالوجات والاستخدام الاحترافي."],
     },
     "中文": {
         "community": "我们的社区", "version": "应用版本",
         "body": """<div class='ss-section'><h2>从想法到图书，始终掌控</h2><p class='ss-muted'>填写侧边栏，创建经过研究的目录，发展文本，并由你决定每一项修改。</p></div><div class='ss-priority-grid'><div class='ss-priority'><div class='ss-priority-icon'>🧭</div><b>量身定制的项目</b><p>简介、读者、类型、风格和目标指导图书的每一步。</p><span class='ss-priority-tag'>引导侧边栏</span></div><div class='ss-priority'><div class='ss-priority-icon'>🧠</div><b>经过研究的目录</b><p>前期研究、专业结构、编辑评分和有针对性的改进。</p><span class='ss-priority-tag'>结构</span></div><div class='ss-priority'><div class='ss-priority-icon'>✍️</div><b>可控写作</b><p>生成一个小节、一章或整本书，只修改你选择的部分。</p><span class='ss-priority-tag'>文本</span></div><div class='ss-priority'><div class='ss-priority-icon'>🔍</div><b>质量与原创性</b><p>导出前检查连贯性、完整性、来源和可能的相似性。</p><span class='ss-priority-tag'>审校</span></div></div><div class='ss-section'><h2>你的项目始终可恢复</h2><p class='ss-muted'>手动保存会话，导出完整 CSV，并可随时继续工作。</p></div><div class='ss-benefits'><div class='ss-benefit'><b>📦 导入和导出</b>完整 CSV，包含侧边栏、目录、文本、来源和关联图片。</div><div class='ss-benefit'><b>🔊 预览与语音阅读器</b>直接在浏览器中阅读、聆听、暂停和继续书稿。</div><div class='ss-benefit'><b>📄 Word、PDF 和 KDP</b>为编辑、印刷或出版准备书稿。</div></div><div class='ss-section'><h2>常见问题</h2><p class='ss-muted'>积分仅用于 AI 处理；阅读、手动编辑、CSV 和导出免费。图书绝不会自动发布。</p></div>""",
         "packages": "清晰的积分套餐", "package_sub": "根据你的项目选择套餐。估算较为谨慎，并包含检查余量。", "credit_word": "积分",
-        "package_hints": ["完成第一个完整项目。", "制作多本指南或 Test Prep。", "持续进行编辑工作。", "目录与专业用途。"],
+        "package_hints": ["试用主要功能。", "完成第一个完整项目。", "制作多本指南或 Test Prep。", "持续进行编辑工作。", "目录与专业用途。"],
     },
 }
 
@@ -477,15 +486,15 @@ HOME_SLIDE_SCENE = (
 
 
 HOME_PACKAGE_NAMES = {
-    "Italiano": ("Base", "Creator", "Studio", "Professionale"),
-    "English": ("Base", "Creator", "Studio", "Professional"),
-    "Español": ("Base", "Creator", "Studio", "Profesional"),
-    "Français": ("Base", "Creator", "Studio", "Professionnel"),
-    "Deutsch": ("Basis", "Creator", "Studio", "Professionell"),
-    "Română": ("Bază", "Creator", "Studio", "Profesional"),
-    "Русский": ("Базовый", "Creator", "Studio", "Профессиональный"),
-    "العربية": ("أساسي", "Creator", "Studio", "احترافي"),
-    "中文": ("基础", "创作者", "工作室", "专业版"),
+    "Italiano": ("Prova", "Base", "Creator", "Studio", "Professionale"),
+    "English": ("Try", "Base", "Creator", "Studio", "Professional"),
+    "Español": ("Prueba", "Base", "Creator", "Studio", "Profesional"),
+    "Français": ("Essai", "Base", "Creator", "Studio", "Professionnel"),
+    "Deutsch": ("Test", "Basis", "Creator", "Studio", "Professionell"),
+    "Română": ("Probă", "Bază", "Creator", "Studio", "Profesional"),
+    "Русский": ("Пробный", "Базовый", "Creator", "Studio", "Профессиональный"),
+    "العربية": ("تجربة", "أساسي", "Creator", "Studio", "احترافي"),
+    "中文": ("试用", "基础", "创作者", "工作室", "专业版"),
 }
 
 # FAQ complete della home. Non viene tradotta al volo: ogni lingua ha testi
@@ -1563,6 +1572,9 @@ def _landing_page_v2() -> None:
             else f"{pacchetto['amount_cents'] / 100:.2f} €".replace(".", ","),
             "crediti": f"{pacchetto['credits']:,}".replace(",", "."),
             "pro": pro, "eco": eco, "consigliato": chiave == "creator_375",
+            # Il pacchetto Prova non basta per un libro intero: al posto di
+            # "≈ 0 libri" la home mostra la sua breve descrizione.
+            "nota": C["package_hints"][posizione] if not (pro or eco) else "",
         })
     faq_titolo, _faq_sotto, faq_voci = HOME_FAQ_COPY[lingua]
     guida_titolo, guida_testo, etichetta_it, etichetta_en = HOME_GUIDES_COPY[lingua]
