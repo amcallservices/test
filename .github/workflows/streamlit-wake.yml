@@ -30,7 +30,14 @@ jobs:
       - name: Installa il browser di controllo
         run: |
           npm install --no-save --no-package-lock playwright@1.64.0
-          npx playwright install --with-deps --only-shell chromium
+          # L'immagine Ubuntu di GitHub include un archivio di pacchetti Microsoft
+          # che a volte risponde 403 e blocca "apt-get update". Al controllo non
+          # serve: lo togliamo da questo server temporaneo prima di installare.
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft*.list /etc/apt/sources.list.d/microsoft*.sources || true
+          # Se le dipendenze di sistema non si installano comunque, scarichiamo
+          # solo il browser: sui server di GitHub le librerie di base ci sono già.
+          npx playwright install --with-deps --only-shell chromium \
+            || npx playwright install --only-shell chromium
       - name: Visita la home e riattiva l'app se dorme
         timeout-minutes: 4
         env:
