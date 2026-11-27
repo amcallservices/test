@@ -243,15 +243,24 @@ def build_home_html(lingua: str, d: dict[str, Any]) -> str:
         def libri(x: int) -> str:
             return T["libro_circa"] if x == 1 else T["libri_circa"]
         badge = f"<span class='ss2-badge'>{_e(d['consigliato'])}</span>" if p["consigliato"] else ""
+        nota = p.get("nota", "")
+        if nota:
+            stima_eco = stima_pro = _e(nota)
+            stime = f"<span class='ss2-stima ss2-stima-nota'>{_e(nota)}</span>"
+        else:
+            stima_eco = f"≈ {p['eco']} {_e(libri(p['eco']))}"
+            stima_pro = f"≈ {p['pro']} {_e(libri(p['pro']))}"
+            stime = (
+                f"<span class='ss2-stima' data-mostra='eco'><b>≈ {p['eco']}</b>{_e(libri(p['eco']))}</span>"
+                f"<span class='ss2-stima' data-mostra='pro'><b>≈ {p['pro']}</b>{_e(libri(p['pro']))}</span>"
+            )
         pacchetti += (
             f"<button type='button' class='ss2-pacchetto ss2-solleva{' scelto' if p['consigliato'] else ''}' aria-pressed='{'true' if p['consigliato'] else 'false'}'"
             f" data-nome='{_e(p['nome'])}' data-prezzo='{_e(p['prezzo'])}' data-crediti='{_e(p['crediti'])}'"
-            f" data-eco='≈ {p['eco']} {_e(libri(p['eco']))}' data-pro='≈ {p['pro']} {_e(libri(p['pro']))}'>"
+            f" data-eco='{stima_eco}' data-pro='{stima_pro}'>"
             f"<span class='ss2-pacchetto-testa'><b>{_e(p['nome'])}</b>{badge}</span>"
             f"<span class='ss2-prezzo'>{_e(p['prezzo'])}</span><span class='ss2-crediti'>{_e(p['crediti'])} {_e(T['crediti'])}</span>"
-            f"<span class='ss2-separatore'></span>"
-            f"<span class='ss2-stima' data-mostra='eco'><b>≈ {p['eco']}</b>{_e(libri(p['eco']))}</span>"
-            f"<span class='ss2-stima' data-mostra='pro'><b>≈ {p['pro']}</b>{_e(libri(p['pro']))}</span></button>"
+            f"<span class='ss2-separatore'></span>{stime}</button>"
         )
     scelto = next((p for p in d["pacchetti"] if p["consigliato"]), d["pacchetti"][0])
     riepilogo = (
@@ -270,7 +279,7 @@ def build_home_html(lingua: str, d: dict[str, Any]) -> str:
         f"<div id='ss-crediti' class='ss2-testa ss2-testa-crediti'><span class='ss2-etichetta'>{_e(N[4])}</span>"
         f"<h2 class='ss2-h2'>{_e(T['cred_titolo'])}</h2><p class='ss2-lead-piccolo'>{_e(T['cred_sub'])} "
         f"<b class='ss2-oro-testo' data-mostra='eco'>{_e(A['eco_nome'])}</b><b class='ss2-oro-testo' data-mostra='pro'>{_e(A['pro_nome'])}</b>.</p></div>"
-        f"<div class='ss2-griglia-4'>{pacchetti}</div>{riepilogo}"
+        f"<div class='ss2-griglia-4{' ss2-griglia-5' if len(d['pacchetti']) > 4 else ''}'>{pacchetti}</div>{riepilogo}"
         f"<p class='ss2-nota-piccola'>{_e(d['nota_stime'])}</p></div></section>"
     )
 
