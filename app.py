@@ -10008,7 +10008,33 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
     }
     # La tab 0 rimane la prima nel DOM e quindi è quella aperta ad ogni avvio.
     # Lo stile la mostra dopo -1, senza cambiare alcuna funzione delle tab 1–5.
-    tabs = st.tabs([f"📘 0. {titolo_guida}", etichette_tab_nicchia.get(lingua_sel, etichette_tab_nicchia["Italiano"])] + L["tabs"] + [testo_ui("formattazione", lingua_sel)])
+    etichette_schede = [f"📘 0. {titolo_guida}", etichette_tab_nicchia.get(lingua_sel, etichette_tab_nicchia["Italiano"])] + L["tabs"] + [testo_ui("formattazione", lingua_sel)]
+    # Le schede ricordano quella aperta: all'ingresso si parte sempre dalla
+    # chat guidata (tab 0); dopo che l'utente usa una sezione, per esempio
+    # genera l'indice, al termine dell'operazione resta su quella sezione
+    # invece di tornare alla chat guidata. La chiave include la lingua perché
+    # lo stato salva l'etichetta della scheda, che cambia con la lingua.
+    chiave_schede = f"editor_schede_{lingua_sel}"
+
+    # Una correzione preparata dal controllo finale o una stesura in corso
+    # deve arrivare davvero all'editor: si apre la sezione 2 (Scrivi il
+    # libro), che nel menu è la quarta scheda in tutte le lingue. Durante una
+    # pausa succede una volta e l'utente può poi consultare liberamente le
+    # altre sezioni dell'app.
+    apri_tab_scrittura = (
+        st.session_state.pop("apri_tab_scrittura_da_correzione", False)
+        or st.session_state.pop("apri_tab_scrittura_da_stesura", False)
+        or bool(st.session_state.get("job_scrittura_attivo"))
+        or bool(st.session_state.pop("apri_tab_scrittura_da_pausa", False))
+    )
+    scheda_da_aprire = st.session_state.pop("apri_scheda_numero", None)
+    if apri_tab_scrittura:
+        scheda_da_aprire = 3
+    if isinstance(scheda_da_aprire, int) and 0 <= scheda_da_aprire < len(etichette_schede):
+        st.session_state[chiave_schede] = etichette_schede[scheda_da_aprire]
+    elif st.session_state.get(chiave_schede) not in etichette_schede:
+        st.session_state.pop(chiave_schede, None)
+    tabs = st.tabs(etichette_schede, key=chiave_schede, on_change="rerun")
 
     # Stile diretto e indipendente dal tema per le sei schede principali.
     # Interviene esclusivamente sul menu che Streamlit ha già creato: ogni
@@ -10138,51 +10164,6 @@ Notificările sonore anunță când bara laterală este gata, la începutul sau 
         """.replace("__GRAFICA_NUOVA__", "false" if grafica_area_classica() else "true"),
         height=0,
     )
-
-    # Una correzione preparata dal controllo finale o una stesura in corso
-    # deve arrivare davvero all'editor. Streamlit non espone un'API Python per
-    # attivare una tab: il piccolo script seleziona la terza scheda, che è
-    # sempre la sezione 2 in tutte le lingue. Durante una pausa il click
-    # viene eseguito una volta e l'utente può poi consultare liberamente le
-    # altre sezioni dell'app.
-    apri_tab_scrittura = (
-        st.session_state.pop("apri_tab_scrittura_da_correzione", False)
-        or st.session_state.pop("apri_tab_scrittura_da_stesura", False)
-        or bool(st.session_state.get("job_scrittura_attivo"))
-        or bool(st.session_state.pop("apri_tab_scrittura_da_pausa", False))
-    )
-    if apri_tab_scrittura:
-        components.html(
-            """
-            <script>
-            setTimeout(function () {
-              try {
-                const schede = Array.from(window.parent.document.querySelectorAll('[role="tab"]'));
-                const scrittura = schede[3] || schede.find(function (scheda) {
-                  const testo = (scheda.innerText || '').toLowerCase();
-                  return testo.includes('scrittura') || testo.includes('write');
-                });
-                if (scrittura) scrittura.click();
-              } catch (errore) { /* il messaggio di conferma resta il fallback */ }
-            }, 250);
-            </script>
-            """,
-            height=0,
-        )
-
-    scheda_da_aprire = st.session_state.pop("apri_scheda_numero", None)
-    if isinstance(scheda_da_aprire, int):
-        components.html(
-            f"""<script>
-            setTimeout(function () {{
-              try {{
-                const schede = Array.from(window.parent.document.querySelectorAll('[data-testid="stTabs"] [role="tab"]'));
-                if (schede[{scheda_da_aprire}]) schede[{scheda_da_aprire}].click();
-              }} catch (errore) {{}}
-            }}, 250);
-            </script>""",
-            height=0,
-        )
 
     with tabs[0]:
         avviso_reset_nuovo_progetto = {
