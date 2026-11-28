@@ -176,3 +176,57 @@ def invia_a_tutti(
         except Exception:  # noqa: BLE001
             pass
     return {"inviati": inviati, "falliti": falliti}
+
+
+# ------------------------------------------------- avviso all'amministratore
+def componi_avviso_nuovo_utente(conf: dict, destinatari: list[str], email_utente: str,
+                                quando: str, invito: str = "", base_url: str = "") -> EmailMessage:
+    """Email breve per l'amministratore: si è registrato un nuovo utente."""
+    messaggio = EmailMessage()
+    messaggio["From"] = formataddr((conf["nome"], conf["utente"]))
+    messaggio["To"] = ", ".join(destinatari)
+    messaggio["Subject"] = f"Nuovo utente su Scrittore Site: {email_utente}"
+    messaggio["Message-ID"] = make_msgid(domain=conf["utente"].split("@")[-1])
+    righe = [
+        "Si è appena registrato un nuovo utente su Scrittore Site.",
+        "",
+        f"Email: {email_utente}",
+        f"Data e ora: {quando}",
+        f"Invitato con il codice: {invito}" if invito else "Invitato da un altro utente: no",
+        "",
+        "L'account diventa attivo quando l'utente conferma l'email.",
+    ]
+    if base_url:
+        righe.append(f"Pannello amministratore: {base_url.rstrip('/')}/?azione=accedi")
+    testo = "\n".join(righe)
+    messaggio.set_content(testo + "\n")
+    righe_html = "".join(
+        f"<p style=\"margin:0 0 8px\">{escape(riga)}</p>" if riga else "<p style=\"margin:0 0 8px\">&nbsp;</p>"
+        for riga in righe
+    )
+    messaggio.add_alternative(
+        "<!doctype html><html><body style=\"margin:0;background:#0d1426;padding:24px\">"
+        "<div style=\"max-width:560px;margin:auto;background:#f4ecdc;border-radius:16px;padding:24px;"
+        "font:15px/1.55 Georgia,serif;color:#1c2540\">"
+        "<p style=\"margin:0 0 14px;font:600 13px Arial,sans-serif;letter-spacing:.08em;color:#b07d1c\">"
+        "SCRITTORE SITE · NUOVO UTENTE</p>" + righe_html + "</div></body></html>",
+        subtype="html",
+    )
+    return messaggio
+
+
+def invia_avviso_nuovo_utente(conf: dict, destinatari: list[str], email_utente: str,
+                              quando: str, invito: str = "", base_url: str = "") -> None:
+    """Invia l'avviso; gli errori vengono sollevati al chiamante."""
+    if not conf or not destinatari:
+        return
+    messaggio = componi_avviso_nuovo_utente(conf, destinatari, email_utente, quando, invito, base_url)
+    server = apri_connessione(conf)
+    try:
+        server.send_message(messaggio)
+    finally:
+        try:
+            server.quit()
+        except Exception:
+            pass
+

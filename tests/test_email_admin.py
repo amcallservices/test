@@ -2,6 +2,7 @@
 import smtplib
 
 import email_admin as ea
+import email_admin
 
 SEGRETI = {"EMAIL_SMTP_USER": "scrittore@gmail.com", "EMAIL_SMTP_PASSWORD": "abcd efgh ijkl mnop"}
 
@@ -67,3 +68,37 @@ def test_invio_separato_a_ciascuno_senza_fermarsi_agli_errori(monkeypatch):
     assert [m["To"] for m in finto.inviati] == ["a@x.it", "c@x.it"]  # un'email per persona
     assert all("?disiscrivi=" in m["List-Unsubscribe"] for m in finto.inviati)
     assert passi[-1] == (3, 3) and finto.chiuso
+
+
+def test_avviso_nuovo_utente_per_admin():
+    conf = {"utente": "mittente@gmail.com", "password": "x", "nome": "Scrittore Site",
+            "host": "smtp.gmail.com", "porta": 465}
+    msg = email_admin.componi_avviso_nuovo_utente(
+        conf, ["admin@esempio.it"], "nuovo<b>@esempio.it", "28/11/2026 alle 17:30", "ABC123",
+        "https://scrittoresite.streamlit.app/",
+    )
+    assert msg["To"] == "admin@esempio.it"
+    assert "nuovo<b>@esempio.it" in msg["Subject"]
+    testo = msg.get_body(("plain",)).get_content()
+    html = msg.get_body(("html",)).get_content()
+    assert "28/11/2026 alle 17:30" in testo and "ABC123" in testo
+    assert "?azione=accedi" in testo
+    assert "<b>@" not in html and "&lt;b&gt;" in html
+
+
+def test_avviso_nuovo_utente_invio(monkeypatch):
+    inviati = []
+
+    class FintoServer:
+        def send_message(self, m):
+            inviati.append(m)
+
+        def quit(self):
+            pass
+
+    monkeypatch.setattr(email_admin, "apri_connessione", lambda conf: FintoServer())
+    conf = {"utente": "m@gmail.com", "password": "x", "nome": "S", "host": "h", "porta": 465}
+    email_admin.invia_avviso_nuovo_utente(conf, ["a@b.it"], "u@b.it", "oggi")
+    email_admin.invia_avviso_nuovo_utente(conf, [], "u@b.it", "oggi")
+    email_admin.invia_avviso_nuovo_utente(None, ["a@b.it"], "u@b.it", "oggi")
+    assert len(inviati) == 1 and "Invitato da un altro utente: no" in inviati[0].get_body(("plain",)).get_content()

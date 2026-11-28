@@ -7,6 +7,7 @@ import json
 import hashlib
 import csv
 import datetime as dt
+import threading
 from pathlib import Path
 from typing import Any
 from io import StringIO
@@ -1054,7 +1055,41 @@ def _supabase_signup(email: str, password: str) -> dict[str, Any]:
     return {
         "id": str((user or {}).get("id", "")),
         "email": str((user or {}).get("email", email.strip())),
+        # Email già registrata: Supabase restituisce un utente "finto" senza identità.
+        "esistente": isinstance((user or {}).get("identities"), list) and not (user or {}).get("identities"),
     }
+
+
+def _avvisa_admin_nuovo_utente(email_utente: str, invito: str = "") -> None:
+    """Manda all'amministratore un'email per ogni nuova registrazione.
+
+    Usa la stessa Gmail del pannello "Email agli utenti" e parte in un thread
+    separato, così chi si registra non aspetta l'invio. Destinatari: gli
+    indirizzi in ADMIN_EMAILS (o, se vuoto, la Gmail mittente). Si disattiva
+    con NOTIFICA_NUOVI_UTENTI = "false" nei Secrets.
+    """
+    if _secret("NOTIFICA_NUOVI_UTENTI").strip().lower() in {"false", "no", "0", "off"}:
+        return
+    import email_admin
+
+    conf = email_admin.configurazione_email(_secret)
+    if not conf:
+        return
+    destinatari = sorted(_admin_emails()) or [conf["utente"]]
+    try:
+        from zoneinfo import ZoneInfo
+        quando = dt.datetime.now(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y alle %H:%M")
+    except Exception:
+        quando = dt.datetime.now().strftime("%d/%m/%Y alle %H:%M")
+    base_url = _secret("APP_BASE_URL")
+
+    def _invia() -> None:
+        try:
+            email_admin.invia_avviso_nuovo_utente(conf, destinatari, email_utente, quando, invito, base_url)
+        except Exception as errore:  # l'avviso non deve mai bloccare la registrazione
+            print(f"[avviso nuovo utente] invio non riuscito: {type(errore).__name__}")
+
+    threading.Thread(target=_invia, daemon=True).start()
 
 
 def _supabase_resend_confirmation(email: str) -> None:
@@ -2316,11 +2351,21 @@ def _account_gate() -> dict[str, Any]:
         if st.button("Crea account", key="commercial_signup"):
             try:
                 nuovo_account = _supabase_signup(email, password)
+                codice_invito = _normalizza_codice_referral(
+                    st.session_state.get("commercial_pending_referral_code", "")
+                )
                 esito_referral = _collega_referral_nuovo_account(nuovo_account.get("id", ""))
                 referral_in_attesa = bool(_normalizza_codice_referral(
                     st.session_state.get("commercial_pending_referral_code", "")
                 ))
                 st.session_state["commercial_pending_confirmation_email"] = email.strip()
+                # Supabase risponde "ok" anche per un'email già registrata, ma in quel
+                # caso non restituisce un ID nuovo: l'avviso parte solo per i nuovi utenti.
+                if nuovo_account.get("id") and not nuovo_account.get("esistente"):
+                    _avvisa_admin_nuovo_utente(
+                        nuovo_account.get("email") or email.strip(),
+                        codice_invito,
+                    )
                 st.success("Account creato. Controlla l'email di conferma, poi accedi.")
                 if esito_referral.get("status") == "claimed":
                     st.info(
